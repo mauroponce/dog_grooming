@@ -1,0 +1,778 @@
+<%
+  persisted = customer.persisted?
+  form_eyebrow = persisted ? "Editar registro" : "Nuevo registro"
+  form_title = persisted ? "Editar cliente" : "Añadir cliente"
+  form_description = persisted ? "Actualizá sus datos básicos para identificarlo, encontrarlo rápidamente y mantener completa su ficha comercial." : "Guardá sus datos básicos para identificarlo, encontrarlo rápidamente y completar su ficha comercial."
+  submit_label = persisted ? "Guardar cambios" : "Guardar cliente"
+  back_path = admin_customer_profiles_path
+  back_label = persisted ? "Volver a cliente" : "Volver a clientes"
+  birth_date = customer.birth_date
+  birth_day = params.dig(:customer_profile, :birth_day).presence || birth_date&.day
+  birth_month = params.dig(:customer_profile, :birth_month).presence || birth_date&.month
+  birth_year = params.dig(:customer_profile, :birth_year).presence || birth_date&.year
+  birth_day_month = birth_day.present? && birth_month.present? ? "#{birth_day.to_s.rjust(2, '0')} / #{birth_month.to_s.rjust(2, '0')}" : nil
+  selected_gender = customer.gender.presence
+  first_name_value = customer.first_name.presence || customer.name.to_s.squish.split.first
+  last_name_value = customer.last_name.presence || customer.name.to_s.squish.split.drop(1).join(" ").presence
+  icons = {
+    arrow_left: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    arrow_right: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    asterisk: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 4v16M5.1 8l13.8 8M18.9 8 5.1 16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+    cake: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 21h10a4 4 0 0 0 4-4v-3H3v3a4 4 0 0 0 4 4Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M3 14c1.2 0 1.2-1 2.4-1s1.2 1 2.4 1 1.2-1 2.4-1 1.2 1 2.4 1 1.2-1 2.4-1 1.2 1 2.4 1 1.2-1 2.4-1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M8 10V8M12 10V8M16 10V8M8 4l.01.01M12 4l.01.01M16 4l.01.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+    calendar: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 2v4M16 2v4M4 10h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="4" y="5" width="16" height="17" rx="3" stroke="currentColor" stroke-width="2"/></svg>',
+    info: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M12 16v-4M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+    mail: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3" stroke="currentColor" stroke-width="2"/><path d="m4 7 8 6 8-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    mail_check: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3" stroke="currentColor" stroke-width="2"/><path d="m4 7 8 6 8-6M14 17l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    message: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-12.1 7.6L3 21l1.9-5.6A8.4 8.4 0 1 1 21 11.5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>',
+    shield: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="m9 12 2 2 4-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    user: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0M12 13a5 5 0 1 0 0-10 5 5 0 0 0 0 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    user_plus: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M16 21a7 7 0 0 0-14 0M9 13a5 5 0 1 0 0-10 5 5 0 0 0 0 10ZM19 8v6M16 11h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+  }
+  icon = ->(name, css_class = "h-4 w-4") { icons.fetch(name).sub("<svg", %(<svg class="#{css_class}")).html_safe }
+%>
+
+<style>
+  .customer-editor-workspace {
+    box-sizing: border-box;
+    height: 100%;
+    min-height: 0;
+    overflow-y: auto;
+    background:
+      radial-gradient(circle at 84% -8%, rgba(255, 222, 212, .055), transparent 34rem),
+      #f7f7f9;
+    color: #0f172a;
+  }
+
+  .customer-editor-container {
+    box-sizing: border-box;
+    width: min(var(--admin-content-max-width, 1600px), calc(100% - var(--admin-content-horizontal-space, 48px)));
+    margin: 0 auto;
+    padding: 28px 0 40px;
+  }
+
+  .customer-editor-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 12px;
+    padding: 4px 8px;
+    color: #64748b;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: background .18s ease, color .18s ease;
+  }
+
+  .customer-editor-back svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .customer-editor-back:hover {
+    background: #fff;
+    color: #A63826;
+  }
+
+  .customer-editor-card {
+    margin-top: 20px;
+    overflow: hidden;
+    border: 1px solid rgba(226, 232, 240, .9);
+    border-radius: 28px;
+    background: #fff;
+    box-shadow: 0 10px 34px rgba(255, 222, 212, .055);
+  }
+
+  .customer-editor-card-header {
+    border-bottom: 1px solid #f1f5f9;
+    background: linear-gradient(135deg, #fff 0%, rgba(255, 222, 212, .72) 100%);
+    padding: 28px 32px;
+  }
+
+  .customer-editor-header-layout {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+  }
+
+  .customer-editor-title-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .customer-editor-header-icon,
+  .customer-birth-icon {
+    display: grid;
+    flex: 0 0 auto;
+    place-items: center;
+    background: #ffded4;
+    color: #A63826;
+    box-shadow: inset 0 0 0 1px #ffded4;
+  }
+
+  .customer-editor-header-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 18px;
+  }
+
+  .customer-editor-header-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .customer-editor-eyebrow {
+    margin: 0;
+    color: #A63826;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+  }
+
+  .customer-editor-title {
+    margin: 8px 0 0;
+    color: #020617;
+    font-size: 32px;
+    line-height: 1.08;
+    font-weight: 700;
+    letter-spacing: -.04em;
+  }
+
+  .customer-editor-copy {
+    margin: 10px 0 0;
+    max-width: 680px;
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.7;
+    font-weight: 650;
+  }
+
+  .customer-private-badge {
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    gap: 8px;
+    border: 1px solid #d1fae5;
+    border-radius: 999px;
+    background: #ecfdf5;
+    color: #047857;
+    padding: 7px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .customer-private-badge svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .customer-editor-body {
+    padding: 32px;
+  }
+
+  .customer-editor-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+  }
+
+  .customer-field-label {
+    display: block;
+    color: #1e293b;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .customer-required-dot {
+    color: #e11d48;
+  }
+
+  .customer-field-shell {
+    margin-top: 8px;
+    display: flex;
+    height: 48px;
+    align-items: center;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    background: rgba(248, 250, 252, .72);
+    padding: 0 16px;
+    transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+  }
+
+  .customer-field-shell:focus-within {
+    border-color: #A63826;
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(255, 222, 212, .62);
+  }
+
+  .customer-field-icon {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 auto;
+    margin-right: 12px;
+    color: #94a3b8;
+  }
+
+  .customer-field-icon-whatsapp {
+    color: #059669;
+  }
+
+  .customer-input {
+    min-width: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    background: transparent;
+    color: #1e293b;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    outline: none;
+  }
+
+  .customer-input::placeholder {
+    color: #94a3b8;
+  }
+
+  .customer-field-hint {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    margin: 8px 0 0;
+    color: #94a3b8;
+    font-size: 11px;
+    line-height: 1.55;
+    font-weight: 700;
+  }
+
+  .customer-field-hint svg {
+    width: 14px;
+    height: 14px;
+    flex: 0 0 auto;
+    margin-top: 1px;
+  }
+
+  .customer-panel-section {
+    margin-top: 28px;
+    border: 1px solid #e2e8f0;
+    border-radius: 22px;
+    background: rgba(248, 250, 252, .72);
+    padding: 18px 20px 20px;
+  }
+
+  .customer-section-heading {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .customer-birth-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: inset 0 0 0 1px #f1f5f9, 0 1px 2px rgba(15, 23, 42, .04);
+  }
+
+  .customer-birth-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .customer-section-title {
+    margin: 0;
+    color: #0f172a;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .customer-section-copy {
+    margin: 4px 0 0;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.55;
+    font-weight: 650;
+  }
+
+  .customer-birth-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 150px;
+    gap: 16px;
+  }
+
+  .customer-gender-top {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .customer-clear-gender {
+    border: 0;
+    background: transparent;
+    color: #A63826;
+    cursor: pointer;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .customer-clear-gender[hidden] {
+    display: none;
+  }
+
+  .customer-gender-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  .customer-gender-option {
+    position: relative;
+    display: flex;
+    height: 48px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    background: #fff;
+    color: #475569;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 700;
+    transition: border-color .18s ease, background .18s ease, color .18s ease, box-shadow .18s ease, transform .18s ease;
+  }
+
+  .customer-gender-option:hover {
+    transform: translateY(-1px);
+    border-color: #A63826;
+  }
+
+  .customer-gender-option.is-active,
+  .customer-gender-option:has(input:checked) {
+    border-color: #A63826;
+    background: linear-gradient(135deg, #ffded4 0%, #ffded4 100%);
+    color: #A63826;
+    box-shadow: 0 0 0 4px rgba(255, 222, 212, .48);
+  }
+
+  .customer-gender-option input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .customer-gender-option svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .customer-editor-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    border-top: 1px solid #f1f5f9;
+    background: rgba(248, 250, 252, .72);
+    padding: 16px 32px;
+  }
+
+  .customer-required-note {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #94a3b8;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .customer-required-note svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .customer-form-actions {
+    display: flex;
+    gap: 12px;
+  }
+
+  .customer-cancel-button,
+  .customer-submit-button {
+    display: inline-flex;
+    min-width: 138px;
+    min-height: 48px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 16px;
+    padding: 12px 20px;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: border-color .18s ease, background .18s ease, color .18s ease, transform .18s ease;
+  }
+
+  .customer-cancel-button {
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    color: #334155;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
+  }
+
+  .customer-cancel-button:hover {
+    border-color: #cbd5e1;
+    background: #f8fafc;
+  }
+
+  .customer-submit-button {
+    border: 0;
+    background: #020617;
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 18px 34px rgba(2, 6, 23, .10);
+  }
+
+  .customer-submit-button:hover {
+    transform: translateY(-1px);
+    background: #ffded4;
+  }
+
+  .customer-submit-button svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .customer-form-errors {
+    margin: 0 0 22px;
+    border: 1px solid rgba(251, 113, 133, .35);
+    border-radius: 18px;
+    background: #fff1f2;
+    color: #be123c;
+    padding: 16px 18px;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  @media (max-width: 900px) {
+    .customer-editor-container {
+      width: calc(100% - 28px);
+      padding: 22px 0 34px;
+    }
+
+    .customer-editor-card-header,
+    .customer-editor-body,
+    .customer-editor-footer {
+      padding-left: 20px;
+      padding-right: 20px;
+    }
+
+    .customer-editor-header-layout,
+    .customer-editor-footer,
+    .customer-gender-top {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .customer-private-badge {
+      align-self: flex-start;
+    }
+
+    .customer-editor-grid,
+    .customer-birth-grid,
+    .customer-gender-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .customer-form-actions {
+      flex-direction: column-reverse;
+    }
+
+    .customer-cancel-button,
+    .customer-submit-button {
+      width: 100%;
+    }
+  }
+</style>
+
+<div class="customer-editor-workspace" data-customer-editor-form>
+  <div class="customer-editor-container">
+    <%= link_to back_path, class: "customer-editor-back" do %>
+      <%= icon.call(:arrow_left) %>
+      <span><%= back_label %></span>
+    <% end %>
+
+    <%= form_with model: [ :admin, customer ], class: "customer-editor-card" do |form| %>
+      <%= hidden_field_tag :source, "new_customer_page" unless persisted %>
+
+      <div class="customer-editor-card-header">
+        <div class="customer-editor-header-layout">
+          <div class="customer-editor-title-row">
+            <span class="customer-editor-header-icon"><%= icon.call(:user_plus) %></span>
+            <div>
+              <p class="customer-editor-eyebrow"><%= form_eyebrow %></p>
+              <h1 class="customer-editor-title"><%= form_title %></h1>
+              <p class="customer-editor-copy"><%= form_description %></p>
+            </div>
+          </div>
+
+          <span class="customer-private-badge">
+            <%= icon.call(:shield) %>
+            Datos privados
+          </span>
+        </div>
+      </div>
+
+      <div class="customer-editor-body">
+        <% if customer.errors.any? %>
+          <div class="customer-form-errors">
+            <%= customer.errors.full_messages.to_sentence %>
+          </div>
+        <% end %>
+
+        <div class="customer-editor-grid">
+          <label>
+            <span class="customer-field-label">Nombre <span class="customer-required-dot">*</span></span>
+            <div class="customer-field-shell">
+              <%= icon.call(:user, "customer-field-icon") %>
+              <%= form.text_field :first_name,
+                value: first_name_value,
+                required: true,
+                autocomplete: "given-name",
+                placeholder: "Nombre",
+                class: "customer-input" %>
+            </div>
+          </label>
+
+          <label>
+            <span class="customer-field-label">Apellido <span class="customer-required-dot">*</span></span>
+            <div class="customer-field-shell">
+              <%= icon.call(:user, "customer-field-icon") %>
+              <%= form.text_field :last_name,
+                value: last_name_value,
+                required: true,
+                autocomplete: "family-name",
+                placeholder: "Apellido",
+                class: "customer-input" %>
+            </div>
+          </label>
+
+          <label>
+            <span class="customer-field-label">WhatsApp <span class="customer-required-dot">*</span></span>
+            <div class="customer-field-shell">
+              <%= icon.call(:message, "customer-field-icon customer-field-icon-whatsapp") %>
+              <%= form.telephone_field :phone,
+                required: true,
+                autocomplete: "tel",
+                placeholder: "+54 9 11 5555-5555",
+                class: "customer-input" %>
+            </div>
+            <p class="customer-field-hint">
+              <%= icon.call(:info) %>
+              <span>Se usa para identificar reservas y preparar mensajes.</span>
+            </p>
+          </label>
+
+          <label>
+            <span class="customer-field-label">Email <span class="customer-required-dot">*</span></span>
+            <div class="customer-field-shell">
+              <%= icon.call(:mail, "customer-field-icon") %>
+              <%= form.email_field :email,
+                required: true,
+                autocomplete: "email",
+                placeholder: "cliente@email.com",
+                class: "customer-input" %>
+            </div>
+            <p class="customer-field-hint">
+              <%= icon.call(:mail_check) %>
+              <span>Permite enviar confirmaciones y recordatorios.</span>
+            </p>
+          </label>
+        </div>
+
+        <section class="customer-panel-section">
+          <div class="customer-section-heading">
+            <span class="customer-birth-icon"><%= icon.call(:cake) %></span>
+            <div>
+              <h2 class="customer-section-title">Fecha de nacimiento</h2>
+              <p class="customer-section-copy">Es opcional. Podés cargar solo día y mes, o también el año.</p>
+            </div>
+          </div>
+
+          <div class="customer-birth-grid">
+            <label>
+              <span class="customer-field-label">Día y mes</span>
+              <div class="customer-field-shell bg-white">
+                <%= icon.call(:calendar, "customer-field-icon") %>
+                <%= text_field_tag "customer_birth_day_month",
+                  birth_day_month,
+                  inputmode: "numeric",
+                  placeholder: "DD / MM",
+                  maxlength: 7,
+                  autocomplete: "bday",
+                  class: "customer-input",
+                  data: { customer_birth_display: true } %>
+              </div>
+              <%= form.hidden_field :birth_date, value: birth_date&.iso8601, data: { customer_birth_date: true } %>
+              <%= hidden_field_tag "customer_profile[birth_day]", birth_day, data: { customer_birth_day: true } %>
+              <%= hidden_field_tag "customer_profile[birth_month]", birth_month, data: { customer_birth_month: true } %>
+            </label>
+
+            <label>
+              <span class="customer-field-label">Año</span>
+              <div class="customer-field-shell bg-white">
+                <%= text_field_tag "customer_profile[birth_year]",
+                  birth_year,
+                  id: "customer_profile_birth_year",
+                  inputmode: "numeric",
+                  pattern: "\\d{4}",
+                  maxlength: 4,
+                  autocomplete: "bday-year",
+                  placeholder: "Año",
+                  class: "customer-input",
+                  data: { customer_birth_year: true } %>
+              </div>
+            </label>
+          </div>
+        </section>
+
+        <section class="customer-panel-section">
+          <div class="customer-gender-top">
+            <div>
+              <h2 class="customer-section-title">Género</h2>
+              <p class="customer-section-copy">Campo opcional para completar la ficha del cliente.</p>
+            </div>
+
+            <button type="button" class="customer-clear-gender" data-clear-gender <%= "hidden" if selected_gender.blank? %>>
+              Quitar selección
+            </button>
+          </div>
+
+          <div class="customer-gender-grid">
+            <% CustomerProfile::GENDER_OPTIONS.each do |value, label| %>
+              <label class="customer-gender-option <%= 'is-active' if selected_gender == value %>" data-gender-option>
+                <%= form.radio_button :gender, value, checked: selected_gender == value, data: { gender_radio: true } %>
+                <%= icon.call(:user) %>
+                <span><%= label %></span>
+              </label>
+            <% end %>
+
+            <button type="button" class="customer-gender-option <%= 'is-active' if selected_gender.blank? %>" data-gender-empty>
+              <%= icon.call(:user) %>
+              <span>Otro / no especificar</span>
+            </button>
+          </div>
+        </section>
+      </div>
+
+      <div class="customer-editor-footer">
+        <p class="customer-required-note">
+          <%= icon.call(:asterisk) %>
+          <span>Los campos marcados son obligatorios</span>
+        </p>
+
+        <div class="customer-form-actions">
+          <%= link_to "Cancelar", back_path, class: "customer-cancel-button" %>
+          <%= button_tag type: :submit, class: "customer-submit-button" do %>
+            <span><%= submit_label %></span>
+            <%= icon.call(:arrow_right) %>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<script>
+  (() => {
+    const root = document.querySelector("[data-customer-editor-form]");
+    if (!root) return;
+
+    const birthDisplay = root.querySelector("[data-customer-birth-display]");
+    const birthDay = root.querySelector("[data-customer-birth-day]");
+    const birthMonth = root.querySelector("[data-customer-birth-month]");
+    const birthYear = root.querySelector("[data-customer-birth-year]");
+    const birthDate = root.querySelector("[data-customer-birth-date]");
+    const radios = Array.from(root.querySelectorAll("[data-gender-radio]"));
+    const genderOptions = Array.from(root.querySelectorAll("[data-gender-option]"));
+    const genderEmpty = root.querySelector("[data-gender-empty]");
+    const clearGender = root.querySelector("[data-clear-gender]");
+
+    const pad = (value) => String(value || "").padStart(2, "0");
+
+    const syncBirthDate = () => {
+      const day = Number(birthDay.value);
+      const month = Number(birthMonth.value);
+      const year = Number(birthYear.value);
+
+      if (day && month && birthYear.value.length === 4 && year >= 1900) {
+        birthDate.value = `${year}-${pad(month)}-${pad(day)}`;
+      } else {
+        birthDate.value = "";
+      }
+    };
+
+    const formatBirthDisplay = () => {
+      let value = birthDisplay.value.replace(/\D/g, "").slice(0, 4);
+
+      if (value.length > 2) {
+        value = `${value.slice(0, 2)} / ${value.slice(2)}`;
+      }
+
+      birthDisplay.value = value;
+      const digits = value.replace(/\D/g, "");
+      birthDay.value = digits.slice(0, 2);
+      birthMonth.value = digits.slice(2, 4);
+      syncBirthDate();
+    };
+
+    const syncGenderUi = () => {
+      const selected = radios.find((radio) => radio.checked);
+
+      genderOptions.forEach((option) => {
+        const radio = option.querySelector("[data-gender-radio]");
+        option.classList.toggle("is-active", Boolean(radio && radio.checked));
+      });
+
+      if (genderEmpty) {
+        genderEmpty.classList.toggle("is-active", !selected);
+      }
+
+      if (clearGender) {
+        clearGender.hidden = !selected;
+      }
+    };
+
+    birthDisplay?.addEventListener("input", formatBirthDisplay);
+    birthYear?.addEventListener("input", () => {
+      birthYear.value = birthYear.value.replace(/\D/g, "").slice(0, 4);
+      syncBirthDate();
+    });
+
+    radios.forEach((radio) => {
+      radio.addEventListener("change", syncGenderUi);
+    });
+
+    genderEmpty?.addEventListener("click", () => {
+      radios.forEach((radio) => {
+        radio.checked = false;
+      });
+      syncGenderUi();
+    });
+
+    clearGender?.addEventListener("click", () => {
+      radios.forEach((radio) => {
+        radio.checked = false;
+      });
+      syncGenderUi();
+    });
+
+    syncBirthDate();
+    syncGenderUi();
+  })();
+</script>

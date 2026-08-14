@@ -1,0 +1,89 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #18181B;
+  --color-brand-50: #FFF8F6;
+  --color-brand-100: #FFEDE8;
+  --color-brand-200: #FFDED4;
+  --color-brand-300: #FFC4B2;
+  --color-brand-400: #FF9C7D;
+  --color-brand-500: #E96D4D;
+  --color-brand-600: #BF482F;
+  --color-brand-700: #A63826;
+  --color-brand-800: #842D21;
+  --color-brand-900: #69251C;
+  --color-brand-950: #43130D;
+  --color-violet-50: #FFF8F6;
+  --color-violet-100: #FFEDE8;
+  --color-violet-200: #FFDED4;
+  --color-violet-300: #FFC4B2;
+  --color-violet-400: #FF9C7D;
+  --color-violet-500: #E96D4D;
+  --color-violet-600: #BF482F;
+  --color-violet-700: #A63826;
+  --color-violet-800: #842D21;
+  --color-violet-900: #69251C;
+  --color-violet-950: #43130D;
+  --color-purple-50: #FFF8F6;
+  --color-purple-100: #FFEDE8;
+  --color-purple-200: #FFDED4;
+  --color-purple-300: #FFC4B2;
+  --color-purple-400: #FF9C7D;
+  --color-purple-500: #E96D4D;
+  --color-purple-600: #BF482F;
+  --color-purple-700: #A63826;
+  --color-purple-800: #842D21;
+  --color-purple-900: #69251C;
+  --color-purple-950: #43130D;
+  --color-fuchsia-50: #FFF8F6;
+  --color-fuchsia-100: #FFEDE8;
+  --color-fuchsia-200: #FFDED4;
+  --color-fuchsia-300: #FFC4B2;
+  --color-fuchsia-400: #FF9C7D;
+  --color-fuchsia-500: #E96D4D;
+  --color-fuchsia-600: #BF482F;
+  --color-fuchsia-700: #A63826;
+  --color-fuchsia-800: #842D21;
+  --color-fuchsia-900: #69251C;
+  --color-fuchsia-950: #43130D;
+  --shadow-soft: 0 24px 70px rgba(24, 24, 27, .10);
+  --shadow-glow: 0 16px 40px rgba(255, 222, 212, .24);
+  --shadow-card: 0 14px 40px rgba(24, 24, 27, .08);
+  --shadow-popover: 0 24px 80px rgba(24, 24, 27, .18);
+}
+
+@layer base {
+  :where(
+    a[href],
+    button:not(:disabled),
+    summary,
+    select:not(:disabled),
+    label[for],
+    input[type="button"]:not(:disabled),
+    input[type="submit"]:not(:disabled),
+    input[type="reset"]:not(:disabled),
+    input[type="checkbox"]:not(:disabled),
+    input[type="radio"]:not(:disabled),
+    input[type="file"]:not(:disabled),
+    [role="button"]:not([aria-disabled="true"]),
+    [onclick],
+    [data-action]
+  ) {
+    cursor: pointer;
+  }
+
+  :where(button:disabled, select:disabled, input:disabled, [aria-disabled="true"]) {
+    cursor: not-allowed;
+  }
+}
+
+@layer components {
+  .calendar-slot,
+  .appt-block,
+  .month-day,
+  .month-appt,
+  .week-cell,
+  .week-item {
+    cursor: pointer !important;
+  }
+}

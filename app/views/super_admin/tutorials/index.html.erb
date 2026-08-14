@@ -1,0 +1,83 @@
+<% content_for :full_width, true %>
+
+<div class="min-h-screen bg-[#F7F7FA] font-sans text-zinc-950 antialiased">
+  <header class="sticky top-0 z-50 border-b border-zinc-200 bg-white/95 px-4 py-3 backdrop-blur xl:hidden">
+    <div class="flex items-center justify-between gap-3">
+      <div class="min-w-0">
+        <p class="text-sm font-bold">Superadmin</p>
+        <p class="truncate text-xs font-semibold text-zinc-500">Tutoriales para negocios</p>
+      </div>
+      <%= link_to "Nuevo", new_super_admin_tutorial_path, class: "rounded-2xl bg-ink px-4 py-2 text-sm font-bold text-white" %>
+    </div>
+  </header>
+
+  <div class="mx-auto grid max-w-[1680px] gap-6 px-4 py-5 sm:px-6 lg:px-8 xl:grid-cols-[250px_1fr] xl:py-8">
+    <aside class="hidden xl:block">
+      <div class="sticky top-8 flex min-h-[calc(100vh-4rem)] flex-col rounded-[32px] border border-white bg-white p-4 shadow-card">
+        <%= link_to super_admin_root_path, class: "flex items-center gap-3 border-b border-zinc-100 pb-4" do %>
+          <span class="block h-12 w-12 shrink-0 overflow-hidden rounded-2xl shadow-lg shadow-brand-300/30"><%= image_tag "/icon.png?v=3", alt: "", class: "h-full w-full object-cover" %></span>
+          <span class="min-w-0"><span class="block truncate font-bold">Dog Grooming</span><span class="mt-1 block truncate text-xs font-semibold text-zinc-500">Panel superadmin</span></span>
+        <% end %>
+
+        <nav class="mt-4 space-y-1">
+          <%= link_to super_admin_businesses_path, class: "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold text-zinc-600 hover:bg-zinc-50" do %>
+            <span class="grid h-7 w-7 place-items-center rounded-xl bg-zinc-100">⌘</span> Negocios
+          <% end %>
+          <%= link_to super_admin_billing_path, class: "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold text-zinc-600 hover:bg-zinc-50" do %>
+            <span class="grid h-7 w-7 place-items-center rounded-xl bg-zinc-100">$</span> Cobros
+          <% end %>
+          <%= link_to super_admin_whatsapp_path, class: "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold text-zinc-600 hover:bg-zinc-50" do %>
+            <span class="grid h-7 w-7 place-items-center rounded-xl bg-zinc-100">◌</span> WhatsApp API
+          <% end %>
+          <%= link_to super_admin_usage_path, class: "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold text-zinc-600 hover:bg-zinc-50" do %>
+            <span class="grid h-7 w-7 place-items-center rounded-xl bg-zinc-100">↗</span> Uso
+          <% end %>
+          <%= link_to super_admin_tutorials_path, class: "flex items-center gap-3 rounded-2xl bg-ink px-4 py-3 text-sm font-bold text-white" do %>
+            <span class="grid h-7 w-7 place-items-center rounded-xl bg-white/10">▶</span> Tutoriales
+          <% end %>
+        </nav>
+
+        <div class="mt-auto pt-6"><%= button_to "Salir", session_path, method: :delete, class: "w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-bold text-zinc-700 hover:bg-zinc-50" %></div>
+      </div>
+    </aside>
+
+    <main class="min-w-0">
+      <header class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p class="text-xs font-bold uppercase tracking-[.14em] text-brand-700">Contenido para administradores</p>
+          <h1 class="mt-3 text-4xl font-bold tracking-tight text-zinc-950">Tutoriales</h1>
+          <p class="mt-2 max-w-2xl text-sm font-semibold leading-6 text-zinc-500">Publicá guías en video que estarán disponibles para los administradores de cada negocio.</p>
+        </div>
+        <%= link_to "Nuevo tutorial", new_super_admin_tutorial_path, class: "inline-flex h-12 items-center justify-center rounded-2xl bg-brand-600 px-5 text-sm font-bold text-white shadow-glow hover:bg-brand-700" %>
+      </header>
+
+      <section class="mt-6 overflow-hidden rounded-[30px] border border-white bg-white shadow-card">
+        <div class="border-b border-zinc-100 px-5 py-4 sm:px-6">
+          <p class="text-sm font-bold text-zinc-900"><%= @tutorials.count %> <%= @tutorials.one? ? "tutorial publicado" : "tutoriales publicados" %></p>
+        </div>
+
+        <div class="divide-y divide-zinc-100">
+          <% @tutorials.each do |tutorial| %>
+            <article class="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+              <div class="min-w-0">
+                <h2 class="truncate text-lg font-bold tracking-tight text-zinc-950"><%= tutorial.title %></h2>
+                <%= link_to tutorial.video_url, tutorial.video_url, target: "_blank", rel: "noopener", class: "mt-2 block truncate text-sm font-semibold text-brand-700 underline decoration-brand-200 underline-offset-2" %>
+              </div>
+              <div class="flex shrink-0 flex-wrap gap-2">
+                <%= link_to "Editar", edit_super_admin_tutorial_path(tutorial), class: "inline-flex h-10 items-center justify-center rounded-xl border border-zinc-200 bg-white px-4 text-sm font-bold text-zinc-700 hover:bg-zinc-50" %>
+                <%= button_to "Eliminar", super_admin_tutorial_path(tutorial), method: :delete, form: { data: { turbo_confirm: "¿Seguro que querés eliminar este tutorial?" } }, class: "h-10 rounded-xl border border-rose-200 bg-rose-50 px-4 text-sm font-bold text-rose-700 hover:bg-rose-100" %>
+              </div>
+            </article>
+          <% end %>
+
+          <% if @tutorials.empty? %>
+            <div class="p-10 text-center">
+              <p class="text-sm font-bold text-zinc-800">Todavía no hay tutoriales.</p>
+              <p class="mt-1 text-sm font-semibold text-zinc-500">Creá el primero para que aparezca en los paneles de Admin.</p>
+            </div>
+          <% end %>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>

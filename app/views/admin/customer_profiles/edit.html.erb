@@ -1,0 +1,4 @@
+<% content_for :admin_standalone, true %>
+<% content_for :title, "Editar cliente · Dog Grooming" %>
+
+<%= render "editor_form", customer: @customer, appointments: @customer_appointments, active_section: @customer_editor_section, return_to: @customer_editor_return_to %>

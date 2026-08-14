@@ -1,0 +1,77 @@
+<% use_admin_layout = controller.class.name.start_with?("Admin::") && @business.present? %>
+<!DOCTYPE html>
+<html lang="es-AR">
+  <head>
+    <title><%= content_for(:title) || "Dog Grooming" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Dog Grooming">
+    <meta name="mobile-web-app-capable" content="yes">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= render "admin/shared/shell_styles" if use_admin_layout %>
+    <%= yield :head %>
+
+    <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
+    <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
+
+    <link rel="icon" href="/icon.png?v=3" type="image/png" sizes="1024x1024">
+    <link rel="shortcut icon" href="/icon.png?v=3" type="image/png">
+    <link rel="apple-touch-icon" href="/icon.png?v=3">
+
+    <%# Includes all stylesheet files in app/assets/stylesheets %>
+    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <body class="<%= use_admin_layout ? 'overflow-hidden bg-[#F7F7F8] text-zinc-950 antialiased' : 'bg-[#F7F7FA] text-zinc-950 antialiased' %>">
+    <% if impersonating? %>
+      <div class="admin-impersonation-bar flex items-center gap-2 whitespace-nowrap border-b border-amber-200 bg-amber-50 px-5 py-2 text-sm font-semibold text-amber-900">
+        <span>Logueado como <%= current_business&.slug || current_business&.name || "cuenta" %> (<%= current_user.email_address %>).</span>
+        <%= button_to "Volver a Super Admin", super_admin_impersonation_path, method: :delete, form: { class: "inline" }, class: "inline font-bold underline" %>
+      </div>
+    <% end %>
+
+    <% if use_admin_layout %>
+      <% admin_full_bleed = content_for?(:admin_full_bleed) %>
+      <% admin_dark_shell = content_for?(:admin_dark_shell) %>
+      <% admin_standalone = content_for?(:admin_standalone) %>
+      <% admin_hide_shell_header = content_for?(:admin_hide_shell_header) %>
+      <% if admin_standalone %>
+        <main class="h-screen min-h-0 overflow-hidden bg-[#F7F7F8]">
+          <%= yield %>
+        </main>
+      <% else %>
+        <div class="admin-shell-app <%= 'admin-shell-app-dark' if admin_dark_shell %> flex overflow-hidden bg-[#F7F7F8]">
+        <%= render "admin/shared/shell_sidebar" %>
+
+        <section class="flex min-w-0 flex-1 flex-col">
+          <%= render "admin/shared/shell_header" unless admin_hide_shell_header %>
+
+          <main class="<%= admin_full_bleed ? 'min-h-0 flex-1 overflow-hidden bg-white' : 'admin-shell-content' %>">
+            <% if admin_full_bleed %>
+              <div class="relative h-full min-h-0">
+                <%= yield %>
+              </div>
+            <% else %>
+              <div class="admin-shell-content-inner">
+                <%= yield %>
+              </div>
+            <% end %>
+          </main>
+        </section>
+
+        </div>
+        <%= render "admin/shared/customer_profile_drawer" %>
+      <% end %>
+    <% else %>
+      <% full_width_layout = content_for?(:full_width) %>
+      <main class="<%= full_width_layout ? "w-full" : "mx-auto w-full max-w-7xl px-4 py-6 sm:px-7 sm:py-8 lg:px-10" %>">
+        <%= yield %>
+      </main>
+      <% end %>
+
+    <%= render "shared/flash_toasts" %>
+  </body>
+</html>

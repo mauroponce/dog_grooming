@@ -1,0 +1,12 @@
+Resumen de cobros Dog Grooming
+
+Pagos para revisar: <%= @summary.fetch(:pending_review_count) %>
+Pagos vencidos: <%= @summary.fetch(:overdue_count) %>
+Cuentas que se restringen hoy: <%= @summary.fetch(:restricting_today_count) %>
+Cuentas que se suspenden hoy: <%= @summary.fetch(:suspending_today_count) %>
+Trials que vencen esta semana: <%= @summary.fetch(:trials_ending_count) %>
+MRR activo: <%= @summary.fetch(:mrr_label) %>
+Monto vencido: <%= @summary.fetch(:overdue_label) %>
+
+Abrir superadmin:
+<%= @super_admin_url %>

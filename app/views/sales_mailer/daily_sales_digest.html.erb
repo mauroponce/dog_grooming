@@ -1,0 +1,35 @@
+<% content_for :email_preheader, "Hoy tenés oportunidades para llenar más turnos." %>
+<% content_for :email_badge, "Ventas" %>
+<% content_for :email_status, "Oportunidades" %>
+<% content_for :email_footer_note, "Este email fue enviado por el módulo de oportunidades comerciales de Dog Grooming." %>
+
+<h1>Oportunidades para llenar más turnos hoy</h1>
+
+<p>Hoy tenés oportunidades concretas para llenar más turnos.</p>
+
+<div class="email-card" style="margin-top:24px;">
+  <div class="email-card-inner">
+    <div class="email-card-title">Resumen</div>
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top:10px;">
+      <tr class="email-detail-row">
+        <td class="email-detail-label">Oportunidades abiertas</td>
+        <td class="email-detail-value"><%= @opportunities.size %></td>
+      </tr>
+      <tr>
+        <td class="email-detail-label">Huecos detectados</td>
+        <td class="email-detail-value"><%= @gaps.size %></td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<% if @opportunities.any? %>
+  <h2>Primeras oportunidades</h2>
+  <ul>
+    <% @opportunities.first(5).each do |opportunity| %>
+      <li><strong><%= opportunity.title %></strong>: <%= opportunity.body %></li>
+    <% end %>
+  </ul>
+<% end %>
+
+<p><%= link_to "Abrir Ventas", @url, class: "email-button button" %></p>

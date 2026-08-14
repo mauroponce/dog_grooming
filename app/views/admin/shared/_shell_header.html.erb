@@ -1,0 +1,346 @@
+<% section_title = if content_for?(:admin_section_title)
+  content_for(:admin_section_title)
+else
+  {
+    "home" => "Inicio",
+    "dashboard" => "Asistente diario",
+    "calendar" => "Calendario",
+    "appointments" => "Calendario",
+    "billing" => "Suscripción",
+    "customer_profiles" => "Clientes",
+    "client_notes" => "Clientes",
+    "customer_reminders" => "Clientes",
+    "services" => "Servicios",
+    "service_categories" => "Servicios",
+    "waitlist_entries" => "Lista de espera",
+    "employee_memberships" => "Equipo",
+    "settings" => "Configuración",
+    "tutorials" => "Tutoriales",
+    "profiles" => "Editar perfil"
+  }.fetch(controller_name, "Dog Grooming")
+end %>
+<% profile_membership = @business&.employee_memberships&.available_for_booking&.find_by(user_id: current_user.id) || @business&.employee_memberships&.find_by(user_id: current_user.id) %>
+<% profile_display_name = profile_membership&.display_name.presence || current_user.try(:name).presence || current_user.email_address.to_s.split("@").first.presence || "Usuario" %>
+<% user_initials = profile_membership&.initials.presence || profile_display_name.split.first(2).map { |part| part.first&.upcase }.join.presence || current_user.email_address.to_s.first&.upcase || @business.initials.first %>
+<% user_avatar_color = profile_membership&.calendar_color.presence || "#ffded4" %>
+<% profile_photo = profile_membership&.effective_profile_photo || current_user.profile_photo %>
+<% public_business_url = current_public_business_url(@business) %>
+<% header_icons = {
+  menu: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  bell: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M13.73 21a2 2 0 0 1-3.46 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  copy: '<svg aria-hidden="true" class="h-4 w-4" viewBox="0 0 24 24" fill="none"><path d="M8 8V5.8C8 4.8 8.8 4 9.8 4h8.4c1 0 1.8.8 1.8 1.8v8.4c0 1-.8 1.8-1.8 1.8H16" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M4 9.8C4 8.8 4.8 8 5.8 8h8.4c1 0 1.8.8 1.8 1.8v8.4c0 1-.8 1.8-1.8 1.8H5.8C4.8 20 4 19.2 4 18.2V9.8Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>',
+  x: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  calendar: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 2v4M16 2v4M4 10h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="4" y="5" width="16" height="17" rx="3" stroke="currentColor" stroke-width="2"/></svg>',
+  star: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>',
+  lightbulb: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 18h6M10 22h4M8.5 14.5A6 6 0 1 1 15.5 14.5c-.8.6-1.5 1.5-1.5 2.5h-4c0-1-.7-1.9-1.5-2.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  chart: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 19V5M4 19h16M8 16v-5M12 16V8M16 16v-8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  bolt: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m13 2-8 12h7l-1 8 8-12h-7l1-8Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>'
+} %>
+<% notification_items = (@notification_center&.all_items(limit: 20) || []).to_a %>
+<% notification_unread_count = (@notification_center&.unread_count || 0).to_i %>
+<% notification_category_for = ->(item) do
+  case item.notification_type
+  when "new_booking", "booking_cancelled", "deposit_approved", "deposit_rejected"
+    :appointments
+  else
+    :actions
+  end
+end %>
+<% notification_categories = {
+  appointments: { label: "Turnos", icon: :calendar },
+  actions: { label: "Acciones", icon: :bolt }
+} %>
+<% notifications_by_category = notification_categories.keys.index_with { [] } %>
+<% notification_items.each { |item| notifications_by_category[notification_category_for.call(item)] << item } %>
+<% today = Time.zone.today %>
+<% spanish_weekdays = %w[domingo lunes martes miércoles jueves viernes sábado] %>
+<% spanish_months = %w[enero febrero marzo abril mayo junio julio agosto septiembre octubre noviembre diciembre] %>
+<% header_date_label = "#{spanish_weekdays.fetch(today.wday).capitalize}, #{today.day} de #{spanish_months.fetch(today.month - 1)}" %>
+
+<header class="admin-shell-header flex h-[var(--topbar-height)] shrink-0 items-center justify-between border-b border-white/80 px-4">
+  <div class="flex min-w-0 items-center gap-3">
+    <button type="button" class="admin-mobile-menu-button" data-admin-mobile-menu-toggle aria-controls="admin-main-sidebar" aria-expanded="false" aria-label="Abrir menú de administración">
+      <%= header_icons.fetch(:menu).html_safe %>
+    </button>
+    <div class="min-w-0">
+      <p class="admin-header-date"><%= header_date_label %></p>
+      <p class="admin-header-title truncate"><%= section_title %></p>
+    </div>
+  </div>
+
+  <div class="admin-header-public-url absolute left-1/2 flex -translate-x-1/2 items-center gap-1" data-controller="copy-text" data-copy-text-preserve-content-value="true" data-copy-text-update-title-value="false">
+    <%= link_to public_business_url,
+      class: "admin-public-booking-link rounded-full px-4 py-2 text-sm font-bold text-slate-600 transition hover:bg-white hover:text-slate-950",
+      target: "_blank",
+      rel: "noopener",
+      aria: { label: "Abrir página pública de reservas de #{@business.name}" } do %>
+      <%= display_public_url(public_business_url) %>
+    <% end %>
+    <span class="sr-only" data-copy-text-target="source"><%= public_business_url %></span>
+    <button type="button" class="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-500 transition hover:bg-white hover:text-slate-950" data-copy-text-target="button" data-action="copy-text#copy" aria-label="Copiar">
+      <%= header_icons.fetch(:copy).html_safe %>
+    </button>
+  </div>
+
+  <div class="flex items-center gap-2">
+    <button type="button" class="admin-header-icon-button relative" data-admin-notifications-toggle aria-label="Abrir notificaciones" aria-expanded="false">
+      <%= header_icons.fetch(:bell).html_safe %>
+      <% if notification_unread_count.positive? %>
+        <span class="absolute right-2 top-2 h-2.5 w-2.5 rounded-full border-2 border-white bg-rose-500"></span>
+        <span class="sr-only"><%= notification_unread_count %> notificaciones sin leer</span>
+      <% end %>
+    </button>
+
+    <details class="relative ml-1" data-admin-profile-menu>
+      <summary class="flex h-11 w-11 cursor-pointer list-none items-center justify-center overflow-hidden rounded-full text-base font-bold text-white transition hover:brightness-95 [&::-webkit-details-marker]:hidden" style="background-color: <%= user_avatar_color %>;" title="<%= current_user.email_address %>">
+        <% if profile_photo.attached? %>
+          <%= image_tag profile_photo, alt: profile_display_name, class: "h-full w-full object-cover" %>
+        <% else %>
+          <%= user_initials %>
+        <% end %>
+      </summary>
+
+      <div class="admin-profile-dropdown absolute right-0 top-14 w-56 overflow-hidden rounded-2xl border border-zinc-200 bg-white py-2 text-zinc-950 shadow-menu">
+        <div class="border-b border-zinc-100 px-4 py-3">
+          <p class="truncate text-sm font-bold"><%= profile_display_name %></p>
+          <p class="mt-0.5 truncate text-xs font-semibold text-zinc-500"><%= current_user.email_address %></p>
+        </div>
+        <%= link_to "Editar perfil", edit_admin_profile_path, class: "block px-4 py-3 text-sm font-bold transition hover:bg-zinc-50" %>
+        <%= button_to "Cerrar sesión", session_path, method: :delete, form: { class: "w-full" }, class: "block w-full px-4 py-3 text-left text-sm font-bold text-rose-600 transition hover:bg-rose-50" %>
+      </div>
+    </details>
+  </div>
+</header>
+
+<div class="admin-notifications-backdrop" data-admin-notifications-backdrop hidden></div>
+<aside class="admin-notifications-panel" data-admin-notifications-panel hidden aria-hidden="true" aria-label="Notificaciones">
+  <div class="admin-notifications-header">
+    <div>
+      <p class="admin-notifications-eyebrow">Centro de actividad</p>
+      <h2>Notificaciones</h2>
+      <div class="admin-notifications-status">
+        <p><%= notification_unread_count.positive? ? "#{notification_unread_count} sin leer" : "No tenés pendientes sin leer" %></p>
+        <% if notification_unread_count.positive? %>
+          <%= button_to "Marcar todas como leídas",
+            mark_all_read_admin_notifications_path,
+            method: :patch,
+            form: { class: "admin-notifications-mark-read-form" },
+            class: "admin-notifications-mark-read" %>
+        <% end %>
+      </div>
+    </div>
+    <button type="button" class="admin-notifications-close" data-admin-notifications-close aria-label="Cerrar notificaciones">
+      <%= header_icons.fetch(:x).html_safe %>
+    </button>
+  </div>
+
+  <div class="admin-notifications-body">
+    <aside class="admin-notifications-categories">
+      <% notification_categories.each_with_index do |(key, category), index| %>
+        <% category_count = notifications_by_category.fetch(key).size %>
+        <button type="button" class="admin-notifications-category <%= 'is-active' if index.zero? %>" data-admin-notifications-category-button="<%= key %>">
+          <span class="admin-notifications-category-icon"><%= header_icons.fetch(category.fetch(:icon)).html_safe %></span>
+          <span><%= category.fetch(:label) %></span>
+          <% if category_count.positive? %>
+            <span class="admin-notifications-category-count"><%= category_count %></span>
+          <% end %>
+        </button>
+      <% end %>
+    </aside>
+
+    <section class="admin-notifications-list">
+      <% notification_categories.each_with_index do |(key, category), index| %>
+        <div class="admin-notifications-category-panel" data-admin-notifications-category-panel="<%= key %>" <%= "hidden" unless index.zero? %>>
+          <div class="admin-notifications-list-title">
+            <h3><%= category.fetch(:label) %></h3>
+            <span><%= pluralize(notifications_by_category.fetch(key).size, "notificación", plural: "notificaciones") %></span>
+          </div>
+
+          <div class="admin-notifications-items">
+            <% notifications_by_category.fetch(key).each do |item| %>
+              <article
+                class="admin-notification-card <%= 'is-unread' if item.unread? %>"
+                data-admin-notification-mark-read-url="<%= mark_read_admin_notification_path(item.event) if item.unread? %>">
+                <span class="admin-notification-dot admin-notification-dot-<%= item.tone %> <%= 'is-unread' if item.unread? %>"></span>
+                <div class="min-w-0">
+                  <div class="flex items-start justify-between gap-3">
+                    <p class="admin-notification-title"><%= item.title %></p>
+                    <span class="admin-notification-time <%= 'is-unread' if item.unread? %>"><%= time_ago_in_words(item.created_at) %></span>
+                  </div>
+                  <% if item.body.present? %>
+                    <p class="admin-notification-body"><%= item.body %></p>
+                  <% end %>
+                  <div class="admin-notification-actions">
+                    <% if item.action_url.present? && item.action_label.present? %>
+                      <%= link_to item.action_label,
+                        item.action_url,
+                        class: "admin-notification-action #{'is-unread' if item.unread?}",
+                        target: item.external_action? ? "_blank" : nil,
+                        rel: item.external_action? ? "noopener" : nil %>
+                    <% end %>
+                    <%= button_to "Eliminar",
+                      admin_notification_path(item.event),
+                      method: :delete,
+                      form: { class: "admin-notification-delete-form" },
+                      class: "admin-notification-delete",
+                      data: { admin_notification_delete: true } %>
+                  </div>
+                </div>
+              </article>
+            <% end %>
+
+            <% if notifications_by_category.fetch(key).blank? %>
+              <div class="admin-notifications-empty">
+                <span><%= header_icons.fetch(category.fetch(:icon)).html_safe %></span>
+                <p>No hay notificaciones en esta categoría.</p>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </section>
+  </div>
+</aside>
+
+<script>
+  (() => {
+    function profileMenus() {
+      return document.querySelectorAll("[data-admin-profile-menu]");
+    }
+
+    function notificationPanel() {
+      return document.querySelector("[data-admin-notifications-panel]");
+    }
+
+    function notificationBackdrop() {
+      return document.querySelector("[data-admin-notifications-backdrop]");
+    }
+
+    function notificationToggle() {
+      return document.querySelector("[data-admin-notifications-toggle]");
+    }
+
+    function csrfToken() {
+      return document.querySelector("meta[name='csrf-token']")?.content;
+    }
+
+    function markNotificationAsRead(card) {
+      const url = card?.dataset.adminNotificationMarkReadUrl;
+      if (!url || card.dataset.adminNotificationMarkingRead === "true") return;
+
+      card.dataset.adminNotificationMarkingRead = "true";
+      fetch(url, {
+        method: "PATCH",
+        credentials: "same-origin",
+        keepalive: true,
+        headers: {
+          "Accept": "application/json",
+          "X-CSRF-Token": csrfToken()
+        }
+      }).then((response) => {
+        if (!response.ok) {
+          card.dataset.adminNotificationMarkingRead = "false";
+          return;
+        }
+
+        card.classList.remove("is-unread");
+        card.querySelectorAll(".is-unread").forEach((element) => element.classList.remove("is-unread"));
+        delete card.dataset.adminNotificationMarkReadUrl;
+      }).catch(() => {
+        card.dataset.adminNotificationMarkingRead = "false";
+      });
+    }
+
+    function setNotificationCategory(category) {
+      const panel = notificationPanel();
+      if (!panel) return;
+
+      panel.querySelectorAll("[data-admin-notifications-category-button]").forEach((button) => {
+        button.classList.toggle("is-active", button.dataset.adminNotificationsCategoryButton === category);
+      });
+      panel.querySelectorAll("[data-admin-notifications-category-panel]").forEach((categoryPanel) => {
+        categoryPanel.hidden = categoryPanel.dataset.adminNotificationsCategoryPanel !== category;
+      });
+    }
+
+    function openNotifications(category = "appointments") {
+      const panel = notificationPanel();
+      const backdrop = notificationBackdrop();
+      const toggle = notificationToggle();
+      if (!panel || !backdrop) return;
+
+      setNotificationCategory(category);
+      panel.hidden = false;
+      backdrop.hidden = false;
+      panel.setAttribute("aria-hidden", "false");
+      toggle?.setAttribute("aria-expanded", "true");
+      requestAnimationFrame(() => {
+        panel.classList.add("is-open");
+        backdrop.classList.add("is-open");
+      });
+    }
+
+    function closeNotifications() {
+      const panel = notificationPanel();
+      const backdrop = notificationBackdrop();
+      const toggle = notificationToggle();
+      if (!panel || !backdrop) return;
+
+      panel.classList.remove("is-open");
+      backdrop.classList.remove("is-open");
+      panel.setAttribute("aria-hidden", "true");
+      toggle?.setAttribute("aria-expanded", "false");
+      window.setTimeout(() => {
+        if (!panel.classList.contains("is-open")) panel.hidden = true;
+        if (!backdrop.classList.contains("is-open")) backdrop.hidden = true;
+      }, 180);
+    }
+
+    window.AdminNotificationsDrawer = {
+      open: openNotifications,
+      close: closeNotifications
+    };
+
+    if (!window.AdminShellHeaderEventsBound) {
+      window.AdminShellHeaderEventsBound = true;
+
+      document.addEventListener("click", (event) => {
+        const notificationsButton = event.target.closest("[data-admin-notifications-toggle]");
+        if (notificationsButton) {
+          event.preventDefault();
+          notificationPanel()?.classList.contains("is-open") ? closeNotifications() : openNotifications();
+          return;
+        }
+
+        const closeButton = event.target.closest("[data-admin-notifications-close], [data-admin-notifications-backdrop]");
+        if (closeButton) {
+          event.preventDefault();
+          closeNotifications();
+          return;
+        }
+
+        const categoryButton = event.target.closest("[data-admin-notifications-category-button]");
+        if (categoryButton) {
+          event.preventDefault();
+          setNotificationCategory(categoryButton.dataset.adminNotificationsCategoryButton);
+          return;
+        }
+
+        if (!event.target.closest("[data-admin-notification-delete]")) {
+          markNotificationAsRead(event.target.closest("[data-admin-notification-mark-read-url]"));
+        }
+
+        profileMenus().forEach((menu) => {
+          if (!menu.contains(event.target)) menu.removeAttribute("open");
+        });
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          profileMenus().forEach((menu) => menu.removeAttribute("open"));
+          closeNotifications();
+        }
+      });
+    }
+  })();
+</script>

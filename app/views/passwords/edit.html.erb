@@ -1,0 +1,33 @@
+<div class="mx-auto max-w-xl">
+  <header class="mb-6 flex items-center justify-between border-b border-zinc-200 pb-4">
+    <%= link_to root_path, class: "flex items-center gap-3" do %>
+      <span class="block h-11 w-11 overflow-hidden rounded-xl shadow-sm shadow-zinc-900/15">
+        <%= image_tag "/icon.png?v=3", alt: "", class: "h-full w-full object-cover" %>
+      </span>
+      <span>
+        <span class="block text-sm font-bold tracking-tight text-zinc-950">Dog Grooming</span>
+        <span class="block text-[11px] font-semibold text-zinc-500">Reservas en línea para peluquerías caninas</span>
+      </span>
+    <% end %>
+  </header>
+
+  <section class="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm sm:p-8">
+    <p class="text-xs font-bold uppercase tracking-[.16em] text-brand-700">Nueva contraseña</p>
+    <h1 class="mt-2 text-2xl font-bold tracking-tight text-zinc-950 sm:text-3xl">Actualizá tu acceso</h1>
+    <p class="mt-2 text-sm leading-6 text-zinc-500">Elegí una contraseña nueva para entrar al panel de tu centro.</p>
+
+    <%= form_with url: password_path(params[:token]), method: :put, class: "mt-7 space-y-5" do |form| %>
+      <div>
+        <%= form.label :password, "Nueva contraseña", class: "mb-2 block text-sm font-bold text-zinc-800" %>
+        <%= form.password_field :password, required: true, autocomplete: "new-password", maxlength: 72, class: "h-12 w-full rounded-lg border border-zinc-200 bg-white px-4 text-sm font-semibold outline-none transition placeholder:text-zinc-400 focus:border-brand-400 focus:ring-4 focus:ring-brand-100" %>
+      </div>
+
+      <div>
+        <%= form.label :password_confirmation, "Repetir contraseña", class: "mb-2 block text-sm font-bold text-zinc-800" %>
+        <%= form.password_field :password_confirmation, required: true, autocomplete: "new-password", maxlength: 72, class: "h-12 w-full rounded-lg border border-zinc-200 bg-white px-4 text-sm font-semibold outline-none transition placeholder:text-zinc-400 focus:border-brand-400 focus:ring-4 focus:ring-brand-100" %>
+      </div>
+
+      <%= form.submit "Guardar contraseña", class: "flex h-12 w-full cursor-pointer items-center justify-center rounded-lg bg-zinc-950 px-5 text-sm font-bold text-white shadow-lg shadow-zinc-900/15 transition hover:-translate-y-0.5 hover:bg-zinc-800" %>
+    <% end %>
+  </section>
+</div>

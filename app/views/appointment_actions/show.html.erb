@@ -1,0 +1,58 @@
+<div class="min-h-screen bg-[#f7f2ef] px-4 py-8 text-zinc-950 sm:px-6">
+  <div class="mx-auto max-w-xl">
+    <div class="mb-6 flex items-center gap-3">
+      <div class="grid h-12 w-12 place-items-center rounded-lg bg-zinc-950 text-sm font-bold text-white"><%= @business.initials %></div>
+      <div>
+        <p class="text-xs font-bold uppercase tracking-[.16em] text-brand-700">Confirmación de turno</p>
+        <h1 class="text-2xl font-bold tracking-tight"><%= @business.name %></h1>
+      </div>
+    </div>
+
+    <section class="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
+      <div class="border-b border-zinc-100 p-5 sm:p-6">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <p class="text-sm font-bold text-zinc-500"><%= @appointment.service.name %></p>
+            <p class="mt-2 text-3xl font-bold tracking-tight"><%= format_ar_datetime(@appointment.starts_at) %></p>
+            <p class="mt-2 text-sm font-semibold text-zinc-500"><%= @business.public_location %></p>
+          </div>
+          <span class="w-fit rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[.08em] <%= @appointment.confirmed? ? "bg-emerald-50 text-emerald-700" : @appointment.canceled? ? "bg-rose-50 text-rose-700" : "bg-brand-50 text-brand-700" %>">
+            <%= appointment_status_label(@appointment) %>
+          </span>
+        </div>
+      </div>
+
+      <div class="p-5 sm:p-6">
+        <dl class="grid gap-3 text-sm">
+          <div class="flex justify-between gap-4 border-b border-zinc-100 pb-3">
+            <dt class="font-semibold text-zinc-500">Cliente</dt>
+            <dd class="text-right font-bold text-zinc-900"><%= @appointment.customer_name %></dd>
+          </div>
+          <div class="flex justify-between gap-4 border-b border-zinc-100 pb-3">
+            <dt class="font-semibold text-zinc-500">Duración</dt>
+            <dd class="text-right font-bold text-zinc-900"><%= @appointment.service.duration_minutes %> min</dd>
+          </div>
+          <div class="flex justify-between gap-4">
+            <dt class="font-semibold text-zinc-500">Política</dt>
+            <dd class="max-w-[16rem] text-right font-semibold text-zinc-700"><%= @business.cancellation_notice_hours %> hs de anticipación</dd>
+          </div>
+        </dl>
+
+        <% unless @appointment.canceled? %>
+          <div class="mt-6 grid gap-3 sm:grid-cols-2">
+            <% unless @appointment.confirmed? %>
+              <%= button_to "Confirmar turno", confirm_appointment_action_path(params[:token]), method: :post, class: "inline-flex h-12 w-full cursor-pointer items-center justify-center rounded-lg bg-zinc-950 px-4 text-sm font-bold text-white shadow-lg shadow-zinc-900/15 transition hover:-translate-y-0.5 hover:bg-zinc-800" %>
+            <% end %>
+            <%= button_to "Cancelar turno", cancel_appointment_action_path(params[:token]), method: :post, class: "inline-flex h-12 w-full cursor-pointer items-center justify-center rounded-lg border border-rose-200 bg-rose-50 px-4 text-sm font-bold text-rose-700 transition hover:bg-rose-100" %>
+          </div>
+        <% else %>
+          <p class="mt-6 rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm font-semibold text-rose-700">Este turno fue cancelado. Para coordinar otra fecha, volvé a la agenda pública.</p>
+        <% end %>
+      </div>
+    </section>
+
+    <div class="mt-5 text-center">
+      <%= link_to "Ver agenda pública", public_business_path(@business.slug), class: "text-sm font-bold text-zinc-700 underline decoration-zinc-300 underline-offset-4" %>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,93 @@
+module SuperAdmin
+  class CreateDemoBusiness
+    DEFAULT_PASSWORD = SuperAdmin::CreateBusinessAccount::DEFAULT_PASSWORD
+    Result = Struct.new(:business, :email, :password, keyword_init: true)
+
+    def self.call
+      new.call
+    end
+
+    def call
+      suffix = Time.current.strftime("%Y%m%d%H%M%S")
+      email = "demo-#{suffix}@dog-grooming.test"
+      password = DEFAULT_PASSWORD
+
+      business = nil
+      User.transaction do
+        owner = User.create!(email_address: email, name: business_attributes(suffix)[:name], password: password, role: :admin)
+        business = owner.create_business!(business_attributes(suffix))
+        professional = create_owner_professional!(business, owner)
+        create_first_service!(business, professional)
+      end
+
+      Result.new(business: business, email: email, password: password)
+    end
+
+    private
+      def business_attributes(suffix)
+        {
+          name: "Demo Dog Grooming #{suffix.last(4)}",
+          slug: Slugs::GenerateUnique.call("demo-dog-grooming", scope: Business),
+          business_kind: "business",
+          industry: "dog_grooming",
+          contact_phone: "+5491100000000",
+          phone: "+5491100000000",
+          whatsapp_phone: "+5491100000000",
+          city: "Buenos Aires",
+          cancellation_notice_hours: 12,
+          setup_status: "completed",
+          onboarding_completed_at: Time.current,
+          preferences: Business::PREFERENCE_DEFAULTS.merge(
+            "chatbot_enabled" => true,
+            "deposits_enabled" => true,
+            "deposit_percentage" => 50,
+            "deposit_alias" => "demo.dog.grooming",
+            "deposit_holder" => "Demo Dog Grooming",
+            "deposit_instructions" => "Transferí la seña y subí el comprobante desde el link de tu reserva."
+          ),
+          ai_context: [
+            "Cuenta demo de Dog Grooming para probar agenda, servicios, tutores, mascotas y comprobantes.",
+            "El tutor puede reservar online para su mascota y el negocio confirma desde el panel."
+          ].join("\n")
+        }
+      end
+
+      def create_owner_professional!(business, owner)
+        business.employee_memberships.create!(
+          user: owner,
+          name: owner.name.presence || business.name,
+          first_name: owner.name.to_s.split.first.presence || "Demo",
+          last_name: owner.name.to_s.split.drop(1).join(" ").presence || "Grooming",
+          email_address: owner.email_address,
+          phone: business.contact_phone,
+          specialty: business.industry_label,
+          branch: business.branches.first,
+          status: "active",
+          invitation_sent_at: Time.current,
+          invitation_accepted_at: Time.current,
+          invited_by: owner,
+          permissions: EmployeeMembership::PERMISSIONS.keys.index_with { true }
+        )
+      end
+
+      def create_first_service!(business, professional)
+        service = business.services.create!(
+          name: "Baño y corte demo",
+          category: "Baño y secado",
+          description: "Servicio demo para validar el flujo de reserva pública de una mascota.",
+          duration_minutes: 60,
+          price_cents: 30_000_00,
+          deposit_required: true,
+          deposit_amount_cents: 10_000_00,
+          deposit_percentage: 0,
+          visibility_mode: "public",
+          professional_selection_mode: "hidden",
+          active: true,
+          public_visible: true,
+          popular: true
+        )
+        service.employee_memberships << professional
+        service
+      end
+  end
+end

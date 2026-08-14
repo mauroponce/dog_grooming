@@ -1,0 +1,9 @@
+Clientas para contactar esta semana
+
+Hay <%= @reminders.size %> seguimiento(s) pendiente(s).
+
+<% @reminders.first(5).each do |reminder| %>
+- <%= reminder.customer_profile.name.presence || reminder.customer_profile.phone %><%= " · #{reminder.service.name}" if reminder.service.present? %> · <%= reminder.body %>
+<% end %>
+
+Panel: <%= @url %>

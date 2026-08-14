@@ -1,0 +1,1626 @@
+<% content_for :title, "Inicio | Dog Grooming" %>
+<% content_for :admin_section_title, "Inicio" %>
+
+<% dashboard = @dashboard %>
+<% icons = {
+  arrow: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  arrow_down: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  bot: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 8V4M8 4h8M5 11a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v5a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3v-5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 14h.01M15 14h.01" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>',
+  calendar: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 2v4M16 2v4M4 10h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="4" y="5" width="16" height="17" rx="3" stroke="currentColor" stroke-width="2"/></svg>',
+  calendar_plus: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 2v4M16 2v4M4 10h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="4" y="5" width="16" height="17" rx="3" stroke="currentColor" stroke-width="2"/><path d="M12 14v5M9.5 16.5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  calendar_search: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 2v4M16 2v4M4 10h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="4" y="5" width="16" height="17" rx="3" stroke="currentColor" stroke-width="2"/><circle cx="11" cy="16" r="2.5" stroke="currentColor" stroke-width="2"/><path d="m13 18 2 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m5 13 4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  clock: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  dollar: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2v20M17 6H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  info: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 10v7M12 7h.01" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>',
+  plus: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>',
+  receipt: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 3h10a2 2 0 0 1 2 2v16l-3-2-2 2-2-2-2 2-2-2-3 2V5a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 8h6M9 12h6M9 16h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  refresh: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 12a8 8 0 0 1-13.66 5.66M4 12A8 8 0 0 1 17.66 6.34M18 3v4h-4M6 21v-4h4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  search: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  sparkles: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3 9.8 8.8 4 11l5.8 2.2L12 19l2.2-5.8L20 11l-5.8-2.2L12 3ZM5 3v4M3 5h4M19 17v4M17 19h4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  users: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="9.5" cy="7" r="4" stroke="currentColor" stroke-width="2"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  waitlist: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"/></svg>',
+  x: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>'
+} %>
+<style>
+  .admin-home {
+    --brand-50: #ffded4;
+    --brand-100: #ffded4;
+    --brand-200: #ffded4;
+    --brand-300: #ffded4;
+    --brand-500: #ffded4;
+    --brand-600: #ffded4;
+    --brand-700: #ffded4;
+    --brand-900: #ffded4;
+    --ink: #0f172a;
+    display: grid;
+    gap: 24px;
+  }
+
+  .admin-home svg {
+    width: 1em;
+    height: 1em;
+  }
+
+  .admin-home-topbar {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+  }
+
+  .admin-home-health {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    color: #008768;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+  }
+
+  .admin-home-health::before {
+    position: relative;
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: #10b981;
+    box-shadow: 0 0 0 7px rgba(16, 185, 129, .13);
+    content: "";
+  }
+
+  .admin-home-title {
+    margin: 12px 0 0;
+    color: #071014;
+    font-size: clamp(30px, 3.2vw, 42px);
+    font-weight: 700;
+    letter-spacing: -.05em;
+    line-height: 1.04;
+  }
+
+  .admin-home-subtitle {
+    margin-top: 8px;
+    max-width: 720px;
+    color: #64748b;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.6;
+  }
+
+  .admin-home-actions,
+  .admin-home-hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .admin-home-actions {
+    justify-content: flex-end;
+  }
+
+  .admin-home-button,
+  .admin-home-dark-button,
+  .admin-home-link-button {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    border-radius: 16px;
+    padding: 0 16px;
+    border: 1px solid rgba(226, 232, 240, .95);
+    background: #fff;
+    color: #0f172a;
+    font-size: 14px;
+    font-weight: 700;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, .06);
+    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, background-color .18s ease, color .18s ease;
+  }
+
+  .admin-home-button:hover,
+  .admin-home-link-button:hover {
+    transform: translateY(-1px);
+    border-color: rgba(255, 222, 212, .35);
+    color: var(--brand-700);
+    box-shadow: 0 18px 38px rgba(15, 23, 42, .1);
+  }
+
+  .admin-home-dark-button {
+    border-color: #071014;
+    background: #071014;
+    color: #fff;
+  }
+
+  .admin-home-dark-button:hover {
+    transform: translateY(-1px);
+    background: var(--brand-700);
+  }
+
+  .admin-home-summary {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(226, 232, 240, .88);
+    border-radius: 30px;
+    background:
+      radial-gradient(circle at 100% 0%, rgba(255, 222, 212, .48), transparent 22rem),
+      linear-gradient(180deg, #ffffff 0%, #fdfcff 100%);
+    padding: 26px;
+    box-shadow: 0 20px 60px rgba(255, 222, 212, .07);
+  }
+
+  .admin-home-summary::after {
+    position: absolute;
+    right: -95px;
+    bottom: -125px;
+    width: 280px;
+    height: 280px;
+    border-radius: 999px;
+    background: rgba(255, 222, 212, .055);
+    pointer-events: none;
+    content: "";
+  }
+
+  .admin-home-summary-grid {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(320px, .85fr);
+    gap: 30px;
+    align-items: center;
+  }
+
+  .admin-home-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid var(--brand-200);
+    border-radius: 999px;
+    background: var(--brand-50);
+    padding: 7px 11px;
+    color: var(--brand-700);
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .admin-home-updated {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #94a3b8;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .admin-home-updated::before {
+    position: relative;
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: #10b981;
+    box-shadow: 0 0 0 5px rgba(16, 185, 129, .14);
+    content: "";
+  }
+
+  .admin-home-kicker {
+    margin-top: 24px;
+    color: var(--brand-700);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+  }
+
+  .admin-home-summary-title {
+    margin: 8px 0 0;
+    max-width: 780px;
+    color: #071014;
+    font-size: clamp(25px, 2.6vw, 34px);
+    font-weight: 700;
+    letter-spacing: -.055em;
+    line-height: 1.1;
+  }
+
+  .admin-home-summary-copy {
+    margin-top: 12px;
+    max-width: 740px;
+    color: #64748b;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.65;
+  }
+
+  .admin-home-hero-actions {
+    margin-top: 24px;
+  }
+
+  .admin-home-primary-hero-button {
+    display: inline-flex;
+    min-height: 46px;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    border-radius: 16px;
+    border: 0;
+    background: var(--brand-600);
+    color: #fff;
+    padding: 0 18px;
+    font-size: 14px;
+    font-weight: 700;
+    box-shadow: 0 18px 36px rgba(255, 222, 212, .16);
+    transition: transform .18s ease, background-color .18s ease;
+  }
+
+  .admin-home-primary-hero-button:hover {
+    transform: translateY(-1px);
+    background: var(--brand-700);
+  }
+
+  .admin-home-secondary-hero-button {
+    display: inline-flex;
+    min-height: 46px;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    border-radius: 16px;
+    border: 1px solid var(--brand-200);
+    background: #fff;
+    color: var(--brand-700);
+    padding: 0 18px;
+    font-size: 14px;
+    font-weight: 700;
+    transition: transform .18s ease, background-color .18s ease;
+  }
+
+  .admin-home-secondary-hero-button:hover {
+    transform: translateY(-1px);
+    background: var(--brand-50);
+  }
+
+  .admin-home-summary-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 13px;
+  }
+
+  .admin-home-summary-metric {
+    min-height: 112px;
+    border: 1px solid #e2e8f0;
+    border-radius: 23px;
+    background: #fff;
+    padding: 17px;
+  }
+
+  .admin-home-summary-metric-wide {
+    grid-column: 1 / -1;
+    background: rgba(255, 222, 212, .72);
+    border-color: var(--brand-100);
+  }
+
+  .admin-home-summary-label {
+    color: #94a3b8;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .admin-home-summary-value {
+    margin-top: 9px;
+    color: #071014;
+    font-size: 31px;
+    font-weight: 700;
+    letter-spacing: -.045em;
+  }
+
+  .admin-home-summary-hint {
+    margin-top: 4px;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .admin-home-summary-wide-row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 18px;
+  }
+
+  .admin-home-summary-icon {
+    display: inline-flex;
+    width: 46px;
+    height: 46px;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    border-radius: 18px;
+    background: #fff;
+    color: var(--brand-700);
+    box-shadow: 0 10px 24px rgba(255, 222, 212, .06);
+  }
+
+  .admin-home-panel,
+  .admin-home-assistant-strip {
+    border: 1px solid rgba(226, 232, 240, .88);
+    background: rgba(255, 255, 255, .94);
+    box-shadow: 0 12px 36px rgba(255, 222, 212, .055);
+  }
+
+  .admin-home-action-icon {
+    display: inline-flex;
+    width: 44px;
+    height: 44px;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    border-radius: 16px;
+    font-size: 20px;
+  }
+
+  .admin-home-tone-violet { background: #ffded4; color: #A63826; }
+  .admin-home-tone-amber { background: #fff7e6; color: #b45309; }
+  .admin-home-tone-emerald { background: #eafff6; color: #008768; }
+  .admin-home-tone-blue { background: #eff6ff; color: #2563eb; }
+  .admin-home-tone-pink { background: #fdf2f8; color: #be185d; }
+  .admin-home-tone-rose { background: #fff1f2; color: #e11d48; }
+
+  .admin-home-section-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .admin-home-section-kicker {
+    color: var(--brand-700);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+  }
+
+  .admin-home-section-title {
+    margin-top: 8px;
+    color: #071014;
+    font-size: 25px;
+    font-weight: 700;
+    letter-spacing: -.045em;
+  }
+
+  .admin-home-section-copy {
+    margin-top: 5px;
+    color: #64748b;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.45;
+  }
+
+  .admin-home-panel-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 14px;
+    padding: 9px 11px;
+    color: var(--brand-700);
+    font-size: 13px;
+    font-weight: 700;
+    transition: background-color .18s ease;
+  }
+
+  .admin-home-panel-link:hover {
+    background: var(--brand-50);
+  }
+
+  .admin-home-card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .admin-home-card-title-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .admin-home-card-title {
+    color: #071014;
+    font-size: 19px;
+    font-weight: 700;
+    letter-spacing: -.03em;
+  }
+
+  .admin-home-card-meta {
+    margin-top: 5px;
+    color: #334155;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .admin-home-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 5px 8px;
+    background: #ecfdf5;
+    color: #047857;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+
+  .admin-home-card-dismiss {
+    display: inline-flex;
+    width: 36px;
+    height: 36px;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 13px;
+    background: transparent;
+    color: #94a3b8;
+    cursor: pointer;
+    transition: background-color .18s ease, color .18s ease;
+  }
+
+  .admin-home-card-dismiss:hover {
+    background: #f1f5f9;
+    color: #334155;
+  }
+
+  .admin-home-chip-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .admin-home-mini-label {
+    color: #94a3b8;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+
+  .admin-home-chip {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    background: #f1f5f9;
+    padding: 6px 10px;
+    color: #475569;
+    font-size: 10px;
+    font-weight: 700;
+  }
+
+  .admin-home-candidates-box {
+    margin-top: 18px;
+    border-radius: 18px;
+    border: 1px solid var(--brand-100);
+    background: rgba(255, 222, 212, .72);
+    padding: 15px;
+  }
+
+  .admin-home-candidates-title {
+    color: var(--brand-900);
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .admin-home-candidates-copy {
+    margin-top: 4px;
+    color: var(--brand-700);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.4;
+  }
+
+  .admin-home-opportunity-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-top: 18px;
+  }
+
+  .admin-home-opportunity-empty {
+    display: grid;
+    place-items: center;
+    gap: 16px;
+    min-height: 260px;
+    border: 1px dashed #d8dce6;
+    border-radius: 28px;
+    background: rgba(255, 255, 255, .8);
+    padding: 34px;
+    text-align: center;
+  }
+
+  .admin-home-empty-icon {
+    display: inline-flex;
+    width: 62px;
+    height: 62px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 22px;
+    background: var(--brand-50);
+    color: var(--brand-700);
+    font-size: 28px;
+  }
+
+  .admin-home-main-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 22px;
+    align-items: start;
+  }
+
+  .admin-home-panel {
+    overflow: hidden;
+    border-radius: 28px;
+  }
+
+  .admin-home-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    border-bottom: 1px solid #eef2f7;
+    padding: 20px 22px;
+  }
+
+  .admin-home-panel-title {
+    color: #071014;
+    font-size: 21px;
+    font-weight: 700;
+    letter-spacing: -.04em;
+  }
+
+  .admin-home-list {
+    display: grid;
+  }
+
+  .admin-home-upcoming-table-wrap {
+    overflow-x: auto;
+  }
+
+  .admin-home-upcoming-table {
+    border-collapse: collapse;
+    min-width: 720px;
+    width: 100%;
+  }
+
+  .admin-home-upcoming-table th {
+    border-bottom: 1px solid #eef2f7;
+    color: #94a3b8;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    padding: 13px 22px;
+    text-align: left;
+    text-transform: uppercase;
+  }
+
+  .admin-home-upcoming-table td {
+    border-bottom: 1px solid #eef2f7;
+    padding: 14px 22px;
+    vertical-align: middle;
+  }
+
+  .admin-home-upcoming-row {
+    cursor: pointer;
+    outline: none;
+    transition: background-color .18s ease;
+  }
+
+  .admin-home-upcoming-row:hover,
+  .admin-home-upcoming-row:focus-visible {
+    background: #ffded4;
+  }
+
+  .admin-home-upcoming-row:focus-visible {
+    box-shadow: inset 3px 0 0 var(--brand-600);
+  }
+
+  .admin-home-upcoming-professional {
+    color: #475569;
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .admin-home-upcoming-footer {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    justify-content: space-between;
+    padding: 16px 22px;
+  }
+
+  .admin-home-upcoming-footer > p {
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .admin-home-upcoming-pagination {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .admin-home-upcoming-page {
+    align-items: center;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    color: #475569;
+    display: inline-flex;
+    font-size: 12px;
+    font-weight: 700;
+    height: 34px;
+    justify-content: center;
+    min-width: 34px;
+    padding: 0 10px;
+    text-decoration: none;
+  }
+
+  .admin-home-upcoming-page:not(.is-disabled):not(.is-current):hover {
+    border-color: var(--brand-300);
+    color: var(--brand-700);
+  }
+
+  .admin-home-upcoming-page.is-current {
+    border-color: var(--brand-600);
+    background: var(--brand-600);
+    color: #fff;
+  }
+
+  .admin-home-upcoming-page.is-disabled {
+    color: #cbd5e1;
+  }
+
+  .admin-home-appointment {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    border-bottom: 1px solid #eef2f7;
+    padding: 18px 22px;
+    transition: background-color .18s ease, transform .18s ease;
+  }
+
+  .admin-home-appointment:last-child {
+    border-bottom: 0;
+  }
+
+  .admin-home-appointment:hover {
+    background: #ffded4;
+    transform: translateX(2px);
+  }
+
+  .admin-home-time {
+    display: grid;
+    min-width: 72px;
+    min-height: 54px;
+    place-items: center;
+    border-radius: 17px;
+    background: var(--brand-50);
+    color: var(--brand-700);
+    font-weight: 700;
+    line-height: 1.1;
+    padding: 8px;
+    text-align: center;
+  }
+
+  .admin-home-time-day {
+    font-size: 11px;
+  }
+
+  .admin-home-time-hour {
+    font-size: 14px;
+  }
+
+  .admin-home-appointment-service {
+    color: #0f172a;
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  .admin-home-appointment-meta {
+    margin-top: 4px;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .admin-home-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    padding: 7px 10px;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .admin-home-status-confirmed,
+  .admin-home-status-pending_confirmation {
+    background: #dcfce7;
+    color: #047857;
+  }
+
+  .admin-home-status-pending_deposit_review,
+  .admin-home-status-pending_deposit {
+    background: #fff7ed;
+    color: #c2410c;
+  }
+
+  .admin-home-appointment-overlay {
+    background: rgba(15, 23, 42, .28);
+    inset: 0;
+    opacity: 0;
+    pointer-events: none;
+    position: fixed;
+    transition: opacity .2s ease;
+    visibility: hidden;
+    z-index: 2147483646;
+  }
+
+  .admin-home-appointment-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+    visibility: visible;
+  }
+
+  .admin-home-appointment-drawer {
+    background: #fff;
+    border-left: 1px solid #e2e8f0;
+    bottom: 0;
+    box-shadow: -24px 0 72px rgba(255, 222, 212, .16);
+    display: flex;
+    flex-direction: column;
+    max-width: 768px;
+    position: fixed;
+    right: 0;
+    top: 0;
+    transform: translateX(100%);
+    transition: transform .28s cubic-bezier(.22, .61, .36, 1);
+    width: min(100vw, 768px);
+    z-index: 2147483647;
+  }
+
+  .admin-home-appointment-drawer.open {
+    transform: translateX(0);
+  }
+
+  .admin-home-appointment-drawer-content {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .admin-home-appointment-client-pane {
+    background: #fcfcfd;
+    border-right: 1px solid #eef2f7;
+    display: flex;
+    flex: 0 0 285px;
+    flex-direction: column;
+    padding: 76px 24px 24px;
+  }
+
+  .admin-home-appointment-avatar {
+    align-items: center;
+    background: var(--brand-50);
+    border-radius: 18px;
+    color: var(--brand-700);
+    display: inline-flex;
+    font-size: 19px;
+    font-weight: 700;
+    height: 54px;
+    justify-content: center;
+    width: 54px;
+  }
+
+  .admin-home-appointment-customer-name {
+    color: #0f172a;
+    font-size: 19px;
+    font-weight: 700;
+    letter-spacing: -.03em;
+    margin-top: 13px;
+  }
+
+  .admin-home-appointment-client-detail {
+    border-top: 1px solid #ececf0;
+    color: #3f3f46;
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    margin-top: 18px;
+    padding-top: 18px;
+    text-decoration: none;
+    word-break: break-word;
+  }
+
+  .admin-home-appointment-client-detail:hover {
+    color: var(--brand-700);
+  }
+
+  .admin-home-appointment-client-detail-label {
+    color: #a1a1aa;
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .14em;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+  }
+
+  .admin-home-appointment-client-button {
+    align-items: center;
+    border: 1px solid #d4d4d8;
+    border-radius: 999px;
+    color: #18181b;
+    display: inline-flex;
+    font-size: 13px;
+    font-weight: 700;
+    justify-content: center;
+    margin-top: auto;
+    min-height: 44px;
+    padding: 0 15px;
+    text-decoration: none;
+  }
+
+  .admin-home-appointment-main-pane {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .admin-home-appointment-drawer-header {
+    align-items: flex-start;
+    border-bottom: 1px solid #e4e4e7;
+    display: flex;
+    justify-content: space-between;
+    padding: 24px 72px 20px 26px;
+  }
+
+  .admin-home-appointment-drawer-title {
+    color: #18181b;
+    font-size: 25px;
+    font-weight: 700;
+    letter-spacing: -.04em;
+  }
+
+  .admin-home-appointment-drawer-subtitle {
+    color: #64748b;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.45;
+    margin-top: 5px;
+  }
+
+  .admin-home-appointment-drawer-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 22px 26px 28px;
+  }
+
+  .admin-home-appointment-service-card {
+    border: 1px solid #e4e4e7;
+    border-radius: 20px;
+    margin-top: 14px;
+    padding: 16px;
+  }
+
+  .admin-home-appointment-service-card h3 {
+    color: #18181b;
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  .admin-home-appointment-service-card p {
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.45;
+    margin-top: 4px;
+  }
+
+  .admin-home-appointment-payment-summary {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    display: grid;
+    gap: 10px;
+    margin-top: 16px;
+    padding: 15px;
+  }
+
+  .admin-home-appointment-payment-summary div {
+    align-items: center;
+    display: flex;
+    font-size: 13px;
+    font-weight: 700;
+    justify-content: space-between;
+  }
+
+  .admin-home-appointment-payment-summary span {
+    color: #64748b;
+  }
+
+  .admin-home-appointment-payment-summary small {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    margin-top: 3px;
+  }
+
+  .admin-home-appointment-cancel,
+  .admin-home-appointment-delete,
+  .admin-home-appointment-calendar-link,
+  .admin-home-appointment-back {
+    align-items: center;
+    border-radius: 999px;
+    display: inline-flex;
+    font-size: 14px;
+    font-weight: 700;
+    justify-content: center;
+    min-height: 46px;
+    padding: 0 18px;
+    text-decoration: none;
+    width: 100%;
+  }
+
+  .admin-home-appointment-cancel {
+    background: #fff1f2;
+    border: 1px solid #fecdd3;
+    color: #e11d48;
+  }
+
+  .admin-home-appointment-delete {
+    background: #fff;
+    border: 1px solid #fecdd3;
+    color: #e11d48;
+  }
+
+  .admin-home-appointment-calendar-link,
+  .admin-home-appointment-back {
+    background: #fff;
+    border: 1px solid #d4d4d8;
+    color: #18181b;
+    margin-top: 10px;
+  }
+
+  .admin-home-appointment-cancel-error {
+    background: #fff1f2;
+    border: 1px solid #fecdd3;
+    border-radius: 16px;
+    color: #be123c;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.45;
+    margin-top: 14px;
+    padding: 12px;
+  }
+
+  .admin-home-priority-list {
+    display: grid;
+    gap: 12px;
+    padding: 18px 20px 20px;
+  }
+
+  .admin-home-priority {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    border: 1px solid #eef2f7;
+    border-radius: 20px;
+    padding: 16px;
+    background: #fff;
+    transition: border-color .18s ease, background-color .18s ease, transform .18s ease;
+  }
+
+  .admin-home-priority:hover {
+    border-color: var(--brand-200);
+    background: #ffded4;
+    transform: translateY(-1px);
+  }
+
+  .admin-home-priority-title {
+    color: #0f172a;
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  .admin-home-priority-copy {
+    margin-top: 4px;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.35;
+  }
+
+  .admin-home-priority-action {
+    display: inline-flex;
+    min-height: 38px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    border: 1px solid #e2e8f0;
+    padding: 0 14px;
+    color: #0f172a;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+    margin-left: auto;
+  }
+
+  .admin-home-assistant-strip {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 18px;
+    align-items: center;
+    border-color: rgba(255, 222, 212, .16);
+    border-radius: 28px;
+    background:
+      radial-gradient(circle at 82% 16%, rgba(255, 222, 212, .12), transparent 20rem),
+      #fff;
+    padding: 22px;
+    box-shadow: 0 22px 58px rgba(255, 222, 212, .08);
+  }
+
+  .admin-home-assistant-icon {
+    display: inline-flex;
+    width: 58px;
+    height: 58px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 20px;
+    color: #fff;
+    background: linear-gradient(135deg, #ffded4, #ffded4);
+    box-shadow: 0 18px 40px rgba(255, 222, 212, .28);
+    font-size: 26px;
+  }
+
+  .admin-home-drawer-overlay,
+  .admin-home-message-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2147483646;
+    background: rgba(15, 23, 42, .48);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .22s ease, visibility .22s ease;
+  }
+
+  .admin-home-drawer-overlay.open,
+  .admin-home-message-overlay.open {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .admin-home-drawer {
+    position: fixed;
+    inset: 0 0 0 auto;
+    z-index: 2147483647;
+    display: flex;
+    width: min(100vw, 768px);
+    flex-direction: column;
+    border-left: 1px solid #e2e8f0;
+    background: #fff;
+    box-shadow: -24px 0 72px rgba(255, 222, 212, .16);
+    transform: translateX(100%);
+    transition: transform .28s cubic-bezier(.22, .61, .36, 1);
+  }
+
+  .admin-home-drawer.open {
+    transform: translateX(0);
+  }
+
+  .admin-home-drawer-header,
+  .admin-home-drawer-footer,
+  .admin-home-message-header {
+    border-bottom: 1px solid #eef2f7;
+    padding: 26px 30px;
+  }
+
+  .admin-home-drawer-title {
+    margin-top: 12px;
+    color: #071014;
+    font-size: 31px;
+    font-weight: 700;
+    letter-spacing: -.04em;
+  }
+
+  .admin-home-drawer-subtitle {
+    margin-top: 4px;
+    color: #64748b;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .admin-home-icon-button {
+    display: inline-flex;
+    width: 42px;
+    height: 42px;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 15px;
+    background: transparent;
+    color: #64748b;
+    cursor: pointer;
+    transition: background-color .18s ease, color .18s ease;
+  }
+
+  .admin-home-icon-button:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+  }
+
+  .admin-home-drawer-body {
+    min-height: 0;
+    flex: 1;
+    overflow-y: auto;
+    padding: 26px 30px 28px;
+  }
+
+  .admin-home-filter-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 15px;
+  }
+
+  .admin-home-filter-chip {
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    background: #fff;
+    padding: 11px 15px;
+    color: #475569;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+    transition: border-color .16s ease, background-color .16s ease, color .16s ease;
+  }
+
+  .admin-home-filter-chip.active {
+    border-color: var(--brand-200);
+    background: var(--brand-50);
+    color: var(--brand-700);
+  }
+
+  .admin-home-warning {
+    display: flex;
+    gap: 11px;
+    align-items: flex-start;
+    border: 1px solid #fde68a;
+    border-radius: 22px;
+    background: rgba(255, 251, 235, .75);
+    padding: 17px 18px;
+    color: #92400e;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.5;
+  }
+
+  .admin-home-candidate-list {
+    display: grid;
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  .admin-home-candidate {
+    display: flex;
+    gap: 13px;
+    align-items: flex-start;
+    border: 1px solid #e2e8f0;
+    border-radius: 22px;
+    padding: 18px;
+    cursor: pointer;
+    transition: border-color .18s ease, background-color .18s ease, transform .18s ease;
+  }
+
+  .admin-home-candidate:hover,
+  .admin-home-candidate:has(input:checked) {
+    border-color: var(--brand-300);
+    background: #ffded4;
+    transform: translateY(-1px);
+  }
+
+  .admin-home-candidate input {
+    margin-top: 4px;
+    width: 17px;
+    height: 17px;
+    accent-color: var(--brand-600);
+  }
+
+  .admin-home-avatar {
+    display: grid;
+    width: 44px;
+    height: 44px;
+    flex: 0 0 auto;
+    place-items: center;
+    border-radius: 17px;
+    background: var(--brand-50);
+    color: var(--brand-700);
+    font-size: 13px;
+    font-weight: 700;
+    box-shadow: inset 0 0 0 1px var(--brand-100);
+  }
+
+  .admin-home-candidate-title-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .admin-home-candidate-name {
+    color: #0f172a;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .admin-home-compat {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 5px 8px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+
+  .admin-home-compat-high,
+  .admin-home-compat-waitlist {
+    background: #ecfdf5;
+    color: #047857;
+  }
+
+  .admin-home-compat-medium {
+    background: var(--brand-50);
+    color: var(--brand-700);
+  }
+
+  .admin-home-compat-low {
+    background: #f1f5f9;
+    color: #64748b;
+  }
+
+  .admin-home-candidate-meta {
+    margin-top: 5px;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.4;
+  }
+
+  .admin-home-reason-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-top: 11px;
+  }
+
+  .admin-home-reason {
+    border-radius: 999px;
+    background: #f8fafc;
+    padding: 5px 8px;
+    color: #475569;
+    font-size: 9px;
+    font-weight: 700;
+  }
+
+  .admin-home-drawer-footer {
+    border-top: 1px solid #eef2f7;
+    border-bottom: 0;
+    background: rgba(255, 255, 255, .96);
+    box-shadow: 0 -16px 36px rgba(15, 23, 42, .05);
+  }
+
+  .admin-home-prepare-button {
+    display: inline-flex;
+    min-height: 46px;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    border: 0;
+    border-radius: 16px;
+    background: #e2e8f0;
+    color: #94a3b8;
+    cursor: not-allowed;
+    padding: 0 18px;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .admin-home-prepare-button.is-active {
+    background: var(--brand-600);
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 14px 30px rgba(255, 222, 212, .18);
+  }
+
+  .admin-home-message-modal {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    z-index: 2147483647;
+    display: none;
+    width: min(92vw, 680px);
+    max-height: 90vh;
+    overflow-y: auto;
+    border-radius: 30px;
+    background: #fff;
+    box-shadow: 0 24px 72px rgba(255, 222, 212, .16);
+    transform: translate(-50%, -50%);
+  }
+
+  .admin-home-message-modal.open {
+    display: block;
+  }
+
+  .admin-home-message-body {
+    display: grid;
+    gap: 14px;
+    padding: 22px;
+  }
+
+  .admin-home-message-card {
+    border: 1px solid var(--brand-100);
+    border-radius: 20px;
+    background: rgba(255, 222, 212, .65);
+    padding: 16px;
+  }
+
+  .admin-home-message-card textarea {
+    min-height: 132px;
+    width: 100%;
+    resize: vertical;
+    border: 1px solid var(--brand-100);
+    border-radius: 18px;
+    background: #fff;
+    padding: 12px 14px;
+    color: #334155;
+    font-size: 14px;
+    font-weight: 650;
+    line-height: 1.6;
+    outline: 0;
+  }
+
+  .admin-home-message-card textarea:focus {
+    border-color: var(--brand-300);
+    box-shadow: 0 0 0 4px var(--brand-100);
+  }
+
+  .admin-home-result-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .admin-home-result-button {
+    border: 1px solid #e2e8f0;
+    border-radius: 13px;
+    background: #fff;
+    color: #475569;
+    padding: 10px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .admin-home-result-button.is-selected {
+    border-color: var(--brand-300);
+    background: var(--brand-50);
+    color: var(--brand-700);
+  }
+
+  @media (max-width: 1180px) {
+    .admin-home-summary-grid,
+    .admin-home-main-grid {
+      grid-template-columns: 1fr;
+    }
+
+  }
+
+  @media (max-width: 820px) {
+    .admin-home-topbar,
+    .admin-home-section-header,
+    .admin-home-assistant-strip {
+      align-items: stretch;
+      grid-template-columns: 1fr;
+      flex-direction: column;
+    }
+
+    .admin-home-actions {
+      justify-content: flex-start;
+    }
+
+    .admin-home-summary,
+    .admin-home-panel-header {
+      padding: 20px;
+    }
+
+    .admin-home-summary-metrics,
+    .admin-home-result-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .admin-home-opportunity-foot,
+    .admin-home-drawer-footer > div {
+      align-items: stretch;
+      flex-direction: column;
+    }
+
+    .admin-home-upcoming-footer {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .admin-home-appointment-client-pane {
+      display: none;
+    }
+
+    .admin-home-appointment-drawer {
+      width: 100vw;
+    }
+
+    .admin-home-appointment-drawer-header,
+    .admin-home-appointment-drawer-body {
+      padding-left: 20px;
+      padding-right: 20px;
+    }
+  }
+</style>
+
+<%= turbo_stream_from(*LiveStreams.admin_appointments(@business)) %>
+
+<section class="admin-home" data-admin-home data-controller="home-appointments">
+  <div class="admin-home-topbar">
+    <div>
+      <span class="admin-home-health"><%= dashboard.status_label %></span>
+      <h1 class="admin-home-title">Buen día, <%= dashboard.greeting_name %>.</h1>
+      <p class="admin-home-subtitle"><%= dashboard.hero_intro_copy %>.</p>
+    </div>
+
+    <div class="admin-home-actions">
+      <%= link_to admin_calendar_path, class: "admin-home-button", data: { turbo_frame: "_top" } do %>
+        <%= icons.fetch(:calendar).html_safe %>
+        Abrir calendario
+      <% end %>
+      <%= link_to admin_calendar_path, class: "admin-home-dark-button", data: { turbo_frame: "_top" } do %>
+        <%= icons.fetch(:plus).html_safe %>
+        Nuevo turno
+      <% end %>
+    </div>
+  </div>
+
+  <section class="admin-home-summary">
+    <div class="admin-home-summary-grid">
+      <div>
+        <div class="flex flex-wrap items-center gap-3">
+          <span class="admin-home-pill"><%= icons.fetch(:sparkles).html_safe %> Resumen de Dog Grooming IA</span>
+          <span class="admin-home-updated">Actualizado ahora</span>
+        </div>
+
+        <p class="admin-home-kicker"><%= dashboard.opportunity_summary_kicker %></p>
+        <h2 class="admin-home-summary-title"><%= dashboard.opportunity_summary_title %></h2>
+        <p class="admin-home-summary-copy"><%= dashboard.opportunity_summary_copy %></p>
+
+        <div class="admin-home-hero-actions">
+          <%= link_to admin_calendar_path(date: dashboard.date.iso8601), class: "admin-home-primary-hero-button", data: { turbo_frame: "_top" } do %>
+            Abrir calendario
+            <%= icons.fetch(:arrow).html_safe %>
+          <% end %>
+          <button type="button" class="admin-home-secondary-hero-button" data-admin-home-refresh>
+            Actualizar
+            <%= icons.fetch(:refresh).html_safe %>
+          </button>
+        </div>
+      </div>
+
+      <% summary_metrics = dashboard.opportunity_summary_metrics %>
+      <div class="admin-home-summary-metrics">
+        <% summary_metrics.first(2).each do |metric| %>
+          <article class="admin-home-summary-metric">
+            <p class="admin-home-summary-label"><%= metric.label %></p>
+            <p class="admin-home-summary-value"><%= metric.value %></p>
+            <p class="admin-home-summary-hint"><%= metric.hint %></p>
+          </article>
+        <% end %>
+
+        <% summary_metric = summary_metrics.last %>
+        <article class="admin-home-summary-metric admin-home-summary-metric-wide">
+          <div class="admin-home-summary-wide-row">
+            <div>
+              <p class="admin-home-summary-label" style="color: var(--brand-600);"><%= summary_metric.label %></p>
+              <p class="admin-home-summary-value" style="color: var(--brand-900);"><%= summary_metric.value %></p>
+              <p class="admin-home-summary-hint" style="color: var(--brand-700);"><%= summary_metric.hint %></p>
+            </div>
+            <span class="admin-home-summary-icon"><%= icons.fetch(summary_metric.label == "Próximo hueco" ? :calendar : :dollar).html_safe %></span>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <div class="admin-home-main-grid">
+    <section class="admin-home-panel"
+      data-controller="customers-results-loader"
+      data-customers-results-loader-frame-id-value="home_upcoming_appointments"
+      data-customers-results-loader-preserve-scroll-value="true"
+      data-action="turbo:before-fetch-request->customers-results-loader#start turbo:frame-load->customers-results-loader#stop turbo:fetch-request-error->customers-results-loader#stop">
+      <div class="admin-home-panel-header">
+        <div>
+          <h2 class="admin-home-panel-title">Próximos turnos</h2>
+          <p class="admin-home-section-copy">Los próximos turnos agendados.</p>
+        </div>
+        <%= link_to "Ver calendario", admin_calendar_path, class: "admin-home-panel-link", data: { turbo_frame: "_top" } %>
+      </div>
+
+      <%= render "admin/home/upcoming_appointments",
+        dashboard: dashboard,
+        upcoming_appointments: @upcoming_appointments,
+        upcoming_appointments_pagy: @upcoming_appointments_pagy,
+        icons: icons %>
+
+      <span class="admin-results-loader" data-customers-results-loader-target="indicator" aria-hidden="true">
+        <span class="admin-results-loader-ring"></span>
+      </span>
+    </section>
+
+  </div>
+
+  <section class="admin-home-assistant-strip">
+    <span class="admin-home-assistant-icon"><%= icons.fetch(:sparkles).html_safe %></span>
+    <div>
+      <p class="text-xs font-bold uppercase tracking-[.14em] text-brand-700">Asistente diario</p>
+      <h2 class="mt-1 text-xl font-bold tracking-tight text-slate-950">Preguntá qué debería hacer primero.</h2>
+      <p class="mt-1 text-sm font-bold leading-6 text-slate-500">El asistente consulta turnos, comprobantes, clientes y facturación de <%= @business.name %>.</p>
+    </div>
+    <%= link_to admin_dashboard_path, class: "admin-home-dark-button" do %>
+      Abrir asistente
+      <%= icons.fetch(:arrow).html_safe %>
+    <% end %>
+  </section>
+
+  <div class="admin-home-appointment-overlay" data-home-appointments-target="overlay" data-action="click->home-appointments#close"></div>
+  <aside class="admin-home-appointment-drawer" data-home-appointments-target="drawer" aria-hidden="true">
+    <button type="button" class="admin-home-icon-button" style="position:absolute;right:20px;top:18px;z-index:1" data-action="click->home-appointments#close" aria-label="Cerrar detalle del turno">
+      <%= icons.fetch(:x).html_safe %>
+    </button>
+    <div class="admin-home-appointment-drawer-content" data-home-appointments-target="content"></div>
+  </aside>
+</section>
+
+<script>
+  (() => {
+    function bindAdminHome() {
+      const root = document.querySelector("[data-admin-home]");
+      if (!root || root.dataset.adminHomeReady === "true") return;
+
+      root.dataset.adminHomeReady = "true";
+
+      root.querySelector("[data-admin-home-refresh]")?.addEventListener("click", event => {
+        const button = event.currentTarget;
+        button.style.opacity = ".65";
+        setTimeout(() => window.location.reload(), 220);
+      });
+    }
+
+    document.addEventListener("turbo:load", bindAdminHome);
+    bindAdminHome();
+  })();
+</script>

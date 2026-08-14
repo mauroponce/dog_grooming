@@ -1,0 +1,38 @@
+<% content_for :email_preheader, "Tenés una nueva reserva para revisar en #{@business.name}." %>
+<% content_for :email_badge, "Reserva" %>
+<% content_for :email_status, "Nueva solicitud" %>
+<% content_for :email_footer_note, "Este email fue enviado porque ingresó una nueva reserva online." %>
+
+<h1>Nueva reserva para revisar</h1>
+
+<div class="email-card" style="margin-top:24px;">
+  <div class="email-card-inner">
+    <div class="email-card-title">Datos de la reserva</div>
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top:10px;">
+      <tr class="email-detail-row">
+        <td class="email-detail-label">Cliente</td>
+        <td class="email-detail-value"><%= @appointment.customer_name %></td>
+      </tr>
+      <tr class="email-detail-row">
+        <td class="email-detail-label">WhatsApp</td>
+        <td class="email-detail-value"><%= @appointment.customer_phone %></td>
+      </tr>
+      <tr class="email-detail-row">
+        <td class="email-detail-label">Servicio</td>
+        <td class="email-detail-value"><%= @appointment.service.name %></td>
+      </tr>
+      <tr class="email-detail-row">
+        <td class="email-detail-label">Turno</td>
+        <td class="email-detail-value"><%= CustomerDateFormatter.datetime_label(@appointment.starts_at) %></td>
+      </tr>
+      <tr>
+        <td class="email-detail-label">Estado</td>
+        <td class="email-detail-value"><%= @appointment.status_label %></td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<p>
+  <%= link_to "Ver en calendario", @admin_calendar_url, class: "email-button button" %>
+</p>

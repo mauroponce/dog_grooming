@@ -1,0 +1,78 @@
+es:
+  date:
+    formats:
+      default: "%d/%m/%Y"
+      short: "%d/%m/%Y"
+  time:
+    formats:
+      default: "%d/%m/%Y %H:%M"
+      short: "%d/%m/%Y %H:%M"
+  datetime:
+    distance_in_words:
+      about_x_hours:
+        one: "alrededor de una hora"
+        other: "alrededor de %{count} horas"
+      about_x_months:
+        one: "alrededor de un mes"
+        other: "alrededor de %{count} meses"
+      about_x_years:
+        one: "alrededor de un año"
+        other: "alrededor de %{count} años"
+      almost_x_years:
+        one: "casi un año"
+        other: "casi %{count} años"
+      half_a_minute: "medio minuto"
+      less_than_x_minutes:
+        one: "menos de un minuto"
+        other: "menos de %{count} minutos"
+      less_than_x_seconds:
+        one: "menos de un segundo"
+        other: "menos de %{count} segundos"
+      over_x_years:
+        one: "más de un año"
+        other: "más de %{count} años"
+      x_days:
+        one: "un día"
+        other: "%{count} días"
+      x_minutes:
+        one: "un minuto"
+        other: "%{count} minutos"
+      x_months:
+        one: "un mes"
+        other: "%{count} meses"
+      x_seconds:
+        one: "un segundo"
+        other: "%{count} segundos"
+      x_years:
+        one: "un año"
+        other: "%{count} años"
+  activerecord:
+    models:
+      user: "usuario"
+    attributes:
+      user:
+        email_address: "Email"
+        name: "Nombre"
+        password: "Contraseña"
+        password_confirmation: "Confirmación de contraseña"
+        phone: "Teléfono"
+        profile_photo: "Foto de perfil"
+    errors:
+      models:
+        user:
+          attributes:
+            password:
+              too_short: "debe tener al menos %{count} caracteres"
+            password_confirmation:
+              confirmation: "no coincide con la contraseña"
+  errors:
+    format: "%{attribute} %{message}"
+    messages:
+      blank: "no puede estar vacío"
+      confirmation: "no coincide"
+      empty: "no puede estar vacío"
+      invalid: "no es válido"
+      too_short:
+        one: "es demasiado corto (mínimo %{count} caracter)"
+        other: "es demasiado corto (mínimo %{count} caracteres)"
+      taken: "ya está en uso"

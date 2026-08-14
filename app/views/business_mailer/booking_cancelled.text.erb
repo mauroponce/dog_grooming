@@ -1,0 +1,7 @@
+Un cliente canceló un turno
+
+Cliente: <%= @appointment.customer_name %>
+Servicio: <%= @appointment.service.name %>
+Turno: <%= CustomerDateFormatter.datetime_label(@appointment.starts_at) %>
+
+Ver turno: <%= @url %>

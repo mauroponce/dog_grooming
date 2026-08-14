@@ -1,0 +1,518 @@
+<% content_for :title, "Dog Grooming Admin | Suscripción" %>
+<% content_for :admin_section_title, "Suscripción" %>
+
+<% money = ->(cents) { number_to_currency(cents.to_i / 100.0, unit: "$", precision: 0, delimiter: ".", separator: ",") } %>
+<% date_label = ->(value) { value.present? ? l(value.to_date, format: :long) : "Sin fecha" } %>
+<% short_date_label = ->(value) { value.present? ? l(value.to_date, format: "%-d %b %Y") : "Pendiente" } %>
+<% status_key = @subscription.normalized_status %>
+<% active_status = status_key.in?(%w[active authorized trialing]) %>
+<% status_classes = {
+  "active" => "bg-emerald-50 text-emerald-700 ring-emerald-100",
+  "authorized" => "bg-emerald-50 text-emerald-700 ring-emerald-100",
+  "trialing" => "bg-blue-50 text-blue-700 ring-blue-100",
+  "pending_review" => "bg-amber-50 text-amber-700 ring-amber-100",
+  "payment_due" => "bg-amber-50 text-amber-700 ring-amber-100",
+  "overdue" => "bg-rose-50 text-rose-700 ring-rose-100",
+  "restricted" => "bg-rose-50 text-rose-700 ring-rose-100",
+  "suspended" => "bg-zinc-100 text-zinc-700 ring-zinc-200",
+  "cancelled" => "bg-zinc-100 text-zinc-700 ring-zinc-200"
+} %>
+<% invoice_status_label = ->(invoice) do
+  {
+    "open" => "Pendiente",
+    "pending_review" => "En revisión",
+    "paid" => "Aprobado",
+    "rejected" => "Rechazado",
+    "overdue" => "Vencido",
+    "void" => "Anulado"
+  }.fetch(invoice.status, invoice.status.to_s.humanize)
+end %>
+<% invoice_status_classes = ->(invoice) do
+  {
+    "open" => "bg-amber-50 text-amber-700 ring-amber-100",
+    "pending_review" => "bg-blue-50 text-blue-700 ring-blue-100",
+    "paid" => "bg-emerald-50 text-emerald-700 ring-emerald-100",
+    "rejected" => "bg-rose-50 text-rose-700 ring-rose-100",
+    "overdue" => "bg-rose-50 text-rose-700 ring-rose-100",
+    "void" => "bg-zinc-100 text-zinc-600 ring-zinc-200"
+  }.fetch(invoice.status, "bg-zinc-100 text-zinc-700 ring-zinc-200")
+end %>
+<% proof_label = ->(proof) do
+  next "Sin comprobante" if proof.blank?
+
+  {
+    "pending_review" => "Comprobante en revisión",
+    "approved" => "Comprobante aprobado",
+    "rejected" => "Comprobante rechazado",
+    "replaced" => "Comprobante reemplazado"
+  }.fetch(proof.status, proof.status.to_s.humanize)
+end %>
+<% next_due_on = @current_invoice&.due_on || @subscription.next_due_on || @subscription.trial_ends_on || @subscription.paid_until %>
+<% next_period_start = @current_invoice&.period_start || @subscription.current_period_start || next_due_on %>
+<% next_period_end = @current_invoice&.period_end || @subscription.current_period_end || next_period_start&.advance(months: @subscription.billing_period_months.to_i.presence || 1) %>
+<% subscription_name = Business::SUBSCRIPTION_DETAILS.fetch(:name) %>
+<% payment_details = [
+  [ "Alias", Billing::TransferDetails.alias ],
+  [ "CBU/CVU", Billing::TransferDetails.account ],
+  [ "Titular", Billing::TransferDetails.holder ],
+  [ "CUIT", Billing::TransferDetails.tax_id ]
+] %>
+<% icons = {
+  wallet: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M19 7V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7h-5a2 2 0 0 1 0-4h5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M16 11h.01" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>',
+  crown: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m3 8 5 4 4-7 4 7 5-4-2 11H5L3 8Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>',
+  upload: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M5 20h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  arrow_down: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  calendar: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 2v4M16 2v4M4 10h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="4" y="5" width="16" height="17" rx="3" stroke="currentColor" stroke-width="2"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m5 13 4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  users: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="9.5" cy="7" r="4" stroke="currentColor" stroke-width="2"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  file: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M14 2v6h6M8 13h8M8 17h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  copy: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 8V5.8C8 4.8 8.8 4 9.8 4h8.4c1 0 1.8.8 1.8 1.8v8.4c0 1-.8 1.8-1.8 1.8H16" stroke="currentColor" stroke-width="2"/><path d="M4 9.8C4 8.8 4.8 8 5.8 8h8.4c1 0 1.8.8 1.8 1.8v8.4c0 1-.8 1.8-1.8 1.8H5.8C4.8 20 4 19.2 4 18.2V9.8Z" stroke="currentColor" stroke-width="2"/></svg>',
+  alert: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 9v4M12 17h.01M10.3 3.9 2.5 18a2 2 0 0 0 1.8 3h15.4a2 2 0 0 0 1.8-3L13.7 3.9a2 2 0 0 0-3.4 0Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  external: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M14 3h7v7M21 3l-9 9M11 5H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+} %>
+
+<style>
+  .billing-page {
+    color: #0f172a;
+  }
+
+  .billing-gradient-text {
+    background: linear-gradient(100deg, #ffded4 0%, #ffded4 48%, #ffded4 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .billing-plan-hero {
+    isolation: isolate;
+    background-color: #842D21;
+    background-image:
+      radial-gradient(circle at 82% -8%, rgba(255,255,255,.24), transparent 34%),
+      radial-gradient(circle at 12% 115%, rgba(255, 222, 212, .24), transparent 36%),
+      linear-gradient(132deg, #842D21 0%, #A63826 46%, #A63826 100%);
+  }
+
+  .billing-plan-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: .7;
+    background-image:
+      linear-gradient(rgba(255,255,255,.055) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.055) 1px, transparent 1px);
+    background-size: 26px 26px;
+  }
+
+  .billing-pulse {
+    position: relative;
+  }
+
+  .billing-pulse::before {
+    content: "";
+    position: absolute;
+    inset: -5px;
+    border-radius: 999px;
+    background: rgba(34,197,94,.22);
+    animation: billing-pulse-ring 2s infinite;
+  }
+
+  @keyframes billing-pulse-ring {
+    0% { opacity: .8; transform: scale(.7); }
+    70%, 100% { opacity: 0; transform: scale(1.7); }
+  }
+
+  .billing-card {
+    border: 1px solid rgba(226,232,240,.85);
+    border-radius: 28px;
+    background: #fff;
+    box-shadow: 0 10px 30px rgba(255, 222, 212, .08);
+  }
+
+  .billing-tab-panel[hidden] {
+    display: none;
+  }
+
+  .billing-tab-button.is-active {
+    background: #fff;
+    color: #A63826;
+    box-shadow: 0 5px 15px rgba(255, 222, 212, .08);
+  }
+
+  .billing-icon svg,
+  .billing-button svg,
+  .billing-copy-button svg {
+    width: 18px;
+    height: 18px;
+  }
+</style>
+
+<section class="billing-page">
+  <div class="mb-6 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
+    <div>
+      <div class="mb-2 flex items-center gap-2">
+        <span class="billing-icon grid h-7 w-7 place-items-center rounded-xl bg-brand-50 text-brand-700 ring-1 ring-brand-100"><%= icons.fetch(:wallet).html_safe %></span>
+        <span class="text-xs font-bold uppercase tracking-[.16em] text-brand-700">Suscripción</span>
+      </div>
+      <h1 class="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+        Tu suscripción, <span class="billing-gradient-text">sin sorpresas</span>
+      </h1>
+      <p class="mt-2 max-w-2xl text-sm font-semibold leading-6 text-slate-500 sm:text-base">
+        Revisá el precio mensual, los próximos pagos y todo tu historial de facturación.
+      </p>
+    </div>
+
+    <div class="inline-flex self-start rounded-2xl bg-slate-100 p-1 lg:self-auto" data-billing-tabs>
+      <button type="button" class="billing-tab-button is-active rounded-xl px-4 py-2.5 text-xs font-bold text-slate-500 transition" data-billing-tab-button="resumen">Resumen</button>
+      <button type="button" class="billing-tab-button rounded-xl px-4 py-2.5 text-xs font-bold text-slate-500 transition" data-billing-tab-button="facturacion">Facturación</button>
+      <button type="button" class="billing-tab-button rounded-xl px-4 py-2.5 text-xs font-bold text-slate-500 transition" data-billing-tab-button="historial">Historial</button>
+    </div>
+  </div>
+
+  <section id="resumen" class="billing-tab-panel" data-billing-tab-panel="resumen">
+    <article class="billing-plan-hero relative overflow-hidden rounded-[32px] p-5 text-white shadow-[0_18px_50px_rgba(255, 222, 212, .10)] sm:p-7 lg:p-8">
+      <div class="pointer-events-none absolute -right-20 -top-20 z-[1] h-72 w-72 rounded-full bg-white/10 blur-3xl"></div>
+      <div class="pointer-events-none absolute -bottom-28 left-1/3 z-[1] h-64 w-64 rounded-full bg-brand-300/15 blur-3xl"></div>
+
+      <div class="relative z-10 grid gap-8 xl:grid-cols-[1.2fr_.8fr] xl:items-center">
+        <div>
+          <div class="flex flex-wrap items-center gap-3">
+            <span class="billing-icon inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-bold backdrop-blur">
+              <%= icons.fetch(:crown).html_safe %>
+              Suscripción actual
+            </span>
+            <span class="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold ring-1 ring-inset <%= status_classes.fetch(status_key, 'bg-white/10 text-brand-100 ring-white/15') %>">
+              <% if active_status %><span class="billing-pulse h-2 w-2 rounded-full bg-emerald-300"></span><% end %>
+              <%= subscription_status_label(status_key) %>
+            </span>
+          </div>
+
+          <h2 class="mt-5 text-3xl font-bold tracking-tight sm:text-4xl"><%= subscription_name %></h2>
+          <p class="mt-3 max-w-2xl text-sm font-semibold leading-6 text-brand-100 sm:text-base">
+            Precio fijo mensual para usar reservas, servicios, clientes, comprobantes, Mercado Pago, recordatorios y asistente con IA.
+          </p>
+
+          <div class="mt-7 flex flex-wrap items-end gap-x-3 gap-y-1">
+            <span class="text-4xl font-bold tracking-tight sm:text-5xl"><%= money.call(@billing_amount.base_amount_cents) %></span>
+            <span class="pb-1 text-sm font-bold text-brand-100">/ mes</span>
+          </div>
+          <p class="mt-2 text-xs font-semibold text-brand-200">
+            Sin comisión por reserva y sin adicional por cantidad de profesionales.
+          </p>
+
+          <div class="mt-7 flex flex-wrap gap-3">
+            <% if @current_invoice.present? %>
+              <button type="button" class="billing-button inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-brand-700 shadow-lg shadow-brand-950/20 transition hover:-translate-y-0.5" data-billing-open-upload>
+                <%= icons.fetch(:upload).html_safe %>
+                Subir comprobante
+              </button>
+            <% end %>
+            <button type="button" class="billing-button inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-sm font-bold text-white backdrop-blur transition hover:bg-white/15" data-billing-tab-button="facturacion">
+              Ver facturación
+              <%= icons.fetch(:arrow_down).html_safe %>
+            </button>
+          </div>
+        </div>
+
+        <div class="rounded-[28px] border border-white/15 bg-white/10 p-5 backdrop-blur-md sm:p-6">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <p class="text-xs font-bold uppercase tracking-[.14em] text-brand-200">Próximo pago</p>
+              <p class="mt-2 text-2xl font-bold"><%= date_label.call(next_due_on) %></p>
+              <p class="mt-1 text-sm font-semibold text-brand-100">
+                <% if next_period_start.present? && next_period_end.present? %>
+                  Período <%= l(next_period_start, format: "%B %Y") %>
+                <% else %>
+                  Sin período abierto
+                <% end %>
+              </p>
+            </div>
+            <span class="billing-icon grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-white/10"><%= icons.fetch(:calendar).html_safe %></span>
+          </div>
+
+          <div class="my-5 h-px bg-white/15"></div>
+
+          <div class="space-y-3 text-sm">
+            <div class="flex items-center justify-between gap-4">
+              <span class="text-brand-100">Suscripción mensual</span>
+              <span class="font-bold"><%= money.call(@billing_amount.base_amount_cents) %></span>
+            </div>
+            <div class="flex items-center justify-between gap-4 border-t border-white/15 pt-3">
+              <span class="font-bold text-white">Total próximo pago</span>
+              <span class="text-xl font-bold"><%= money.call(@current_invoice&.amount_cents || @billing_amount.total_amount_cents) %></span>
+            </div>
+          </div>
+
+          <div class="mt-5 rounded-2xl bg-white/10 px-4 py-3">
+            <div class="flex items-center gap-3">
+              <span class="billing-icon shrink-0 text-emerald-200"><%= icons.fetch(:check).html_safe %></span>
+              <p class="text-xs font-semibold leading-5 text-brand-100">
+                <% if @current_invoice&.pending_review? %>
+                  Tu comprobante está en revisión.
+                <% elsif @current_invoice.present? %>
+                  Tenés una factura pendiente para este período.
+                <% else %>
+                  Tu cuenta no requiere ninguna acción ahora.
+                <% end %>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <div class="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <article class="billing-card p-5">
+        <div class="flex items-center justify-between">
+          <span class="billing-icon grid h-10 w-10 place-items-center rounded-2xl bg-emerald-50 text-emerald-700"><%= icons.fetch(:check).html_safe %></span>
+          <span class="rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ring-1 <%= status_classes.fetch(status_key, 'bg-zinc-100 text-zinc-700 ring-zinc-200') %>"><%= subscription_status_label(status_key) %></span>
+        </div>
+        <p class="mt-5 text-sm font-semibold text-slate-500">Estado</p>
+        <p class="mt-1 text-xl font-bold text-slate-900"><%= active_status ? "Suscripción activa" : subscription_status_label(status_key) %></p>
+      </article>
+
+      <article class="billing-card p-5">
+        <div class="flex items-center justify-between">
+          <span class="billing-icon grid h-10 w-10 place-items-center rounded-2xl bg-brand-50 text-brand-700"><%= icons.fetch(:users).html_safe %></span>
+          <span class="text-xs font-bold text-brand-700"><%= @billing_amount.active_professionals_count %> activos</span>
+        </div>
+        <p class="mt-5 text-sm font-semibold text-slate-500">Profesionales con agenda</p>
+        <p class="mt-1 text-xl font-bold text-slate-900">Precio fijo</p>
+        <p class="mt-2 text-xs font-semibold leading-5 text-slate-500">La cantidad de profesionales no modifica el valor mensual.</p>
+      </article>
+
+      <article class="billing-card p-5">
+        <div class="flex items-center justify-between">
+          <span class="billing-icon grid h-10 w-10 place-items-center rounded-2xl bg-blue-50 text-blue-700"><%= icons.fetch(:calendar).html_safe %></span>
+          <span class="text-xs font-bold text-slate-400"><%= @subscription.billing_period_months.to_i == 1 ? "Mensual" : "#{@subscription.billing_period_months} meses" %></span>
+        </div>
+        <p class="mt-5 text-sm font-semibold text-slate-500">Ciclo de facturación</p>
+        <p class="mt-1 text-xl font-bold text-slate-900"><%= next_due_on.present? ? "Vence #{short_date_label.call(next_due_on)}" : "Sin vencimiento" %></p>
+      </article>
+
+      <article class="billing-card p-5">
+        <div class="flex items-center justify-between">
+          <span class="billing-icon grid h-10 w-10 place-items-center rounded-2xl bg-amber-50 text-amber-700"><%= icons.fetch(:file).html_safe %></span>
+          <span class="text-xs font-bold text-slate-400"><%= @invoices.count %> registros</span>
+        </div>
+        <p class="mt-5 text-sm font-semibold text-slate-500">Historial</p>
+        <p class="mt-1 text-xl font-bold text-slate-900"><%= @invoices.to_a.count(&:paid?) %> pagos aprobados</p>
+      </article>
+    </div>
+  </section>
+
+  <section id="facturacion" class="billing-tab-panel" data-billing-tab-panel="facturacion" hidden>
+    <div class="grid gap-6 xl:grid-cols-[1.1fr_.9fr]">
+      <article class="billing-card p-5 sm:p-6">
+        <div class="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p class="text-xs font-bold uppercase tracking-[.14em] text-brand-700">Importe actual</p>
+            <p class="mt-2 text-4xl font-bold tracking-tight text-slate-900"><%= money.call(@billing_amount.total_amount_cents) %></p>
+            <p class="mt-1 text-sm font-semibold text-slate-500"><%= next_due_on.present? ? "Vence el #{date_label.call(next_due_on)}" : "Sin factura abierta" %></p>
+          </div>
+          <% if @current_invoice.present? %>
+            <button type="button" class="billing-button inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-brand-500/20 transition hover:bg-brand-700" data-billing-open-upload>
+              <%= icons.fetch(:upload).html_safe %>
+              Subir comprobante
+            </button>
+          <% end %>
+        </div>
+
+        <div class="mt-6">
+          <h3 class="text-sm font-bold text-slate-900">Detalle</h3>
+          <div class="mt-3 divide-y divide-slate-100 rounded-2xl border border-slate-100">
+            <div class="flex items-center justify-between px-4 py-4 text-sm">
+              <div>
+                <p class="font-bold text-slate-800"><%= subscription_name %></p>
+                <p class="mt-1 text-xs text-slate-500">Precio fijo mensual</p>
+              </div>
+              <span class="font-bold text-slate-800"><%= money.call(@billing_amount.base_amount_cents) %></span>
+            </div>
+            <div class="flex items-center justify-between bg-brand-50/50 px-4 py-4 text-sm">
+              <p class="font-bold text-slate-900">Total</p>
+              <span class="text-lg font-bold text-brand-700"><%= money.call(@billing_amount.total_amount_cents) %></span>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="billing-card p-5 sm:p-6">
+        <div class="flex items-center justify-between gap-4">
+          <div>
+            <h2 class="text-xl font-bold tracking-tight text-slate-900">Datos para transferir</h2>
+            <p class="mt-1 text-sm font-semibold text-slate-500">Usá estos datos al realizar el pago de Dog Grooming.</p>
+          </div>
+          <span class="billing-icon grid h-11 w-11 place-items-center rounded-2xl bg-brand-50 text-brand-700"><%= icons.fetch(:wallet).html_safe %></span>
+        </div>
+
+        <div class="mt-6 space-y-3">
+          <% payment_details.each do |label, value| %>
+            <div class="rounded-2xl border border-slate-100 bg-slate-50 p-4" data-controller="copy-text" data-copy-text-preserve-content-value="true">
+              <p class="text-[10px] font-bold uppercase tracking-[.14em] text-slate-400"><%= label %></p>
+              <div class="mt-2 flex items-center justify-between gap-3">
+                <p class="break-all <%= label.in?(%w[Alias CBU/CVU CUIT]) ? 'font-mono' : '' %> text-sm font-bold text-slate-900"><%= value.presence || "Pendiente de configurar" %></p>
+                <% if value.present? %>
+                  <span class="sr-only" data-copy-text-target="source"><%= value %></span>
+                  <button type="button" class="billing-copy-button grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white text-slate-500 shadow-sm ring-1 ring-slate-100 transition hover:text-brand-700" data-copy-text-target="button" data-action="copy-text#copy" title="Copiar" aria-label="Copiar <%= label %>">
+                    <%= icons.fetch(:copy).html_safe %>
+                  </button>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+
+        <% unless payment_details.any? { |_label, value| value.present? } %>
+          <div class="mt-5 rounded-2xl bg-amber-50 px-4 py-3 ring-1 ring-amber-100">
+            <div class="flex items-start gap-3">
+              <span class="billing-icon mt-0.5 shrink-0 text-amber-700"><%= icons.fetch(:alert).html_safe %></span>
+              <p class="text-xs font-semibold leading-5 text-amber-800">
+                Estamos configurando los datos de transferencia. Si necesitás pagar ahora, contactanos desde el canal habitual.
+              </p>
+            </div>
+          </div>
+        <% end %>
+      </article>
+    </div>
+  </section>
+
+  <section id="historial" class="billing-tab-panel" data-billing-tab-panel="historial" hidden>
+    <article class="billing-card overflow-hidden">
+      <div class="flex flex-col justify-between gap-4 border-b border-slate-100 p-5 sm:flex-row sm:items-center sm:p-6">
+        <div>
+          <h2 class="text-xl font-bold tracking-tight text-slate-900">Historial de pagos</h2>
+          <p class="mt-1 text-sm font-semibold text-slate-500">Todos los pagos, facturas y comprobantes de tu suscripción.</p>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full min-w-[820px]">
+          <thead>
+            <tr class="border-b border-slate-100 bg-slate-50/80 text-left">
+              <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-[.14em] text-slate-400">Período</th>
+              <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-[.14em] text-slate-400">Vencimiento</th>
+              <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-[.14em] text-slate-400">Importe</th>
+              <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-[.14em] text-slate-400">Estado</th>
+              <th class="px-6 py-4 text-right text-[10px] font-bold uppercase tracking-[.14em] text-slate-400">Comprobante</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            <% @invoices.each do |invoice| %>
+              <% proof = invoice.current_proof %>
+              <tr class="transition hover:bg-brand-50/30">
+                <td class="px-6 py-5">
+                  <p class="text-sm font-bold text-slate-800"><%= l(invoice.period_start, format: "%B %Y").capitalize %></p>
+                  <p class="mt-1 text-xs text-slate-500"><%= subscription_name %></p>
+                </td>
+                <td class="px-6 py-5 text-sm font-semibold text-slate-600"><%= short_date_label.call(invoice.due_on) %></td>
+                <td class="px-6 py-5 text-sm font-bold text-slate-800"><%= money.call(invoice.amount_cents) %></td>
+                <td class="px-6 py-5">
+                  <span class="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold ring-1 <%= invoice_status_classes.call(invoice) %>">
+                    <%= invoice_status_label.call(invoice) %>
+                  </span>
+                  <% if proof.present? %>
+                    <p class="mt-2 text-xs font-semibold text-slate-500"><%= proof_label.call(proof) %></p>
+                  <% end %>
+                </td>
+                <td class="px-6 py-5 text-right">
+                  <% if proof&.file&.attached? %>
+                    <%= link_to rails_blob_path(proof.file, disposition: "attachment"), class: "billing-button inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-brand-700 transition hover:bg-brand-50" do %>
+                      Ver archivo
+                      <%= icons.fetch(:external).html_safe %>
+                    <% end %>
+                  <% elsif invoice == @current_invoice %>
+                    <button type="button" class="billing-button inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-brand-700 transition hover:bg-brand-50" data-billing-open-upload>
+                      Subir comprobante
+                      <%= icons.fetch(:upload).html_safe %>
+                    </button>
+                  <% else %>
+                    <span class="text-xs font-semibold text-slate-400">Sin archivo</span>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+
+            <% if @invoices.blank? %>
+              <tr>
+                <td colspan="5" class="px-6 py-12 text-center">
+                  <p class="text-sm font-bold text-slate-800">Todavía no hay historial de pagos.</p>
+                  <p class="mt-1 text-sm font-semibold text-slate-500">Cuando se generen facturas, van a aparecer en esta tabla.</p>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </article>
+  </section>
+
+  <% if @current_invoice.present? %>
+    <div class="fixed inset-0 z-[2147483000] hidden items-center justify-center bg-slate-950/40 p-4 backdrop-blur-sm" data-billing-upload-modal>
+      <div class="w-full max-w-xl rounded-[30px] bg-white p-5 shadow-[0_28px_90px_rgba(255, 222, 212, .22)] sm:p-6">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <h2 class="text-2xl font-bold tracking-tight text-slate-900">Subir comprobante</h2>
+            <p class="mt-1 text-sm font-semibold leading-6 text-slate-500">
+              Factura <%= @current_invoice.reference_code %> · <%= money.call(@current_invoice.amount_cents) %>
+            </p>
+          </div>
+          <button type="button" class="grid h-10 w-10 place-items-center rounded-full bg-slate-100 text-xl font-semibold text-slate-500 hover:bg-slate-200" data-billing-close-upload aria-label="Cerrar">×</button>
+        </div>
+
+        <%= form_with url: upload_payment_proof_admin_billing_path, method: :post, multipart: true, data: { turbo: false }, class: "mt-6 space-y-4" do |form| %>
+          <label class="block rounded-[24px] border border-dashed border-slate-300 bg-slate-50 p-5 text-center transition hover:border-brand-300 hover:bg-brand-50/40">
+            <span class="billing-icon mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-white text-brand-700 shadow-sm"><%= icons.fetch(:upload).html_safe %></span>
+            <span class="mt-3 block text-sm font-bold text-slate-900">Elegí una imagen o PDF</span>
+            <span class="mt-1 block text-xs font-semibold text-slate-500">JPG, PNG, WebP o PDF de hasta 5 MB.</span>
+            <%= form.file_field :payment_proof, accept: SubscriptionPaymentProof::CONTENT_TYPES.join(","), required: true, class: "sr-only" %>
+          </label>
+
+          <div class="flex justify-end gap-3">
+            <button type="button" class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50" data-billing-close-upload>Cancelar</button>
+            <%= form.submit "Enviar comprobante", class: "cursor-pointer rounded-2xl bg-brand-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-brand-500/20 hover:bg-brand-700" %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</section>
+
+<script>
+  (() => {
+    const root = document.querySelector(".billing-page");
+    if (!root) return;
+
+    const panels = Array.from(root.querySelectorAll("[data-billing-tab-panel]"));
+    const buttons = Array.from(root.querySelectorAll("[data-billing-tab-button]"));
+    const setTab = (name) => {
+      panels.forEach((panel) => panel.hidden = panel.dataset.billingTabPanel !== name);
+      buttons.forEach((button) => button.classList.toggle("is-active", button.dataset.billingTabButton === name));
+      if (history.replaceState) history.replaceState(null, "", `#${name}`);
+    };
+
+    buttons.forEach((button) => {
+      button.addEventListener("click", () => setTab(button.dataset.billingTabButton));
+    });
+
+    const initial = ["resumen", "facturacion", "historial"].includes(location.hash.slice(1)) ? location.hash.slice(1) : "resumen";
+    setTab(initial);
+
+    const modal = root.querySelector("[data-billing-upload-modal]");
+    if (modal) {
+      root.querySelectorAll("[data-billing-open-upload]").forEach((button) => {
+        button.addEventListener("click", () => {
+          modal.classList.remove("hidden");
+          modal.classList.add("flex");
+        });
+      });
+
+      root.querySelectorAll("[data-billing-close-upload]").forEach((button) => {
+        button.addEventListener("click", () => {
+          modal.classList.add("hidden");
+          modal.classList.remove("flex");
+        });
+      });
+    }
+  })();
+</script>

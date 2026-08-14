@@ -1,0 +1,29 @@
+<div class="mx-auto max-w-3xl">
+  <%= render "progress", step: 2 %>
+  <h1 class="text-3xl font-semibold">Horario base</h1>
+  <p class="mt-2 text-slate-600">Configurá tu semana tipo.</p>
+
+  <%= form_with url: onboarding_schedule_path, method: :patch, class: "mt-6 rounded-lg border border-slate-200 bg-white p-6 shadow-sm", data: { controller: "schedule-copy" } do %>
+    <div class="mb-4 flex justify-end">
+      <button type="button" data-action="schedule-copy#copy" class="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium">Copiar horario a todos</button>
+    </div>
+    <div class="space-y-3">
+      <% @rules.each do |rule| %>
+        <div class="grid gap-3 rounded-md border border-slate-200 p-3 md:grid-cols-[140px_1fr_1fr] md:items-center">
+          <label class="flex items-center gap-2 font-medium">
+            <%= hidden_field_tag "rules[#{rule.weekday}][active]", "0" %>
+            <%= check_box_tag "rules[#{rule.weekday}][active]", "1", rule.active?, class: "h-4 w-4" %>
+            <%= rule.day_name %>
+          </label>
+          <%= time_field_tag "rules[#{rule.weekday}][start_time]", rule.start_time&.strftime("%H:%M"), class: "rounded-md border border-slate-300 px-3 py-2", data: { schedule_copy_target: "start" } %>
+          <%= time_field_tag "rules[#{rule.weekday}][end_time]", rule.end_time&.strftime("%H:%M"), class: "rounded-md border border-slate-300 px-3 py-2", data: { schedule_copy_target: "end" } %>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="mt-6 flex justify-between">
+      <%= link_to "Volver", root_path, class: "rounded-md border border-slate-300 px-4 py-2" %>
+      <%= submit_tag "Continuar", class: "rounded-md bg-slate-950 px-4 py-2 text-white cursor-pointer" %>
+    </div>
+  <% end %>
+</div>

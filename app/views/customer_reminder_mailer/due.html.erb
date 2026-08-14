@@ -1,0 +1,31 @@
+<% content_for :email_preheader, "Tenés un recordatorio de cliente pendiente." %>
+<% content_for :email_badge, "Clientes" %>
+<% content_for :email_status, "Recordatorio" %>
+<% content_for :email_footer_note, "Este email fue enviado porque tenés un recordatorio interno programado." %>
+
+<h1>Recordatorio de cliente</h1>
+
+<div class="email-card" style="margin-top:24px;">
+  <div class="email-card-inner">
+    <div class="email-card-title">Datos del recordatorio</div>
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top:10px;">
+      <tr class="email-detail-row">
+        <td class="email-detail-label">Cliente</td>
+        <td class="email-detail-value"><%= @customer.name.presence || @customer.phone %></td>
+      </tr>
+      <tr class="email-detail-row">
+        <td class="email-detail-label">WhatsApp</td>
+        <td class="email-detail-value"><%= @customer.phone %></td>
+      </tr>
+      <tr>
+        <td class="email-detail-label">Fecha</td>
+        <td class="email-detail-value"><%= CustomerDateFormatter.datetime_label(@reminder.remind_at) %></td>
+      </tr>
+    </table>
+    <div class="email-note"><%= @reminder.body %></div>
+  </div>
+</div>
+
+<p>
+  <%= link_to "Abrir ficha del cliente", @customer_url, class: "email-button button" %>
+</p>

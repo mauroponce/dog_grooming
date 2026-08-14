@@ -1,0 +1,29 @@
+<% content_for :email_preheader, "Tu turno en #{@business.name} está confirmado." %>
+<% content_for :email_badge, "Reserva confirmada" %>
+<% content_for :email_status, "Turno confirmado" %>
+<% content_for :email_footer_note, "Este email confirma tu turno en #{@business.name}." %>
+
+<h1>Tu turno está confirmado</h1>
+
+<p>Hola <%= @appointment.customer_name %>, tu turno en <strong><%= @business.name %></strong> quedó confirmado.</p>
+
+<div class="email-card" style="margin-top:24px;">
+  <div class="email-card-inner">
+    <div class="email-card-title">Detalle del turno</div>
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top:10px;">
+      <tr class="email-detail-row">
+        <td class="email-detail-label">Servicio</td>
+        <td class="email-detail-value"><%= @appointment.service.name %></td>
+      </tr>
+      <tr>
+        <td class="email-detail-label">Turno</td>
+        <td class="email-detail-value"><%= CustomerDateFormatter.datetime_label(@appointment.starts_at) %></td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<p style="margin-top:24px;"><%= link_to "Agregar a Google Calendar", @google_calendar_url, class: "email-button button" %></p>
+<p><%= link_to "Ver o reprogramar mi turno", @booking_url, class: "email-button button" %></p>
+
+<div class="email-note">Desde el portal podés ver el detalle de tu reserva y, si la política del centro lo permite, reprogramarla o cancelarla.</div>

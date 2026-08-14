@@ -1,0 +1,33 @@
+<% content_for :email_preheader, "Recordatorio de tu turno en #{@business.name}." %>
+<% content_for :email_badge, "Recordatorio" %>
+<% content_for :email_status, "Turno próximo" %>
+<% content_for :email_footer_note, "Este email fue enviado porque tenés un turno reservado en #{@business.name}." %>
+
+<h1>Recordatorio de tu turno</h1>
+
+<p>Hola <%= @appointment.customer_name %>, te recordamos tu turno en <strong><%= @business.name %></strong>.</p>
+
+<div class="email-card" style="margin-top:24px;">
+  <div class="email-card-inner">
+    <div class="email-card-title">Detalle del turno</div>
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top:10px;">
+      <tr class="email-detail-row">
+        <td class="email-detail-label">Servicio</td>
+        <td class="email-detail-value"><%= @appointment.service.name %></td>
+      </tr>
+      <tr class="email-detail-row">
+        <td class="email-detail-label">Turno</td>
+        <td class="email-detail-value"><%= CustomerDateFormatter.datetime_label(@appointment.starts_at) %></td>
+      </tr>
+      <tr>
+        <td class="email-detail-label">Ubicación</td>
+        <td class="email-detail-value"><%= @business.public_location %></td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<p style="margin-top:24px;"><%= link_to "Agregar a Google Calendar", @google_calendar_url, class: "email-button button" %></p>
+<p><%= link_to "Ver o reprogramar mi turno", @booking_url, class: "email-button button" %></p>
+
+<div class="email-note">Si necesitás reprogramar o cancelar, hacelo desde tu portal con la anticipación que establece el centro.</div>

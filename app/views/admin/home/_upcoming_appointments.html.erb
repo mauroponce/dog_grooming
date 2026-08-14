@@ -1,0 +1,85 @@
+<turbo-frame id="home_upcoming_appointments" autoscroll="false" data-home-upcoming-current-page="<%= upcoming_appointments_pagy.page %>">
+  <% if upcoming_appointments.any? %>
+    <div class="admin-home-upcoming-table-wrap">
+      <table class="admin-home-upcoming-table">
+        <thead>
+          <tr>
+            <th scope="col">Fecha y hora</th>
+            <th scope="col">Servicio y cliente</th>
+            <th scope="col">Profesional</th>
+            <th scope="col">Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% upcoming_appointments.each do |appointment| %>
+            <tr
+              class="admin-home-upcoming-row"
+              role="button"
+              tabindex="0"
+              aria-label="Ver detalle del turno de <%= appointment.customer_name %>"
+              data-action="click->home-appointments#open keydown->home-appointments#openFromKeyboard"
+              data-home-appointments-details-url="<%= admin_appointment_details_path(appointment, format: :json) %>">
+              <td>
+                <span class="admin-home-time">
+                  <span class="admin-home-time-day"><%= dashboard.upcoming_appointment_day_label(appointment) %></span>
+                  <span class="admin-home-time-hour"><%= dashboard.time_label(appointment.starts_at) %></span>
+                </span>
+              </td>
+              <td>
+                <span class="admin-home-appointment-service block"><%= appointment.service.name %></span>
+                <span class="admin-home-appointment-meta block">
+                  Cliente: <%= appointment.customer_name %> · <%= dashboard.appointment_duration_label(appointment) %>
+                </span>
+              </td>
+              <td class="admin-home-upcoming-professional"><%= appointment.employee_membership&.display_name || "Sin asignar" %></td>
+              <td><span class="admin-home-status admin-home-status-<%= appointment.status %>"><%= appointment.status_label %></span></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="admin-home-upcoming-footer">
+      <p>
+        Mostrando <strong><%= upcoming_appointments_pagy.from %>-<%= upcoming_appointments_pagy.to %></strong> de <strong><%= upcoming_appointments_pagy.count %></strong> turnos
+      </p>
+
+      <% if upcoming_appointments_pagy.last > 1 %>
+        <% previous_page = upcoming_appointments_pagy.page > 1 ? upcoming_appointments_pagy.page - 1 : nil %>
+        <% next_page = upcoming_appointments_pagy.page < upcoming_appointments_pagy.last ? upcoming_appointments_pagy.page + 1 : nil %>
+        <nav class="admin-home-upcoming-pagination" aria-label="Paginación de próximos turnos">
+          <% if previous_page.present? %>
+            <%= link_to "Anterior", upcoming_appointments_pagy.page_url(previous_page), class: "admin-home-upcoming-page", rel: "prev", data: { turbo_frame: "home_upcoming_appointments" } %>
+          <% else %>
+            <span class="admin-home-upcoming-page is-disabled" aria-disabled="true">Anterior</span>
+          <% end %>
+
+          <% upcoming_appointments_pagy.send(:series).each do |item| %>
+            <% if item == :gap %>
+              <span class="admin-home-upcoming-page is-disabled" aria-hidden="true">&hellip;</span>
+            <% elsif item.is_a?(String) %>
+              <span class="admin-home-upcoming-page is-current" aria-current="page"><%= item %></span>
+            <% else %>
+              <%= link_to item, upcoming_appointments_pagy.page_url(item), class: "admin-home-upcoming-page", data: { turbo_frame: "home_upcoming_appointments" } %>
+            <% end %>
+          <% end %>
+
+          <% if next_page.present? %>
+            <%= link_to "Siguiente", upcoming_appointments_pagy.page_url(next_page), class: "admin-home-upcoming-page", rel: "next", data: { turbo_frame: "home_upcoming_appointments" } %>
+          <% else %>
+            <span class="admin-home-upcoming-page is-disabled" aria-disabled="true">Siguiente</span>
+          <% end %>
+        </nav>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="admin-home-opportunity-empty" style="border: 0; min-height: 240px; border-radius: 0; box-shadow: none;">
+      <span class="admin-home-empty-icon"><%= icons.fetch(:calendar).html_safe %></span>
+      <div>
+        <h3 class="text-lg font-bold text-slate-950">No hay próximos turnos agendados</h3>
+        <p class="mt-1 text-sm font-bold text-slate-500">Podés cargar uno manualmente o compartir tu link público.</p>
+      </div>
+      <%= link_to "Abrir calendario", admin_calendar_path, class: "admin-home-button", data: { turbo_frame: "_top" } %>
+    </div>
+  <% end %>
+</turbo-frame>

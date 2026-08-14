@@ -1,0 +1,24 @@
+<% logo_size = local_assigns.fetch(:logo_size, "h-10 w-10") %>
+<% logo_image_size = local_assigns.fetch(:logo_image_size, [ 80, 80 ]) %>
+<% name_class = local_assigns.fetch(:name_class, "text-sm font-bold tracking-tight") %>
+<% subtitle = local_assigns.fetch(:subtitle, nil) %>
+<% subtitle_class = local_assigns.fetch(:subtitle_class, "text-[11px] font-semibold text-zinc-500") %>
+<% logo_shadow_class = local_assigns.fetch(:logo_shadow_class, "shadow-lg shadow-zinc-900/15") %>
+<% logo_fallback_class = local_assigns.fetch(:logo_fallback_class, "grid place-items-center bg-gradient-to-br from-brand-700 via-brand-600 to-brand-600 text-white font-bold") %>
+
+<div class="flex min-w-0 items-center gap-3">
+  <% if business.logo.attached? %>
+    <%= image_tag business.logo.variant(resize_to_fill: logo_image_size), class: "#{logo_size} shrink-0 rounded-2xl object-cover #{logo_shadow_class}" %>
+  <% else %>
+    <div class="<%= logo_size %> shrink-0 rounded-2xl <%= logo_fallback_class %>">
+      <%= business.initials %>
+    </div>
+  <% end %>
+
+  <div class="min-w-0">
+    <span class="block truncate <%= name_class %>"><%= business.name %></span>
+    <% if subtitle.present? %>
+      <span class="block truncate <%= subtitle_class %>"><%= subtitle %></span>
+    <% end %>
+  </div>
+</div>

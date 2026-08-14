@@ -1,0 +1,9 @@
+No pudimos validar tu comprobante
+
+Revisamos el comprobante de <%= @business.name %>, pero no pudimos validarlo.
+<% if @proof&.rejection_reason.present? %>
+Motivo: <%= @proof.rejection_reason %>
+<% end %>
+
+Podés subir un nuevo comprobante desde el panel:
+<%= @billing_url %>

@@ -1,0 +1,1070 @@
+<% content_for :admin_full_bleed, true %>
+<% content_for :title, "Equipo · Dog Grooming" %>
+<% content_for :admin_section_title, "Equipo" %>
+
+<% team_count = @employees.size %>
+<% active_count = @employees.count { |employee| employee.active? && !employee.archived? } %>
+<% role_modals = @employees.reject(&:owner_profile?) %>
+<% team_icons = {
+  search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
+  plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>',
+  filter: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M2 14h4M10 8h4M18 16h4" stroke-linecap="round"/></svg>',
+  mail: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>',
+  phone: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.2-1.2a2 2 0 0 1 2.1-.5c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.7 2Z" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  chevron: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  eye: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>',
+  pencil: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"/></svg>',
+  shield: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-5"/></svg>',
+  calendar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 2v4M16 2v4M4 10h16" stroke-linecap="round"/><rect x="4" y="5" width="16" height="17" rx="3"/></svg>',
+  list: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" stroke-linecap="round"/></svg>',
+  archive: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 8v13H3V8M1 3h22v5H1Z"/><path d="M10 12h4"/></svg>',
+  trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 14h10l1-14M9 7V4h6v3" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  refresh: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12a9 9 0 0 1-15 6.7L3 16M3 12a9 9 0 0 1 15-6.7L21 8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2" stroke-linecap="round"/></svg>',
+  user_search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="9.5" cy="7" r="4"/><path d="m17 17 4 4M19 19a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/></svg>',
+  x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" stroke-linecap="round"/></svg>',
+  arrow: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+} %>
+
+<style>
+  :root {
+    --topbar-height: 72px;
+  }
+
+  .admin-shell-header {
+    border-bottom-color: rgba(226, 232, 240, .7) !important;
+    background:
+      linear-gradient(90deg, rgba(255,255,255,.86), rgba(255,255,255,.74)),
+      radial-gradient(circle at 88% 0%, rgba(255, 222, 212, .12), transparent 28rem) !important;
+  }
+
+  .team-workspace {
+    height: 100%;
+    min-height: 0;
+    overflow-y: auto;
+    background:
+      radial-gradient(circle at 85% 0%, rgba(255, 222, 212, .055), transparent 32rem),
+      #f7f7f9;
+    color: #0f172a;
+  }
+
+  .team-container {
+    box-sizing: border-box;
+    width: min(var(--admin-content-max-width, 1600px), calc(100% - var(--admin-content-horizontal-space, 48px)));
+    margin: 0 auto;
+    padding: 34px 0 44px;
+  }
+
+  .team-page-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 26px;
+  }
+
+  .team-title-row {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .team-title-row h1 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -.04em;
+    line-height: 1.08;
+  }
+
+  .team-count {
+    display: grid;
+    min-width: 30px;
+    height: 30px;
+    place-items: center;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    background: #fff;
+    padding: 0 8px;
+    color: #334155;
+    font-size: 12px;
+    font-weight: 700;
+    box-shadow: 0 1px 2px rgba(15,23,42,.04);
+  }
+
+  .team-page-copy {
+    max-width: 720px;
+    margin: 9px 0 0;
+    color: #64748b;
+    font-size: 14px;
+    font-weight: 650;
+    line-height: 1.65;
+  }
+
+  .team-primary-button,
+  .team-secondary-button,
+  .team-action-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    border-radius: 18px;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: .16s ease;
+  }
+
+  .team-primary-button {
+    min-height: 48px;
+    border: 0;
+    background: #05080a;
+    padding: 0 20px;
+    color: #fff;
+    box-shadow: 0 16px 34px rgba(15,23,42,.12);
+  }
+
+  .team-primary-button:hover {
+    background: var(--admin-brand-700);
+    transform: translateY(-1px);
+  }
+
+  .team-secondary-button {
+    min-height: 46px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    padding: 0 18px;
+    color: #334155;
+    cursor: pointer;
+  }
+
+  .team-shell-card {
+    overflow: visible;
+    border: 1px solid rgba(226,232,240,.88);
+    border-radius: 26px;
+    background: #fff;
+    box-shadow: 0 10px 32px rgba(255, 222, 212, .055);
+  }
+
+  .team-toolbar {
+    border-bottom: 1px solid rgba(226,232,240,.7);
+    padding: 18px;
+  }
+
+  .team-toolbar-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .team-search {
+    position: relative;
+    display: block;
+    width: min(560px, 100%);
+  }
+
+  .team-search svg {
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    width: 18px;
+    height: 18px;
+    transform: translateY(-50%);
+    color: #94a3b8;
+  }
+
+  .team-search input {
+    box-sizing: border-box;
+    width: 100%;
+    height: 48px;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    background: rgba(248,250,252,.82);
+    padding: 0 18px 0 48px;
+    color: #0f172a;
+    font-size: 14px;
+    font-weight: 700;
+    outline: none;
+    transition: .16s ease;
+  }
+
+  .team-search input::placeholder {
+    color: #94a3b8;
+    font-weight: 650;
+  }
+
+  .team-search input:focus {
+    border-color: var(--admin-brand-200);
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(255, 222, 212, .12);
+  }
+
+  .team-toolbar-actions {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 9px;
+  }
+
+  .team-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid #bbf7d0;
+    border-radius: 14px;
+    background: #ecfdf5;
+    padding: 9px 12px;
+    color: #047857;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .team-status-pill::before {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: #10b981;
+    content: "";
+  }
+
+  .team-filter-icon-button {
+    display: grid;
+    width: 42px;
+    height: 42px;
+    place-items: center;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    background: #fff;
+    color: #64748b;
+    transition: .16s ease;
+  }
+
+  .team-filter-icon-button:hover {
+    border-color: var(--admin-brand-200);
+    background: var(--admin-brand-50);
+    color: var(--admin-brand-700);
+  }
+
+  .team-filter-icon-button svg,
+  .team-primary-button svg,
+  .team-secondary-button svg,
+  .team-action-button svg,
+  .team-menu svg,
+  .team-contact svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  .team-table-desktop {
+    display: block;
+  }
+
+  .team-table-head,
+  .team-row {
+    display: grid;
+    grid-template-columns: minmax(280px, 1.15fr) minmax(220px, .9fr) minmax(230px, 1fr) 132px;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .team-table-head {
+    border-bottom: 1px solid rgba(226,232,240,.7);
+    background: rgba(248,250,252,.52);
+    padding: 14px 22px;
+  }
+
+  .team-table-head p {
+    margin: 0;
+    color: #94a3b8;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+
+  .team-table-head p:last-child {
+    text-align: right;
+  }
+
+  .team-row {
+    position: relative;
+    min-height: 96px;
+    padding: 19px 22px;
+    border-bottom: 1px solid rgba(226,232,240,.7);
+    transition: background-color .18s ease, box-shadow .18s ease;
+  }
+
+  .team-row:last-child {
+    border-bottom: 0;
+  }
+
+  .team-row:hover {
+    background: #ffded4;
+    box-shadow: inset 3px 0 0 var(--admin-brand-500);
+  }
+
+  .team-member {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 15px;
+  }
+
+  .team-avatar {
+    position: relative;
+    display: grid;
+    width: 58px;
+    height: 58px;
+    flex: 0 0 auto;
+    place-items: center;
+    overflow: hidden;
+    border: 3px solid var(--team-avatar-color, var(--admin-brand-500));
+    border-radius: 999px;
+    background: var(--team-avatar-color, var(--admin-brand-500));
+    color: #fff;
+    font-size: 18px;
+    font-weight: 700;
+    box-shadow: 0 1px 0 rgba(255,255,255,.9), 0 10px 24px rgba(15,23,42,.08);
+  }
+
+  .team-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .team-avatar.is-pending {
+    --team-avatar-color: #f59e0b;
+    background: #fffbeb;
+    color: #b45309;
+  }
+
+  .team-avatar.is-archived {
+    --team-avatar-color: #cbd5e1;
+    background: #f1f5f9;
+    color: #64748b;
+  }
+
+  .team-member-copy {
+    min-width: 0;
+  }
+
+  .team-member-title {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .team-member-name {
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    color: #0f172a;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.25;
+    text-decoration: none;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .team-member-name:hover {
+    color: var(--admin-brand-700);
+  }
+
+  .team-role-pill,
+  .team-status-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 3px 8px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+
+  .team-role-pill {
+    border: 1px solid var(--admin-brand-100);
+    background: var(--admin-brand-50);
+    color: var(--admin-brand-700);
+  }
+
+  .team-status-badge.is-active {
+    background: #dcfce7;
+    color: #047857;
+  }
+
+  .team-status-badge.is-pending {
+    background: #fef3c7;
+    color: #b45309;
+  }
+
+  .team-status-badge.is-archived {
+    background: #f1f5f9;
+    color: #64748b;
+  }
+
+  .team-status-badge.is-agenda {
+    background: #ffded4;
+    color: #A63826;
+  }
+
+  .team-status-badge.is-no-agenda {
+    background: #f8fafc;
+    color: #64748b;
+  }
+
+  .team-member-subtitle {
+    margin: 5px 0 0;
+    color: #94a3b8;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.35;
+  }
+
+  .team-pending-note {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 7px;
+    color: #b45309;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .team-pending-note svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .team-contact {
+    display: grid;
+    min-width: 0;
+    gap: 7px;
+  }
+
+  .team-contact a,
+  .team-contact span {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 8px;
+    color: #475569;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .team-contact a:hover {
+    color: var(--admin-brand-700);
+  }
+
+  .team-contact svg {
+    flex: 0 0 auto;
+    color: #94a3b8;
+  }
+
+  .team-contact-value {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .team-role-text {
+    min-width: 0;
+  }
+
+  .team-role-text strong {
+    display: block;
+    color: #1e293b;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.35;
+  }
+
+  .team-role-text span {
+    display: block;
+    margin-top: 4px;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 650;
+    line-height: 1.5;
+  }
+
+  .team-action-cell {
+    position: relative;
+    justify-self: end;
+  }
+
+  .team-filter {
+    position: relative;
+  }
+
+  .team-action-button {
+    min-height: 42px;
+    list-style: none;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    padding: 0 14px;
+    color: #1e293b;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(15,23,42,.04);
+  }
+
+  .team-action-button::-webkit-details-marker {
+    display: none;
+  }
+
+  .team-action-button:hover,
+  .team-filter[open] > .team-action-button {
+    border-color: var(--admin-brand-200);
+    background: var(--admin-brand-50);
+    color: var(--admin-brand-700);
+  }
+
+  .team-menu {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    z-index: 2147482500;
+    display: grid;
+    width: 236px;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    background: #fff;
+    padding: 6px;
+    text-align: left;
+    box-shadow: 0 18px 50px rgba(255, 222, 212, .14);
+  }
+
+  .team-filter.drop-up > .team-menu {
+    top: auto;
+    bottom: calc(100% + 10px);
+  }
+
+  .team-menu a,
+  .team-menu button {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    gap: 10px;
+    border: 0;
+    border-radius: 12px;
+    background: transparent;
+    padding: 10px 11px;
+    color: #334155;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.2;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+    transition: .16s ease;
+  }
+
+  .team-menu a:hover,
+  .team-menu button:hover {
+    background: #f8fafc;
+    color: var(--admin-brand-700);
+  }
+
+  .team-menu .team-menu-emphasis {
+    color: #e11d48;
+  }
+
+  .team-menu .team-menu-emphasis:hover {
+    background: #fff1f2;
+    color: #be123c;
+  }
+
+  .team-menu-divider {
+    height: 1px;
+    margin: 5px 6px;
+    background: #f1f5f9;
+  }
+
+  .team-mobile-list {
+    display: none;
+  }
+
+  .team-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 22px;
+    background: #fff;
+    padding: 16px;
+  }
+
+  .team-card-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .team-card-body {
+    margin-top: 14px;
+    border-radius: 18px;
+    background: #f8fafc;
+    padding: 12px;
+  }
+
+  .team-card-section {
+    margin-top: 14px;
+  }
+
+  .team-card-section-title {
+    margin: 0;
+    color: #94a3b8;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+  }
+
+  .team-card-section-copy {
+    margin: 6px 0 0;
+    color: #334155;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.55;
+  }
+
+  .team-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    border-top: 1px solid rgba(226,232,240,.7);
+    background: rgba(248,250,252,.52);
+    padding: 14px 18px;
+  }
+
+  .team-footer p {
+    margin: 0;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .team-footer strong {
+    color: #334155;
+    font-weight: 700;
+  }
+
+  .team-footer-hint {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .team-footer-hint svg {
+    width: 16px;
+    height: 16px;
+    color: #94a3b8;
+  }
+
+  .team-empty {
+    padding: 58px 24px;
+    text-align: center;
+  }
+
+  .team-empty[hidden] {
+    display: none !important;
+  }
+
+  .team-empty-icon {
+    display: grid;
+    width: 58px;
+    height: 58px;
+    margin: 0 auto;
+    place-items: center;
+    border-radius: 20px;
+    background: #f1f5f9;
+    color: #64748b;
+  }
+
+  .team-empty-icon svg {
+    width: 25px;
+    height: 25px;
+  }
+
+  .team-empty h2 {
+    margin: 15px 0 0;
+    color: #0f172a;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -.02em;
+  }
+
+  .team-empty p {
+    max-width: 360px;
+    margin: 8px auto 0;
+    color: #64748b;
+    font-size: 14px;
+    font-weight: 650;
+    line-height: 1.6;
+  }
+
+  .team-modal {
+    width: min(760px, calc(100vw - 32px));
+    border: 1px solid #e2e8f0;
+    border-radius: 28px;
+    background: #fff;
+    color: #0f172a;
+    padding: 0;
+    box-shadow: 0 24px 80px rgba(15,23,42,.20);
+  }
+
+  .team-modal::backdrop {
+    background: rgba(15,23,42,.35);
+  }
+
+  .team-modal-inner {
+    padding: 28px;
+  }
+
+  .team-modal-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+  }
+
+  .team-modal h2 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -.035em;
+    line-height: 1.18;
+  }
+
+  .team-modal-subtitle {
+    margin: 8px 0 0;
+    color: #64748b;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.55;
+  }
+
+  .team-modal-close {
+    display: grid;
+    width: 42px;
+    height: 42px;
+    place-items: center;
+    flex: 0 0 auto;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    background: #fff;
+    color: #475569;
+    cursor: pointer;
+    transition: .16s ease;
+  }
+
+  .team-modal-close:hover {
+    background: #f8fafc;
+    color: #0f172a;
+  }
+
+  .team-modal-close svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .team-role-list {
+    display: grid;
+    margin-top: 16px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    background: #fff;
+  }
+
+  .team-role-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 16px 18px;
+    cursor: pointer;
+  }
+
+  .team-role-option:last-child {
+    border-bottom: 0;
+  }
+
+  .team-role-option:hover {
+    background: #f8fafc;
+  }
+
+  .team-role-option input {
+    width: 18px;
+    height: 18px;
+    margin-top: 3px;
+    accent-color: var(--admin-brand-600);
+  }
+
+  .team-role-option strong {
+    display: block;
+    color: #0f172a;
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  .team-role-option span span {
+    display: block;
+    margin-top: 4px;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 650;
+    line-height: 1.45;
+  }
+
+  .team-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 22px;
+  }
+
+  @media (max-width: 1180px) {
+    :root {
+      --topbar-height: 64px;
+    }
+
+    .team-container {
+      width: min(100% - 32px, 720px);
+      padding: 24px 0 36px;
+    }
+
+    .team-page-header,
+    .team-toolbar-inner,
+    .team-footer {
+      align-items: stretch;
+      flex-direction: column;
+    }
+
+    .team-primary-button {
+      width: 100%;
+    }
+
+    .team-toolbar-actions {
+      justify-content: space-between;
+    }
+
+    .team-table-desktop {
+      display: none;
+    }
+
+    .team-mobile-list {
+      display: grid;
+      gap: 12px;
+      padding: 14px;
+    }
+
+    .team-avatar {
+      width: 52px;
+      height: 52px;
+      font-size: 16px;
+    }
+  }
+</style>
+
+<div class="team-workspace">
+  <div class="team-container">
+    <section class="team-page-header">
+      <div>
+        <div class="team-title-row">
+          <h1>Miembros del equipo</h1>
+          <span class="team-count"><%= team_count %></span>
+        </div>
+        <p class="team-page-copy">Administrá las personas que trabajan en el negocio, sus datos de contacto y sus permisos dentro de Dog Grooming.</p>
+      </div>
+
+      <%= link_to new_admin_employee_membership_path, class: "team-primary-button" do %>
+        <%= team_icons.fetch(:plus).html_safe %>
+        Añadir miembro
+      <% end %>
+    </section>
+
+    <section class="team-shell-card">
+      <div class="team-toolbar">
+        <div class="team-toolbar-inner">
+          <label class="team-search">
+            <%= team_icons.fetch(:search).html_safe %>
+            <input id="team-member-search" type="search" placeholder="Buscar por nombre, email o teléfono" autocomplete="off">
+          </label>
+
+          <div class="team-toolbar-actions">
+            <span class="team-status-pill"><%= active_count %> <%= active_count == 1 ? "activo" : "activos" %></span>
+            <button class="team-filter-icon-button" type="button" aria-label="Filtros">
+              <%= team_icons.fetch(:filter).html_safe %>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="team-table-desktop">
+        <div class="team-table-head">
+          <p>Nombre</p>
+          <p>Contacto</p>
+          <p>Rol y permisos</p>
+          <p>Acciones</p>
+        </div>
+
+        <% @employees.each do |employee| %>
+          <%= render "admin/employee_memberships/member_row", employee:, team_icons: %>
+        <% end %>
+      </div>
+
+      <div class="team-mobile-list">
+        <% @employees.each do |employee| %>
+          <%= render "admin/employee_memberships/member_card", employee:, team_icons: %>
+        <% end %>
+      </div>
+
+      <% if @employees.blank? %>
+        <div class="team-empty">
+          <span class="team-empty-icon"><%= team_icons.fetch(:user_search).html_safe %></span>
+          <h2>No hay miembros para mostrar</h2>
+          <p>Añadí una persona al equipo para asignarle servicios, turnos y permisos.</p>
+        </div>
+      <% end %>
+
+      <div id="team-search-empty" class="team-empty" hidden>
+        <span class="team-empty-icon"><%= team_icons.fetch(:user_search).html_safe %></span>
+        <h2>No encontramos miembros</h2>
+        <p>Probá buscando por otro nombre, email o número de teléfono.</p>
+      </div>
+
+      <div class="team-footer">
+        <p>Mostrando <strong id="visible-team-member-count"><%= team_count %></strong> de <%= team_count %> <%= team_count == 1 ? "miembro" : "miembros" %></p>
+        <p class="team-footer-hint">
+          <%= team_icons.fetch(:shield).html_safe %>
+          Los permisos pueden modificarse desde Acciones
+        </p>
+      </div>
+    </section>
+  </div>
+</div>
+
+<% role_modals.each do |employee| %>
+  <dialog id="team-role-modal-<%= employee.id %>" class="team-modal">
+    <div class="team-modal-inner">
+      <div class="team-modal-header">
+        <div>
+          <h2>Editar rol de <%= employee.display_name %></h2>
+          <p class="team-modal-subtitle">Elegí qué puede gestionar este miembro dentro de Dog Grooming.</p>
+        </div>
+        <form method="dialog">
+          <button class="team-modal-close" aria-label="Cerrar">
+            <%= team_icons.fetch(:x).html_safe %>
+          </button>
+        </form>
+      </div>
+
+      <%= form_with model: [ :admin, employee ], url: update_role_admin_employee_membership_path(employee), method: :patch, style: "margin-top:24px" do |form| %>
+            <p style="margin:0 0 10px;color:#0f172a;font-size:14px;font-weight:700">Rol de permisos</p>
+        <div class="team-role-list">
+          <% EmployeeMembership::ACCESS_LEVELS.each do |level, config| %>
+            <label class="team-role-option">
+              <%= form.radio_button :access_level, level, checked: employee.access_level == level %>
+              <span>
+                <strong><%= config.fetch(:label) %></strong>
+                <span><%= config.fetch(:description) %></span>
+              </span>
+            </label>
+          <% end %>
+        </div>
+
+        <div class="team-modal-actions">
+          <button type="button" onclick="document.getElementById('team-role-modal-<%= employee.id %>').close()" class="team-secondary-button">Cancelar</button>
+          <%= form.submit "Guardar rol", class: "team-primary-button", style: "min-height:46px;box-shadow:none" %>
+        </div>
+      <% end %>
+    </div>
+  </dialog>
+<% end %>
+
+<script>
+  (() => {
+    const input = document.getElementById("team-member-search");
+    if (!input || input.dataset.bound === "true") return;
+    input.dataset.bound = "true";
+
+    const rows = Array.from(document.querySelectorAll("[data-team-member-row]"));
+    const emptyState = document.getElementById("team-search-empty");
+    const visibleCount = document.getElementById("visible-team-member-count");
+    const normalize = (value) => value.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+
+    function applyLocalSearch() {
+      const query = normalize(input.value);
+      const visibleIds = new Set();
+
+      rows.forEach((row) => {
+        const matches = query.length === 0 || normalize(row.dataset.teamSearch || "").includes(query);
+        row.hidden = !matches;
+        if (matches) visibleIds.add(row.dataset.teamMemberId);
+      });
+
+      if (visibleCount) visibleCount.textContent = visibleIds.size.toString();
+      if (emptyState) emptyState.hidden = query.length === 0 || visibleIds.size > 0;
+    }
+
+    input.addEventListener("input", applyLocalSearch);
+    applyLocalSearch();
+  })();
+
+  (() => {
+    if (window.DogGroomingTeamDropdownsBound) return;
+    window.DogGroomingTeamDropdownsBound = true;
+
+    function positionDropdown(details) {
+      if (!details.open) return;
+      details.classList.remove("drop-up");
+
+      requestAnimationFrame(() => {
+        const menu = details.querySelector(":scope > .team-menu");
+        if (!menu) return;
+
+        const rect = menu.getBoundingClientRect();
+        if (rect.bottom > window.innerHeight - 18) details.classList.add("drop-up");
+      });
+    }
+
+    document.addEventListener("toggle", (event) => {
+      const details = event.target;
+      if (!(details instanceof HTMLDetailsElement) || !details.classList.contains("team-filter")) return;
+
+      if (details.open) {
+        document.querySelectorAll(".team-filter[open]").forEach((openDetails) => {
+          if (openDetails !== details) openDetails.removeAttribute("open");
+        });
+        positionDropdown(details);
+      } else {
+        details.classList.remove("drop-up");
+      }
+    }, true);
+
+    document.addEventListener("click", (event) => {
+      if (event.target.closest(".team-filter")) return;
+      document.querySelectorAll(".team-filter[open]").forEach((details) => details.removeAttribute("open"));
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape") return;
+      document.querySelectorAll(".team-filter[open]").forEach((details) => details.removeAttribute("open"));
+    });
+
+    window.addEventListener("resize", () => {
+      document.querySelectorAll(".team-filter[open]").forEach(positionDropdown);
+    });
+  })();
+</script>

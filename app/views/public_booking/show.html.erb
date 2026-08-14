@@ -1,0 +1,144 @@
+<% content_for :title, "#{@business.name} | Reservá tu turno online" %>
+<% content_for :full_width, true %>
+
+<% if @confirmation.present? || !@business.booking_available? %>
+<div class="relative min-h-screen overflow-hidden bg-[#F7F7FA] text-ink antialiased">
+  <%= render "booking_header", business: @business, show_banner: false %>
+
+  <main class="relative z-10 mx-auto w-full max-w-7xl px-4 pb-7 pt-8 sm:px-7 sm:pb-10 sm:pt-10 lg:px-10">
+    <% if @confirmation.present? %>
+      <section class="public-screen overflow-hidden rounded-[30px] border border-white/90 bg-white/95 shadow-soft backdrop-blur-xl">
+        <div class="mx-auto max-w-3xl px-5 py-10 text-center sm:px-8 lg:px-12">
+          <div class="mx-auto grid h-20 w-20 place-items-center rounded-[27px] bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-xl shadow-emerald-500/20">
+            <%= public_icon("check", css: "h-10 w-10") %>
+          </div>
+          <span class="mt-6 inline-flex rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700"><%= appointment_status_label(@confirmation) %></span>
+          <h1 class="mt-4 text-3xl font-bold tracking-tight text-zinc-950 sm:text-4xl">
+            <% if @confirmation.confirmed? %>
+              Tu turno quedó confirmado
+            <% elsif @confirmation.pending_payment? %>
+              Estamos confirmando tu seña
+            <% elsif @confirmation.pending_deposit_review? %>
+              Recibimos tu comprobante
+            <% elsif @confirmation.pending_deposit? || @confirmation.deposit_rejected? %>
+              Falta revisar la seña
+            <% else %>
+              Tu solicitud fue enviada
+            <% end %>
+          </h1>
+          <p class="mx-auto mt-3 max-w-lg text-sm leading-6 text-zinc-500 sm:text-base">
+            <% if @confirmation.confirmed? %>
+              El turno está confirmado. Si necesitás cancelarlo o reprogramarlo, entrá a tu portal de turnos.
+            <% elsif @confirmation.pending_payment? %>
+              Si ya pagaste con Mercado Pago, la confirmación puede demorar unos instantes. Actualizá esta página para ver el estado final.
+            <% elsif @confirmation.pending_deposit_review? %>
+              Tu turno queda pendiente hasta que <%= @business.name %> revise la seña. Te avisaremos por email cuando quede confirmado.
+            <% elsif @confirmation.pending_deposit? || @confirmation.deposit_rejected? %>
+              Subí el comprobante para que <%= @business.name %> pueda revisar la seña y confirmar el turno.
+            <% else %>
+              <%= @business.name %> revisará la solicitud y te confirmará por email.
+            <% end %>
+          </p>
+          <% if @confirmation.customer_email.blank? %>
+            <div class="mx-auto mt-3 max-w-lg rounded-2xl bg-brand-50 px-4 py-3 text-sm font-semibold leading-6 text-brand-800">
+              <p>Guardá este link para consultar el estado de tus turnos:</p>
+              <%= link_to @confirmation.customer_portal_profile_url, @confirmation.customer_portal_profile_url, class: "mt-1 block break-all font-bold underline decoration-brand-300 underline-offset-4 hover:text-brand-950" %>
+            </div>
+          <% end %>
+
+          <div class="mt-7 overflow-hidden rounded-3xl border border-zinc-200 bg-white text-left shadow-sm">
+            <div class="flex items-start gap-4 border-b border-zinc-100 p-5 sm:p-6">
+              <span class="grid h-12 w-12 shrink-0 place-items-center rounded-2xl <%= @confirmation.service.accent_classes %>">
+                <%= public_icon(@confirmation.service.icon_key, css: "h-6 w-6") %>
+              </span>
+              <div class="min-w-0">
+                <p class="text-[10px] font-bold uppercase tracking-[.13em] text-zinc-400">Servicio</p>
+                <h2 class="mt-1 text-lg font-bold text-zinc-950"><%= @confirmation.service.name %></h2>
+                <p class="mt-1 text-xs font-semibold text-zinc-500"><%= @business.name %></p>
+              </div>
+            </div>
+
+            <div class="grid sm:grid-cols-3">
+              <div class="border-b border-zinc-100 p-5 sm:border-b-0 sm:border-r">
+                <p class="text-[10px] font-bold uppercase tracking-[.12em] text-zinc-400">Fecha</p>
+                <p class="mt-1.5 text-sm font-bold text-zinc-800"><%= public_date_label(@confirmation.starts_at.to_date) %></p>
+              </div>
+              <div class="border-b border-zinc-100 p-5 sm:border-b-0 sm:border-r">
+                <p class="text-[10px] font-bold uppercase tracking-[.12em] text-zinc-400">Horario</p>
+                <p class="mt-1.5 text-sm font-bold text-zinc-800"><%= format_ar_time(@confirmation.starts_at) %></p>
+              </div>
+              <div class="p-5">
+                <p class="text-[10px] font-bold uppercase tracking-[.12em] text-zinc-400">Ubicación</p>
+                <p class="mt-1.5 text-sm font-bold text-zinc-800"><%= @business.public_city %></p>
+              </div>
+            </div>
+
+            <div class="grid border-t border-zinc-100 sm:grid-cols-2">
+              <% if @confirmation.pet.present? %>
+                <% pet_details = [ @confirmation.pet.breed, @confirmation.pet.size_label, @confirmation.pet.sex_label ].compact_blank %>
+                <div class="border-b border-zinc-100 p-5 sm:border-b-0 sm:border-r">
+                  <p class="text-[10px] font-bold uppercase tracking-[.12em] text-zinc-400">Mascota</p>
+                  <p class="mt-1.5 text-sm font-bold text-zinc-800"><%= @confirmation.pet.name %></p>
+                  <% if pet_details.any? %>
+                    <p class="mt-1 text-xs font-semibold text-zinc-500"><%= pet_details.join(" · ") %></p>
+                  <% end %>
+                </div>
+                <div class="p-5">
+                  <p class="text-[10px] font-bold uppercase tracking-[.12em] text-zinc-400">Responsable</p>
+                  <p class="mt-1.5 text-sm font-bold text-zinc-800"><%= @confirmation.customer_name %></p>
+                </div>
+              <% else %>
+                <div class="p-5">
+                  <p class="text-[10px] font-bold uppercase tracking-[.12em] text-zinc-400">Responsable</p>
+                  <p class="mt-1.5 text-sm font-bold text-zinc-800"><%= @confirmation.customer_name %></p>
+                </div>
+              <% end %>
+            </div>
+          </div>
+
+          <div class="mt-5 grid gap-3 sm:grid-cols-3">
+            <% if @confirmation.confirmed? && @confirmation.google_calendar_available_for_customer? %>
+              <%= link_to @confirmation.google_calendar_url, target: "_blank", rel: "noopener", class: "flex h-12 items-center justify-center gap-2 rounded-2xl border border-zinc-200 bg-white px-5 text-sm font-bold text-zinc-700 transition hover:bg-zinc-50" do %>
+                <%= public_icon("calendar", css: "h-4 w-4") %>
+                Agregar a Google Calendar
+              <% end %>
+            <% elsif @confirmation.pending_deposit? || @confirmation.deposit_rejected? %>
+              <%= link_to "Subir comprobante", @confirmation.deposit_upload_url, class: "flex h-12 items-center justify-center rounded-2xl border border-zinc-200 bg-white px-5 text-sm font-bold text-zinc-700 transition hover:bg-zinc-50" %>
+            <% else %>
+              <%= link_to "Escribir por WhatsApp", @business.whatsapp_contact_link, target: "_blank", rel: "noopener", class: "flex h-12 items-center justify-center rounded-2xl border border-emerald-200 bg-emerald-50 px-5 text-sm font-bold text-emerald-700 transition hover:bg-emerald-100" %>
+            <% end %>
+            <%= link_to "Ver mi reserva", @confirmation.customer_portal_booking_url, class: "flex h-12 items-center justify-center rounded-2xl border border-brand-200 bg-brand-50 px-5 text-sm font-bold text-brand-700 transition hover:bg-brand-100" %>
+            <%= link_to "Reservar otro turno", public_business_path(@business.slug), class: "flex h-12 items-center justify-center rounded-2xl bg-ink px-5 text-sm font-bold text-white transition hover:bg-zinc-800" %>
+          </div>
+
+          <%= link_to "Cancelar o reprogramar este turno", @confirmation.customer_portal_booking_url, class: "mt-5 inline-block text-xs font-bold text-zinc-400 underline decoration-zinc-300 underline-offset-4 transition hover:text-zinc-700" %>
+        </div>
+      </section>
+    <% else %>
+      <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm font-semibold text-amber-900 shadow-sm">
+        La agenda no está disponible en este momento.
+      </div>
+    <% end %>
+
+    <footer class="flex flex-col items-center justify-between gap-3 px-2 py-6 text-center text-[11px] font-semibold text-zinc-400 sm:flex-row sm:text-left">
+      <span>© <%= @business.name %></span>
+      <% unless @business.custom_domain_active? %>
+        <span class="inline-flex items-center gap-1.5">
+          Reservas gestionadas con
+          <span class="font-bold text-zinc-600">Dog Grooming</span>
+        </span>
+      <% end %>
+    </footer>
+  </main>
+
+</div>
+<% else %>
+  <%= turbo_stream_from(*LiveStreams.public_services(@business)) %>
+  <% if @business.full_website_mode? %>
+    <% content_for :head, landing_head_tags(@landing) %>
+    <%= render "public_booking/full_website", landing: @landing, business: @business %>
+    <%= render "public_booking/chat_widget" if @business.chatbot_enabled? && @business.ai_chat_available? %>
+  <% else %>
+    <%= render "public_booking/public_profile", business: @business, services: @services, categories: @categories, service_detail: @service_detail %>
+  <% end %>
+<% end %>

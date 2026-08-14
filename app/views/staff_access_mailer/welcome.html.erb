@@ -1,0 +1,55 @@
+<% content_for :email_preheader, "Tu cuenta de Dog Grooming ya está lista para empezar a gestionar reservas, señas y comprobantes." %>
+<% content_for :email_badge, "Bienvenida" %>
+<% content_for :email_status, "Cuenta lista" %>
+<% content_for :email_footer_note, "Este email fue enviado porque se creó una cuenta para administrar un negocio en Dog Grooming." %>
+
+<h1 class="hero-title">Tu cuenta ya está lista</h1>
+
+<p>Hola, ya podés administrar <strong><%= @business.name %></strong> desde Dog Grooming.</p>
+
+<p>Entrá a tu panel con tu email y la contraseña que te comunicará el equipo de Dog Grooming:</p>
+
+<p><%= link_to "Ingresar a Dog Grooming", @url, class: "email-button button" %></p>
+
+<p style="font-size:12px; line-height:20px; color:#71717a;">
+  Si el botón no funciona, copiá y pegá este enlace en tu navegador:<br>
+  <%= link_to @url, @url, class: "email-link" %>
+</p>
+
+<div class="email-card" style="margin-top:28px;">
+  <div class="email-card-inner">
+    <div class="email-card-title">Qué podés hacer ahora</div>
+
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top:14px;">
+      <tr>
+        <td class="stack" width="33.33%" valign="top" style="padding:0 8px 12px 0;">
+          <div class="email-feature">
+            <div class="email-feature-icon">📅</div>
+            <div class="email-feature-title">Gestionar turnos</div>
+            <div class="email-feature-copy">Agenda simple y ordenada.</div>
+          </div>
+        </td>
+
+        <td class="stack" width="33.33%" valign="top" style="padding:0 4px 12px 4px;">
+          <div class="email-feature">
+            <div class="email-feature-icon">💳</div>
+            <div class="email-feature-title">Revisar señas</div>
+            <div class="email-feature-copy">Comprobantes en un lugar.</div>
+          </div>
+        </td>
+
+        <td class="stack" width="33.33%" valign="top" style="padding:0 0 12px 8px;">
+          <div class="email-feature">
+            <div class="email-feature-icon">🔗</div>
+            <div class="email-feature-title">Compartir tu link</div>
+            <div class="email-feature-copy">Ideal para Instagram y WhatsApp.</div>
+          </div>
+        </td>
+      </tr>
+    </table>
+
+    <div class="email-note">
+      Recomendación: cambiá tu contraseña cuando ingreses por primera vez y no la compartas con personas fuera de tu equipo.
+    </div>
+  </div>
+</div>

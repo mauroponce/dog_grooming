@@ -1,0 +1,719 @@
+<% business_account_values = @business_account_values || {} %>
+<% business_form_url = @business_form_url || super_admin_businesses_path %>
+<% business_form_method = @business_form_method || :post %>
+<% business_form_title = @business_form_title || "Dar de alta un negocio" %>
+<% business_form_description = @business_form_description || "Creá la cuenta comercial para que el negocio complete sus servicios desde su panel de administración." %>
+<% business_form_submit_label = @business_form_submit_label || "Crear negocio" %>
+<% business_form_business = @business_form_business %>
+<% business_form_search_address = Business.new(address: business_account_values[:address], neighborhood: business_account_values[:neighborhood], city: business_account_values[:city], province: business_account_values[:province]).location_search_address %>
+<% instagram_handle = business_account_values[:instagram_url].to_s.sub(/\Ahttps?:\/\/(www\.)?instagram\.com\//i, "").sub(/\A@/, "").sub(/\/+\z/, "") %>
+<% business_availability_rules = @business_availability_rules || [] %>
+<% business_time_options = (0...24.hours).step(5.minutes).map { |seconds| Time.zone.parse("00:00") + seconds }.map { |time| time.strftime("%H:%M") } %>
+<% public_link_host = AppUrl.host %>
+<% billing_enabled_value = business_account_values.key?(:billing_enabled) ? ActiveModel::Type::Boolean.new.cast(business_account_values[:billing_enabled]) : true %>
+
+<div class="min-h-screen bg-[#F7F7FA] text-zinc-950">
+  <style>
+    summary::-webkit-details-marker { display: none; }
+    .super-admin-desktop-layout {
+      display: flex;
+      align-items: flex-start;
+      gap: 24px;
+    }
+    .super-admin-sidebar {
+      flex: 0 0 300px;
+      position: sticky;
+      top: 24px;
+      align-self: flex-start;
+    }
+    .super-admin-content {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+    .super-admin-tab {
+      display: flex;
+      width: 100%;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-radius: 18px;
+      padding: 16px 18px;
+      color: #3f3f46;
+      font-size: 14px;
+      font-weight: 700;
+      text-align: left;
+      transition: background-color .15s ease, color .15s ease, box-shadow .15s ease, transform .15s ease;
+    }
+    .super-admin-tab.active {
+      background: #ffded4;
+      color: #A63826;
+      box-shadow: inset 0 0 0 1px #ffded4;
+    }
+    .super-admin-tab .tab-pill {
+      min-width: 28px;
+      height: 28px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      background: #f4f4f5;
+      color: #71717a;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 0 10px;
+    }
+    .super-admin-tab.active .tab-pill {
+      background: #BF482F;
+      color: white;
+    }
+	    .super-admin-panel[hidden] {
+	      display: none !important;
+	    }
+	    .business-schedule-card {
+	      background: #fff;
+	      border: 1px solid #fff;
+	      border-radius: 34px;
+	      color: #09090b;
+	      padding: 36px;
+	      box-shadow: 0 28px 70px rgba(24, 24, 27, .10);
+	    }
+	    .business-schedule-kicker {
+	      color: #A63826;
+	      font-size: 12px;
+	      font-weight: 700;
+	      letter-spacing: .18em;
+	      text-transform: uppercase;
+	    }
+	    .business-schedule-title {
+	      color: #09090b;
+	      font-size: 32px;
+	      font-weight: 700;
+	      letter-spacing: -.04em;
+	      line-height: 1.08;
+	      margin-top: 8px;
+	    }
+	    .business-schedule-description {
+	      color: #52525b;
+	      font-size: 16px;
+	      font-weight: 600;
+	      line-height: 1.55;
+	      margin-top: 12px;
+	      max-width: 760px;
+	    }
+	    .business-schedule-day-pills {
+	      display: flex;
+	      flex-wrap: wrap;
+	      gap: 16px;
+	      margin-top: 32px;
+	    }
+	    .business-schedule-pill {
+	      align-items: center;
+	      background: #fff;
+	      border: 1px solid #e4e4e7;
+	      border-radius: 999px;
+	      color: #18181b;
+	      display: inline-flex;
+	      font-size: 16px;
+	      font-weight: 700;
+	      height: 64px;
+	      justify-content: center;
+	      box-shadow: 0 14px 34px rgba(24, 24, 27, .06);
+	      transition: background-color .15s ease, border-color .15s ease, color .15s ease, box-shadow .15s ease, transform .15s ease;
+	      width: 64px;
+	    }
+	    .business-schedule-pill:hover {
+	      border-color: #A63826;
+	      box-shadow: 0 18px 42px rgba(255, 222, 212, .12);
+	      transform: translateY(-1px);
+	    }
+	    .business-schedule-pill.is-active {
+	      background: #BF482F;
+	      border-color: #A63826;
+	      box-shadow: 0 18px 38px rgba(255, 222, 212, .25);
+	      color: #fff;
+	    }
+	    .business-schedule-rows {
+	      display: grid;
+	      gap: 18px;
+	      margin-top: 42px;
+	      max-width: 760px;
+	    }
+	    .business-schedule-row {
+	      display: grid;
+	      gap: 24px;
+	      grid-template-columns: 240px minmax(0, 1fr);
+	      align-items: start;
+	    }
+	    .business-schedule-row.hidden {
+	      display: none !important;
+	    }
+	    .business-schedule-day-button {
+	      color: #09090b;
+	      display: block;
+	      text-align: left;
+	    }
+	    .business-schedule-day-name {
+	      display: block;
+	      font-size: 16px;
+	      font-weight: 700;
+	      line-height: 1.2;
+	    }
+	    .business-schedule-status {
+	      color: #a1a1aa;
+	      display: block;
+	      font-size: 14px;
+	      font-weight: 700;
+	      line-height: 1.2;
+	      margin-top: 4px;
+	    }
+	    .business-schedule-status.is-active {
+	      color: #059669;
+	    }
+	    .business-schedule-periods {
+	      display: grid;
+	      gap: 16px;
+	    }
+	    .business-schedule-period {
+	      align-items: center;
+	      display: grid;
+	      gap: 16px;
+	      grid-template-columns: 144px 44px 144px 44px;
+	    }
+	    .business-schedule-period.hidden {
+	      display: none !important;
+	    }
+	    .business-schedule-select {
+	      appearance: auto;
+	      background: #fff;
+	      border: 1px solid #d4d4d8;
+	      border-radius: 12px;
+	      color: #09090b;
+	      font-size: 16px;
+	      font-weight: 700;
+	      height: 48px;
+	      outline: none;
+	      padding: 0 36px 0 16px;
+	      width: 144px;
+	    }
+	    .business-schedule-select:focus {
+	      border-color: #A63826;
+	      box-shadow: 0 0 0 4px rgba(255, 222, 212, .12);
+	    }
+	    .business-schedule-select option {
+	      background: #fff;
+	      color: #09090b;
+	    }
+	    .business-schedule-until {
+	      color: #52525b;
+	      font-size: 16px;
+	      font-weight: 600;
+	    }
+	    .business-schedule-icon-button {
+	      align-items: center;
+	      border-radius: 999px;
+	      color: #71717a;
+	      display: inline-flex;
+	      font-size: 32px;
+	      font-weight: 300;
+	      height: 44px;
+	      justify-content: center;
+	      line-height: 1;
+	      width: 44px;
+	    }
+	    .business-schedule-icon-button:hover {
+	      background: #f4f4f5;
+	      color: #18181b;
+	    }
+	    .business-schedule-icon-button.remove {
+	      color: #e11d48;
+	    }
+	    .business-schedule-icon-button.remove:hover {
+	      background: #fff1f2;
+	      color: #e11d48;
+	    }
+	    .business-schedule-copy-prompt {
+	      background: #ffded4;
+	      border: 1px solid #ffded4;
+	      border-radius: 12px;
+	      color: #18181b;
+	      max-width: 404px;
+	      padding: 16px 18px;
+	    }
+	    .business-schedule-copy-prompt.hidden {
+	      display: none !important;
+	    }
+	    .business-schedule-copy-prompt-inner {
+	      align-items: center;
+	      display: flex;
+	      gap: 16px;
+	      justify-content: space-between;
+	    }
+	    .business-schedule-copy-prompt p {
+	      font-size: 14px;
+	      font-weight: 700;
+	      line-height: 1.35;
+	    }
+	    .business-schedule-copy-button {
+	      background: #18181b;
+	      border: 1px solid #18181b;
+	      border-radius: 999px;
+	      color: #fff;
+	      flex: 0 0 auto;
+	      font-size: 14px;
+	      font-weight: 700;
+	      height: 40px;
+	      padding: 0 16px;
+	    }
+	    .business-schedule-copy-button:hover {
+	      background: #000;
+	      color: #fff;
+	    }
+	    @media (max-width: 1279px) {
+	      .super-admin-desktop-layout {
+	        display: block;
+      }
+      .super-admin-sidebar {
+        position: static;
+        width: 100%;
+	        margin-bottom: 24px;
+	      }
+	    }
+	    @media (max-width: 767px) {
+	      .business-schedule-card {
+	        padding: 24px;
+	      }
+	      .business-schedule-row {
+	        grid-template-columns: 1fr;
+	      }
+	      .business-schedule-period {
+	        grid-template-columns: minmax(120px, 1fr) 44px minmax(120px, 1fr) 44px;
+	      }
+	      .business-schedule-select {
+	        width: 100%;
+	      }
+	      .business-schedule-copy-prompt-inner {
+	        align-items: flex-start;
+	        flex-direction: column;
+	      }
+	    }
+	  </style>
+
+  <div class="mx-auto max-w-[1640px] px-4 py-5 lg:px-6 lg:py-6">
+    <%= link_to "‹ Volver a negocios", super_admin_businesses_path, class: "inline-flex items-center gap-2 text-sm font-bold text-zinc-500 hover:text-zinc-950" %>
+
+    <div class="mt-6">
+      <p class="text-xs font-bold uppercase tracking-[.18em] text-brand-700">Setup inicial</p>
+      <h1 class="mt-2 text-4xl font-bold tracking-[-.05em] sm:text-5xl"><%= business_form_title %></h1>
+      <p class="mt-3 max-w-4xl text-sm font-semibold leading-6 text-zinc-500"><%= business_form_description %></p>
+    </div>
+
+    <%= form_with scope: :business_account, url: business_form_url, method: business_form_method, multipart: true, id: "super-admin-business-form", class: "mt-8" do |form| %>
+      <section class="super-admin-desktop-layout">
+        <aside class="super-admin-sidebar">
+          <div class="rounded-[32px] border border-white bg-white p-4 shadow-card">
+            <div class="border-b border-zinc-100 px-3 pb-4 pt-2">
+              <p class="text-sm font-bold">Alta del negocio</p>
+              <p class="mt-1 text-xs font-semibold leading-5 text-zinc-500">Usalo para dejarle el centro funcionando desde el día uno.</p>
+            </div>
+
+            <nav class="mt-4 space-y-2" data-super-admin-tabs>
+              <button type="button" class="super-admin-tab active" data-tab-target="business">
+                <span class="flex items-center gap-3">
+                  <span class="grid h-8 w-8 place-items-center rounded-xl bg-brand-600 text-xs font-bold text-white">1</span>
+                  Datos del negocio
+                </span>
+              </button>
+            </nav>
+          </div>
+        </aside>
+
+        <main class="super-admin-content space-y-6">
+          <section data-tab-panel="business" class="super-admin-panel space-y-6">
+            <section
+              class="rounded-[34px] border border-white bg-white p-5 shadow-card sm:p-7"
+              data-controller="branch-location"
+              data-branch-location-photon-url-value="https://photon.komoot.io/api/"
+            >
+              <p class="text-xs font-bold uppercase tracking-[.18em] text-brand-700">Cuenta</p>
+              <h2 class="mt-2 text-3xl font-bold tracking-[-.04em]">Datos del negocio</h2>
+
+              <div class="mt-6 grid gap-5 md:grid-cols-2">
+	                <div>
+	                  <%= form.label :business_name, "Nombre del centro", class: "text-sm font-bold text-zinc-950" %>
+	                  <%= form.text_field :business_name, value: business_account_values[:business_name], required: true, autocomplete: "organization", class: "mt-2 h-12 w-full rounded-2xl border border-zinc-200 bg-white px-4 text-sm font-semibold outline-none focus:border-brand-300 focus:ring-4 focus:ring-brand-100", data: { business_name_source: true } %>
+	                </div>
+	                <div>
+	                  <%= form.label :owner_name, "Nombre del dueño", class: "text-sm font-bold text-zinc-950" %>
+	                  <%= form.text_field :owner_name, value: business_account_values[:owner_name], required: true, autocomplete: "name", class: "mt-2 h-12 w-full rounded-2xl border border-zinc-200 bg-white px-4 text-sm font-semibold outline-none focus:border-brand-300 focus:ring-4 focus:ring-brand-100" %>
+	                  <p class="mt-2 text-xs font-semibold leading-5 text-zinc-500">Se usará para crear el usuario dueño y su miembro de equipo.</p>
+	                </div>
+                <div>
+	                  <%= form.label :owner_email, "email de acceso del dueño", class: "text-sm font-bold text-zinc-950" %>
+                  <%= form.email_field :owner_email, value: business_account_values[:owner_email], required: true, autocomplete: "email", class: "mt-2 h-12 w-full rounded-2xl border border-zinc-200 bg-white px-4 text-sm font-semibold outline-none focus:border-brand-300 focus:ring-4 focus:ring-brand-100" %>
+                  <p class="mt-2 text-xs font-semibold leading-5 text-zinc-500">El dueño puede ingresar con el enlace mágico enviado a su email.</p>
+                </div>
+                <label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+                  <%= form.check_box :billing_enabled, { checked: billing_enabled_value, class: "mt-1 h-5 w-5 rounded border-zinc-300 text-brand-600 focus:ring-brand-500" }, "1", "0" %>
+                  <span>
+                    <span class="block text-sm font-bold text-zinc-950">Facturación Dog Grooming activa</span>
+                    <span class="mt-1 block text-xs font-semibold leading-5 text-zinc-500">Si lo desactivás, el negocio queda como cliente gratuito: no ve suscripción ni cobros.</span>
+                  </span>
+                </label>
+                <div>
+                  <%= form.label :contact_phone, "WhatsApp del negocio", class: "text-sm font-bold text-zinc-950" %>
+                  <%= form.telephone_field :contact_phone, value: business_account_values[:contact_phone], required: true, autocomplete: "tel", class: "mt-2 h-12 w-full rounded-2xl border border-zinc-200 bg-white px-4 text-sm font-semibold outline-none focus:border-brand-300 focus:ring-4 focus:ring-brand-100" %>
+                  <p class="mt-2 text-xs font-semibold leading-5 text-zinc-500">Se usa como contacto público y para las alertas operativas del negocio.</p>
+                </div>
+                <div>
+                  <%= form.label :slug, "Link público opcional", class: "text-sm font-bold text-zinc-950" %>
+                  <div class="mt-2 flex h-12 overflow-hidden rounded-2xl border border-zinc-200 bg-white focus-within:border-brand-300 focus-within:ring-4 focus-within:ring-brand-100">
+                    <span class="inline-flex shrink-0 items-center border-r border-zinc-200 bg-zinc-50 px-4 text-sm font-bold text-zinc-500"><%= public_link_host %>/</span>
+                    <%= form.text_field :slug, value: business_account_values[:slug], autocomplete: "off", class: "min-w-0 flex-1 border-0 bg-white px-4 text-sm font-semibold outline-none", data: { public_slug_input: true } %>
+                  </div>
+                  <p class="mt-2 text-xs font-semibold leading-5 text-zinc-500">Si lo dejás vacío, se genera automáticamente.</p>
+                </div>
+                <div>
+                  <%= form.label :custom_domain, "Dominio propio", class: "text-sm font-bold text-zinc-950" %>
+                  <%= form.text_field :custom_domain, value: business_account_values[:custom_domain], autocomplete: "url", placeholder: "reserva.aura.com.ar", class: "mt-2 h-12 w-full rounded-2xl border border-zinc-200 bg-white px-4 text-sm font-semibold outline-none focus:border-brand-300 focus:ring-4 focus:ring-brand-100" %>
+                  <p class="mt-2 text-xs font-semibold leading-5 text-zinc-500">Debe resolver al servidor de Dog Grooming antes de activarlo.</p>
+                </div>
+                <label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+                  <%= form.check_box :custom_domain_enabled, { checked: ActiveModel::Type::Boolean.new.cast(business_account_values[:custom_domain_enabled]), class: "mt-1 h-5 w-5 rounded border-zinc-300 text-brand-600 focus:ring-brand-500" }, "1", "0" %>
+                  <span>
+                    <span class="block text-sm font-bold text-zinc-950">Activar dominio propio</span>
+                    <span class="mt-1 block text-xs font-semibold leading-5 text-zinc-500">Sólo activalo cuando el DNS esté listo: habilita la agenda y el certificado HTTPS automático.</span>
+                  </span>
+                </label>
+                <div class="md:col-span-2">
+                  <%= form.label :instagram_url, "Instagram del negocio", class: "text-sm font-bold text-zinc-950" %>
+                  <div class="mt-2 flex h-12 overflow-hidden rounded-2xl border border-zinc-200 bg-white focus-within:border-brand-300 focus-within:ring-4 focus-within:ring-brand-100">
+                    <span class="inline-flex shrink-0 items-center border-r border-zinc-200 bg-zinc-50 px-4 text-sm font-bold text-zinc-500">instagram.com/</span>
+                    <%= form.text_field :instagram_url, value: instagram_handle, autocomplete: "off", class: "min-w-0 flex-1 border-0 bg-white px-4 text-sm font-semibold outline-none", data: { instagram_handle_input: true } %>
+                  </div>
+                  <p class="mt-2 text-xs font-semibold leading-5 text-zinc-500">Se usa en la página pública.</p>
+                </div>
+                <div class="md:col-span-2">
+                  <%= form.label :slogan, "Slogan", class: "text-sm font-bold text-zinc-950" %>
+                  <%= form.text_field :slogan, value: business_account_values[:slogan], maxlength: 90, placeholder: "Ej. Tu momento de bienestar empieza acá", class: "mt-2 h-12 w-full rounded-2xl border border-zinc-200 bg-white px-4 text-sm font-semibold outline-none focus:border-brand-300 focus:ring-4 focus:ring-brand-100" %>
+                  <p class="mt-2 text-xs font-semibold leading-5 text-zinc-500">Se muestra como título principal en el banner del perfil público.</p>
+                </div>
+                <div>
+                  <%= form.label :logo, "Logo", class: "text-sm font-bold text-zinc-950" %>
+                  <% if business_form_business&.logo&.attached? %>
+                    <div class="mt-2 flex items-center gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 p-3">
+                      <%= image_tag business_form_business.logo.variant(resize_to_fill: [ 72, 72 ]), class: "h-16 w-16 rounded-2xl object-cover", alt: "Logo actual" %>
+                      <div>
+                        <p class="text-sm font-bold text-zinc-950">Logo actual</p>
+                        <p class="mt-1 text-xs font-semibold text-zinc-500">Seleccioná otro archivo para reemplazarlo.</p>
+                      </div>
+                    </div>
+                  <% end %>
+                  <%= form.file_field :logo, accept: "image/png,image/jpeg,image/webp", class: "mt-2 block w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold text-zinc-600 file:mr-4 file:rounded-xl file:border-0 file:bg-zinc-950 file:px-4 file:py-2 file:text-xs file:font-bold file:text-white" %>
+                </div>
+              </div>
+
+              <div class="mt-8 rounded-[34px] border border-zinc-100 bg-zinc-50 p-5">
+                <p class="text-xs font-bold uppercase tracking-[.18em] text-brand-700">Ubicación</p>
+                <h3 class="mt-2 text-2xl font-bold tracking-tight text-zinc-950">Dirección del negocio</h3>
+
+                <div class="space-y-4">
+                  <div>
+                    <label class="mb-2 block text-sm font-bold text-zinc-950" for="business_account_search_address">Dirección del negocio</label>
+                    <div class="relative" data-branch-location-target="searchWrapper">
+                      <%= text_field_tag "business_account[search_address]", business_form_search_address, id: "business_account_search_address", autocomplete: "street-address", placeholder: "Ej. Bynnon, Castelar, Buenos Aires, Argentina", class: "h-12 w-full rounded-2xl border border-zinc-200 bg-white px-4 text-sm font-semibold outline-none focus:border-brand-300 focus:ring-4 focus:ring-brand-100", data: { branch_location_target: "search", action: "input->branch-location#searchChanged keydown->branch-location#keydown" } %>
+                      <div class="absolute left-0 right-0 top-[calc(100%+8px)] z-20 hidden overflow-hidden rounded-[20px] border border-zinc-200 bg-white shadow-card" data-branch-location-target="suggestions"></div>
+                    </div>
+                  </div>
+
+                  <%= hidden_field_tag "business_account[latitude]", business_account_values[:latitude], data: { branch_location_target: "latitude" } %>
+                  <%= hidden_field_tag "business_account[longitude]", business_account_values[:longitude], data: { branch_location_target: "longitude" } %>
+                  <%= hidden_field_tag "business_account[country]", "Argentina", data: { branch_location_target: "country" } %>
+                  <%= form.hidden_field :address, value: business_account_values[:address], data: { branch_location_target: "address" } %>
+                  <%= form.hidden_field :city, value: business_account_values[:city], data: { branch_location_target: "city" } %>
+                  <%= form.hidden_field :province, value: business_account_values[:province], data: { branch_location_target: "province" } %>
+                  <%= text_field_tag "business_account[neighborhood]", business_account_values[:neighborhood], class: "hidden", data: { branch_location_target: "neighborhood" } %>
+
+                  <div class="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <%= form.label :address_details, "Piso / departamento", class: "mb-2 block text-sm font-bold text-zinc-950" %>
+                      <%= form.text_field :address_details, value: business_account_values[:address_details], autocomplete: "address-line2", placeholder: "Ej. Piso 3, Depto B", class: "h-12 w-full rounded-2xl border border-zinc-200 bg-white px-4 text-sm font-semibold outline-none focus:border-brand-300 focus:ring-4 focus:ring-brand-100" %>
+                      <p class="mt-2 text-xs font-semibold leading-5 text-zinc-500">No afecta el mapa; se muestra junto a la dirección para que el cliente llegue al lugar exacto.</p>
+                    </div>
+                  </div>
+
+                  <div data-branch-location-target="mapContainer" class="hidden space-y-4">
+                    <div class="overflow-hidden rounded-[28px] border border-zinc-200 bg-white shadow-soft">
+                    <div class="border-b border-zinc-100 px-4 py-3">
+                      <p class="text-xs font-bold uppercase tracking-[.14em] text-zinc-400">Mapa</p>
+                    </div>
+                    <div class="relative" style="height: 340px; min-height: 340px;">
+                      <div data-branch-location-target="map" class="h-full w-full" style="height: 100%; min-height: 340px; width: 100%;"></div>
+                      <div data-branch-location-target="mapPanel" class="pointer-events-none absolute inset-x-4 bottom-4 rounded-[20px] bg-white/95 p-3 shadow-card backdrop-blur">
+                        <p class="text-xs font-bold uppercase tracking-[.12em] text-zinc-400">Estado</p>
+                        <p class="mt-1 text-sm font-semibold leading-6 text-zinc-600">Buscá una dirección para ubicar el negocio en el mapa.</p>
+                      </div>
+                    </div>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+              <div class="business-schedule-card mt-8" data-business-schedule>
+                <div>
+                  <div>
+                    <p class="business-schedule-kicker">Horarios</p>
+                    <h3 class="business-schedule-title">Horarios de atención</h3>
+                    <p class="business-schedule-description">
+                      Informá a los clientes el horario habitual del centro. Se mostrará en el perfil público y se usará como base para calcular disponibilidad.
+                    </p>
+                  </div>
+                </div>
+
+                <div class="business-schedule-day-pills">
+                  <% business_availability_rules.each do |rule| %>
+                    <% short_day = { 1 => "Lun", 2 => "Mar", 3 => "Mie", 4 => "Jue", 5 => "Vie", 6 => "Sáb", 0 => "Dom" }.fetch(rule.fetch(:weekday)) %>
+                    <button type="button" class="business-schedule-pill <%= "is-active" if rule.fetch(:active) %>" data-schedule-day-pill="<%= rule.fetch(:weekday) %>">
+                      <%= short_day %>
+                    </button>
+                  <% end %>
+                </div>
+
+                <% first_active_weekday = business_availability_rules.find { |rule| rule.fetch(:active) }&.fetch(:weekday) %>
+                <div class="business-schedule-rows">
+                  <% business_availability_rules.each do |rule| %>
+                    <% weekday = rule.fetch(:weekday) %>
+                    <% has_second_period = rule[:break_start_time].present? && rule[:break_end_time].present? %>
+                    <% show_copy_prompt = has_second_period && weekday == first_active_weekday %>
+                    <% first_period_end = has_second_period ? rule[:break_start_time] : rule[:end_time] %>
+                    <% second_period_start = rule[:break_end_time].presence || "15:00" %>
+                    <div class="business-schedule-row <%= "hidden" unless rule.fetch(:active) %>" data-schedule-day-row="<%= weekday %>">
+                      <div>
+                        <button type="button" class="business-schedule-day-button" data-schedule-day-toggle>
+                          <span class="business-schedule-day-name"><%= rule.fetch(:day_name) %></span>
+                          <span class="business-schedule-status <%= "is-active" if rule.fetch(:active) %>" data-schedule-status>
+                            <%= rule.fetch(:active) ? "Abierto" : "Cerrado" %>
+                          </span>
+                        </button>
+                      </div>
+
+                      <div class="business-schedule-periods" data-schedule-periods>
+                        <%= hidden_field_tag "business_account[availability_rules][#{weekday}][active]", rule.fetch(:active) ? "1" : "0", data: { schedule_active_field: true } %>
+                        <%= hidden_field_tag "business_account[availability_rules][#{weekday}][start_time]", rule[:start_time], data: { schedule_start_field: true } %>
+                        <%= hidden_field_tag "business_account[availability_rules][#{weekday}][end_time]", rule[:end_time], data: { schedule_end_field: true } %>
+                        <%= hidden_field_tag "business_account[availability_rules][#{weekday}][break_start_time]", rule[:break_start_time], data: { schedule_break_start_field: true } %>
+                        <%= hidden_field_tag "business_account[availability_rules][#{weekday}][break_end_time]", rule[:break_end_time], data: { schedule_break_end_field: true } %>
+
+                        <div class="business-schedule-period" data-schedule-period="0">
+                          <%= select_tag nil, options_for_select(business_time_options, rule[:start_time]), class: "business-schedule-select", data: { schedule_period_start: true } %>
+                          <span class="business-schedule-until">Hasta</span>
+                          <%= select_tag nil, options_for_select(business_time_options, first_period_end), class: "business-schedule-select", data: { schedule_period_end: true } %>
+                          <button type="button" class="business-schedule-icon-button" data-schedule-add-period aria-label="Agregar otra franja">+</button>
+                        </div>
+
+                        <div class="business-schedule-period <%= "hidden" unless has_second_period %>" data-schedule-extra-period data-schedule-period="1">
+                          <%= select_tag nil, options_for_select(business_time_options, second_period_start), class: "business-schedule-select", data: { schedule_period_start: true } %>
+                          <span class="business-schedule-until">Hasta</span>
+                          <%= select_tag nil, options_for_select(business_time_options, rule[:end_time]), class: "business-schedule-select", data: { schedule_period_end: true } %>
+                          <button type="button" class="business-schedule-icon-button remove" data-schedule-remove-period aria-label="Quitar franja">×</button>
+                        </div>
+
+                        <div class="business-schedule-copy-prompt <%= "hidden" unless show_copy_prompt %>" data-schedule-copy-prompt>
+                          <div class="business-schedule-copy-prompt-inner">
+                            <p>¿Deseas copiar este horario laboral a los demás días?</p>
+                            <button type="button" class="business-schedule-copy-button" data-schedule-copy-open-days>
+                              Sí, copiar
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  <% end %>
+                </div>
+              </div>
+            </section>
+          </section>
+
+          <div class="flex flex-col gap-3 sm:flex-row sm:justify-end">
+            <%= link_to "Cancelar", super_admin_businesses_path, class: "inline-flex h-12 items-center justify-center rounded-2xl border border-zinc-200 bg-white px-5 text-sm font-bold text-zinc-800" %>
+            <%= button_tag business_form_submit_label, type: "submit", form: "super-admin-business-form", class: "h-12 rounded-2xl bg-ink px-5 text-sm font-bold text-white shadow-lg shadow-zinc-900/15" %>
+          </div>
+        </main>
+      </section>
+    <% end %>
+  </div>
+</div>
+
+<script>
+  (() => {
+    const form = document.getElementById("super-admin-business-form");
+    if (!form) return;
+
+    const businessNameInputs = Array.from(form.querySelectorAll("[data-business-name-source]"));
+    const slugInputs = Array.from(form.querySelectorAll("[data-public-slug-input]"));
+    const instagramInputs = Array.from(form.querySelectorAll("[data-instagram-handle-input]"));
+    let slugWasEdited = slugInputs.some((input) => input.value.trim() !== "");
+
+    const slugify = (value) => value
+      .toString()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+
+    const syncInputs = (inputs, value, except = null) => {
+      inputs.forEach((input) => {
+        if (input !== except && input.value !== value) input.value = value;
+      });
+    };
+
+    const setSlug = (value, except = null) => {
+      syncInputs(slugInputs, slugify(value), except);
+    };
+
+    businessNameInputs.forEach((input) => {
+      input.addEventListener("input", () => {
+        syncInputs(businessNameInputs, input.value, input);
+        if (!slugWasEdited) setSlug(input.value);
+      });
+    });
+
+    slugInputs.forEach((input) => {
+      input.addEventListener("input", () => {
+        slugWasEdited = true;
+        const cleanSlug = slugify(input.value);
+        input.value = cleanSlug;
+        setSlug(cleanSlug, input);
+      });
+    });
+
+    if (!slugWasEdited && businessNameInputs[0]?.value.trim()) setSlug(businessNameInputs[0].value);
+
+    const cleanInstagramHandle = (value) => value
+      .toString()
+      .trim()
+      .replace(/^https?:\/\/(www\.)?instagram\.com\//i, "")
+      .replace(/^@/, "")
+      .replace(/\/+$/g, "");
+
+    instagramInputs.forEach((input) => {
+      input.addEventListener("input", () => {
+        input.value = cleanInstagramHandle(input.value);
+      });
+    });
+
+    const scheduleRoot = document.querySelector("[data-business-schedule]");
+    const scheduleRows = scheduleRoot ? Array.from(scheduleRoot.querySelectorAll("[data-schedule-day-row]")) : [];
+
+    const hasVisibleSecondPeriod = (row) => {
+      const secondPeriod = row.querySelector("[data-schedule-extra-period]");
+      return Boolean(secondPeriod && !secondPeriod.classList.contains("hidden"));
+    };
+
+    const updateScheduleCopyPrompts = () => {
+      const firstActiveRow = scheduleRows.find((row) => row.dataset.scheduleActive === "1");
+
+      scheduleRows.forEach((row) => {
+        const prompt = row.querySelector("[data-schedule-copy-prompt]");
+        prompt?.classList.toggle("hidden", row !== firstActiveRow || !hasVisibleSecondPeriod(row));
+      });
+    };
+
+    const syncScheduleRow = (row) => {
+      const activeField = row.querySelector("[data-schedule-active-field]");
+      const startField = row.querySelector("[data-schedule-start-field]");
+      const endField = row.querySelector("[data-schedule-end-field]");
+      const breakStartField = row.querySelector("[data-schedule-break-start-field]");
+      const breakEndField = row.querySelector("[data-schedule-break-end-field]");
+      const firstPeriod = row.querySelector("[data-schedule-period='0']");
+      const secondPeriod = row.querySelector("[data-schedule-extra-period]");
+      const hasSecondPeriod = secondPeriod && !secondPeriod.classList.contains("hidden");
+
+      if (!activeField || !startField || !endField || !breakStartField || !breakEndField || !firstPeriod) return;
+
+      const firstStart = firstPeriod.querySelector("[data-schedule-period-start]")?.value || "10:00";
+      const firstEnd = firstPeriod.querySelector("[data-schedule-period-end]")?.value || "19:00";
+      const secondStart = secondPeriod?.querySelector("[data-schedule-period-start]")?.value || "15:00";
+      const secondEnd = secondPeriod?.querySelector("[data-schedule-period-end]")?.value || "19:00";
+
+      startField.value = firstStart;
+      endField.value = hasSecondPeriod ? secondEnd : firstEnd;
+      breakStartField.value = hasSecondPeriod ? firstEnd : "";
+      breakEndField.value = hasSecondPeriod ? secondStart : "";
+      activeField.value = row.dataset.scheduleActive === "1" ? "1" : "0";
+    };
+
+    const setScheduleActive = (row, active) => {
+      row.dataset.scheduleActive = active ? "1" : "0";
+      const weekday = row.dataset.scheduleDayRow;
+      const pill = scheduleRoot?.querySelector(`[data-schedule-day-pill="${weekday}"]`);
+      const status = row.querySelector("[data-schedule-status]");
+
+      row.classList.toggle("hidden", !active);
+      status.textContent = active ? "Abierto" : "Cerrado";
+      status.classList.toggle("is-active", active);
+      pill?.classList.toggle("is-active", active);
+      syncScheduleRow(row);
+      updateScheduleCopyPrompts();
+    };
+
+    scheduleRows.forEach((row) => {
+      const active = row.querySelector("[data-schedule-active-field]")?.value === "1";
+      setScheduleActive(row, active);
+
+      row.querySelector("[data-schedule-day-toggle]")?.addEventListener("click", () => {
+        setScheduleActive(row, row.dataset.scheduleActive !== "1");
+      });
+
+      scheduleRoot?.querySelector(`[data-schedule-day-pill="${row.dataset.scheduleDayRow}"]`)?.addEventListener("click", () => {
+        setScheduleActive(row, row.dataset.scheduleActive !== "1");
+      });
+
+      row.querySelector("[data-schedule-add-period]")?.addEventListener("click", () => {
+        row.querySelector("[data-schedule-extra-period]")?.classList.remove("hidden");
+        syncScheduleRow(row);
+        updateScheduleCopyPrompts();
+      });
+
+      row.querySelector("[data-schedule-remove-period]")?.addEventListener("click", () => {
+        row.querySelector("[data-schedule-extra-period]")?.classList.add("hidden");
+        syncScheduleRow(row);
+        updateScheduleCopyPrompts();
+      });
+
+      row.querySelectorAll("[data-schedule-period-start], [data-schedule-period-end]").forEach((select) => {
+        select.addEventListener("change", () => syncScheduleRow(row));
+      });
+    });
+
+    scheduleRoot?.querySelectorAll("[data-schedule-copy-open-days]").forEach((button) => button.addEventListener("click", () => {
+      const sourceRow = button.closest("[data-schedule-day-row]");
+      if (!sourceRow) return;
+
+      const sourcePeriods = Array.from(sourceRow.querySelectorAll("[data-schedule-period]"));
+      const sourceHasSecond = hasVisibleSecondPeriod(sourceRow);
+      scheduleRows.filter((row) => row !== sourceRow && row.dataset.scheduleActive === "1").forEach((row) => {
+        const periods = Array.from(row.querySelectorAll("[data-schedule-period]"));
+        periods.forEach((period, index) => {
+          const source = sourcePeriods[index];
+          if (!source) return;
+
+          period.querySelector("[data-schedule-period-start]").value = source.querySelector("[data-schedule-period-start]").value;
+          period.querySelector("[data-schedule-period-end]").value = source.querySelector("[data-schedule-period-end]").value;
+        });
+        row.querySelector("[data-schedule-extra-period]")?.classList.toggle("hidden", !sourceHasSecond);
+        syncScheduleRow(row);
+      });
+      updateScheduleCopyPrompts();
+    }));
+
+    form.addEventListener("submit", () => {
+      instagramInputs.forEach((input) => {
+        const handle = cleanInstagramHandle(input.value);
+        input.value = handle ? `https://www.instagram.com/${handle}` : "";
+      });
+    });
+
+  })();
+</script>

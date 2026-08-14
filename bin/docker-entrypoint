@@ -1,0 +1,6 @@
+#!/bin/bash -e
+
+# Database migrations are run explicitly by deploy.sh before booting web.
+# Keep app boot side-effect free so multiple containers do not compete for the migration lock.
+
+exec "${@}"

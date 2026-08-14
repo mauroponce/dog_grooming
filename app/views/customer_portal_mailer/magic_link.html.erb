@@ -1,0 +1,15 @@
+<% content_for :email_preheader, "Usá este enlace para consultar tus turnos en #{@business.name}." %>
+<% content_for :email_badge, "Acceso seguro" %>
+<% content_for :email_status, "Mis turnos" %>
+<% content_for :email_footer_note, "Este email fue enviado porque se pidió acceso al portal de turnos de #{@business.name}." %>
+
+<h1>Acceso a tus turnos</h1>
+
+<p>Hola, recibimos un pedido para consultar tus turnos en <strong><%= @business.name %></strong>.</p>
+
+<p><%= link_to "Ver mis turnos", @access_url, class: "email-button button" %></p>
+
+<p>Este link vence en 30 minutos. También podés copiar y pegar este enlace:</p>
+<p><%= link_to @access_url, @access_url, class: "email-link" %></p>
+
+<div class="email-note">Si no pediste este acceso, podés ignorar este email.</div>

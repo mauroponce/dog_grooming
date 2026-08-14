@@ -1,0 +1,54 @@
+<% editing = local_assigns.fetch(:editing, false) %>
+
+<div id="<%= dom_id(category, :services_category_heading) %>"
+     class="services-category-heading-editor <%= "is-editing" if editing %>"
+     data-category-inline-editor
+     data-category-inline-current-name="<%= category.name.to_s %>">
+  <div class="services-category-heading-display" data-category-inline-display>
+    <h2 class="services-category-heading"><%= category.name.presence || "Categoría" %></h2>
+    <%= form_with model: [ :admin, category ], class: "services-category-image-form", data: { turbo: false, category_image_form: true } do |form| %>
+      <label class="services-category-image-button" title="La imagen se muestra en las tarjetas de categorías de Web Completa">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none">
+          <rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="2"/>
+          <circle cx="8" cy="9" r="1.5" fill="currentColor"/>
+          <path d="m4 18 5-5 3.5 3.5 2.5-2.5 5 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span><%= category.cover_image.attached? ? "Cambiar imagen" : "Agregar imagen" %></span>
+        <%= form.file_field :cover_image, accept: "image/png,image/jpeg,image/webp", class: "services-category-image-input", data: { category_image_input: true } %>
+      </label>
+    <% end %>
+    <button type="button" class="services-category-heading-edit-button" data-category-inline-edit aria-label="Editar nombre de categoría">
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <path d="M4 20h4.6L19.1 9.5a2.1 2.1 0 0 0 0-3l-1.6-1.6a2.1 2.1 0 0 0-3 0L4 15.4V20Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+        <path d="m13.5 6 4.5 4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </button>
+    <button type="button" class="services-category-heading-delete-button" data-service-category-modal="service-category-delete-modal-<%= category.id %>" aria-label="Eliminar categoría">
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <path d="M4 7h16M10 11v6M14 11v6M6 7l1 14h10l1-14M9 7V4h6v3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+  </div>
+
+  <%= form_with model: [ :admin, category ], class: "services-category-inline-form", data: { category_inline_form: true } do |form| %>
+    <%= form.text_field :name,
+      required: true,
+      class: "services-category-inline-input",
+      data: { category_inline_input: true },
+      aria: { label: "Nombre de categoría" } %>
+    <button type="submit" class="services-category-inline-button is-save" aria-label="Guardar nombre de categoría">
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <path d="m5 12 4 4L19 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+    <button type="button" class="services-category-inline-button is-cancel" data-category-inline-cancel aria-label="Cancelar edición de categoría">
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+      </svg>
+    </button>
+  <% end %>
+
+  <% if category.errors[:name].present? %>
+    <p class="services-category-inline-error"><%= category.errors[:name].to_sentence %></p>
+  <% end %>
+</div>

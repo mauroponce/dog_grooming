@@ -1,0 +1,31 @@
+<% landing = local_assigns.fetch(:landing) %>
+<% categories = landing.categories %>
+
+<% if categories.any? %>
+  <section id="servicios" class="ht-services" data-dog-grooming-categories>
+    <div class="ht-services__inner">
+      <p class="ht-services__eyebrow">Servicios</p>
+      <h2 class="ht-services__heading">Nuestros servicios</h2>
+      <div class="ht-category-grid">
+        <% categories.each do |category| %>
+          <% category_services = landing.services_for_category(category) %>
+          <% fallback_service = category_services.find { |service| service.cover_image.attached? } || category_services.first %>
+          <%= link_to landing.category_path(category), class: "ht-category-card" do %>
+            <% if category.cover_image.attached? %>
+              <%= image_tag category.cover_image.variant(resize_to_fill: [ 720, 420 ]), class: "ht-category-card__image", alt: category.name %>
+            <% elsif fallback_service&.cover_image&.attached? %>
+              <%= image_tag fallback_service.cover_image.variant(resize_to_fill: [ 720, 420 ]), class: "ht-category-card__image", alt: category.name %>
+            <% else %>
+              <span class="ht-category-card__image ht-category-card__image--placeholder" aria-hidden="true"></span>
+            <% end %>
+            <span class="ht-category-card__body">
+              <h3><%= category.name %></h3>
+              <p><%= category.description.presence || "#{category_services.size} #{category_services.one? ? 'servicio disponible' : 'servicios disponibles'}" %></p>
+              <span class="ht-category-card__action">Ver servicios →</span>
+            </span>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  </section>
+<% end %>

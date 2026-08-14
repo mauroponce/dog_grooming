@@ -1,0 +1,11 @@
+Resumen semanal de ventas en Dog Grooming
+
+Campañas creadas: <%= @campaigns_count %>
+Oportunidades contactadas: <%= @contacted_count %>
+Reservas atribuidas a links: <%= @attributed_bookings_count %>
+
+<% @top_links.each do |link| %>
+- <%= link.name %>: <%= link.visit_count %> visitas, <%= link.conversion_count %> reservas.
+<% end %>
+
+Abrir Ventas: <%= @url %>

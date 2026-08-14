@@ -1,0 +1,3918 @@
+<% content_for :title, "Dog Grooming Admin | Calendario" %>
+<% content_for :admin_full_bleed, true %>
+<% content_for :admin_section_title, "Calendario" %>
+
+<style>
+  :root {
+    --sidebar-width: var(--admin-sidebar-width, 280px);
+    --topbar-height: 78px;
+    --toolbar-height: 58px;
+    --resource-height: 104px;
+    --slot-height: 56px;
+    --drawer-width: 390px;
+    --time-col-width: 70px;
+    --calendar-start-hour: 0;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html,
+  body {
+    height: 100%;
+    overflow: hidden;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #f7f7f8;
+    color: #121212;
+  }
+
+  button,
+  input,
+  textarea,
+  select { font-family: inherit; }
+
+  .admin-calendar-app { --color-ink: #071014; --color-brand: #ffded4; }
+
+  .icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 999px;
+    border: 1px solid #e6e6e9;
+    background: #fff;
+    transition: .16s ease;
+  }
+
+  .icon-btn:hover {
+    border-color: #d4d4d8;
+    background: #fafafa;
+    transform: translateY(-1px);
+  }
+
+  .sidebar-item {
+    position: relative;
+    display: flex;
+    width: 40px;
+    height: 40px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    color: #cfd8dc;
+    transition: .16s ease;
+  }
+
+  .sidebar-item:hover {
+    color: #fff;
+    background: rgba(255,255,255,.08);
+  }
+
+  .sidebar-item.active {
+    color: #fff;
+    background: #ffded4;
+    box-shadow: 0 10px 24px rgba(255, 222, 212, .30);
+  }
+
+  .sidebar-item:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: calc(100% + 10px);
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 100;
+    white-space: nowrap;
+    border-radius: 10px;
+    background: #111;
+    color: #fff;
+    padding: 8px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    box-shadow: 0 8px 26px rgba(0,0,0,.18);
+  }
+
+  .shadow-drawer { box-shadow: -16px 0 45px rgba(15,23,42,.10); }
+  .shadow-menu { box-shadow: 0 18px 45px rgba(15,23,42,.16); }
+  .shadow-soft { box-shadow: 0 8px 28px rgba(15,23,42,.08); }
+
+  .calendar-shell {
+    height: calc(100vh - var(--topbar-height) - var(--toolbar-height) - var(--resource-height));
+    overflow: hidden;
+  }
+
+  body.action-mode-active .calendar-shell {
+    height: calc(100vh - var(--topbar-height) - var(--toolbar-height) - var(--resource-height) - 48px);
+  }
+
+  .calendar-scroll {
+    height: 100%;
+    overflow: auto;
+    background: #fff;
+  }
+
+  .calendar-scroll::-webkit-scrollbar,
+  .drawer-scroll::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  .calendar-scroll::-webkit-scrollbar-thumb,
+  .drawer-scroll::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: #d6d6dc;
+    border: 3px solid #fff;
+  }
+
+  .resource-header-viewport {
+    position: relative;
+    z-index: 25;
+    height: var(--resource-height);
+    overflow: hidden;
+    border-bottom: 1px solid #e5e7eb;
+    background: #fff;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, .08);
+  }
+
+  .resource-header-grid,
+  .calendar-body-grid {
+    display: grid;
+    grid-template-columns: var(--time-col-width) repeat(var(--employee-count), minmax(230px, 1fr));
+    min-width: calc(var(--time-col-width) + (var(--employee-count) * 260px));
+    width: max(100%, calc(var(--time-col-width) + (var(--employee-count) * 260px)));
+  }
+
+  .resource-header-grid { will-change: transform; }
+  .calendar-body-grid { position: relative; }
+
+  .resource-cell {
+    height: var(--resource-height);
+    min-height: var(--resource-height);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-left: 1px solid #e5e7eb;
+    background: #fff;
+    overflow: hidden;
+  }
+
+  .resource-card {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    text-align: center;
+  }
+
+  .resource-avatar {
+    display: flex;
+    width: 46px;
+    height: 46px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    border: 3px solid #fff;
+    color: #fff;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1;
+    box-shadow: 0 7px 18px rgba(15, 23, 42, .14);
+    overflow: hidden;
+  }
+
+  .resource-avatar img,
+  .week-employee-avatar img,
+  .team-menu-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .resource-name {
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 1.15;
+  }
+
+  .resource-name { font-size: 13px; font-weight: 700; color: #121212; }
+
+  .calendar-column {
+    position: relative;
+    min-height: calc(var(--slot-height) * var(--slot-count));
+    border-left: 1px solid #ececf1;
+    background:
+      repeating-linear-gradient(-45deg, rgba(255, 222, 212, .022) 0, rgba(255, 222, 212, .022) 4px, transparent 4px, transparent 8px),
+      #fff;
+  }
+
+  .time-column {
+    min-height: calc(var(--slot-height) * var(--slot-count));
+    background: #fff;
+    border-right: 1px solid #ececf1;
+  }
+
+  .time-label {
+    height: calc(var(--slot-height) * 2);
+    border-top: 1px solid #f0f0f3;
+    padding-top: 6px;
+    padding-right: 8px;
+    text-align: right;
+    font-size: 12px;
+    font-weight: 700;
+    color: #60646c;
+  }
+
+  .calendar-slot {
+    height: var(--slot-height);
+    border-top: 1px solid #f0f0f3;
+    transition: background .12s ease;
+    cursor: crosshair;
+  }
+
+  .calendar-slot:nth-child(even) {
+    border-top-style: dashed;
+    border-top-color: #f5f5f7;
+  }
+
+  .calendar-slot:hover { background: rgba(255, 222, 212, .045); }
+
+  .global-now-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 2px;
+    z-index: 35;
+    background: #ef6b8b;
+    pointer-events: none;
+  }
+
+  .global-now-line::before {
+    content: attr(data-time);
+    position: absolute;
+    left: 8px;
+    top: -11px;
+    width: 48px;
+    border-radius: 999px;
+    border: 1px solid #ef6b8b;
+    background: #fff;
+    color: #ef6b8b;
+    font-size: 11px;
+    font-weight: 700;
+    text-align: center;
+    line-height: 20px;
+  }
+
+  .appt-block {
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    z-index: 12;
+    border-radius: 9px;
+    padding: 8px 10px;
+    font-size: 12px;
+    line-height: 1.2;
+    overflow: hidden;
+    cursor: pointer;
+    border: 1px solid rgba(15, 23, 42, .08);
+    box-shadow: 0 7px 20px rgba(15,23,42,.08);
+    transition: .14s ease;
+  }
+
+  .appt-block:hover {
+    filter: brightness(.98);
+    transform: translateY(-1px);
+  }
+
+  .appt-line {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 700;
+  }
+
+  .appt-status {
+    font-weight: 700;
+  }
+
+  .appt-status.is-emerald { color: #047857; }
+  .appt-status.is-violet { color: #A63826; }
+
+  .selection-block {
+    position: absolute;
+    left: 6px;
+    right: 6px;
+    z-index: 10;
+    border: 2px solid #ffded4;
+    background: rgba(255, 222, 212, .08);
+    border-radius: 8px;
+    pointer-events: none;
+  }
+
+  .drawer {
+    top: var(--admin-impersonation-offset, 0px);
+    z-index: 2147483647;
+    isolation: isolate;
+    width: var(--drawer-width);
+    max-width: var(--drawer-width);
+    overflow: hidden;
+    transform: translateX(100%);
+    opacity: 0;
+    transition: transform .22s ease, opacity .22s ease;
+    pointer-events: none;
+  }
+
+  .drawer.open {
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .drawer.appointment-editor {
+    width: min(820px, calc(100vw - var(--sidebar-width)));
+    max-width: min(820px, calc(100vw - var(--sidebar-width)));
+  }
+
+  .appointment-editor-layout { display: grid; grid-template-columns: 265px minmax(0, 1fr); height: 100%; min-height: 0; }
+  .appointment-client-pane { display: flex; min-height: 0; flex-direction: column; overflow-y: auto; border-right: 1px solid #e4e4e7; background: #fafafa; }
+  .appointment-client-summary { display: flex; min-height: 100%; flex: 1; flex-direction: column; align-items: stretch; padding: 22px 18px; }
+  .appointment-client-identity { display: flex; flex-direction: column; align-items: center; text-align: center; }
+  .appointment-client-avatar { display: grid; width: 78px; height: 78px; place-items: center; border: 12px solid #ffded4; border-radius: 999px; background: #ffded4; color: #A63826; font-size: 21px; font-weight: 700; }
+  .appointment-client-action { margin-top: 16px; color: #071014; font-size: 22px; font-weight: 700; line-height: 1.1; letter-spacing: -.04em; }
+  .appointment-client-details { margin-top: 22px; width: 100%; display: grid; text-align: left; }
+  .appointment-client-detail { display: flex; min-width: 0; align-items: center; gap: 14px; border-top: 1px solid #ececf0; padding: 18px 0; color: #3f3f46; text-decoration: none; }
+  .appointment-client-detail:first-child { border-top: 0; }
+  .appointment-client-detail:hover .appointment-client-detail-value { color: #A63826; text-decoration: underline; text-underline-offset: 3px; }
+  .appointment-client-detail-icon { display: grid; width: 36px; height: 36px; flex: 0 0 auto; place-items: center; border-radius: 12px; background: #ffded4; color: #A63826; }
+  .appointment-client-detail-icon svg { width: 18px; height: 18px; }
+  .appointment-client-detail-label { display: block; color: #a1a1aa; font-size: 11px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; }
+  .appointment-client-detail-value { display: block; min-width: 0; margin-top: 6px; overflow-wrap: anywhere; color: #18181b; font-size: 16px; font-weight: 700; line-height: 1.28; }
+  .appointment-client-detail.muted .appointment-client-detail-icon { background: #f4f4f5; color: #71717a; }
+  .appointment-client-detail.muted .appointment-client-detail-value { color: #3f3f46; }
+  .appointment-client-detail-button { display: inline-flex; width: 100%; min-height: 48px; margin-top: auto; align-items: center; justify-content: center; border-radius: 999px; border: 1px solid #d4d4d8; background: #fff; color: #18181b; font-size: 14px; font-weight: 700; text-decoration: none; box-shadow: 0 12px 28px rgba(15,23,42,.08); }
+  .appointment-client-detail-button:hover { border-color: #18181b; background: #fafafa; }
+  .appointment-main-pane { display: flex; min-width: 0; min-height: 0; flex-direction: column; background: #fff; }
+  .customer-picker-header { position: sticky; top: 0; z-index: 2; border-bottom: 1px solid #e4e4e7; background: #fff; padding: 20px; }
+  .customer-picker-title { margin: 0 0 14px; font-size: 19px; font-weight: 700; }
+  .customer-picker-search { width: 100%; height: 48px; border: 1px solid #d4d4d8; border-radius: 12px; padding: 0 14px; background: #fff; font-size: 13px; font-weight: 700; outline: none; }
+  .customer-picker-search:focus { border-color: #A63826; box-shadow: 0 0 0 4px rgba(255, 222, 212, .12); }
+  .customer-picker-option { display: flex; width: 100%; align-items: center; gap: 12px; border-bottom: 1px solid #e4e4e7; padding: 15px 18px; background: transparent; text-align: left; }
+  .customer-picker-option:hover { background: #ffded4; }
+  .customer-picker-option-avatar { display: grid; width: 44px; height: 44px; flex: 0 0 auto; place-items: center; border-radius: 999px; background: #ffded4; color: #A63826; font-weight: 700; }
+  .customer-picker-option-name { display: block; overflow: hidden; font-size: 13px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+  .customer-picker-option-meta { display: block; overflow: hidden; margin-top: 3px; color: #71717a; font-size: 11px; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+  .appointment-status-badge { display: inline-flex; align-items: center; border-radius: 999px; padding: 4px 12px; background: #ffded4; color: #A63826; font-size: 12px; font-weight: 700; }
+  .appointment-status-badge.is-emerald { background: #d1fae5; color: #047857; }
+  .appointment-status-badge.is-violet { background: #ffded4; color: #A63826; }
+  .appointment-status-badge.is-amber { background: #fef3c7; color: #b45309; }
+  .appointment-status-badge.is-rose { background: #ffe4e6; color: #be123c; }
+  .appointment-status-badge.is-zinc { background: #f4f4f5; color: #52525b; }
+  .appointment-service-card { border-left: 4px solid #ffded4; border-radius: 12px; background: #fafafa; padding: 17px; }
+  .appointment-service-card.is-emerald { border-left-color: #10b981; }
+  .appointment-service-card.is-violet { border-left-color: #A63826; }
+  .appointment-service-card.is-amber { border-left-color: #f59e0b; }
+  .appointment-service-card.is-rose { border-left-color: #f43f5e; }
+  .appointment-service-card.is-zinc { border-left-color: #a1a1aa; }
+  .appointment-editor-footer { margin-top: auto; border-top: 1px solid #e4e4e7; background: #fff; padding: 18px 24px; }
+  .appointment-total-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; }
+  .appointment-save-button { width: 100%; height: 52px; margin-top: 15px; border: 0; border-radius: 999px; background: #071014; color: #fff; font-size: 15px; font-weight: 700; }
+
+  .waitlist-toolbar-button {
+    display: inline-flex;
+    height: 40px;
+    align-items: center;
+    gap: 8px;
+    border-radius: 999px;
+    border: 1px solid #d4d4d8;
+    background: #fff;
+    padding: 0 12px;
+    color: #18181b;
+    font-size: 13px;
+    font-weight: 700;
+    box-shadow: 0 6px 18px rgba(15,23,42,.08);
+    transition: .16s ease;
+  }
+
+  .waitlist-toolbar-button:hover {
+    border-color: #A63826;
+    color: #A63826;
+    transform: translateY(-1px);
+  }
+
+  .waitlist-toolbar-count {
+    display: inline-flex;
+    min-width: 24px;
+    height: 24px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: #BF482F;
+    color: #fff;
+    padding: 0 8px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .waitlist-tab.active {
+    border-bottom-color: #18181b;
+    color: #18181b;
+  }
+
+  .waitlist-card {
+    border: 1px solid #e4e4e7;
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 10px 28px rgba(15,23,42,.06);
+  }
+
+  .waitlist-card-menu {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: calc(100% + 8px);
+    z-index: 15;
+    width: 230px;
+    overflow: hidden;
+    border: 1px solid #e4e4e7;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 18px 45px rgba(15,23,42,.16);
+  }
+
+  .waitlist-card-menu.open { display: block; }
+
+  .drawer-close-button {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 4;
+    display: grid;
+    width: 46px;
+    height: 46px;
+    place-items: center;
+    border: 1px solid #e4e4e7;
+    border-radius: 999px;
+    background: #fff;
+    color: #18181b;
+    font-size: 28px;
+    font-weight: 300;
+    line-height: 1;
+    box-shadow: 0 10px 28px rgba(15,23,42,.12);
+    transition: background .16s ease, transform .16s ease;
+  }
+
+  .drawer-close-button:hover {
+    background: #f4f4f5;
+    transform: translateY(-1px);
+  }
+
+  .payment-confirmation-dialog {
+    width: min(440px, calc(100vw - 32px));
+    margin: auto;
+    border: 1px solid #e4e4e7;
+    border-radius: 24px;
+    padding: 0;
+    color: #18181b;
+    box-shadow: 0 28px 80px rgba(15, 23, 42, .26);
+  }
+
+  .payment-confirmation-dialog::backdrop { background: rgba(9, 9, 11, .42); }
+
+  .quick-menu,
+  .team-menu,
+  .view-menu {
+    display: none;
+    border: 1px solid #e7e7ec;
+    background: #fff;
+    box-shadow: 0 18px 45px rgba(15,23,42,.16);
+    overflow: hidden;
+  }
+
+  .quick-menu.open,
+  .team-menu.open,
+  .view-menu.open { display: block; }
+
+  .quick-menu {
+    position: fixed;
+    z-index: 80;
+    width: 245px;
+    border-radius: 12px;
+  }
+
+  .team-menu,
+  .view-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    z-index: 75;
+    min-width: 250px;
+    border-radius: 14px;
+  }
+
+  .team-menu { left: 0; width: 310px; padding: 8px; }
+  .view-menu { right: 0; width: 176px; min-width: 176px; padding: 6px; }
+
+  .team-menu-row {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    gap: 12px;
+    border-radius: 10px;
+    padding: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    text-align: left;
+    transition: .14s ease;
+  }
+
+  .team-menu-row:hover,
+  .view-menu button:hover { background: #ffded4; }
+
+  .team-checkbox {
+    display: flex;
+    width: 22px;
+    height: 22px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    border: 1px solid #d6d6dd;
+    background: #fff;
+    color: transparent;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .team-checkbox.checked {
+    border-color: #A63826;
+    background: #BF482F;
+    color: #fff;
+  }
+
+  .team-menu-avatar {
+    display: flex;
+    width: 28px;
+    height: 28px;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    overflow: hidden;
+    border: 2px solid currentColor;
+    border-radius: 999px;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .calendar-week-shell {
+    height: calc(100vh - var(--topbar-height) - var(--toolbar-height));
+    overflow: auto;
+    background: #fff;
+  }
+
+  body.action-mode-active .calendar-week-shell {
+    height: calc(100vh - var(--topbar-height) - var(--toolbar-height) - 48px);
+  }
+
+  .week-grid {
+    display: grid;
+    grid-template-columns: 112px repeat(7, minmax(150px, 1fr));
+    min-width: 1180px;
+    border-top: 1px solid #e4e4e7;
+    border-left: 1px solid #e4e4e7;
+  }
+
+  .week-corner,
+  .week-day-header {
+    position: sticky;
+    top: 0;
+    z-index: 22;
+    height: 62px;
+    border-right: 1px solid #e4e4e7;
+    border-bottom: 1px solid #e4e4e7;
+    background: #fff;
+  }
+
+  .week-corner { left: 0; z-index: 24; }
+
+  .week-day-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: #52525b;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .week-day-number {
+    display: inline-flex;
+    width: 34px;
+    height: 34px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    color: #18181b;
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  .week-day-header.today { color: #A63826; }
+  .week-day-header.today .week-day-number { background: #BF482F; color: #fff; }
+
+  .week-employee {
+    position: sticky;
+    left: 0;
+    z-index: 18;
+    display: flex;
+    min-height: 178px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    border-right: 1px solid #e4e4e7;
+    border-bottom: 1px solid #e4e4e7;
+    background: #fafafa;
+    padding: 12px 8px;
+    text-align: center;
+  }
+
+  .week-employee-avatar {
+    display: grid;
+    width: 48px;
+    height: 48px;
+    place-items: center;
+    border: 3px solid #fff;
+    border-radius: 999px;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    box-shadow: 0 5px 14px rgba(15,23,42,.15);
+    overflow: hidden;
+  }
+
+  .week-employee-name {
+    width: 100%;
+    overflow: hidden;
+    color: #18181b;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+  }
+
+  .week-cell {
+    min-height: 178px;
+    border-right: 1px solid #e4e4e7;
+    border-bottom: 1px solid #e4e4e7;
+    background: #fff;
+    padding: 9px;
+    text-align: left;
+    transition: background .14s ease, box-shadow .14s ease;
+  }
+
+  .week-cell:hover { background: #ffded4; box-shadow: inset 0 0 0 1px rgba(255, 222, 212, .18); }
+  .week-cell.weekend { background-color: #fafafa; background-image: repeating-linear-gradient(-45deg, rgba(24,24,27,.025) 0, rgba(24,24,27,.025) 3px, transparent 3px, transparent 7px); }
+  .week-cell.selected { box-shadow: inset 0 0 0 2px #ffded4; background: #ffded4; }
+
+  .week-item {
+    display: block;
+    width: 100%;
+    margin-bottom: 7px;
+    overflow: hidden;
+    border: 1px solid rgba(15,23,42,.07);
+    border-left: 4px solid #ffded4;
+    border-radius: 8px;
+    padding: 7px 8px;
+    color: #18181b;
+    font-size: 11px;
+    line-height: 1.25;
+    text-align: left;
+    box-shadow: 0 3px 10px rgba(15,23,42,.05);
+  }
+
+  .week-item-time { display: block; font-weight: 700; }
+  .week-item-label { display: block; margin-top: 2px; overflow: hidden; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+  .week-more { color: #A63826; font-size: 11px; font-weight: 700; }
+
+  .calendar-month-shell {
+    height: calc(100vh - var(--topbar-height) - var(--toolbar-height));
+    overflow: auto;
+    background: #fff;
+  }
+
+  body.action-mode-active .calendar-month-shell {
+    height: calc(100vh - var(--topbar-height) - var(--toolbar-height) - 48px);
+  }
+
+  .month-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(130px, 1fr));
+    min-width: 980px;
+    border-top: 1px solid #ececf1;
+    border-left: 1px solid #ececf1;
+  }
+
+  .month-weekday {
+    height: 40px;
+    border-right: 1px solid #ececf1;
+    border-bottom: 1px solid #ececf1;
+    background: #fff;
+    padding: 12px 12px 0;
+    font-size: 13px;
+    font-weight: 700;
+    color: #3f3f46;
+  }
+
+  .month-day {
+    position: relative;
+    min-height: 126px;
+    border-right: 1px solid #ececf1;
+    border-bottom: 1px solid #ececf1;
+    background: #fff;
+    padding: 12px;
+    text-align: left;
+    transition: background .14s ease, box-shadow .14s ease;
+  }
+
+  .month-day:hover {
+    background: #ffded4;
+    box-shadow: inset 0 0 0 1px rgba(255, 222, 212, .20);
+  }
+
+  .month-day.selected {
+    background: #ffded4;
+    box-shadow: inset 0 0 0 2px rgba(255, 222, 212, .32);
+  }
+
+  .month-day.muted {
+    color: #a1a1aa;
+    background: #fbfbfc;
+  }
+
+  .month-day-number { font-size: 14px; font-weight: 700; color: #27272a; }
+  .month-day.muted .month-day-number { color: #a1a1aa; }
+
+  .month-today-badge {
+    display: inline-flex;
+    min-width: 24px;
+    height: 24px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: #BF482F;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .month-appt {
+    margin-top: 6px;
+    overflow: hidden;
+    border-radius: 6px;
+    background: #9bd5f5;
+    padding: 4px 6px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #103344;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .month-more {
+    margin-top: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #A63826;
+  }
+
+  .toast {
+    transform: translateY(-16px);
+    opacity: 0;
+    pointer-events: none;
+    transition: .18s ease;
+  }
+
+  .toast.show {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  .notification-category.active {
+    color: #A63826;
+    background: #ffded4;
+    border-left-color: #A63826;
+  }
+
+  .service-row:hover { background: #fafafa; }
+
+  @media (max-width: 1100px) {
+    :root { --drawer-width: 360px; }
+  }
+
+  @media (max-width: 820px) {
+    :root {
+      --topbar-height: 64px;
+      --toolbar-height: 112px;
+      --resource-height: 76px;
+      --slot-height: 52px;
+      --time-col-width: 54px;
+      --drawer-width: 100vw;
+    }
+
+    html,
+    body {
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .admin-calendar-page {
+      min-width: 0;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .calendar-toolbar {
+      height: var(--toolbar-height);
+      align-items: stretch;
+      flex-direction: column;
+      justify-content: center;
+      gap: 9px;
+      padding: 8px 12px;
+    }
+
+    .calendar-toolbar-primary,
+    .calendar-toolbar-secondary {
+      width: 100%;
+      min-width: 0;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .calendar-toolbar-primary::-webkit-scrollbar,
+    .calendar-toolbar-secondary::-webkit-scrollbar {
+      display: none;
+    }
+
+    .calendar-date-nav {
+      flex: 0 0 auto;
+    }
+
+    #dateNavigationLabel {
+      min-width: 128px;
+      padding-inline: 14px;
+      white-space: nowrap;
+    }
+
+    #teamSelectorButton,
+    #viewSelectorButton,
+    .waitlist-toolbar-button {
+      height: 40px;
+      white-space: nowrap;
+    }
+
+    .team-menu,
+    .view-menu {
+      position: fixed;
+      top: calc(var(--admin-impersonation-offset, 0px) + var(--topbar-height) + var(--toolbar-height) - 2px);
+      left: 12px;
+      right: 12px;
+      z-index: 2147482600;
+      width: auto;
+      min-width: 0;
+      max-height: min(58dvh, 420px);
+      overflow-y: auto;
+    }
+
+    .resource-header-grid,
+    .calendar-body-grid {
+      grid-template-columns: var(--time-col-width) repeat(var(--employee-count), minmax(176px, 176px));
+      min-width: calc(var(--time-col-width) + (var(--employee-count) * 176px));
+      width: max(100%, calc(var(--time-col-width) + (var(--employee-count) * 176px)));
+    }
+
+    .resource-cell {
+      padding: 0 8px;
+    }
+
+    .resource-avatar {
+      width: 38px;
+      height: 38px;
+      border-width: 2px;
+      font-size: 14px;
+    }
+
+    .resource-name {
+      max-width: 148px;
+    }
+
+    .resource-name {
+      font-size: 12px;
+    }
+
+    .calendar-shell {
+      height: calc(100dvh - var(--admin-impersonation-offset, 0px) - var(--topbar-height) - var(--toolbar-height) - var(--resource-height));
+    }
+
+    body.action-mode-active .calendar-shell {
+      height: calc(100dvh - var(--admin-impersonation-offset, 0px) - var(--topbar-height) - var(--toolbar-height) - var(--resource-height));
+    }
+
+    .calendar-week-shell,
+    .calendar-month-shell {
+      height: calc(100dvh - var(--admin-impersonation-offset, 0px) - var(--topbar-height) - var(--toolbar-height));
+    }
+
+    body.action-mode-active .calendar-week-shell,
+    body.action-mode-active .calendar-month-shell {
+      height: calc(100dvh - var(--admin-impersonation-offset, 0px) - var(--topbar-height) - var(--toolbar-height));
+    }
+
+    .calendar-scroll,
+    .calendar-week-shell,
+    .calendar-month-shell {
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .time-label {
+      padding-right: 6px;
+      font-size: 11px;
+    }
+
+    .calendar-slot {
+      cursor: pointer;
+    }
+
+    .appt-block {
+      left: 5px;
+      right: 5px;
+      border-radius: 8px;
+      padding: 7px 8px;
+      font-size: 11px;
+    }
+
+    .selection-block {
+      left: 4px;
+      right: 4px;
+    }
+
+    .global-now-line::before {
+      left: 2px;
+      width: 42px;
+      font-size: 10px;
+    }
+
+    .week-grid {
+      grid-template-columns: 78px repeat(7, minmax(118px, 118px));
+      min-width: calc(78px + (7 * 118px));
+    }
+
+    .week-corner,
+    .week-day-header {
+      height: 54px;
+    }
+
+    .week-day-header {
+      flex-direction: column;
+      gap: 2px;
+      font-size: 11px;
+    }
+
+    .week-day-number {
+      width: 30px;
+      height: 30px;
+      font-size: 14px;
+    }
+
+    .week-employee {
+      min-height: 148px;
+      padding: 10px 6px;
+    }
+
+    .week-employee-avatar {
+      width: 38px;
+      height: 38px;
+      font-size: 13px;
+    }
+
+    .week-cell {
+      min-height: 148px;
+      padding: 7px;
+    }
+
+    .month-grid {
+      grid-template-columns: repeat(7, minmax(102px, 102px));
+      min-width: calc(7 * 102px);
+    }
+
+    .month-weekday {
+      height: 36px;
+      padding: 10px 8px 0;
+      font-size: 11px;
+    }
+
+    .month-day {
+      min-height: 104px;
+      padding: 8px;
+    }
+
+    .drawer,
+    .drawer.appointment-editor {
+      top: var(--admin-impersonation-offset, 0px);
+      width: 100vw;
+      max-width: 100vw;
+      height: calc(100dvh - var(--admin-impersonation-offset, 0px));
+      border-left: 0;
+      border-radius: 0;
+    }
+
+    .appointment-editor-layout {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .appointment-client-pane {
+      max-height: 158px;
+      min-height: auto;
+      flex: 0 0 auto;
+      border-right: 0;
+      border-bottom: 1px solid #e4e4e7;
+    }
+
+    .appointment-client-pane:has(.customer-picker-header),
+    .appointment-client-pane:has(#newAppointmentCustomerName) {
+      max-height: min(48dvh, 390px);
+    }
+
+    .appointment-client-summary {
+      min-height: auto;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: center;
+      gap: 13px;
+      padding: 14px 16px;
+      text-align: left;
+    }
+
+    .appointment-client-summary > .appointment-client-avatar {
+      grid-row: 1 / span 3;
+    }
+
+    .appointment-client-avatar {
+      width: 50px;
+      height: 50px;
+      border-width: 7px;
+      font-size: 17px;
+    }
+
+    .appointment-client-action {
+      margin-top: 0;
+      min-width: 0;
+      overflow: hidden;
+      font-size: 17px;
+      line-height: 1.15;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .appointment-client-hint {
+      display: block;
+      margin-top: 3px;
+      color: #71717a;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.25;
+    }
+
+    .appointment-client-summary > .mt-4 {
+      width: fit-content;
+      margin-top: 6px !important;
+      padding-block: 7px !important;
+    }
+
+    .appointment-main-pane {
+      min-height: 0;
+      flex: 1 1 auto;
+    }
+
+    .drawer-close-button {
+      top: 12px;
+      right: 12px;
+      width: 42px;
+      height: 42px;
+      font-size: 25px;
+    }
+
+    .drawer-scroll {
+      padding-inline: 16px !important;
+    }
+
+    .appointment-editor-footer {
+      padding: 14px 16px max(14px, env(safe-area-inset-bottom));
+    }
+
+    .quick-menu {
+      width: min(280px, calc(100vw - 24px));
+    }
+  }
+
+  @media (max-width: 420px) {
+    :root {
+      --toolbar-height: 116px;
+      --resource-height: 72px;
+      --slot-height: 50px;
+      --time-col-width: 50px;
+    }
+
+    .resource-header-grid,
+    .calendar-body-grid {
+      grid-template-columns: var(--time-col-width) repeat(var(--employee-count), minmax(158px, 158px));
+      min-width: calc(var(--time-col-width) + (var(--employee-count) * 158px));
+      width: max(100%, calc(var(--time-col-width) + (var(--employee-count) * 158px)));
+    }
+
+    #dateNavigationLabel {
+      min-width: 112px;
+      padding-inline: 10px;
+    }
+
+    .calendar-toolbar {
+      padding-inline: 10px;
+    }
+  }
+</style>
+
+<%= turbo_stream_from(*LiveStreams.admin_appointments(@business)) %>
+
+<div class="admin-calendar-page relative flex h-full min-w-0 flex-col bg-white">
+    <div class="calendar-toolbar flex h-[var(--toolbar-height)] shrink-0 items-center justify-between border-b border-zinc-200 bg-white px-4">
+      <div class="calendar-toolbar-primary flex items-center gap-2">
+        <button type="button" onclick="goToday()" class="rounded-full border border-zinc-200 bg-white px-4 py-2 text-sm font-bold shadow-sm">Hoy</button>
+
+        <div class="calendar-date-nav flex overflow-hidden rounded-full border border-zinc-200 bg-white shadow-sm">
+          <button type="button" onclick="moveDate(-1)" class="px-3 py-2 hover:bg-zinc-50" aria-label="Anterior">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+          <button type="button" id="dateNavigationLabel" class="border-x border-zinc-200 px-6 py-2 text-sm font-bold"></button>
+          <button type="button" onclick="moveDate(1)" class="px-3 py-2 hover:bg-zinc-50" aria-label="Siguiente">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+        </div>
+
+        <div class="relative">
+          <button type="button" onclick="toggleTeamMenu()" id="teamSelectorButton" class="rounded-full border border-zinc-200 bg-white px-4 py-2 text-sm font-bold shadow-sm">
+            <span id="teamSelectorLabel">Equipo completo</span>
+            <span class="ml-2 text-zinc-400">⌄</span>
+          </button>
+          <div id="teamMenu" class="team-menu"></div>
+        </div>
+      </div>
+
+      <div class="calendar-toolbar-secondary flex items-center gap-2">
+        <% if policy(@business).waitlist? %>
+          <button type="button" onclick="openWaitlistPanel()" id="waitlistToolbarButton" class="waitlist-toolbar-button" aria-label="Abrir lista de espera">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="M8 14h4"/><path d="M8 18h6"/>
+            </svg>
+            <span id="waitlistToolbarCount" class="waitlist-toolbar-count">0</span>
+          </button>
+        <% end %>
+
+        <div class="relative">
+          <button type="button" onclick="toggleViewMenu()" id="viewSelectorButton" class="rounded-full border border-zinc-200 bg-white px-4 py-2 text-sm font-bold shadow-sm">
+            <span id="viewSelectorLabel">Semana</span>
+            <span class="ml-2 text-zinc-400">⌄</span>
+          </button>
+          <div id="viewMenu" class="view-menu">
+            <button type="button" onclick="setCalendarView('day')" class="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm font-bold">
+              Día <span id="viewCheckDay" class="hidden text-brand-700">✓</span>
+            </button>
+            <button type="button" onclick="setCalendarView('week')" class="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm font-bold">
+              Semana <span id="viewCheckWeek" class="text-brand-700">✓</span>
+            </button>
+            <button type="button" onclick="setCalendarView('month')" class="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm font-bold">
+              Mes <span id="viewCheckMonth" class="hidden text-brand-700">✓</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div id="resourceHeaderViewport" class="resource-header-viewport hidden shrink-0">
+      <div id="resourceHeader" class="resource-header-grid h-[var(--resource-height)]"></div>
+    </div>
+
+    <div id="dayCalendarShell" class="calendar-shell hidden">
+      <div id="calendarScroll" class="calendar-scroll">
+        <div id="calendarBody" class="calendar-body-grid"></div>
+      </div>
+    </div>
+
+    <div id="weekCalendarShell" class="calendar-week-shell">
+      <div id="weekCalendar" class="week-grid"></div>
+    </div>
+
+    <div id="monthCalendarShell" class="calendar-month-shell hidden">
+      <div id="monthCalendar" class="month-grid"></div>
+    </div>
+  <aside id="rightDrawer" class="drawer fixed bottom-0 right-0 bg-white shadow-drawer">
+    <button type="button" onclick="dismissDrawer()" class="drawer-close-button" aria-label="Cerrar panel">×</button>
+    <div id="drawerContent" class="flex h-full flex-col"></div>
+  </aside>
+
+  <dialog id="remainingBalancePaymentDialog" class="payment-confirmation-dialog" aria-labelledby="remainingBalancePaymentDialogTitle">
+    <div class="p-6">
+      <h2 id="remainingBalancePaymentDialogTitle" class="text-xl font-bold tracking-[-0.03em]">Confirmar pago restante</h2>
+      <p id="remainingBalancePaymentDialogDescription" class="mt-3 text-sm font-semibold leading-6 text-zinc-600"></p>
+      <p id="remainingBalancePaymentDialogError" class="mt-4 hidden rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700"></p>
+      <div class="mt-6 grid grid-cols-2 gap-3">
+        <button type="button" onclick="closeRemainingBalancePaymentDialog()" class="rounded-full border border-zinc-200 bg-white px-4 py-3 text-sm font-bold text-zinc-700">Cancelar</button>
+        <button id="confirmRemainingBalancePaymentButton" type="button" onclick="confirmRemainingBalancePayment()" class="rounded-full bg-zinc-950 px-4 py-3 text-sm font-bold text-white">Confirmar pago</button>
+      </div>
+    </div>
+  </dialog>
+
+  <div id="quickMenu" class="quick-menu">
+    <div class="border-b border-zinc-100 px-4 py-3">
+      <p id="quickMenuTime" class="text-base font-bold">10:30</p>
+      <p id="quickMenuEmployee" class="text-xs font-semibold text-zinc-500">Profesional</p>
+    </div>
+    <button type="button" onclick="quickAction('appointment')" class="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-bold hover:bg-zinc-50"><span>+</span> Agregar turno</button>
+    <button type="button" onclick="quickAction('blocked')" class="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-bold hover:bg-zinc-50"><span>⛔</span> Añadir horario no disponible</button>
+  </div>
+
+</div>
+
+<script type="module">
+import { bindAppointmentDetailPanel, openProfessionalPicker, renderAppointmentDetail } from "appointment_detail_panel";
+
+(() => {
+  if (window.dogGroomingCalendarAbortController) {
+    window.dogGroomingCalendarAbortController.abort();
+  }
+
+  const calendarAbortController = new AbortController();
+  window.dogGroomingCalendarAbortController = calendarAbortController;
+  const calendarSignal = calendarAbortController.signal;
+
+  const employees = <%= raw json_escape(@calendar_employees.to_json) %>;
+  const services = <%= raw json_escape(@calendar_services.to_json) %>;
+  let appointments = <%= raw json_escape(@calendar_appointments.to_json) %>;
+  let blocks = <%= raw json_escape(@calendar_blocks.to_json) %>;
+  let waitlistEntries = <%= raw json_escape(@calendar_waitlist_entries.to_json) %>;
+  const notifications = <%= raw json_escape(@calendar_notifications.to_json) %>;
+  const initialDateISO = "<%= @calendar_date.iso8601 %>";
+  const initialAppointmentToken = <%= raw json_escape(params[:t].to_s.to_json) %>;
+  const initialWaitlistOpen = <%= params[:waitlist].present? ? "true" : "false" %>;
+  const initialWaitlistFilters = <%= raw json_escape(params.permit(:service_id, :desired_date, :start_time, :status).to_h.to_json) %>;
+  const appointmentCreateUrl = "<%= admin_appointments_path(format: :json) %>";
+  const availabilityBlockCreateUrl = "<%= admin_availability_blocks_path(format: :json) %>";
+  const availabilityBlockDeleteUrlTemplate = "<%= admin_availability_block_path("__ID__", format: :json) %>";
+  const waitlistCreateUrl = "<%= admin_waitlist_entries_path(format: :json) %>";
+  const waitlistUpdateUrlTemplate = "<%= admin_waitlist_entry_path("__ID__", format: :json) %>";
+  const waitlistDestroyUrlTemplate = "<%= admin_waitlist_entry_path("__ID__", format: :json) %>";
+  const customerAutocompleteUrl = "<%= autocomplete_admin_customer_profiles_path(format: :json) %>";
+  const csrfToken = document.querySelector("meta[name='csrf-token']")?.content;
+
+  const START_HOUR = 0;
+  const END_HOUR = 24;
+  const SLOT_MINUTES = 30;
+  const SLOT_HEIGHT = 56;
+  const SLOT_COUNT = ((END_HOUR - START_HOUR) * 60) / SLOT_MINUTES;
+  const SPANISH_WEEKDAYS_SHORT = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+  const SPANISH_WEEKDAYS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+  const SPANISH_MONTHS = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+  const WAITLIST_TIME_PRESETS = {
+    any: { label: "En cualquier momento", start_time: "00:00", end_time: "23:55" },
+    morning: { label: "Mañana", start_time: "06:00", end_time: "12:00" },
+    afternoon: { label: "Tarde", start_time: "12:00", end_time: "18:00" },
+    night: { label: "Noche", start_time: "18:00", end_time: "23:55" },
+    custom: { label: "Personalizado", start_time: "09:00", end_time: "18:00" }
+  };
+
+  let actionMode = null;
+  let selectedSlot = null;
+  let selectedService = null;
+  let selectedServices = [];
+  let editingServiceIndex = null;
+  let selectedCustomer = null;
+  let loadedCustomers = new Map();
+  let customerSearchTimer = null;
+  let customerRequestSequence = 0;
+  let waitlistCustomerSearchTimer = null;
+  let waitlistCustomerRequestSequence = 0;
+  let loadedWaitlistCustomers = new Map();
+  let selectedWaitlistCustomer = null;
+  let waitlistEditingEntryId = null;
+  let waitlistAppointmentEntryId = null;
+  let waitlistTab = "waiting";
+  let waitlistDateFilter = initialWaitlistFilters.desired_date ? "specific" : "upcoming";
+  let waitlistSort = "created_asc";
+  let waitlistServiceFilter = initialWaitlistFilters.service_id || "";
+  let waitlistDesiredDateFilter = initialWaitlistFilters.desired_date || "";
+  let waitlistStartTimeFilter = initialWaitlistFilters.start_time || "";
+  let currentNotificationCategory = "appointments";
+  let calendarView = "week";
+  let selectedDate = dateFromISO(initialDateISO);
+  let selectedEmployeeIds = new Set(employees.map(employee => employee.id));
+  let selectedMonthDay = null;
+
+  document.documentElement.style.setProperty("--employee-count", Math.max(1, selectedEmployeeIds.size));
+  document.documentElement.style.setProperty("--slot-count", SLOT_COUNT);
+
+  function dateFromISO(iso) {
+    const [year, month, day] = iso.split("-").map(Number);
+    return new Date(year, month - 1, day);
+  }
+
+  function dateToISO(date) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  }
+
+  function localizedDateFromISO(iso) {
+    const [year, month, day] = iso.split("-");
+    return `${day}/${month}/${year}`;
+  }
+
+  function isoFromLocalizedDate(value) {
+    const match = String(value || "").trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (!match) return null;
+
+    const [, day, month, year] = match;
+    const date = new Date(Number(year), Number(month) - 1, Number(day));
+    return date.getFullYear() === Number(year) && date.getMonth() === Number(month) - 1 && date.getDate() === Number(day)
+      ? `${year}-${month}-${day}`
+      : null;
+  }
+
+  function addDays(date, amount) {
+    const next = new Date(date);
+    next.setDate(next.getDate() + amount);
+    return next;
+  }
+
+  function addMonths(date, amount) {
+    const next = new Date(date);
+    next.setMonth(next.getMonth() + amount);
+    return next;
+  }
+
+  function currentDateISO() {
+    return dateToISO(selectedDate);
+  }
+
+  function currentDateLabel() {
+    if (calendarView === "month") return `${SPANISH_MONTHS[selectedDate.getMonth()]} ${selectedDate.getFullYear()}`;
+    if (calendarView === "week") return weekDateLabel();
+    return `${SPANISH_WEEKDAYS_SHORT[selectedDate.getDay()]} ${selectedDate.getDate()} ${SPANISH_MONTHS[selectedDate.getMonth()].slice(0, 3)}`;
+  }
+
+  function beginningOfWeek(date) {
+    return addDays(date, -((date.getDay() + 6) % 7));
+  }
+
+  function weekDates() {
+    const start = beginningOfWeek(selectedDate);
+    return Array.from({ length: 7 }, (_, index) => addDays(start, index));
+  }
+
+  function weekDateLabel() {
+    const [start, , , , , , finish] = weekDates();
+    const startMonth = SPANISH_MONTHS[start.getMonth()].slice(0, 3);
+    const finishMonth = SPANISH_MONTHS[finish.getMonth()].slice(0, 3);
+    const year = finish.getFullYear();
+    return start.getMonth() === finish.getMonth()
+      ? `${start.getDate()} – ${finish.getDate()} ${finishMonth} ${year}`
+      : `${start.getDate()} ${startMonth} – ${finish.getDate()} ${finishMonth} ${year}`;
+  }
+
+  function monthDayLabel(date) {
+    return `${SPANISH_WEEKDAYS_SHORT[date.getDay()]} ${date.getDate()} ${SPANISH_MONTHS[date.getMonth()].slice(0, 3)}`;
+  }
+
+  function minutesFromTime(time) {
+    const [h, m] = time.split(":").map(Number);
+    return h * 60 + m;
+  }
+
+  function timeFromMinutes(minutes) {
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+  }
+
+  function timeValueFromMinutes(minutes) {
+    return timeFromMinutes(((minutes % (24 * 60)) + (24 * 60)) % (24 * 60));
+  }
+
+  function durationFromTimes(start, finish) {
+    const startMinutes = minutesFromTime(start);
+    let finishMinutes = minutesFromTime(finish);
+    if (finishMinutes <= startMinutes) finishMinutes += 24 * 60;
+    return finishMinutes - startMinutes;
+  }
+
+  function timeSelectOptions(selected) {
+    return Array.from({ length: 96 }, (_, index) => {
+      const value = timeValueFromMinutes(index * 15);
+      return `<option value="${value}" ${value === selected ? "selected" : ""}>${value}</option>`;
+    }).join("");
+  }
+
+  function blockDateOptions(selectedISO) {
+    const options = new Map();
+    const today = new Date();
+    options.set(selectedISO, monthDayLabel(dateFromISO(selectedISO)));
+    Array.from({ length: 181 }, (_, index) => addDays(today, index)).forEach(date => {
+      options.set(dateToISO(date), monthDayLabel(date));
+    });
+
+    return Array.from(options.entries())
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([value, label]) => `<option value="${value}" ${value === selectedISO ? "selected" : ""}>${escapeHTML(label)}</option>`)
+      .join("");
+  }
+
+  function calendarLoadedRangeStartISO() {
+    const first = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+    return dateToISO(beginningOfWeek(first));
+  }
+
+  function calendarLoadedRangeEndISO() {
+    const last = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
+    return dateToISO(addDays(beginningOfWeek(last), 6));
+  }
+
+  function formatMoney(value) {
+    return `$${new Intl.NumberFormat("es-AR").format(value)}`;
+  }
+
+  function paymentDateTimeLabel(value) {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "";
+
+    const parts = new Intl.DateTimeFormat("es-AR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23"
+    }).formatToParts(date).reduce((memo, part) => {
+      memo[part.type] = part.value;
+      return memo;
+    }, {});
+    return `${parts.day}/${parts.month}/${parts.year}, ${parts.hour}:${parts.minute}hs`;
+  }
+
+  function paymentSummaryMarkup(appointment, { allowMarkPaid = true } = {}) {
+    const depositAmount = Number(appointment.depositAmount || 0);
+    const remainingBalance = Number(appointment.remainingBalance ?? appointment.price ?? 0);
+    const remainingPaidAt = appointment.remainingBalancePaidAt;
+    const remainingPaidAmount = Number(appointment.remainingBalancePaidAmount || 0);
+    const depositPaidAt = appointment.depositPaidAt;
+    const depositMethod = appointment.depositPaymentMethod || "Medio no registrado";
+    const remainingMethod = appointment.remainingBalancePaymentMethod || depositMethod;
+
+    return `
+      <div class="mt-4 grid gap-2 rounded-2xl border border-zinc-100 bg-zinc-50 px-4 py-3">
+        ${depositAmount > 0 ? `
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <span class="text-sm font-bold text-zinc-500">Seña pagada${depositPaidAt ? ` (${escapeHTML(paymentDateTimeLabel(depositPaidAt))})` : ""}</span>
+              <p class="mt-1 text-xs font-bold text-zinc-500">${escapeHTML(depositMethod)}</p>
+            </div>
+            <strong>${formatMoney(depositAmount)}</strong>
+          </div>
+        ` : ""}
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <span class="text-sm font-bold text-zinc-500">${remainingPaidAt ? `Restante pagado (${escapeHTML(paymentDateTimeLabel(remainingPaidAt))})` : "Resta pagar"}</span>
+            ${remainingPaidAt ? `<p class="mt-1 text-xs font-bold text-zinc-500">${escapeHTML(remainingMethod)}</p>` : ""}
+          </div>
+          <strong>${formatMoney(remainingPaidAt ? remainingPaidAmount : remainingBalance)}</strong>
+        </div>
+      </div>
+      ${allowMarkPaid && appointment.markRemainingBalancePaidUrl ? `<button type="button" onclick="openRemainingBalancePaymentDialog('${escapeAttribute(appointment.id)}')" class="mt-4 w-full rounded-full bg-zinc-950 px-5 py-3 text-sm font-bold text-white hover:bg-zinc-800">Marcar como pagado</button>` : ""}
+    `;
+  }
+
+  function appointmentDetailTone(appointment) {
+    const status = String(appointment?.status || "");
+    const label = String(appointment?.statusLabel || "").toLowerCase();
+    if (status === "completed" || label.includes("finalizado") || label.includes("realizado")) return "violet";
+    if (["confirmed", "pending_confirmation"].includes(status) || label.includes("confirmado")) return "emerald";
+    if (["pending_deposit_review"].includes(status) || label.includes("comprobante")) return "amber";
+    if (["pending_deposit", "deposit_rejected", "pending_payment"].includes(status) || label.includes("pendiente")) return "rose";
+    if (["canceled", "expired", "no_show", "rescheduled"].includes(status)) return "zinc";
+
+    return "brand";
+  }
+
+  function appointmentStatusLabel(appointment) {
+    return appointment?.status === "completed" ? "Finalizado" : String(appointment?.statusLabel || appointment?.status || "");
+  }
+
+  function finishTime(start, duration) {
+    return timeFromMinutes(minutesFromTime(start) + Number(duration || 0));
+  }
+
+  function initials(value) {
+    return String(value || "")
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map(part => part[0])
+      .join("")
+      .toUpperCase() || "HT";
+  }
+
+  function employeeAvatarMarkup(employee, className = "resource-avatar") {
+    const color = employee?.color || "#ffded4";
+    const photoUrl = employee?.photoUrl;
+    const label = escapeAttribute(employee?.name || "Profesional");
+    const baseStyle = `background:${color}; border-color:${color};`;
+
+    if (photoUrl) {
+      return `<span class="${className}" style="${baseStyle}" title="${label}"><img src="${escapeAttribute(photoUrl)}" alt="${label}" loading="lazy"></span>`;
+    }
+
+    return `<span class="${className}" style="${baseStyle}" title="${label}">${escapeHTML(employee?.avatar || initials(employee?.name))}</span>`;
+  }
+
+  function trashIconMarkup() {
+    return `
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" class="h-4 w-4">
+        <path d="M9 4h6m-8 4h10m-9 0 .6 11.2A2 2 0 0 0 10.6 21h2.8a2 2 0 0 0 2-1.8L16 8M10 11v6m4-6v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    `;
+  }
+
+  function employeeById(id) {
+    return employees.find(employee => employee.id === id) || employees[0];
+  }
+
+  function visibleEmployees() {
+    return employees.filter(employee => selectedEmployeeIds.has(employee.id));
+  }
+
+  function firstVisibleEmployeeId() {
+    return visibleEmployees()[0]?.id || employees[0]?.id;
+  }
+
+  function updateEmployeeCountCss() {
+    document.documentElement.style.setProperty("--employee-count", Math.max(1, visibleEmployees().length));
+  }
+
+  function serviceById(id) {
+    return services.find(service => service.id === id);
+  }
+
+  function serviceDurationLabel(minutes) {
+    const total = Number(minutes) || 0;
+    if (total < 60) return `${total} min`;
+
+    const hours = Math.floor(total / 60);
+    const rest = total % 60;
+    return rest > 0 ? `${hours} h ${rest} min` : `${hours} h`;
+  }
+
+  function normalizeServiceSearch(value) {
+    return String(value ?? "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim();
+  }
+
+  function groupedServicesFor(availableServices, query) {
+    const needle = normalizeServiceSearch(query);
+    const matchingServices = needle
+      ? availableServices.filter(service => {
+          const searchable = normalizeServiceSearch(`${service.name} ${service.category}`);
+          return searchable.includes(needle);
+        })
+      : availableServices;
+
+    return matchingServices.reduce((groups, service) => {
+      const category = service.category || "General";
+      if (!groups.has(category)) groups.set(category, []);
+      groups.get(category).push(service);
+      return groups;
+    }, new Map());
+  }
+
+  function renderServiceGroups(container, availableServices, query, selectionHandler = "selectService") {
+    const groups = Array.from(groupedServicesFor(availableServices, query).entries());
+
+    if (!groups.length) {
+      container.innerHTML = `<p class="rounded-2xl border border-zinc-100 bg-white px-4 py-5 text-sm font-semibold text-zinc-500">${query ? "No encontramos servicios con esa búsqueda." : "No hay servicios disponibles para este profesional."}</p>`;
+      return;
+    }
+
+    const accentColors = ["#ffded4", "#f472b6", "#22d3ee", "#facc15", "#34d399", "#60a5fa"];
+    container.innerHTML = groups.map(([category, categoryServices], index) => {
+      const accentColor = accentColors[index % accentColors.length];
+      return `
+        <section>
+          <div class="flex items-center gap-2">
+            <h3 class="text-lg font-bold tracking-[-0.02em] text-zinc-950">${escapeHTML(category)}</h3>
+            <span class="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-bold text-zinc-600">${categoryServices.length}</span>
+          </div>
+          <div class="mt-3 overflow-hidden rounded-2xl border border-zinc-100 bg-white">
+            ${categoryServices.map(service => `
+              <button type="button" onclick="${selectionHandler}('${escapeAttribute(service.id)}')" class="service-row flex w-full items-center justify-between gap-4 border-b border-zinc-100 px-4 py-4 text-left last:border-b-0">
+                <span class="border-l-4 pl-3" style="border-left-color: ${accentColor};">
+                  <span class="block text-sm font-bold text-zinc-950">${escapeHTML(service.name)}</span>
+                  <span class="mt-1 block text-xs font-semibold text-zinc-500">${serviceDurationLabel(service.duration)}</span>
+                </span>
+                <span class="text-sm font-bold text-zinc-950">${formatMoney(service.price)}</span>
+              </button>
+            `).join("")}
+          </div>
+        </section>
+      `;
+    }).join("");
+  }
+
+  function topFromTime(time) {
+    const start = START_HOUR * 60;
+    return ((minutesFromTime(time) - start) / SLOT_MINUTES) * SLOT_HEIGHT;
+  }
+
+  function heightFromDuration(duration) {
+    return Math.max(28, (duration / SLOT_MINUTES) * SLOT_HEIGHT - 4);
+  }
+
+  function buildTimeSlots() {
+    const slots = [];
+    for (let minutes = START_HOUR * 60; minutes < END_HOUR * 60; minutes += SLOT_MINUTES) {
+      slots.push(timeFromMinutes(minutes));
+    }
+    return slots;
+  }
+
+  function appointmentsForCurrentDate() {
+    const dateISO = currentDateISO();
+    const visibleIds = new Set(visibleEmployees().map(employee => employee.id));
+    return appointments.filter(appointment => appointment.dateISO === dateISO && visibleIds.has(appointment.employeeId));
+  }
+
+  function blocksForCurrentDate() {
+    const dateISO = currentDateISO();
+    return blocks.filter(blocked => blocked.dateISO === dateISO);
+  }
+
+  function renderResourceHeader() {
+    updateEmployeeCountCss();
+    const header = document.getElementById("resourceHeader");
+    const staff = visibleEmployees();
+
+    header.innerHTML = `
+      <div class="h-[var(--resource-height)] border-r border-zinc-200 bg-white"></div>
+      ${staff.map(employee => `
+        <div class="resource-cell">
+          <div class="resource-card">
+            ${employeeAvatarMarkup(employee)}
+            <p class="resource-name" title="${escapeAttribute(employee.name)}">${escapeHTML(employee.name)}</p>
+          </div>
+        </div>
+      `).join("")}
+    `;
+  }
+
+  function renderCalendar() {
+    updateEmployeeCountCss();
+    const slots = buildTimeSlots();
+    const body = document.getElementById("calendarBody");
+    const staff = visibleEmployees();
+
+    body.innerHTML = `
+      <div class="time-column">
+        ${Array.from({ length: END_HOUR - START_HOUR }).map((_, index) => {
+          const hour = START_HOUR + index;
+          return `<div class="time-label">${String(hour).padStart(2, "0")}:00</div>`;
+        }).join("")}
+      </div>
+      ${staff.map(employee => `
+        <div class="calendar-column" data-employee-id="${employee.id}">
+          ${slots.map(time => `<div class="calendar-slot" data-employee-id="${employee.id}" data-time="${time}"></div>`).join("")}
+        </div>
+      `).join("")}
+    `;
+
+    body.querySelectorAll(".calendar-slot").forEach(slot => {
+      slot.addEventListener("click", event => {
+        event.stopPropagation();
+        handleCalendarSlotClick(slot, event);
+      });
+    });
+
+    renderCalendarItems();
+  }
+
+  function renderCalendarItems() {
+    document.querySelectorAll(".calendar-column").forEach(column => {
+      column.querySelectorAll(".appt-block,.selection-block,.now-line").forEach(item => item.remove());
+    });
+    document.querySelectorAll(".global-now-line").forEach(item => item.remove());
+
+    appointmentsForCurrentDate().forEach(appointment => {
+      const column = document.querySelector(`.calendar-column[data-employee-id="${appointment.employeeId}"]`);
+      if (!column) return;
+
+      const block = document.createElement("button");
+      block.type = "button";
+      block.className = "appt-block text-left";
+      block.style.top = `${topFromTime(appointment.start)}px`;
+      block.style.height = `${heightFromDuration(appointment.duration)}px`;
+      block.style.background = appointment.color || "#dbeafe";
+      block.dataset.appointmentId = appointment.id;
+
+      const statusLabel = appointmentStatusLabel(appointment);
+      const statusTone = appointmentDetailTone(appointment);
+      block.innerHTML = `<div class="appt-line">${escapeHTML(appointment.start)} · ${escapeHTML(appointment.client)} · ${escapeHTML(appointment.service)} <span class="appt-status is-${statusTone}">(${escapeHTML(statusLabel)})</span></div>`;
+      block.addEventListener("click", event => {
+        event.stopPropagation();
+        openAppointmentDetails(appointment.id);
+      });
+      column.appendChild(block);
+    });
+
+    blocksForCurrentDate().forEach(blocked => {
+      const targetIds = blocked.employeeId ? [blocked.employeeId] : visibleEmployees().map(employee => employee.id);
+      targetIds.forEach(employeeId => {
+        const column = document.querySelector(`.calendar-column[data-employee-id="${employeeId}"]`);
+        if (!column) return;
+
+        const block = document.createElement("button");
+        block.type = "button";
+        block.className = "appt-block text-left";
+        block.style.top = `${topFromTime(blocked.start)}px`;
+        block.style.height = `${heightFromDuration(blocked.duration)}px`;
+        block.style.background = blocked.color || "#e5e7eb";
+        block.innerHTML = `<div class="appt-line">${escapeHTML(blocked.start)} - ${escapeHTML(blocked.finish || finishTime(blocked.start, blocked.duration))} · ${escapeHTML(blocked.reason || "Horario no disponible")}</div>`;
+        block.addEventListener("click", event => {
+          event.stopPropagation();
+          openBlockedDetails(blocked.id);
+        });
+        column.appendChild(block);
+      });
+    });
+
+    if (selectedSlot && actionMode && selectedSlot.dateISO === currentDateISO()) {
+      const column = document.querySelector(`.calendar-column[data-employee-id="${selectedSlot.employeeId}"]`);
+      if (column) {
+        const selection = document.createElement("div");
+        selection.className = "selection-block";
+        selection.style.top = `${topFromTime(selectedSlot.time)}px`;
+        selection.style.height = `${heightFromDuration(actionMode === "blocked" ? 15 : selectedServices.reduce((sum, service) => sum + Number(service.duration), 0) || 45)}px`;
+        column.appendChild(selection);
+      }
+    }
+
+    renderCurrentTimeLine();
+    syncCalendarHeader();
+  }
+
+  function renderCurrentTimeLine() {
+    const todayISO = dateToISO(new Date());
+    if (currentDateISO() !== todayISO) return;
+
+    const now = new Date();
+    const minutes = now.getHours() * 60 + now.getMinutes();
+    if (minutes < START_HOUR * 60 || minutes > END_HOUR * 60) return;
+
+    const body = document.getElementById("calendarBody");
+    const line = document.createElement("div");
+    const time = timeFromMinutes(minutes);
+    line.className = "global-now-line";
+    line.dataset.time = time;
+    line.style.top = `${topFromTime(time)}px`;
+    body.appendChild(line);
+  }
+
+  function refreshCurrentTimeLine() {
+    document.querySelectorAll(".global-now-line").forEach(item => item.remove());
+    renderCurrentTimeLine();
+  }
+
+  function scrollCalendarToCurrentTime(behavior = "auto") {
+    const scroll = document.getElementById("calendarScroll");
+    if (!scroll) return;
+
+    const now = new Date();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    const currentTop = ((currentMinutes - START_HOUR * 60) / SLOT_MINUTES) * SLOT_HEIGHT;
+    const targetTop = Math.max(0, currentTop - Math.min(scroll.clientHeight * 0.35, 220));
+    scroll.scrollTo({ top: targetTop, behavior });
+  }
+
+  function handleCalendarSlotClick(slot, event) {
+    const employeeId = slot.dataset.employeeId;
+    const time = slot.dataset.time;
+    selectedSlot = { employeeId, time, dateISO: currentDateISO(), dateLabel: monthDayLabel(selectedDate) };
+
+    if (actionMode === "appointment") {
+      selectedService = null;
+      selectedServices = [];
+      editingServiceIndex = null;
+      renderCalendarItems();
+      openServicePanel();
+      return;
+    }
+
+    if (actionMode === "blocked") {
+      renderCalendarItems();
+      openBlockedTimePanel();
+      return;
+    }
+
+    showQuickMenu(event.clientX, event.clientY, employeeId, time);
+  }
+
+  function showQuickMenu(x, y, employeeId, time, dateISO = currentDateISO(), dateLabel = monthDayLabel(selectedDate)) {
+    selectedSlot = { employeeId, time, dateISO, dateLabel };
+    const menu = document.getElementById("quickMenu");
+    const employee = employeeById(employeeId);
+
+    document.getElementById("quickMenuTime").textContent = time;
+    document.getElementById("quickMenuEmployee").textContent = employee.name;
+
+    const maxX = window.innerWidth - 265;
+    const maxY = window.innerHeight - 250;
+    menu.style.left = `${Math.min(x + 10, maxX)}px`;
+    menu.style.top = `${Math.min(y + 10, maxY)}px`;
+    menu.classList.add("open");
+  }
+
+  function closeQuickMenu() {
+    document.getElementById("quickMenu").classList.remove("open");
+  }
+
+  function quickAction(type) {
+    closeQuickMenu();
+    startAction(type, { keepSlot: true });
+    if (type === "appointment") openServicePanel();
+    if (type === "blocked") openBlockedTimePanel();
+    renderCalendarItems();
+  }
+
+  function startAction(type, options = {}) {
+    closeQuickMenu();
+    actionMode = type;
+    selectedService = null;
+    selectedServices = [];
+    editingServiceIndex = null;
+    selectedCustomer = null;
+    waitlistAppointmentEntryId = null;
+    if (!options.keepSlot) selectedSlot = null;
+
+    document.body.classList.add("action-mode-active");
+    renderCalendarItems();
+    if (calendarView === "week") renderWeekCalendar();
+  }
+
+  function cancelAction() {
+    actionMode = null;
+    selectedSlot = null;
+    selectedService = null;
+    selectedServices = [];
+    editingServiceIndex = null;
+    selectedCustomer = null;
+    waitlistAppointmentEntryId = null;
+    document.body.classList.remove("action-mode-active");
+    closeDrawer();
+    renderCalendarItems();
+    if (calendarView === "week") renderWeekCalendar();
+  }
+
+  function openDrawer(html, options = {}) {
+    const drawer = document.getElementById("rightDrawer");
+    const content = document.getElementById("drawerContent");
+    content.innerHTML = html;
+    drawer.classList.toggle("appointment-editor", options.wide === true);
+    drawer.classList.add("open");
+  }
+
+  function closeDrawer() {
+    const drawer = document.getElementById("rightDrawer");
+    drawer.classList.remove("open");
+    drawer.classList.remove("appointment-editor");
+    closeWaitlistEntryMenus();
+  }
+
+  function dismissDrawer() {
+    if (actionMode) {
+      cancelAction();
+    } else {
+      closeDrawer();
+    }
+  }
+
+  function drawerHeader(title, subtitle = "") {
+    return `
+      <header class="relative flex shrink-0 items-start justify-between border-b border-zinc-200 py-5 pl-6 pr-20">
+        <div>
+          <h2 class="text-2xl font-bold tracking-[-0.03em]">${escapeHTML(title)}</h2>
+          ${subtitle ? `<p class="mt-1 text-sm font-semibold text-zinc-500">${escapeHTML(subtitle)}</p>` : ""}
+        </div>
+      </header>
+    `;
+  }
+
+  function customerPaneSummary() {
+    if (selectedCustomer) {
+      return `
+        <button type="button" onclick="openCustomerPicker()" class="appointment-client-summary w-full">
+          <span class="appointment-client-avatar">${escapeHTML(initials(selectedCustomer.name))}</span>
+          <span class="appointment-client-action">${escapeHTML(selectedCustomer.name)}</span>
+          <span class="appointment-client-hint">${escapeHTML(selectedCustomer.phone || selectedCustomer.email || "Responsable seleccionado")}</span>
+          <span class="mt-4 rounded-full border border-zinc-200 bg-white px-4 py-2 text-xs font-bold">Cambiar responsable</span>
+        </button>
+      `;
+    }
+
+    return `
+      <button type="button" onclick="openCustomerPicker()" class="appointment-client-summary w-full">
+        <span class="appointment-client-avatar">+</span>
+        <span class="appointment-client-action">Añadir responsable</span>
+        <span class="appointment-client-hint">Elegí a quien acompaña a la mascota</span>
+      </button>
+    `;
+  }
+
+  function appointmentEditorShell(mainContent) {
+    return `
+      <div class="appointment-editor-layout">
+        <aside id="appointmentClientPane" class="appointment-client-pane">${customerPaneSummary()}</aside>
+        <section class="appointment-main-pane">${mainContent}</section>
+      </div>
+    `;
+  }
+
+  function openServicePanel() {
+    if (!selectedSlot) return;
+    const employee = employeeById(selectedSlot.employeeId);
+    const filteredServices = services.filter(service => service.employees.includes(employee.id));
+
+    openDrawer(appointmentEditorShell(`
+      ${drawerHeader(selectedServices.length ? "Añadir un servicio" : "Seleccionar un servicio", `${employee.name} · ${selectedSlot.dateLabel ? selectedSlot.dateLabel + " · " : ""}${selectedSlot.time}`)}
+      <div class="drawer-scroll min-h-0 flex-1 overflow-y-auto px-6 py-5">
+        ${selectedServices.length ? `<button type="button" onclick="openClientFormPanel()" class="mb-5 rounded-full border border-zinc-200 px-4 py-2 text-sm font-bold">← Atrás</button>` : ""}
+        <div class="mb-5 rounded-2xl bg-brand-50 p-4">
+          <p class="text-xs font-bold uppercase tracking-wide text-brand-700">Nuevo turno confirmado</p>
+          <p class="mt-1 text-sm font-semibold text-brand-950">Elegí el servicio para el bloque seleccionado. Después cargá los datos del cliente.</p>
+        </div>
+        <label class="relative block">
+          <span class="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400">⌕</span>
+          <input id="serviceSearchInput" type="search" placeholder="Buscar por nombre de servicio" class="w-full rounded-2xl border border-zinc-200 bg-white py-3 pl-10 pr-4 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100" />
+        </label>
+        <div class="mt-6">
+          <p class="text-sm font-bold">Servicios disponibles para ${escapeHTML(employee.name)}</p>
+          <div id="serviceGroups" class="mt-4 grid gap-6"></div>
+        </div>
+      </div>
+    `), { wide: true });
+
+    const searchInput = document.getElementById("serviceSearchInput");
+    const serviceGroups = document.getElementById("serviceGroups");
+    const renderGroups = () => renderServiceGroups(serviceGroups, filteredServices, searchInput.value);
+    searchInput.addEventListener("input", renderGroups, { signal: calendarSignal });
+    renderGroups();
+  }
+
+  function selectService(serviceId) {
+    const service = serviceById(serviceId);
+    if (editingServiceIndex === null) selectedServices.push(service);
+    else selectedServices[editingServiceIndex] = service;
+    editingServiceIndex = null;
+    selectedService = selectedServices[0] || null;
+    renderCalendarItems();
+    openClientFormPanel();
+  }
+
+  function addAppointmentService() {
+    editingServiceIndex = null;
+    openServicePanel();
+  }
+
+  function editAppointmentService(index) {
+    editingServiceIndex = Number(index);
+    openServicePanel();
+  }
+
+  function removeAppointmentService(index) {
+    const service = selectedServices[Number(index)];
+    if (!window.confirm(`¿Eliminar ${service?.name || "este servicio"} del turno?`)) return;
+
+    selectedServices.splice(Number(index), 1);
+    selectedService = selectedServices[0] || null;
+    renderCalendarItems();
+    openClientFormPanel();
+  }
+
+  function appointmentPetFields() {
+    const pets = Array.isArray(selectedCustomer?.pets) ? selectedCustomer.pets : [];
+    const petOptions = pets.map(pet => {
+      const detail = [pet.breed, pet.sizeLabel].filter(Boolean).join(" · ");
+      return `<option value="${escapeAttribute(pet.id)}">${escapeHTML([pet.name, detail].filter(Boolean).join(" — "))}</option>`;
+    }).join("");
+
+    return `
+      <section class="rounded-2xl border border-brand-100 bg-brand-50/40 p-4">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <h3 class="text-base font-bold text-zinc-950">Mascota</h3>
+            <p class="mt-1 text-xs font-semibold leading-5 text-zinc-500">El turno se guarda en el historial de esta mascota.</p>
+          </div>
+          <span class="rounded-full bg-white px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-brand-700">Obligatorio</span>
+        </div>
+        ${pets.length ? `<div class="mt-4"><label class="mb-2 block text-sm font-bold">Mascota registrada</label><select id="appointmentPetIdInput" class="w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100"><option value="">Agregar una nueva mascota</option>${petOptions}</select></div>` : ""}
+        <div class="mt-4 grid gap-4 sm:grid-cols-2">
+          <div><label class="mb-2 block text-sm font-bold">Nombre *</label><input id="appointmentPetNameInput" type="text" placeholder="Ej: Coco" class="w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100"></div>
+          <div><label class="mb-2 block text-sm font-bold">Raza</label><input id="appointmentPetBreedInput" type="text" placeholder="Ej: Caniche" class="w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100"></div>
+          <div><label class="mb-2 block text-sm font-bold">Tamaño</label><select id="appointmentPetSizeInput" class="w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100"><option value="">No especificado</option><option value="extra_small">Mini</option><option value="small">Chico</option><option value="medium">Mediano</option><option value="large">Grande</option><option value="extra_large">Gigante</option></select></div>
+          <div><label class="mb-2 block text-sm font-bold">Sexo</label><select id="appointmentPetSexInput" class="w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100"><option value="">No especificado</option><option value="female">Hembra</option><option value="male">Macho</option></select></div>
+        </div>
+        <div class="mt-4"><label class="mb-2 block text-sm font-bold">Cuidados o información importante</label><textarea id="appointmentPetNotesInput" rows="3" placeholder="Alergias, sensibilidad, comportamiento o indicaciones" class="w-full resize-none rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100"></textarea></div>
+      </section>
+    `;
+  }
+
+  function openClientFormPanel() {
+    const employee = employeeById(selectedSlot.employeeId);
+    const totalPrice = selectedServices.reduce((sum, service) => sum + Number(service.price), 0);
+    const totalDuration = selectedServices.reduce((sum, service) => sum + Number(service.duration), 0);
+    openDrawer(appointmentEditorShell(`
+      ${drawerHeader(selectedSlot.dateLabel || "Nuevo turno", `${selectedSlot.time} · ${employee.name}`)}
+      <form onsubmit="event.preventDefault(); createAppointmentFromForm();" class="flex min-h-0 flex-1 flex-col">
+        <div class="drawer-scroll min-h-0 flex-1 overflow-y-auto px-6 py-5">
+          <h3 class="text-lg font-bold">Servicios</h3>
+          ${selectedServices.length ? selectedServices.map((service, index) => `
+            <div class="appointment-service-card mt-4">
+              <div class="flex items-start justify-between gap-4"><div><p class="text-base font-bold">${escapeHTML(service.name)}</p><p class="mt-1 text-sm font-semibold text-zinc-500">${index === 0 ? selectedSlot.time : finishTime(selectedSlot.time, selectedServices.slice(0, index).reduce((sum, item) => sum + Number(item.duration), 0))} · ${serviceDurationLabel(service.duration)} · ${escapeHTML(employee.name)}</p></div><div class="flex items-center gap-2"><strong class="mr-2 text-sm">${formatMoney(service.price)}</strong><button type="button" onclick="editAppointmentService(${index})" class="grid h-8 w-8 place-items-center rounded-full border border-zinc-200" title="Editar" aria-label="Editar servicio">✎</button><button type="button" onclick="removeAppointmentService(${index})" class="grid h-8 w-8 place-items-center rounded-full border border-red-200 text-red-600 hover:bg-red-50" title="Eliminar" aria-label="Eliminar servicio">${trashIconMarkup()}</button></div></div>
+            </div>
+          `).join("") : `<div class="mt-4 rounded-2xl border border-dashed border-zinc-300 bg-zinc-50 px-6 py-12 text-center"><p class="text-sm font-bold text-zinc-500">Añadir un servicio para guardar el turno</p><button type="button" onclick="addAppointmentService()" class="mt-5 rounded-full border border-zinc-300 bg-white px-5 py-3 text-sm font-bold">＋ Añadir servicio</button></div>`}
+          ${selectedServices.length ? `<div class="mt-4 flex items-center justify-between"><button type="button" onclick="addAppointmentService()" class="rounded-full border border-zinc-200 px-4 py-2 text-sm font-bold">＋ Añadir servicio</button><span class="text-sm font-bold text-zinc-500">${serviceDurationLabel(totalDuration)}</span></div>` : ""}
+          <div class="mt-6 grid gap-4">
+            ${appointmentPetFields()}
+            <div>
+              <label class="mb-2 block text-sm font-bold">Estado del turno</label>
+              <select id="appointmentStatusInput" class="w-full rounded-2xl border border-zinc-200 px-4 py-3 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100">
+                <option value="confirmed">Confirmado</option>
+                <option value="pending_deposit">Seña pendiente</option>
+                <option value="pending">Pendiente de aprobación</option>
+              </select>
+            </div>
+            <div>
+              <label class="mb-2 block text-sm font-bold">Notas internas</label>
+              <textarea id="appointmentNotesInput" rows="4" placeholder="Ej: viene por primera vez..." class="w-full resize-none rounded-2xl border border-zinc-200 px-4 py-3 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100"></textarea>
+            </div>
+            <div id="appointmentFormError" class="hidden rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700"></div>
+          </div>
+        </div>
+        <footer class="appointment-editor-footer">
+          <div class="appointment-total-row"><span class="text-sm font-semibold text-zinc-500">Total<br><strong class="text-base text-zinc-950">A pagar</strong></span><strong class="text-lg">${formatMoney(totalPrice)}</strong></div>
+          <button id="createAppointmentButton" type="submit" ${selectedServices.length ? "" : "disabled"} class="appointment-save-button disabled:cursor-not-allowed disabled:opacity-60">Guardar turno</button>
+        </footer>
+      </form>
+    `), { wide: true });
+  }
+
+  function openCustomerPicker() {
+    const pane = document.getElementById("appointmentClientPane");
+    if (!pane) return;
+
+    pane.innerHTML = `
+      <div class="customer-picker-header">
+        <h3 class="customer-picker-title">Seleccionar responsable</h3>
+        <input type="search" class="customer-picker-search" placeholder="Buscar por nombre, teléfono o email" data-customer-search autocomplete="off">
+      </div>
+      <div>
+        <button type="button" onclick="showNewCustomerForm()" class="customer-picker-option"><span class="customer-picker-option-avatar">+</span><span><span class="customer-picker-option-name">Añadir un nuevo responsable</span><span class="customer-picker-option-meta">Crear al guardar el turno</span></span></button>
+        <button type="button" onclick="chooseWalkInCustomer()" class="customer-picker-option"><span class="customer-picker-option-avatar">○</span><span><span class="customer-picker-option-name">Sin cita</span><span class="customer-picker-option-meta">Sin cliente registrado</span></span></button>
+      </div>
+      <div id="customerPickerResults"></div>
+      <div id="customerPickerLoading" class="hidden px-5 py-4 text-center text-xs font-bold text-zinc-500">Cargando clientes...</div>
+    `;
+
+    pane.dataset.customerPage = "0";
+    pane.dataset.customerHasMore = "true";
+    pane.dataset.customerQuery = "";
+    pane.addEventListener("scroll", handleCustomerPickerScroll, { signal: calendarSignal });
+    pane.querySelector("[data-customer-search]").addEventListener("input", event => {
+      window.clearTimeout(customerSearchTimer);
+      customerSearchTimer = window.setTimeout(() => resetAndLoadCustomers(event.target.value), 220);
+    }, { signal: calendarSignal });
+    loadMoreCustomers();
+  }
+
+  function resetAndLoadCustomers(query) {
+    const pane = document.getElementById("appointmentClientPane");
+    if (!pane) return;
+    pane.dataset.customerPage = "0";
+    pane.dataset.customerHasMore = "true";
+    pane.dataset.customerQuery = query.trim();
+    document.getElementById("customerPickerResults").innerHTML = "";
+    loadedCustomers = new Map();
+    loadMoreCustomers();
+  }
+
+  function handleCustomerPickerScroll(event) {
+    const pane = event.currentTarget;
+    if (pane.scrollTop + pane.clientHeight >= pane.scrollHeight - 120) loadMoreCustomers();
+  }
+
+  async function loadMoreCustomers() {
+    const pane = document.getElementById("appointmentClientPane");
+    const results = document.getElementById("customerPickerResults");
+    const loading = document.getElementById("customerPickerLoading");
+    if (!pane || !results || pane.dataset.customerLoading === "true" || pane.dataset.customerHasMore !== "true") return;
+
+    pane.dataset.customerLoading = "true";
+    loading?.classList.remove("hidden");
+    const page = Number(pane.dataset.customerPage || 0) + 1;
+    const query = pane.dataset.customerQuery || "";
+    const sequence = ++customerRequestSequence;
+
+    try {
+      const url = new URL(customerAutocompleteUrl, window.location.origin);
+      url.searchParams.set("page", page);
+      if (query) url.searchParams.set("q", query);
+      const response = await fetch(url, { headers: { "Accept": "application/json" } });
+      if (!response.ok) throw new Error("customer request failed");
+      const payload = await response.json();
+      if (sequence !== customerRequestSequence || query !== (pane.dataset.customerQuery || "")) return;
+
+      payload.results.forEach(customer => loadedCustomers.set(String(customer.id), customer));
+      results.insertAdjacentHTML("beforeend", payload.results.map(customer => `
+        <button type="button" onclick="chooseExistingCustomer('${escapeAttribute(customer.id)}')" class="customer-picker-option">
+          <span class="customer-picker-option-avatar">${escapeHTML(customer.initials)}</span>
+          <span class="min-w-0"><span class="customer-picker-option-name">${escapeHTML(customer.name)}</span><span class="customer-picker-option-meta">${escapeHTML(customer.phone || customer.email || customer.subtitle || "Sin datos de contacto")}</span></span>
+        </button>
+      `).join(""));
+      pane.dataset.customerPage = String(payload.page);
+      pane.dataset.customerHasMore = String(payload.has_more);
+      if (page === 1 && payload.results.length === 0) results.innerHTML = `<p class="px-5 py-6 text-center text-sm font-semibold text-zinc-500">No encontramos clientes.</p>`;
+    } catch (_error) {
+      if (page === 1) results.innerHTML = `<p class="px-5 py-6 text-center text-sm font-semibold text-red-600">No se pudo cargar el listado.</p>`;
+    } finally {
+      pane.dataset.customerLoading = "false";
+      loading?.classList.add("hidden");
+    }
+  }
+
+  function chooseExistingCustomer(customerId) {
+    selectedCustomer = loadedCustomers.get(String(customerId));
+    if (selectedServices.length) openClientFormPanel(); else openServicePanel();
+  }
+
+  function chooseWalkInCustomer() {
+    selectedCustomer = { id: null, name: "Sin cita", phone: "", email: "", walkIn: true };
+    if (selectedServices.length) openClientFormPanel(); else openServicePanel();
+  }
+
+  function showNewCustomerForm() {
+    const pane = document.getElementById("appointmentClientPane");
+    if (!pane) return;
+    pane.innerHTML = `
+      <div class="customer-picker-header"><button type="button" onclick="openCustomerPicker()" class="mb-3 text-xs font-bold text-brand-700">← Volver</button><h3 class="customer-picker-title">Nuevo responsable</h3></div>
+      <div class="grid gap-4 p-5">
+        <div><label class="team-label">Nombre *</label><input id="newAppointmentCustomerName" class="customer-picker-search" type="text" placeholder="Ej: Sofía Gómez"></div>
+        <div><label class="team-label">WhatsApp *</label><input id="newAppointmentCustomerPhone" class="customer-picker-search" type="tel" placeholder="+54 9 11 1234-5678"></div>
+        <div><label class="team-label">Email *</label><input id="newAppointmentCustomerEmail" class="customer-picker-search" type="email" required></div>
+        <button type="button" onclick="chooseNewCustomer()" class="h-12 rounded-full bg-zinc-950 text-sm font-bold text-white">Usar este cliente</button>
+        <p id="newAppointmentCustomerError" class="hidden text-xs font-bold text-red-600">Ingresá nombre, WhatsApp y email para guardar el cliente.</p>
+      </div>
+    `;
+  }
+
+  function chooseNewCustomer() {
+    const name = document.getElementById("newAppointmentCustomerName")?.value.trim();
+    const phone = document.getElementById("newAppointmentCustomerPhone")?.value.trim();
+    const email = document.getElementById("newAppointmentCustomerEmail")?.value.trim();
+    if (!name || !phone || !email) {
+      document.getElementById("newAppointmentCustomerError")?.classList.remove("hidden");
+      return;
+    }
+    selectedCustomer = {
+      id: null,
+      name,
+      phone,
+      email,
+      isNew: true
+    };
+    if (selectedServices.length) openClientFormPanel(); else openServicePanel();
+  }
+
+  async function createAppointmentFromForm() {
+    const employee = employeeById(selectedSlot.employeeId);
+    const customer = selectedCustomer || { id: null, name: "Sin cita", phone: "", email: "", walkIn: true };
+    const name = customer.name;
+    const phone = customer.phone || "";
+    const email = customer.email || "";
+    const petId = document.getElementById("appointmentPetIdInput")?.value || "";
+    const petName = document.getElementById("appointmentPetNameInput")?.value.trim() || "";
+    const petBreed = document.getElementById("appointmentPetBreedInput")?.value.trim() || "";
+    const petSize = document.getElementById("appointmentPetSizeInput")?.value || "";
+    const petSex = document.getElementById("appointmentPetSexInput")?.value || "";
+    const petNotes = document.getElementById("appointmentPetNotesInput")?.value.trim() || "";
+    const status = document.getElementById("appointmentStatusInput").value;
+    const notes = document.getElementById("appointmentNotesInput").value.trim();
+    const submitButton = document.getElementById("createAppointmentButton");
+    const errorBox = document.getElementById("appointmentFormError");
+
+    errorBox.classList.add("hidden");
+    errorBox.textContent = "";
+    if (!phone || !email) {
+      errorBox.textContent = "El cliente debe tener WhatsApp y email para crear el turno.";
+      errorBox.classList.remove("hidden");
+      return;
+    }
+    if (!petId && !petName) {
+      errorBox.textContent = "Seleccioná o agregá una mascota para crear el turno.";
+      errorBox.classList.remove("hidden");
+      return;
+    }
+    submitButton.disabled = true;
+    submitButton.textContent = "Guardando...";
+
+    try {
+      const response = await fetch(appointmentCreateUrl, {
+        method: "POST",
+        headers: {
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrfToken
+        },
+        body: JSON.stringify({
+          appointment: {
+            service_id: selectedServices[0].id,
+            add_on_service_ids: selectedServices.slice(1).map(service => service.id),
+            employee_membership_id: employee.id === "center" ? "" : employee.id,
+            customer_profile_id: customer.id || "",
+            create_customer_profile: customer.isNew === true,
+            customer_name: name,
+            customer_phone: phone,
+            customer_email: email,
+            pet_id: petId,
+            pet_name: petName,
+            pet_breed: petBreed,
+            pet_size: petSize,
+            pet_sex: petSex,
+            pet_notes: petNotes,
+            waitlist_entry_id: waitlistAppointmentEntryId || "",
+            starts_at: `${selectedSlot.dateISO}T${selectedSlot.time}`,
+            notes,
+            status
+          }
+        })
+      });
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const message = Array.isArray(payload.errors) && payload.errors.length ? payload.errors.join(". ") : "No se pudo guardar el turno.";
+        errorBox.textContent = message;
+        errorBox.classList.remove("hidden");
+        return;
+      }
+
+      appointments = appointments.filter(appointment => appointment.id !== payload.id);
+      appointments.push(payload);
+      if (waitlistAppointmentEntryId) {
+        markWaitlistEntryBooked(waitlistAppointmentEntryId);
+        waitlistAppointmentEntryId = null;
+      }
+      showToast("Turno guardado");
+      cancelAction();
+      renderAll();
+    } catch (_error) {
+      errorBox.textContent = "No se pudo conectar con el servidor. Probá de nuevo.";
+      errorBox.classList.remove("hidden");
+    } finally {
+      submitButton.disabled = false;
+      submitButton.textContent = "Guardar turno";
+    }
+  }
+
+  function openBlockedTimePanel() {
+    const employee = employeeById(selectedSlot.employeeId);
+    const defaultStart = selectedSlot.time;
+    const defaultFinish = timeValueFromMinutes(minutesFromTime(defaultStart) + 15);
+    openDrawer(`
+      ${drawerHeader("Añadir horario no disponible")}
+      <form onsubmit="event.preventDefault(); createBlockedTime();" class="drawer-scroll flex min-h-0 flex-1 flex-col overflow-y-auto">
+        <div class="flex-1 px-6 py-5">
+          <div class="grid gap-5">
+            <div>
+              <label class="mb-2 block text-sm font-bold">Título <span class="font-semibold text-zinc-500">(Opcional)</span></label>
+              <input id="blockedTitleInput" type="text" maxlength="120" placeholder="por ejemplo, comida de negocios" class="w-full rounded-2xl border border-zinc-200 px-4 py-3 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100" />
+            </div>
+            <div>
+              <label class="mb-2 block text-sm font-bold">Fecha</label>
+              <select id="blockedDateInput" class="w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100">
+                ${blockDateOptions(selectedSlot.dateISO)}
+              </select>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="mb-2 block text-sm font-bold">Hora de inicio</label>
+                <select id="blockedStartInput" onchange="syncBlockedDurationLabel()" class="w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100">
+                  ${timeSelectOptions(defaultStart)}
+                </select>
+              </div>
+              <div>
+                <label class="mb-2 block text-sm font-bold">Hora de finalización</label>
+                <select id="blockedEndInput" onchange="syncBlockedDurationLabel()" class="w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100">
+                  ${timeSelectOptions(defaultFinish)}
+                </select>
+                <p id="blockedDurationLabel" class="mt-2 text-xs font-semibold text-zinc-500">${serviceDurationLabel(durationFromTimes(defaultStart, defaultFinish))} de duración</p>
+              </div>
+            </div>
+            <div>
+              <label class="mb-2 block text-sm font-bold">Miembros del equipo</label>
+              <select id="blockedEmployeeInput" class="w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100">
+                ${employees.map(member => `<option value="${escapeAttribute(member.id)}" ${member.id === employee.id ? "selected" : ""}>${escapeHTML(member.name)}</option>`).join("")}
+              </select>
+            </div>
+            <div>
+              <label class="mb-2 block text-sm font-bold">Frecuencia</label>
+              <select id="blockedRecurrenceInput" class="w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100">
+                <option value="none" selected>No se repite</option>
+                <option value="daily">Todos los días</option>
+                <option value="weekdays">De lunes a viernes</option>
+                <option value="weekly">Cada semana</option>
+                <option value="monthly">Cada mes</option>
+              </select>
+            </div>
+            <div>
+              <div class="mb-2 flex items-center justify-between gap-4">
+                <label class="block text-sm font-bold">Descripción <span class="font-semibold text-zinc-500">(Opcional)</span></label>
+                <span id="blockedDescriptionCounter" class="text-xs font-bold text-zinc-500">0/255</span>
+              </div>
+              <textarea id="blockedDescriptionInput" maxlength="255" oninput="syncBlockedDescriptionCounter()" placeholder="Añadir descripción o comentario" class="min-h-[120px] w-full resize-none rounded-2xl border border-zinc-200 px-4 py-3 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100"></textarea>
+            </div>
+            <label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-zinc-100 p-4">
+              <input id="blockedOnlineBookingAllowedInput" type="checkbox" class="mt-1 h-5 w-5 rounded border-zinc-300 text-brand-600 focus:ring-brand-500" />
+              <span class="text-sm font-semibold text-zinc-700">Reserva online permitida durante el horario no disponible</span>
+            </label>
+            <div id="blockedFormError" class="hidden rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700"></div>
+          </div>
+        </div>
+        <footer class="shrink-0 border-t border-zinc-200 bg-white px-6 py-4">
+          <button id="createBlockedButton" type="submit" class="w-full rounded-full bg-[#071014] px-5 py-4 text-sm font-bold text-white">Añadir horario no disponible</button>
+        </footer>
+      </form>
+    `);
+  }
+
+  function syncBlockedDurationLabel() {
+    const start = document.getElementById("blockedStartInput")?.value;
+    const finish = document.getElementById("blockedEndInput")?.value;
+    const label = document.getElementById("blockedDurationLabel");
+    if (!start || !finish || !label) return;
+
+    label.textContent = `${serviceDurationLabel(durationFromTimes(start, finish))} de duración`;
+  }
+
+  function syncBlockedDescriptionCounter() {
+    const textarea = document.getElementById("blockedDescriptionInput");
+    const counter = document.getElementById("blockedDescriptionCounter");
+    if (!textarea || !counter) return;
+
+    counter.textContent = `${textarea.value.length}/255`;
+  }
+
+  async function createBlockedTime() {
+    const submitButton = document.getElementById("createBlockedButton");
+    const errorBox = document.getElementById("blockedFormError");
+    const date = document.getElementById("blockedDateInput")?.value;
+    const start = document.getElementById("blockedStartInput")?.value;
+    const finish = document.getElementById("blockedEndInput")?.value;
+
+    errorBox.classList.add("hidden");
+    errorBox.textContent = "";
+    submitButton.disabled = true;
+    submitButton.textContent = "Guardando...";
+
+    try {
+      const response = await fetch(availabilityBlockCreateUrl, {
+        method: "POST",
+        headers: {
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrfToken
+        },
+        body: JSON.stringify({
+          range_start: calendarLoadedRangeStartISO(),
+          range_end: calendarLoadedRangeEndISO(),
+          availability_block: {
+            title: document.getElementById("blockedTitleInput")?.value.trim() || "",
+            date: date,
+            start_time: start,
+            end_time: finish,
+            employee_membership_id: document.getElementById("blockedEmployeeInput")?.value || "",
+            recurrence: document.getElementById("blockedRecurrenceInput")?.value || "none",
+            description: document.getElementById("blockedDescriptionInput")?.value.trim() || "",
+            online_booking_allowed: document.getElementById("blockedOnlineBookingAllowedInput")?.checked || false
+          }
+        })
+      });
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        errorBox.textContent = Array.isArray(payload.errors) && payload.errors.length ? payload.errors.join(". ") : "No se pudo guardar el horario no disponible.";
+        errorBox.classList.remove("hidden");
+        return;
+      }
+
+      blocks = [
+        ...blocks.filter(block => !payload.blocks?.some(newBlock => String(newBlock.id) === String(block.id))),
+        ...(payload.blocks || [])
+      ];
+      showToast("Horario no disponible añadido");
+      cancelAction();
+      renderAll();
+    } catch (_error) {
+      errorBox.textContent = "No se pudo conectar con el servidor. Probá de nuevo.";
+      errorBox.classList.remove("hidden");
+    } finally {
+      submitButton.disabled = false;
+      submitButton.textContent = "Añadir horario no disponible";
+    }
+  }
+
+  function openAppointmentDetails(appointmentId) {
+    const targetId = String(appointmentId || "");
+    const appointment = appointments.find(item => String(item.id) === targetId);
+    if (!appointment) return;
+
+    openDrawer(renderAppointmentDetail(appointment, {
+      actions: {
+        changeProfessional: appointment.availableProfessionalsUrl && appointment.changeProfessionalUrl ? `onclick="openCalendarProfessionalPicker('${escapeAttribute(appointment.id)}')"` : "",
+        approveDeposit: appointment.approveDepositUrl ? `onclick="approveCalendarDeposit('${escapeAttribute(appointment.id)}')"` : "",
+        rejectDeposit: appointment.rejectDepositUrl ? `onclick="rejectCalendarDeposit('${escapeAttribute(appointment.id)}')"` : "",
+        markPaid: appointment.markRemainingBalancePaidUrl ? `onclick="openRemainingBalancePaymentDialog('${escapeAttribute(appointment.id)}')"` : "",
+        cancel: appointment.cancelUrl ? "data-appointment-detail-cancel" : "",
+        destroy: appointment.destroyUrl ? `onclick="deleteExistingAppointment('${escapeAttribute(appointment.id)}')"` : ""
+      },
+      calendarUrl: appointment.url,
+      variant: "customer-profile"
+    }), { wide: true });
+    bindAppointmentDetailPanel(document.getElementById("drawerContent"), {
+      onSaveNotes: (internalNotes) => saveCalendarAppointmentNotes(appointment, internalNotes),
+      onCancel: (reason) => cancelCalendarAppointment(appointment.id, reason)
+    });
+  }
+
+  async function saveCalendarAppointmentNotes(appointment, internalNotes) {
+    if (!appointment?.notesUrl) throw new Error("No tenés permisos para editar las notas del turno.");
+
+    const response = await fetch(appointment.notesUrl, {
+      method: "PATCH",
+      headers: {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "X-CSRF-Token": csrfToken
+      },
+      body: JSON.stringify({ appointment: { internal_notes: internalNotes } })
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(Array.isArray(payload.errors) && payload.errors.length ? payload.errors.join(". ") : "No pudimos guardar las notas.");
+    }
+
+    appointments = appointments.map(item => String(item.id) === String(appointment.id) ? payload : item);
+    renderAll();
+    openAppointmentDetails(appointment.id);
+  }
+
+  async function cancelCalendarAppointment(appointmentId, providedReason = "") {
+    const appointment = appointments.find(item => String(item.id) === String(appointmentId));
+    if (!appointment?.cancelUrl) return;
+
+    const reason = providedReason || document.getElementById("appointmentCancellationNote")?.value.trim() || "";
+
+    try {
+      const response = await fetch(appointment.cancelUrl, {
+        method: "PATCH",
+        headers: {
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrfToken
+        },
+        body: JSON.stringify({ reason })
+      });
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const message = Array.isArray(payload.errors) && payload.errors.length ? payload.errors.join(". ") : "No se pudo cancelar el turno.";
+        throw new Error(message);
+      }
+
+      appointments = appointments.filter(item => String(item.id) !== String(appointment.id));
+      closeDrawer();
+      renderAll();
+      showToast("Turno cancelado");
+    } catch (_error) {
+      throw new Error(_error.message || "No se pudo conectar con el servidor. Probá de nuevo.");
+    }
+  }
+
+  function openRemainingBalancePaymentDialog(appointmentId) {
+    const appointment = appointments.find(item => String(item.id) === String(appointmentId));
+    if (!appointment?.markRemainingBalancePaidUrl) return;
+
+    const dialog = document.getElementById("remainingBalancePaymentDialog");
+    const description = document.getElementById("remainingBalancePaymentDialogDescription");
+    const errorBox = document.getElementById("remainingBalancePaymentDialogError");
+    if (!dialog || !description) return;
+
+    dialog.dataset.appointmentId = appointment.id;
+    description.textContent = `¿Confirmás que se pagó el total restante de ${formatMoney(appointment.remainingBalance)}?`;
+    errorBox?.classList.add("hidden");
+    if (!dialog.open) dialog.showModal();
+  }
+
+  function closeRemainingBalancePaymentDialog() {
+    const dialog = document.getElementById("remainingBalancePaymentDialog");
+    if (dialog?.open) dialog.close();
+  }
+
+  async function confirmRemainingBalancePayment() {
+    const dialog = document.getElementById("remainingBalancePaymentDialog");
+    const appointment = appointments.find(item => String(item.id) === String(dialog?.dataset.appointmentId));
+    const errorBox = document.getElementById("remainingBalancePaymentDialogError");
+    const submitButton = document.getElementById("confirmRemainingBalancePaymentButton");
+    if (!appointment?.markRemainingBalancePaidUrl) return;
+
+    errorBox?.classList.add("hidden");
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.textContent = "Guardando...";
+    }
+
+    try {
+      const response = await fetch(appointment.markRemainingBalancePaidUrl, {
+        method: "PATCH",
+        headers: {
+          "Accept": "application/json",
+          "X-CSRF-Token": csrfToken
+        }
+      });
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const message = Array.isArray(payload.errors) && payload.errors.length ? payload.errors.join(". ") : "No se pudo registrar el pago restante.";
+        if (errorBox) {
+          errorBox.textContent = message;
+          errorBox.classList.remove("hidden");
+        }
+        return;
+      }
+
+      appointments = appointments.map(item => String(item.id) === String(appointment.id) ? payload : item);
+      closeRemainingBalancePaymentDialog();
+      renderAll();
+      openAppointmentDetails(appointment.id);
+      showToast("Saldo restante registrado como pagado");
+    } catch (_error) {
+      if (errorBox) {
+        errorBox.textContent = "No se pudo conectar con el servidor. Probá de nuevo.";
+        errorBox.classList.remove("hidden");
+      }
+    } finally {
+      if (submitButton?.isConnected) {
+        submitButton.disabled = false;
+        submitButton.textContent = "Confirmar pago";
+      }
+    }
+  }
+
+  async function approveCalendarDeposit(appointmentId) {
+    const appointment = appointments.find(item => String(item.id) === String(appointmentId));
+    if (!appointment?.approveDepositUrl) return;
+    if (!window.confirm("¿Confirmás que la seña es válida? El turno quedará confirmado.")) return;
+
+    await updateCalendarDepositStatus(appointment, appointment.approveDepositUrl, {}, "Seña aprobada. El turno fue confirmado.");
+  }
+
+  async function rejectCalendarDeposit(appointmentId) {
+    const appointment = appointments.find(item => String(item.id) === String(appointmentId));
+    if (!appointment?.rejectDepositUrl) return;
+
+    const reason = window.prompt("Indicá el motivo para rechazar el comprobante:")?.trim();
+    if (!reason) return;
+
+    await updateCalendarDepositStatus(appointment, appointment.rejectDepositUrl, { reason }, "Comprobante rechazado.");
+  }
+
+  async function updateCalendarDepositStatus(appointment, url, body, successMessage) {
+    try {
+      const response = await fetch(url, {
+        method: "PATCH",
+        headers: {
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrfToken
+        },
+        body: JSON.stringify(body)
+      });
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const message = Array.isArray(payload.errors) && payload.errors.length ? payload.errors.join(". ") : "No se pudo actualizar la seña.";
+        showToast(message);
+        return;
+      }
+
+      appointments = appointments.map(item => String(item.id) === String(appointment.id) ? payload : item);
+      renderAll();
+      openAppointmentDetails(appointment.id);
+      showToast(successMessage);
+    } catch (_error) {
+      showToast("No se pudo conectar con el servidor. Probá de nuevo.");
+    }
+  }
+
+  function openCalendarProfessionalPicker(appointmentId) {
+    const appointment = appointments.find(item => String(item.id) === String(appointmentId));
+    if (!appointment?.availableProfessionalsUrl || !appointment?.changeProfessionalUrl) return;
+
+    openProfessionalPicker({
+      professionalsUrl: appointment.availableProfessionalsUrl,
+      selectedProfessionalId: appointment.employeeId,
+      onConfirm: async (employeeMembershipId) => {
+        const response = await fetch(appointment.changeProfessionalUrl, {
+          method: "PATCH",
+          headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "X-CSRF-Token": csrfToken
+          },
+          body: JSON.stringify({ employee_membership_id: employeeMembershipId })
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(Array.isArray(payload.errors) ? payload.errors.join(". ") : "No se pudo cambiar el profesional.");
+        }
+
+        appointments = appointments.map(item => String(item.id) === String(appointment.id) ? payload : item);
+        renderAll();
+        openAppointmentDetails(appointment.id);
+        showToast("Profesional actualizado");
+      }
+    });
+  }
+
+  async function deleteExistingAppointment(appointmentId) {
+    const appointment = appointments.find(item => String(item.id) === String(appointmentId));
+    if (!appointment) return;
+    if (!appointment.destroyUrl) {
+      showToast("Solo se pueden eliminar turnos creados desde el calendario");
+      return;
+    }
+    if (!window.confirm("¿Eliminar este turno? Esta acción borra el turno de la agenda. Si necesitás cancelar una reserva, usá Cancelar turno.")) return;
+
+    try {
+      const response = await fetch(appointment.destroyUrl, {
+        method: "DELETE",
+        headers: { "Accept": "application/json", "X-CSRF-Token": csrfToken }
+      });
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const message = Array.isArray(payload.errors) && payload.errors.length ? payload.errors.join(". ") : "No se pudo eliminar el turno";
+        showToast(message);
+        return;
+      }
+
+      appointments = appointments.filter(item => String(item.id) !== String(appointment.id));
+      closeDrawer();
+      renderAll();
+      showToast("Turno eliminado");
+    } catch (_error) {
+      showToast("No se pudo conectar con el servidor. Probá de nuevo.");
+    }
+  }
+
+  function openCalendarAppointmentDetails(appointmentId) {
+    const targetId = String(appointmentId || "");
+    if (!targetId) return false;
+
+    const appointment = appointments.find(item => String(item.id) === targetId);
+    if (!appointment) return false;
+
+    window.AdminNotificationsDrawer?.close?.();
+    openAppointmentDetails(targetId);
+    return true;
+  }
+
+  function openBlockedDetails(blockId) {
+    const blocked = blocks.find(item => String(item.id) === String(blockId));
+    if (!blocked) return;
+    const employee = employeeById(blocked.employeeId || firstVisibleEmployeeId());
+    openDrawer(`
+      ${drawerHeader("Horario no disponible", `${blocked.start} · ${employee.name}`)}
+      <div class="drawer-scroll flex-1 overflow-y-auto px-6 py-5">
+        <div class="rounded-3xl border border-zinc-100 bg-zinc-50 p-5">
+          <p class="text-sm font-bold">${escapeHTML(blocked.reason || "No disponible")}</p>
+          <p class="mt-1 text-sm font-semibold text-zinc-500">${serviceDurationLabel(blocked.duration)}</p>
+          ${blocked.description ? `<p class="mt-4 text-sm font-semibold leading-6 text-zinc-600">${escapeHTML(blocked.description)}</p>` : ""}
+          <div class="mt-4 flex flex-wrap gap-2">
+            <span class="rounded-full bg-white px-3 py-1 text-xs font-bold text-zinc-600">${escapeHTML(blocked.recurrenceLabel || "No se repite")}</span>
+            ${blocked.onlineBookingAllowed ? `<span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">Reserva online permitida</span>` : ""}
+          </div>
+        </div>
+        <button type="button" onclick="deleteBlockedTime('${escapeAttribute(blocked.id)}')" class="mt-5 w-full rounded-full border border-red-200 bg-red-50 px-5 py-4 text-sm font-bold text-red-600">Eliminar bloqueo</button>
+        <p id="blockedDeleteError" class="mt-3 hidden rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700"></p>
+      </div>
+    `);
+  }
+
+  async function deleteBlockedTime(blockId) {
+    const blocked = blocks.find(item => String(item.id) === String(blockId));
+    if (!blocked) return;
+
+    const errorBox = document.getElementById("blockedDeleteError");
+    if (errorBox) {
+      errorBox.classList.add("hidden");
+      errorBox.textContent = "";
+    }
+
+    try {
+      const seriesId = blocked.seriesId || blocked.id;
+      const response = await fetch(availabilityBlockDeleteUrlTemplate.replace("__ID__", encodeURIComponent(seriesId)), {
+        method: "DELETE",
+        headers: {
+          "Accept": "application/json",
+          "X-CSRF-Token": csrfToken
+        }
+      });
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        if (errorBox) {
+          errorBox.textContent = Array.isArray(payload.errors) && payload.errors.length ? payload.errors.join(". ") : "No se pudo eliminar el bloqueo.";
+          errorBox.classList.remove("hidden");
+        }
+        return;
+      }
+
+      const removedSeriesId = String(payload.seriesId || seriesId);
+      blocks = blocks.filter(item => String(item.seriesId || item.id) !== removedSeriesId);
+      closeDrawer();
+      renderAll();
+      showToast("Horario no disponible eliminado");
+    } catch (_error) {
+      if (errorBox) {
+        errorBox.textContent = "No se pudo conectar con el servidor. Probá de nuevo.";
+        errorBox.classList.remove("hidden");
+      }
+    }
+  }
+
+  function waitlistActiveEntries() {
+    return waitlistEntries.filter(entry => ["waiting", "offered"].includes(entry.status));
+  }
+
+  function renderWaitlistToolbarCount() {
+    const badge = document.getElementById("waitlistToolbarCount");
+    if (!badge) return;
+
+    badge.textContent = waitlistActiveEntries().length;
+  }
+
+  function waitlistStatusGroup(entry) {
+    if (entry.status === "booked") return "booked";
+    if (entry.status === "expired") return "expired";
+    return ["waiting", "offered"].includes(entry.status) ? "waiting" : entry.status;
+  }
+
+  function waitlistTabCount(tab) {
+    return waitlistEntries.filter(entry => waitlistStatusGroup(entry) === tab).length;
+  }
+
+  function waitlistWindowCovers(entry, time) {
+    if (!time) return true;
+
+    const target = minutesFromTime(time);
+    const windows = Array.isArray(entry.preferredTimeWindows) && entry.preferredTimeWindows.length ? entry.preferredTimeWindows : [WAITLIST_TIME_PRESETS.any];
+    return windows.some(window => {
+      const start = minutesFromTime(window.start_time || window.startTime || "00:00");
+      const finish = minutesFromTime(window.end_time || window.endTime || "23:55");
+      if (start <= finish) return target >= start && target < finish;
+      return target >= start || target < finish;
+    });
+  }
+
+  function waitlistFilteredEntries() {
+    const todayISO = dateToISO(new Date());
+    let entries = waitlistEntries.filter(entry => waitlistStatusGroup(entry) === waitlistTab);
+
+    if (waitlistDateFilter === "upcoming") entries = entries.filter(entry => entry.desiredDate >= todayISO);
+    if (waitlistDateFilter === "specific" && waitlistDesiredDateFilter) entries = entries.filter(entry => entry.desiredDate === waitlistDesiredDateFilter);
+    if (waitlistServiceFilter) entries = entries.filter(entry => String(entry.serviceId) === String(waitlistServiceFilter));
+    if (waitlistStartTimeFilter) entries = entries.filter(entry => waitlistWindowCovers(entry, waitlistStartTimeFilter));
+
+    return entries.sort((left, right) => {
+      if (waitlistSort === "date_asc") return `${left.desiredDate}${left.createdAt}`.localeCompare(`${right.desiredDate}${right.createdAt}`);
+      if (waitlistSort === "created_desc") return String(right.createdAt).localeCompare(String(left.createdAt));
+      return String(left.createdAt).localeCompare(String(right.createdAt));
+    });
+  }
+
+  function openWaitlistPanel() {
+    if (actionMode) cancelAction();
+    closeTeamMenu();
+    closeViewMenu();
+    closeQuickMenu();
+    openDrawer(waitlistPanelHTML());
+    renderWaitlistToolbarCount();
+  }
+
+  function renderWaitlistPanel() {
+    const content = document.getElementById("drawerContent");
+    if (!content) return;
+
+    content.innerHTML = waitlistPanelHTML();
+    renderWaitlistToolbarCount();
+  }
+
+  function waitlistPanelHTML() {
+    const counts = {
+      waiting: waitlistTabCount("waiting"),
+      expired: waitlistTabCount("expired"),
+      booked: waitlistTabCount("booked")
+    };
+    const entries = waitlistFilteredEntries();
+    const offeredEntries = entries.filter(entry => entry.status === "offered");
+    const waitingEntries = entries.filter(entry => entry.status !== "offered");
+
+    return `
+      ${drawerHeader("Lista de espera")}
+      <div class="drawer-scroll min-h-0 flex-1 overflow-y-auto px-6 py-5">
+        <div class="mb-5 flex items-center justify-end gap-3">
+          <button type="button" onclick="openWaitlistCustomerPicker()" class="inline-flex h-11 items-center justify-center rounded-full bg-zinc-950 px-5 text-sm font-bold text-white">Añadir</button>
+        </div>
+        <div class="grid gap-3">
+          <select onchange="changeWaitlistDateFilter(this.value)" class="rounded-full border border-zinc-200 bg-white px-4 py-3 text-sm font-bold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100">
+            <option value="upcoming" ${waitlistDateFilter === "upcoming" ? "selected" : ""}>Todas las próximas fechas</option>
+            <option value="all" ${waitlistDateFilter === "all" ? "selected" : ""}>Todas las fechas</option>
+            <option value="specific" ${waitlistDateFilter === "specific" ? "selected" : ""}>Una fecha específica</option>
+          </select>
+          ${waitlistDateFilter === "specific" ? `<input type="text" inputmode="numeric" pattern="[0-9]{2}/[0-9]{2}/[0-9]{4}" placeholder="dd/mm/aaaa" value="${escapeAttribute(localizedDateFromISO(waitlistDesiredDateFilter || currentDateISO()))}" onchange="changeWaitlistSpecificDate(this.value)" class="rounded-full border border-zinc-200 bg-white px-4 py-3 text-sm font-bold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100">` : ""}
+          <select onchange="changeWaitlistServiceFilter(this.value)" class="rounded-full border border-zinc-200 bg-white px-4 py-3 text-sm font-bold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100">
+            <option value="" ${waitlistServiceFilter === "" ? "selected" : ""}>Todos los servicios</option>
+            ${services.map(service => `<option value="${escapeAttribute(service.id)}" ${String(waitlistServiceFilter) === String(service.id) ? "selected" : ""}>${escapeHTML(service.name)}</option>`).join("")}
+          </select>
+          <select onchange="changeWaitlistSort(this.value)" class="rounded-full border border-zinc-200 bg-white px-4 py-3 text-sm font-bold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100">
+            <option value="created_asc" ${waitlistSort === "created_asc" ? "selected" : ""}>Creado (más antiguo primero)</option>
+            <option value="created_desc" ${waitlistSort === "created_desc" ? "selected" : ""}>Creado (más reciente primero)</option>
+            <option value="date_asc" ${waitlistSort === "date_asc" ? "selected" : ""}>Fecha más próxima</option>
+          </select>
+          ${waitlistStartTimeFilter ? `
+            <div class="flex items-center justify-between gap-3 rounded-2xl border border-brand-200 bg-brand-50 px-4 py-3 text-sm font-bold text-brand-900">
+              <span>Horario liberado: ${escapeHTML(waitlistStartTimeFilter)}</span>
+              <button type="button" onclick="clearWaitlistStartTimeFilter()" class="rounded-full bg-white px-3 py-1 text-xs font-bold text-brand-700">Quitar</button>
+            </div>
+          ` : ""}
+        </div>
+        <div class="mt-6 flex border-b border-zinc-200">
+          ${waitlistTabButton("waiting", "En espera", counts.waiting)}
+          ${waitlistTabButton("expired", "Caducada", counts.expired)}
+          ${waitlistTabButton("booked", "Reservada", counts.booked)}
+        </div>
+        <div class="mt-6 space-y-5">
+          ${entries.length ? (
+            waitlistTab === "waiting"
+              ? `${waitlistEntrySection("Disponible para reservar", offeredEntries)}${waitlistEntrySection("En espera", waitingEntries)}`
+              : waitlistEntrySection(waitlistTab === "expired" ? "Caducadas" : "Reservadas", entries)
+          ) : waitlistEmptyState()}
+        </div>
+      </div>
+    `;
+  }
+
+  function waitlistTabButton(tab, label, count) {
+    return `
+      <button type="button" onclick="changeWaitlistTab('${tab}')" class="waitlist-tab ${waitlistTab === tab ? "active" : ""} -mb-px flex flex-1 items-center justify-center gap-2 border-b-2 border-transparent px-2 py-3 text-sm font-bold text-zinc-500">
+        ${label}
+        <span class="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-bold text-zinc-600">${count}</span>
+      </button>
+    `;
+  }
+
+  function waitlistEntrySection(title, entries) {
+    if (!entries.length) return "";
+
+    return `
+      <section>
+        <h3 class="mb-3 flex items-center gap-2 text-base font-bold">
+          ${escapeHTML(title)}
+          <span class="grid h-6 min-w-6 place-items-center rounded-full bg-rose-600 px-2 text-xs font-bold text-white">${entries.length}</span>
+        </h3>
+        <div class="space-y-3">${entries.map(waitlistEntryCard).join("")}</div>
+      </section>
+    `;
+  }
+
+  function waitlistEntryCard(entry) {
+    const professional = entry.employeeName || "Cualquier miembro del equipo";
+    const windows = (entry.preferredTimeLabels || []).join(", ") || "En cualquier momento";
+
+    return `
+      <article class="waitlist-card p-5">
+        <div class="flex items-start justify-between gap-4">
+          <div class="min-w-0">
+            <p class="truncate text-lg font-bold">${escapeHTML(entry.clientName)}</p>
+            <p class="mt-1 truncate text-sm font-semibold text-zinc-500">${escapeHTML(entry.email || entry.clientPhone || "Sin contacto")}</p>
+          </div>
+          <span class="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-brand-100 text-sm font-bold text-brand-700">${escapeHTML(entry.customerInitials || initials(entry.clientName))}</span>
+        </div>
+        <p class="mt-5 text-sm font-semibold text-zinc-600">▣ ${escapeHTML(entry.desiredDateLabel)} · ${escapeHTML(windows)}</p>
+        <div class="my-5 border-t border-zinc-100"></div>
+        <div class="flex items-start justify-between gap-4">
+          <div class="min-w-0">
+            <p class="truncate text-sm font-bold">${escapeHTML(entry.serviceName)}</p>
+            <p class="mt-1 text-sm font-semibold text-zinc-500">${serviceDurationLabel(entry.serviceDuration)} · ${escapeHTML(professional)}</p>
+          </div>
+          <strong class="shrink-0 text-sm">${formatMoney(entry.servicePrice)}</strong>
+        </div>
+        <div class="mt-5 flex items-center gap-2">
+          <button type="button" onclick="bookWaitlistEntry('${escapeAttribute(entry.id)}')" class="rounded-full bg-zinc-950 px-5 py-3 text-sm font-bold text-white">Reservar ahora</button>
+          <div class="relative">
+            <button type="button" onclick="toggleWaitlistEntryMenu(event, '${escapeAttribute(entry.id)}')" class="grid h-11 w-11 place-items-center rounded-full border border-zinc-200 bg-white text-xl font-bold">⋮</button>
+            <div id="waitlistEntryMenu-${escapeAttribute(entry.id)}" class="waitlist-card-menu">
+              <button type="button" onclick="bookWaitlistEntry('${escapeAttribute(entry.id)}')" class="block w-full px-4 py-3 text-left text-sm font-bold hover:bg-zinc-50">Reservar ahora</button>
+              <button type="button" onclick="editWaitlistEntry('${escapeAttribute(entry.id)}')" class="block w-full px-4 py-3 text-left text-sm font-bold hover:bg-zinc-50">Editar preferencias</button>
+              <div class="mx-4 border-t border-zinc-100"></div>
+              <button type="button" onclick="deleteWaitlistEntry('${escapeAttribute(entry.id)}')" class="block w-full px-4 py-3 text-left text-sm font-bold text-rose-600 hover:bg-rose-50">Eliminar de la lista de espera</button>
+            </div>
+          </div>
+        </div>
+      </article>
+    `;
+  }
+
+  function waitlistEmptyState() {
+    return `
+      <div class="rounded-3xl border border-dashed border-zinc-200 bg-zinc-50 px-5 py-12 text-center">
+        <p class="text-base font-bold">No hay personas para estos filtros.</p>
+        <p class="mt-2 text-sm font-semibold text-zinc-500">Cuando alguien se una a la lista de espera, va a aparecer acá.</p>
+      </div>
+    `;
+  }
+
+  function changeWaitlistDateFilter(value) {
+    waitlistDateFilter = value;
+    if (value === "specific" && !waitlistDesiredDateFilter) waitlistDesiredDateFilter = currentDateISO();
+    renderWaitlistPanel();
+  }
+
+  function changeWaitlistSpecificDate(value) {
+    const date = isoFromLocalizedDate(value);
+    if (!date) return;
+
+    waitlistDesiredDateFilter = date;
+    renderWaitlistPanel();
+  }
+
+  function changeWaitlistServiceFilter(value) {
+    waitlistServiceFilter = value;
+    renderWaitlistPanel();
+  }
+
+  function changeWaitlistSort(value) {
+    waitlistSort = value;
+    renderWaitlistPanel();
+  }
+
+  function clearWaitlistStartTimeFilter() {
+    waitlistStartTimeFilter = "";
+    renderWaitlistPanel();
+  }
+
+  function changeWaitlistTab(tab) {
+    waitlistTab = tab;
+    renderWaitlistPanel();
+  }
+
+  function toggleWaitlistEntryMenu(event, entryId) {
+    event.stopPropagation();
+    const menu = document.getElementById(`waitlistEntryMenu-${entryId}`);
+    const isOpen = menu?.classList.contains("open");
+    closeWaitlistEntryMenus();
+    if (!isOpen) menu?.classList.add("open");
+  }
+
+  function closeWaitlistEntryMenus() {
+    document.querySelectorAll(".waitlist-card-menu.open").forEach(menu => menu.classList.remove("open"));
+  }
+
+  function openWaitlistCustomerPicker() {
+    waitlistEditingEntryId = null;
+    selectedWaitlistCustomer = null;
+    loadedWaitlistCustomers = new Map();
+    openDrawer(waitlistCustomerPickerHTML());
+    setupWaitlistCustomerSearch();
+    loadMoreWaitlistCustomers();
+  }
+
+  function waitlistCustomerPickerHTML() {
+    return `
+      ${drawerHeader("Seleccionar cliente", "Lista de espera")}
+      <div id="waitlistCustomerPickerPane" class="drawer-scroll min-h-0 flex-1 overflow-y-auto px-6 py-5" data-customer-page="0" data-customer-has-more="true" data-customer-query="">
+        <div class="mb-4 text-sm font-bold text-zinc-500"><span class="text-zinc-950">Cliente</span> › Fecha y hora › Servicio</div>
+        <label class="relative block">
+          <span class="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400">⌕</span>
+          <input type="search" class="customer-picker-search pl-10" placeholder="Buscar cliente" data-waitlist-customer-search autocomplete="off">
+        </label>
+        <button type="button" onclick="showWaitlistNewCustomerForm()" class="customer-picker-option mt-5 rounded-2xl border border-zinc-100">
+          <span class="customer-picker-option-avatar">+</span>
+          <span><span class="customer-picker-option-name">Añadir un nuevo cliente</span><span class="customer-picker-option-meta">Crear el cliente y sumarlo a la lista</span></span>
+        </button>
+        <div id="waitlistCustomerResults" class="mt-2"></div>
+        <div id="waitlistCustomerLoading" class="hidden px-5 py-4 text-center text-xs font-bold text-zinc-500">Cargando clientes...</div>
+      </div>
+    `;
+  }
+
+  function setupWaitlistCustomerSearch() {
+    const pane = document.getElementById("waitlistCustomerPickerPane");
+    if (!pane) return;
+
+    pane.addEventListener("scroll", handleWaitlistCustomerPickerScroll, { signal: calendarSignal });
+    pane.querySelector("[data-waitlist-customer-search]")?.addEventListener("input", event => {
+      window.clearTimeout(waitlistCustomerSearchTimer);
+      waitlistCustomerSearchTimer = window.setTimeout(() => resetAndLoadWaitlistCustomers(event.target.value), 220);
+    }, { signal: calendarSignal });
+  }
+
+  function resetAndLoadWaitlistCustomers(query) {
+    const pane = document.getElementById("waitlistCustomerPickerPane");
+    const results = document.getElementById("waitlistCustomerResults");
+    if (!pane || !results) return;
+
+    pane.dataset.customerPage = "0";
+    pane.dataset.customerHasMore = "true";
+    pane.dataset.customerQuery = query.trim();
+    results.innerHTML = "";
+    loadedWaitlistCustomers = new Map();
+    loadMoreWaitlistCustomers();
+  }
+
+  function handleWaitlistCustomerPickerScroll(event) {
+    const pane = event.currentTarget;
+    if (pane.scrollTop + pane.clientHeight >= pane.scrollHeight - 120) loadMoreWaitlistCustomers();
+  }
+
+  async function loadMoreWaitlistCustomers() {
+    const pane = document.getElementById("waitlistCustomerPickerPane");
+    const results = document.getElementById("waitlistCustomerResults");
+    const loading = document.getElementById("waitlistCustomerLoading");
+    if (!pane || !results || pane.dataset.customerLoading === "true" || pane.dataset.customerHasMore !== "true") return;
+
+    pane.dataset.customerLoading = "true";
+    loading?.classList.remove("hidden");
+    const page = Number(pane.dataset.customerPage || 0) + 1;
+    const query = pane.dataset.customerQuery || "";
+    const sequence = ++waitlistCustomerRequestSequence;
+
+    try {
+      const url = new URL(customerAutocompleteUrl, window.location.origin);
+      url.searchParams.set("page", page);
+      if (query) url.searchParams.set("q", query);
+      const response = await fetch(url, { headers: { "Accept": "application/json" } });
+      if (!response.ok) throw new Error("customer request failed");
+      const payload = await response.json();
+      if (sequence !== waitlistCustomerRequestSequence || query !== (pane.dataset.customerQuery || "")) return;
+
+      payload.results.forEach(customer => loadedWaitlistCustomers.set(String(customer.id), customer));
+      results.insertAdjacentHTML("beforeend", payload.results.map(customer => `
+        <button type="button" onclick="chooseWaitlistExistingCustomer('${escapeAttribute(customer.id)}')" class="customer-picker-option">
+          <span class="customer-picker-option-avatar">${escapeHTML(customer.initials)}</span>
+          <span class="min-w-0"><span class="customer-picker-option-name">${escapeHTML(customer.name)}</span><span class="customer-picker-option-meta">${escapeHTML(customer.phone || customer.email || customer.subtitle || "Sin datos de contacto")}</span></span>
+        </button>
+      `).join(""));
+      pane.dataset.customerPage = String(payload.page);
+      pane.dataset.customerHasMore = String(payload.has_more);
+      if (page === 1 && payload.results.length === 0) results.innerHTML = `<p class="px-5 py-6 text-center text-sm font-semibold text-zinc-500">No encontramos clientes.</p>`;
+    } catch (_error) {
+      if (page === 1) results.innerHTML = `<p class="px-5 py-6 text-center text-sm font-semibold text-red-600">No se pudo cargar el listado.</p>`;
+    } finally {
+      pane.dataset.customerLoading = "false";
+      loading?.classList.add("hidden");
+    }
+  }
+
+  function chooseWaitlistExistingCustomer(customerId) {
+    selectedWaitlistCustomer = loadedWaitlistCustomers.get(String(customerId));
+    openWaitlistPreferenceForm();
+  }
+
+  function showWaitlistNewCustomerForm() {
+    openDrawer(`
+      ${drawerHeader("Nuevo cliente", "Lista de espera")}
+      <div class="drawer-scroll min-h-0 flex-1 overflow-y-auto px-6 py-5">
+        <button type="button" onclick="openWaitlistCustomerPicker()" class="mb-5 rounded-full border border-zinc-200 px-4 py-2 text-sm font-bold">← Volver</button>
+        <div class="grid gap-4">
+          <div><label class="team-label">Nombre *</label><input id="newWaitlistCustomerName" class="customer-picker-search" type="text" placeholder="Ej: Sofía Gómez"></div>
+          <div><label class="team-label">WhatsApp *</label><input id="newWaitlistCustomerPhone" class="customer-picker-search" type="tel" placeholder="+54 9 11 1234-5678"></div>
+          <div><label class="team-label">Email <span class="text-zinc-400">(opcional)</span></label><input id="newWaitlistCustomerEmail" class="customer-picker-search" type="email"></div>
+          <button type="button" onclick="chooseWaitlistNewCustomer()" class="h-12 rounded-full bg-zinc-950 text-sm font-bold text-white">Continuar</button>
+          <p id="newWaitlistCustomerError" class="hidden text-xs font-bold text-red-600">Ingresá nombre y WhatsApp para avisarle cuando haya un turno.</p>
+        </div>
+      </div>
+    `);
+  }
+
+  function chooseWaitlistNewCustomer() {
+    const name = document.getElementById("newWaitlistCustomerName")?.value.trim();
+    const phone = document.getElementById("newWaitlistCustomerPhone")?.value.trim();
+    if (!name || !phone) {
+      document.getElementById("newWaitlistCustomerError")?.classList.remove("hidden");
+      return;
+    }
+
+    selectedWaitlistCustomer = {
+      id: null,
+      name,
+      phone,
+      email: document.getElementById("newWaitlistCustomerEmail")?.value.trim() || "",
+      isNew: true
+    };
+    openWaitlistPreferenceForm();
+  }
+
+  function openWaitlistPreferenceForm(entryId = null) {
+    waitlistEditingEntryId = entryId ? String(entryId) : waitlistEditingEntryId;
+    const entry = waitlistEditingEntryId ? waitlistEntries.find(item => String(item.id) === waitlistEditingEntryId) : null;
+    if (entry && !selectedWaitlistCustomer) {
+      selectedWaitlistCustomer = {
+        id: entry.customerProfileId || null,
+        name: entry.clientName,
+        phone: entry.clientPhone,
+        email: entry.email || ""
+      };
+    }
+    const customer = selectedWaitlistCustomer;
+    if (!customer) return openWaitlistCustomerPicker();
+
+    const selectedWindow = normalizeWaitlistWindow(entry?.preferredTimeWindows?.[0]);
+    const selectedServiceId = entry?.serviceId || services[0]?.id || "";
+    const selectedEmployeeId = entry?.employeeId || "";
+    openDrawer(`
+      ${drawerHeader(entry ? "Editar preferencias" : "Añadir a lista de espera", customer.name)}
+      <form onsubmit="event.preventDefault(); saveWaitlistEntry();" class="drawer-scroll flex min-h-0 flex-1 flex-col overflow-y-auto">
+        <div class="flex-1 px-6 py-5">
+          <div class="mb-5 text-sm font-bold text-zinc-500"><button type="button" onclick="openWaitlistCustomerPicker()" class="text-zinc-950">Cliente</button> › <span class="text-zinc-950">Fecha y hora</span> › Servicio</div>
+          <div class="mb-5 rounded-3xl border border-zinc-100 bg-zinc-50 p-4">
+            <p class="text-sm font-bold">${escapeHTML(customer.name)}</p>
+            <p class="mt-1 text-sm font-semibold text-zinc-500">${escapeHTML(customer.phone || customer.email || "Sin contacto")}</p>
+          </div>
+          <div class="grid gap-5">
+            <div>
+              <label class="mb-2 block text-sm font-bold">Servicio</label>
+              <select id="waitlistServiceInput" onchange="syncWaitlistEmployeeOptions()" class="w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100">
+                ${services.map(service => `<option value="${escapeAttribute(service.id)}" ${String(service.id) === String(selectedServiceId) ? "selected" : ""}>${escapeHTML(service.name)}</option>`).join("")}
+              </select>
+            </div>
+            <div>
+              <label class="mb-2 block text-sm font-bold">Fecha</label>
+              <select id="waitlistDateInput" class="w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100">
+                ${blockDateOptions(entry?.desiredDate || currentDateISO())}
+              </select>
+            </div>
+            <div>
+              <label class="mb-2 block text-sm font-bold">Profesional</label>
+              <select id="waitlistEmployeeInput" class="w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100">
+                ${waitlistEmployeeOptions(selectedServiceId, selectedEmployeeId)}
+              </select>
+            </div>
+            <div>
+              <label class="mb-2 block text-sm font-bold">Hora preferida</label>
+              <select id="waitlistWindowPresetInput" onchange="syncWaitlistWindowFields()" class="w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100">
+                ${Object.entries(WAITLIST_TIME_PRESETS).map(([key, preset]) => `<option value="${key}" ${selectedWindow.period === key ? "selected" : ""}>${escapeHTML(preset.label)}</option>`).join("")}
+              </select>
+              <div id="waitlistCustomWindowFields" class="${selectedWindow.period === "custom" ? "" : "hidden"} mt-3 grid grid-cols-2 gap-3">
+                <select id="waitlistStartInput" class="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100">${timeSelectOptions(selectedWindow.start_time)}</select>
+                <select id="waitlistEndInput" class="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100">${timeSelectOptions(selectedWindow.end_time)}</select>
+              </div>
+            </div>
+            <div>
+              <label class="mb-2 block text-sm font-bold">Notas <span class="font-semibold text-zinc-500">(opcional)</span></label>
+              <textarea id="waitlistNotesInput" rows="4" placeholder="Preferencias u otra información relevante" class="w-full resize-none rounded-2xl border border-zinc-200 px-4 py-3 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100">${escapeHTML(entry?.notes || "")}</textarea>
+            </div>
+            <div id="waitlistFormError" class="hidden rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700"></div>
+          </div>
+        </div>
+        <footer class="shrink-0 border-t border-zinc-200 bg-white px-6 py-4">
+          <button id="saveWaitlistButton" type="submit" class="w-full rounded-full bg-[#071014] px-5 py-4 text-sm font-bold text-white">${entry ? "Guardar cambios" : "Añadir a lista de espera"}</button>
+        </footer>
+      </form>
+    `);
+  }
+
+  function editWaitlistEntry(entryId) {
+    closeWaitlistEntryMenus();
+    selectedWaitlistCustomer = null;
+    openWaitlistPreferenceForm(entryId);
+  }
+
+  function normalizeWaitlistWindow(window) {
+    const normalized = window || WAITLIST_TIME_PRESETS.any;
+    const period = WAITLIST_TIME_PRESETS[normalized.period] ? normalized.period : "custom";
+    return {
+      period,
+      label: normalized.label || WAITLIST_TIME_PRESETS[period].label,
+      start_time: normalized.start_time || normalized.startTime || WAITLIST_TIME_PRESETS[period].start_time,
+      end_time: normalized.end_time || normalized.endTime || WAITLIST_TIME_PRESETS[period].end_time
+    };
+  }
+
+  function syncWaitlistWindowFields() {
+    const fields = document.getElementById("waitlistCustomWindowFields");
+    const preset = document.getElementById("waitlistWindowPresetInput")?.value;
+    fields?.classList.toggle("hidden", preset !== "custom");
+  }
+
+  function waitlistEmployeeOptions(serviceId, selectedEmployeeId = "") {
+    const service = serviceById(serviceId) || services[0];
+    const allowedIds = new Set(service?.employees || employees.map(employee => employee.id));
+    const allowedEmployees = employees.filter(employee => allowedIds.has(employee.id));
+    return `
+      <option value="" ${selectedEmployeeId ? "" : "selected"}>Cualquier miembro del equipo</option>
+      ${allowedEmployees.map(employee => `<option value="${escapeAttribute(employee.id)}" ${String(employee.id) === String(selectedEmployeeId) ? "selected" : ""}>${escapeHTML(employee.name)}</option>`).join("")}
+    `;
+  }
+
+  function syncWaitlistEmployeeOptions() {
+    const serviceId = document.getElementById("waitlistServiceInput")?.value;
+    const employeeInput = document.getElementById("waitlistEmployeeInput");
+    if (!employeeInput) return;
+
+    employeeInput.innerHTML = waitlistEmployeeOptions(serviceId, employeeInput.value);
+  }
+
+  function waitlistWindowFromForm() {
+    const period = document.getElementById("waitlistWindowPresetInput")?.value || "any";
+    if (period !== "custom") return { ...WAITLIST_TIME_PRESETS[period], period };
+
+    const start = document.getElementById("waitlistStartInput")?.value || "09:00";
+    const finish = document.getElementById("waitlistEndInput")?.value || "18:00";
+    return { period: "custom", label: `${start} a ${finish}`, start_time: start, end_time: finish };
+  }
+
+  async function saveWaitlistEntry() {
+    const customer = selectedWaitlistCustomer;
+    const submitButton = document.getElementById("saveWaitlistButton");
+    const errorBox = document.getElementById("waitlistFormError");
+    if (!customer || !submitButton || !errorBox) return;
+
+    errorBox.classList.add("hidden");
+    errorBox.textContent = "";
+    if (!customer.phone || !customer.email) {
+      errorBox.textContent = "El cliente debe tener WhatsApp y email para ingresar a la lista de espera.";
+      errorBox.classList.remove("hidden");
+      return;
+    }
+    submitButton.disabled = true;
+    submitButton.textContent = "Guardando...";
+
+    try {
+      const entryId = waitlistEditingEntryId;
+      const response = await fetch(entryId ? waitlistUpdateUrlTemplate.replace("__ID__", encodeURIComponent(entryId)) : waitlistCreateUrl, {
+        method: entryId ? "PATCH" : "POST",
+        headers: {
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrfToken
+        },
+        body: JSON.stringify({
+          waitlist_entry: {
+            customer_profile_id: customer.id || "",
+            client_name: customer.name,
+            client_phone: customer.phone || "",
+            email: customer.email || "",
+            service_id: document.getElementById("waitlistServiceInput")?.value,
+            employee_membership_id: document.getElementById("waitlistEmployeeInput")?.value || "",
+            desired_date: document.getElementById("waitlistDateInput")?.value,
+            preferred_time_windows: [waitlistWindowFromForm()],
+            notes: document.getElementById("waitlistNotesInput")?.value.trim() || ""
+          }
+        })
+      });
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        errorBox.textContent = Array.isArray(payload.errors) && payload.errors.length ? payload.errors.join(". ") : "No se pudo guardar la lista de espera.";
+        errorBox.classList.remove("hidden");
+        return;
+      }
+
+      upsertWaitlistEntry(payload);
+      selectedWaitlistCustomer = null;
+      waitlistEditingEntryId = null;
+      openWaitlistPanel();
+      showToast(entryId ? "Lista de espera actualizada" : "Cliente añadido a la lista de espera");
+    } catch (_error) {
+      errorBox.textContent = "No se pudo conectar con el servidor. Probá de nuevo.";
+      errorBox.classList.remove("hidden");
+    } finally {
+      submitButton.disabled = false;
+      submitButton.textContent = waitlistEditingEntryId ? "Guardar cambios" : "Añadir a lista de espera";
+    }
+  }
+
+  function upsertWaitlistEntry(entry) {
+    waitlistEntries = waitlistEntries.filter(item => String(item.id) !== String(entry.id));
+    waitlistEntries.push(entry);
+    renderWaitlistToolbarCount();
+  }
+
+  function markWaitlistEntryBooked(entryId) {
+    waitlistEntries = waitlistEntries.map(entry => {
+      if (String(entry.id) !== String(entryId)) return entry;
+      return { ...entry, status: "booked", statusLabel: "Reservada" };
+    });
+    renderWaitlistToolbarCount();
+  }
+
+  async function deleteWaitlistEntry(entryId) {
+    closeWaitlistEntryMenus();
+    try {
+      const response = await fetch(waitlistDestroyUrlTemplate.replace("__ID__", encodeURIComponent(entryId)), {
+        method: "DELETE",
+        headers: {
+          "Accept": "application/json",
+          "X-CSRF-Token": csrfToken
+        }
+      });
+      if (!response.ok) throw new Error("delete failed");
+
+      waitlistEntries = waitlistEntries.filter(entry => String(entry.id) !== String(entryId));
+      renderWaitlistPanel();
+      showToast("Entrada eliminada de la lista de espera");
+    } catch (_error) {
+      showToast("No se pudo eliminar la entrada");
+    }
+  }
+
+  function firstEmployeeForService(service) {
+    const allowedIds = new Set(service?.employees || []);
+    const visible = visibleEmployees().find(employee => allowedIds.has(employee.id));
+    if (visible) return visible.id;
+
+    return employees.find(employee => allowedIds.has(employee.id))?.id || firstVisibleEmployeeId();
+  }
+
+  function waitlistBookingStartTime(entry) {
+    const window = normalizeWaitlistWindow(entry.preferredTimeWindows?.[0]);
+    return window.start_time === "00:00" ? "10:00" : window.start_time;
+  }
+
+  function bookWaitlistEntry(entryId) {
+    const entry = waitlistEntries.find(item => String(item.id) === String(entryId));
+    const service = serviceById(entry?.serviceId);
+    if (!entry || !service) {
+      showToast("No se encontró la entrada de lista de espera");
+      return;
+    }
+
+    closeWaitlistEntryMenus();
+    const employeeId = entry.employeeId || firstEmployeeForService(service);
+    selectedEmployeeIds.add(employeeId);
+    selectedDate = dateFromISO(entry.desiredDate);
+    selectedMonthDay = entry.desiredDate;
+    selectedSlot = {
+      employeeId,
+      time: waitlistBookingStartTime(entry),
+      dateISO: entry.desiredDate,
+      dateLabel: monthDayLabel(dateFromISO(entry.desiredDate))
+    };
+    selectedService = service;
+    selectedServices = [service];
+    editingServiceIndex = null;
+    selectedCustomer = {
+      id: entry.customerProfileId || null,
+      name: entry.clientName,
+      phone: entry.clientPhone || "",
+      email: entry.email || "",
+      isNew: !entry.customerProfileId
+    };
+    waitlistAppointmentEntryId = entry.id;
+    actionMode = "appointment";
+    document.body.classList.add("action-mode-active");
+    renderAll();
+    openClientFormPanel();
+  }
+
+  function openNotificationsPanel(category = currentNotificationCategory) {
+    currentNotificationCategory = category;
+    const categoryLabels = {
+      appointments: "Reservas",
+      tips: "Tips",
+      sales: "Online sales",
+      actions: "Actions"
+    };
+    const items = notifications[currentNotificationCategory] || [];
+
+    openDrawer(`
+      ${drawerHeader("Notificaciones")}
+      <div class="flex min-h-0 flex-1">
+        <aside class="w-[104px] shrink-0 border-r border-zinc-100 bg-zinc-50 py-4">
+          ${Object.entries(categoryLabels).map(([key, label]) => `
+            <button type="button" onclick="openNotificationsPanel('${key}')" class="notification-category ${key === currentNotificationCategory ? "active" : ""} flex w-full flex-col items-center gap-2 border-l-4 border-transparent px-2 py-4 text-xs font-bold text-zinc-500 hover:bg-white">
+              <span class="text-lg">${notificationIcon(key)}</span>
+              <span>${label}</span>
+            </button>
+          `).join("")}
+        </aside>
+        <section class="drawer-scroll min-w-0 flex-1 overflow-y-auto px-5 py-5">
+          <h3 class="text-xl font-bold">${categoryLabels[currentNotificationCategory]}</h3>
+          <p class="mt-1 text-sm font-semibold text-zinc-500">Unread</p>
+          <div class="mt-5 space-y-3">
+            ${items.length ? items.map(item => `
+              <article class="rounded-2xl border border-zinc-100 bg-white p-4 shadow-sm">
+                <div class="flex gap-3">
+                  <span class="mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${item.unread ? "bg-[#ffded4]" : "bg-zinc-200"}"></span>
+                  <div class="min-w-0">
+                    <p class="text-sm font-bold">${escapeHTML(item.title)}</p>
+                    <p class="mt-1 text-xs font-semibold text-zinc-500">${escapeHTML(item.time)}</p>
+                    <p class="mt-2 text-sm leading-5 text-zinc-600">${escapeHTML(item.body || "")}</p>
+                    ${item.actionUrl && item.actionLabel ? `<a href="${escapeAttribute(item.actionUrl)}" class="mt-3 inline-flex rounded-full bg-zinc-950 px-4 py-2 text-xs font-bold text-white">${escapeHTML(item.actionLabel)}</a>` : ""}
+                  </div>
+                </div>
+              </article>
+            `).join("") : `<p class="rounded-2xl border border-zinc-100 bg-white p-5 text-sm font-semibold text-zinc-500">No hay notificaciones en esta categoría.</p>`}
+          </div>
+        </section>
+      </div>
+    `);
+  }
+
+  function notificationIcon(key) {
+    return { appointments: "📅", tips: "💡", sales: "◇", actions: "⚡" }[key] || "•";
+  }
+
+  function openSalePanel() {
+    openDrawer(`${drawerHeader("Crear venta", "Venta rápida fuera de turno")}<div class="drawer-scroll flex-1 overflow-y-auto px-6 py-5"><div class="rounded-2xl bg-zinc-50 p-4"><p class="text-sm font-bold">Módulo placeholder</p><p class="mt-1 text-sm text-zinc-500">El flujo de venta rápida se conecta después.</p></div></div>`);
+  }
+
+  function openPaymentPanel() {
+    openDrawer(`${drawerHeader("Pago rápido", "Registrar cobro manual")}<div class="drawer-scroll flex-1 overflow-y-auto px-6 py-5"><div class="rounded-2xl bg-zinc-50 p-4"><p class="text-sm font-bold">Módulo placeholder</p><p class="mt-1 text-sm text-zinc-500">El registro de pagos se conecta después.</p></div></div>`);
+  }
+
+  function showToast(message) {
+    const toast = document.getElementById("toast");
+    if (!toast) return;
+
+    toast.textContent = message;
+    toast.classList.add("show");
+    setTimeout(() => toast.classList.remove("show"), 2200);
+  }
+
+  function toggleTeamMenu() {
+    document.getElementById("teamMenu").classList.toggle("open");
+    document.getElementById("viewMenu").classList.remove("open");
+  }
+
+  function closeTeamMenu() {
+    document.getElementById("teamMenu").classList.remove("open");
+  }
+
+  function renderTeamMenu() {
+    const menu = document.getElementById("teamMenu");
+    const selectedCount = selectedEmployeeIds.size;
+    document.getElementById("teamSelectorLabel").textContent =
+      selectedCount === employees.length ? "Equipo completo" : `${selectedCount} profesional${selectedCount === 1 ? "" : "es"}`;
+
+    menu.innerHTML = `
+      <button type="button" onclick="selectAllEmployees()" class="team-menu-row bg-brand-50 text-brand-950"><span class="text-lg">◎</span><span>Equipo completo</span></button>
+      <div class="my-2 border-t border-zinc-100"></div>
+      <div class="px-2 pb-2 pt-1 text-xs font-bold uppercase tracking-wide text-zinc-500">Profesionales</div>
+      ${employees.map(employee => `
+        <button type="button" onclick="toggleEmployee('${employee.id}')" class="team-menu-row">
+          <span class="team-checkbox ${selectedEmployeeIds.has(employee.id) ? "checked" : ""}">✓</span>
+          ${employeeAvatarMarkup(employee, "team-menu-avatar")}
+          <span class="min-w-0 flex-1 truncate">${escapeHTML(employee.name)}</span>
+        </button>
+      `).join("")}
+    `;
+  }
+
+  function selectAllEmployees() {
+    selectedEmployeeIds = new Set(employees.map(employee => employee.id));
+    refreshCalendarAfterEmployeeChange();
+  }
+
+  function toggleEmployee(employeeId) {
+    if (selectedEmployeeIds.has(employeeId) && selectedEmployeeIds.size > 1) {
+      selectedEmployeeIds.delete(employeeId);
+    } else {
+      selectedEmployeeIds.add(employeeId);
+    }
+    refreshCalendarAfterEmployeeChange();
+  }
+
+  function refreshCalendarAfterEmployeeChange() {
+    if (selectedSlot && !selectedEmployeeIds.has(selectedSlot.employeeId)) {
+      selectedSlot.employeeId = firstVisibleEmployeeId();
+    }
+    renderTeamMenu();
+    renderResourceHeader();
+    renderCalendar();
+    renderWeekCalendar();
+    renderMonthCalendar();
+    requestAnimationFrame(syncCalendarHeader);
+  }
+
+  function toggleViewMenu() {
+    document.getElementById("viewMenu").classList.toggle("open");
+    document.getElementById("teamMenu").classList.remove("open");
+  }
+
+  function closeViewMenu() {
+    document.getElementById("viewMenu").classList.remove("open");
+  }
+
+  function setCalendarView(view, options = {}) {
+    calendarView = view;
+    if (options.resetDate !== false) {
+      selectedDate = new Date();
+      selectedMonthDay = currentDateISO();
+    }
+    closeViewMenu();
+    closeQuickMenu();
+    document.getElementById("viewSelectorLabel").textContent = { day: "Día", week: "Semana", month: "Mes" }[view] || "Día";
+    document.getElementById("viewCheckDay").classList.toggle("hidden", view !== "day");
+    document.getElementById("viewCheckWeek").classList.toggle("hidden", view !== "week");
+    document.getElementById("viewCheckMonth").classList.toggle("hidden", view !== "month");
+    document.getElementById("resourceHeaderViewport").classList.toggle("hidden", view !== "day");
+    document.getElementById("dayCalendarShell").classList.toggle("hidden", view !== "day");
+    document.getElementById("weekCalendarShell").classList.toggle("hidden", view !== "week");
+    document.getElementById("monthCalendarShell").classList.toggle("hidden", view !== "month");
+    updateDateNavigationLabel();
+
+    if (view === "month") {
+      renderMonthCalendar();
+    } else if (view === "week") {
+      renderWeekCalendar();
+    } else {
+      renderResourceHeader();
+      renderCalendar();
+      requestAnimationFrame(syncCalendarHeader);
+      requestAnimationFrame(() => scrollCalendarToCurrentTime());
+    }
+  }
+
+  function updateDateNavigationLabel() {
+    document.getElementById("dateNavigationLabel").textContent = currentDateLabel();
+  }
+
+  function moveDate(direction) {
+    selectedDate = calendarView === "month"
+      ? addMonths(selectedDate, direction)
+      : addDays(selectedDate, calendarView === "week" ? direction * 7 : direction);
+    selectedMonthDay = currentDateISO();
+    closeDrawer();
+    renderAll();
+  }
+
+  function goToday() {
+    selectedDate = new Date();
+    selectedMonthDay = currentDateISO();
+    renderAll();
+    if (calendarView === "day") requestAnimationFrame(() => scrollCalendarToCurrentTime("smooth"));
+  }
+
+  function refreshCalendar() {
+    renderAll();
+    showToast("Turnos actualizados");
+  }
+
+  function renderWeekCalendar() {
+    const week = document.getElementById("weekCalendar");
+    if (!week) return;
+
+    const dates = weekDates();
+    const staff = visibleEmployees();
+    const todayISO = dateToISO(new Date());
+
+    week.innerHTML = `
+      <div class="week-corner"></div>
+      ${dates.map(day => {
+        const iso = dateToISO(day);
+        return `
+          <div class="week-day-header ${iso === todayISO ? "today" : ""}">
+            <span class="week-day-number">${day.getDate()}</span>
+            <span>${SPANISH_WEEKDAYS[(day.getDay() + 6) % 7]}</span>
+          </div>
+        `;
+      }).join("")}
+      ${staff.map(employee => `
+        <div class="week-employee">
+          ${employeeAvatarMarkup(employee, "week-employee-avatar")}
+          <span class="week-employee-name" title="${escapeAttribute(employee.name)}">${escapeHTML(employee.name)}</span>
+        </div>
+        ${dates.map(day => renderWeekCell(employee, day)).join("")}
+      `).join("")}
+    `;
+  }
+
+  function renderWeekCell(employee, day) {
+    const iso = dateToISO(day);
+    const dayAppointments = appointments
+      .filter(item => item.dateISO === iso && item.employeeId === employee.id)
+      .sort((a, b) => a.start.localeCompare(b.start));
+    const dayBlocks = blocks
+      .filter(item => item.dateISO === iso && (!item.employeeId || item.employeeId === employee.id))
+      .sort((a, b) => a.start.localeCompare(b.start));
+    const items = [
+      ...dayAppointments.map(item => ({ ...item, kind: "appointment" })),
+      ...dayBlocks.map(item => ({ ...item, kind: "block" }))
+    ].sort((a, b) => a.start.localeCompare(b.start));
+    const selected = selectedSlot?.employeeId === employee.id && selectedSlot?.dateISO === iso;
+    const weekend = day.getDay() === 0 || day.getDay() === 6;
+    const label = monthDayLabel(day);
+
+    return `
+      <button type="button" class="week-cell ${weekend ? "weekend" : ""} ${selected ? "selected" : ""}" onclick="handleWeekCellClick(event, '${escapeAttribute(employee.id)}', '${iso}', '${escapeAttribute(label)}')">
+        ${items.slice(0, 5).map(item => item.kind === "appointment" ? `
+          <span role="button" tabindex="0" class="week-item" style="background:${item.color || "#ffded4"}; border-left-color:${employee.color};" onclick="event.stopPropagation(); openCalendarAppointmentDetails('${escapeAttribute(item.id)}')">
+            <span class="week-item-time">${escapeHTML(item.start)}</span>
+            <span class="week-item-label">${escapeHTML(item.client)} · ${escapeHTML(item.service)}</span>
+          </span>
+        ` : `
+          <span role="button" tabindex="0" class="week-item" style="background:${item.color || "#e5e7eb"}; border-left-color:#a1a1aa;" onclick="event.stopPropagation(); openBlockedDetails('${escapeAttribute(item.id)}')">
+            <span class="week-item-time">${escapeHTML(item.start)}</span>
+            <span class="week-item-label">No disponible · ${escapeHTML(item.reason)}</span>
+          </span>
+        `).join("")}
+        ${items.length > 5 ? `<span class="week-more">+${items.length - 5} más</span>` : ""}
+      </button>
+    `;
+  }
+
+  function handleWeekCellClick(event, employeeId, iso, label) {
+    selectedDate = dateFromISO(iso);
+    selectedMonthDay = iso;
+    selectedSlot = { employeeId, time: "10:00", dateISO: iso, dateLabel: label };
+
+    if (actionMode === "appointment") {
+      selectedService = null;
+      selectedServices = [];
+      editingServiceIndex = null;
+      renderWeekCalendar();
+      openServicePanel();
+      return;
+    }
+
+    if (actionMode === "blocked") {
+      renderWeekCalendar();
+      openBlockedTimePanel();
+      return;
+    }
+
+    renderWeekCalendar();
+    showQuickMenu(event.clientX, event.clientY, employeeId, "10:00", iso, label);
+  }
+
+  function renderMonthCalendar() {
+    const month = document.getElementById("monthCalendar");
+    if (!month) return;
+    const firstDay = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+    const lastDay = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
+    const mondayIndex = (firstDay.getDay() + 6) % 7;
+    const gridStart = addDays(firstDay, -mondayIndex);
+    const totalDays = Math.ceil((mondayIndex + lastDay.getDate()) / 7) * 7;
+    const todayISO = dateToISO(new Date());
+    const visibleIds = new Set(visibleEmployees().map(employee => employee.id));
+
+    const days = Array.from({ length: totalDays }, (_, index) => addDays(gridStart, index));
+    month.innerHTML = `
+      ${SPANISH_WEEKDAYS.map(day => `<div class="month-weekday">${day}</div>`).join("")}
+      ${days.map(day => {
+        const iso = dateToISO(day);
+        const dayAppointments = appointments
+          .filter(item => item.dateISO === iso && visibleIds.has(item.employeeId))
+          .sort((a, b) => a.start.localeCompare(b.start));
+        const muted = day.getMonth() !== selectedDate.getMonth();
+        const label = monthDayLabel(day);
+        return `
+          <button type="button" onclick="handleMonthDayClick('${iso}', '${label}')" class="month-day ${muted ? "muted" : ""} ${selectedMonthDay === iso ? "selected" : ""}" data-date="${iso}">
+            <span class="${iso === todayISO ? "month-today-badge" : "month-day-number"}">${day.getDate() === 1 ? `${day.getDate()} ${SPANISH_MONTHS[day.getMonth()]}` : day.getDate()}</span>
+            <div class="mt-3">
+              ${dayAppointments.slice(0, 3).map(item => `<div class="month-appt" onclick="event.stopPropagation(); openCalendarAppointmentDetails('${escapeAttribute(item.id)}')">${escapeHTML(item.start)} ${escapeHTML(item.client)}</div>`).join("")}
+              ${dayAppointments.length > 3 ? `<div class="month-more">+${dayAppointments.length - 3} más</div>` : ""}
+            </div>
+          </button>
+        `;
+      }).join("")}
+    `;
+  }
+
+  function handleMonthDayClick(iso, label) {
+    selectedDate = dateFromISO(iso);
+    selectedMonthDay = iso;
+    selectedSlot = { employeeId: firstVisibleEmployeeId(), time: "10:00", dateLabel: label, dateISO: iso };
+    actionMode = "appointment";
+    selectedService = null;
+    selectedServices = [];
+    editingServiceIndex = null;
+    selectedCustomer = null;
+
+    document.body.classList.add("action-mode-active");
+
+    updateDateNavigationLabel();
+    renderMonthCalendar();
+    openServicePanel();
+  }
+
+  document.addEventListener("click", event => {
+    const quickMenu = document.getElementById("quickMenu");
+    if (!event.target.closest("#teamMenu") && !event.target.closest("#teamSelectorButton")) closeTeamMenu();
+    if (!event.target.closest("#viewMenu") && !event.target.closest("#viewSelectorButton")) closeViewMenu();
+    if (!event.target.closest(".waitlist-card-menu") && !event.target.closest("button[onclick^='toggleWaitlistEntryMenu']")) closeWaitlistEntryMenus();
+    if (!event.target.closest("#quickMenu") && !event.target.closest(".calendar-slot") && !event.target.closest(".week-cell")) quickMenu.classList.remove("open");
+  }, { signal: calendarSignal });
+
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape") {
+      if (document.querySelector("dialog[open]")) return;
+      closeTeamMenu();
+      closeViewMenu();
+      closeQuickMenu();
+      closeWaitlistEntryMenus();
+      const drawer = document.getElementById("rightDrawer");
+      if (drawer?.classList.contains("open")) {
+        dismissDrawer();
+      } else if (actionMode) {
+        cancelAction();
+      }
+    }
+  }, { signal: calendarSignal });
+
+  function syncCalendarHeader() {
+    const scroll = document.getElementById("calendarScroll");
+    const header = document.getElementById("resourceHeader");
+    const body = document.getElementById("calendarBody");
+    if (!scroll || !header || !body) return;
+    header.style.width = `${body.scrollWidth}px`;
+    header.style.transform = `translateX(${-scroll.scrollLeft}px)`;
+  }
+
+  function renderAll() {
+    updateDateNavigationLabel();
+    renderWaitlistToolbarCount();
+    renderTeamMenu();
+    if (calendarView === "month") {
+      renderMonthCalendar();
+    } else if (calendarView === "week") {
+      renderWeekCalendar();
+    } else {
+      renderResourceHeader();
+      renderCalendar();
+      requestAnimationFrame(syncCalendarHeader);
+    }
+  }
+
+  function customerDetailRow({ label, value, href = "", icon = "", external = false, muted = false }) {
+    const body = `
+      <span class="appointment-client-detail-icon">${icon}</span>
+      <span class="min-w-0">
+        <span class="appointment-client-detail-label">${escapeHTML(label)}</span>
+        <span class="appointment-client-detail-value">${escapeHTML(value)}</span>
+      </span>
+    `;
+    const classes = `appointment-client-detail${muted ? " muted" : ""}`;
+    if (!href) return `<div class="${classes}">${body}</div>`;
+    const targetAttrs = external ? ` target="_blank" rel="noopener noreferrer"` : "";
+    return `<a href="${escapeAttribute(href)}" class="${classes}"${targetAttrs}>${body}</a>`;
+  }
+
+  function formatCustomerCreatedAt(value) {
+    if (!value) return "Sin fecha";
+    const parsed = new Date(`${value}T00:00:00`);
+    if (Number.isNaN(parsed.getTime())) return "Sin fecha";
+    return new Intl.DateTimeFormat("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" }).format(parsed);
+  }
+
+  function whatsappIconMarkup() {
+    return '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5.8 18.2 4.7 22l3.9-1a8.3 8.3 0 1 0-2.8-2.8Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9.1 8.8c.2-.5.4-.6.8-.6h.6c.2 0 .4.1.5.4l.7 1.6c.1.3.1.5-.1.7l-.5.6c.6 1.1 1.4 1.9 2.5 2.5l.6-.5c.2-.2.4-.2.7-.1l1.6.7c.3.1.4.3.4.5v.6c0 .4-.1.6-.6.8-.7.3-1.7.2-2.7-.2-2.3-.9-4.2-2.8-5.1-5.1-.4-1-.5-2-.2-2.7Z" fill="currentColor"/></svg>';
+  }
+
+  function emailIconMarkup() {
+    return '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 6h16v12H4V6Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="m5 7 7 6 7-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  }
+
+  function calendarSmallIconMarkup() {
+    return '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 3v4M16 3v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="4" y="5" width="16" height="16" rx="3" stroke="currentColor" stroke-width="2"/><path d="M4 10h16" stroke="currentColor" stroke-width="2"/></svg>';
+  }
+
+  function escapeHTML(value) {
+    return String(value ?? "").replace(/[&<>"']/g, character => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    }[character]));
+  }
+
+  function escapeAttribute(value) {
+    return escapeHTML(value);
+  }
+
+  function init() {
+    selectedMonthDay = currentDateISO();
+    renderAll();
+    setCalendarView("week", { resetDate: false });
+    const scroll = document.getElementById("calendarScroll");
+    if (calendarView === "day") requestAnimationFrame(() => scrollCalendarToCurrentTime());
+    scroll.addEventListener("scroll", syncCalendarHeader, { signal: calendarSignal });
+    window.addEventListener("resize", syncCalendarHeader, { signal: calendarSignal });
+    const currentTimeTimer = window.setInterval(refreshCurrentTimeLine, 30_000);
+    calendarSignal.addEventListener("abort", () => window.clearInterval(currentTimeTimer), { once: true });
+    requestAnimationFrame(syncCalendarHeader);
+    if (initialAppointmentToken) {
+      requestAnimationFrame(() => openCalendarAppointmentDetails(initialAppointmentToken));
+    } else if (initialWaitlistOpen) {
+      requestAnimationFrame(() => openWaitlistPanel());
+    }
+  }
+
+  Object.assign(window, {
+    addAppointmentService,
+    cancelAction,
+    chooseExistingCustomer,
+    chooseNewCustomer,
+    chooseWalkInCustomer,
+    chooseWaitlistExistingCustomer,
+    chooseWaitlistNewCustomer,
+    changeWaitlistServiceFilter,
+    changeWaitlistSort,
+    changeWaitlistSpecificDate,
+    changeWaitlistTab,
+    clearWaitlistStartTimeFilter,
+    closeDrawer,
+    dismissDrawer,
+    closeQuickMenu,
+    changeWaitlistDateFilter,
+    createAppointmentFromForm,
+    createBlockedTime,
+    deleteBlockedTime,
+    deleteExistingAppointment,
+    deleteWaitlistEntry,
+    editWaitlistEntry,
+    bookWaitlistEntry,
+    goToday,
+    handleMonthDayClick,
+    handleWeekCellClick,
+    editAppointmentService,
+    moveDate,
+    openNotificationsPanel,
+    openCustomerPicker,
+    openBlockedDetails,
+    openCalendarAppointmentDetails,
+    openAppointmentDetails,
+    openRemainingBalancePaymentDialog,
+    closeRemainingBalancePaymentDialog,
+    confirmRemainingBalancePayment,
+    approveCalendarDeposit,
+    rejectCalendarDeposit,
+    openCalendarProfessionalPicker,
+    cancelCalendarAppointment,
+    openPaymentPanel,
+    openSalePanel,
+    openWaitlistCustomerPicker,
+    openWaitlistPanel,
+    openWaitlistPreferenceForm,
+    quickAction,
+    refreshCalendar,
+    removeAppointmentService,
+    selectAllEmployees,
+    selectService,
+    setCalendarView,
+    saveWaitlistEntry,
+    showNewCustomerForm,
+    showWaitlistNewCustomerForm,
+    startAction,
+    syncBlockedDescriptionCounter,
+    syncBlockedDurationLabel,
+    syncWaitlistEmployeeOptions,
+    syncWaitlistWindowFields,
+    toggleEmployee,
+    toggleTeamMenu,
+    toggleWaitlistEntryMenu,
+    toggleViewMenu
+  });
+
+  init();
+})();
+</script>

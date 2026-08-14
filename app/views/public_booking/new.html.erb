@@ -1,0 +1,917 @@
+<% content_for :title, "#{@business.name} | Reservar" %>
+<% content_for :full_width, true %>
+
+<% selected_service_slugs = @selected_services.map(&:slug) %>
+<% selected_service_category = @selected_services.first&.category_label %>
+<% active_service_category = params[:category].presence || selected_service_category %>
+<% professionals_params = @selected_professionals_by_service.to_h { |service, membership| [ service.slug, membership&.id ] }.compact_blank %>
+<% flow_params = {
+  service_ids: selected_service_slugs,
+  date: @date,
+  month: @month_date,
+  date_window_start: @date_window_start,
+  starts_at: @selected_starts_at&.iso8601,
+  professional_mode: @professional_mode,
+  employee_membership_id: @selected_employee_membership&.id,
+  professionals: professionals_params,
+  draft: @booking_draft_token
+}.compact %>
+<% service_step_params = flow_params.merge(step: "services", category: active_service_category).compact %>
+<% schedule_flow_params = flow_params %>
+<% selected_schedule_flow_params = schedule_flow_params.merge(starts_at: @selected_starts_at&.iso8601).compact %>
+<% next_step_after_services = @professional_step_required ? "professionals" : "schedule" %>
+<% qualified_memberships = @employee_memberships.select { |membership| @selected_services.all? { |service| @employees_by_service.fetch(service, []).include?(membership) } } %>
+<% cart_total_label = price_cents_label(@total_price_cents) %>
+<% deposit_payment_services = @selected_services.select(&:deposit_required?) %>
+<% no_deposit_payment_required = @selected_services.any? && deposit_payment_services.empty? %>
+<% show_professional_details = @business.public_booking_allow_professional_selection? %>
+<% manual_transfer_payment_available = deposit_payment_services.any? && @business.manual_transfer_payment_enabled? && deposit_payment_services.all?(&:manual_payment_configured?) %>
+<% mercado_pago_payment_available = deposit_payment_services.any? && @business.mercado_pago_payment_enabled? && @business.mercado_pago_connected? %>
+<% deposit_payment_methods = [] %>
+<% deposit_payment_methods << "manual_transfer" if manual_transfer_payment_available %>
+<% deposit_payment_methods << "mercado_pago" if mercado_pago_payment_available %>
+<% deposit_payment_method = deposit_payment_methods.first %>
+<% deposit_payment_submission_step = { "mercado_pago" => "mercado_pago", "manual_transfer" => "start_manual_transfer" }[deposit_payment_method] %>
+<% deposit_payment_amount_cents = deposit_payment_services.sum { |service| service.deposit_amount_cents_for(service.price_cents) } %>
+<% remaining_balance_cents = [ @total_price_cents.to_i - deposit_payment_amount_cents.to_i, 0 ].max %>
+<% remaining_balance_label = number_to_currency(remaining_balance_cents.to_i / 100, unit: "$", precision: 0, delimiter: ".") %>
+<% payment_deadline_minutes = deposit_payment_services.first&.deposit_payment_deadline_minutes || 30 %>
+<% booking_draft = (@booking_draft || {}).with_indifferent_access %>
+<% selected_services_count = @selected_services.size %>
+<% selected_services_count_label = "#{selected_services_count} #{selected_services_count == 1 ? "artículo" : "artículos"}" %>
+<% selected_services_duration_minutes = @selected_services.sum(&:duration_minutes) %>
+<% selected_services_duration_label = selected_services_duration_minutes.positive? ? public_service_duration_label(selected_services_duration_minutes) : nil %>
+<% mobile_cart_total_label = @total_price_cents.to_i.zero? ? "Consultar" : number_to_currency(@total_price_cents.to_i / 100, unit: "$", precision: 0, delimiter: ".") %>
+<div class="relative min-h-screen overflow-hidden bg-[#F7F7FA] pb-28 pt-[72px] text-ink antialiased lg:pb-0" data-controller="public-booking-flow" data-action="click->public-booking-flow#scheduleScroll turbo:frame-load@document->public-booking-flow#scrollAfterFrameLoad">
+  <%= render "booking_header", business: @business, show_banner: false, fixed: true %>
+
+  <%= turbo_frame_tag "booking_flow", data: { turbo_action: "advance" } do %>
+  <main class="relative z-10 mx-auto grid w-full max-w-7xl gap-8 px-4 pb-8 pt-8 sm:px-7 sm:pb-10 sm:pt-10 lg:grid-cols-[minmax(0,1fr)_390px] lg:px-10">
+    <section class="min-w-0">
+      <nav class="mb-5 flex flex-wrap items-center gap-2 text-sm font-semibold text-zinc-400">
+        <% if @booking_step == "services" %>
+          <span class="text-zinc-950">Servicio</span>
+        <% else %>
+          <%= link_to "Servicio", new_public_booking_path(@business.slug, service_step_params), class: "hover:text-zinc-900" %>
+        <% end %>
+        <% if @professional_step_required %>
+          <span>›</span>
+
+          <% if @booking_step == "professionals" %>
+            <span class="text-zinc-950">Profesional</span>
+          <% elsif @selected_services.any? && @booking_step.in?(%w[schedule waitlist details reserve]) %>
+            <%= link_to "Profesional", new_public_booking_path(@business.slug, flow_params.merge(step: "professionals")), class: "hover:text-zinc-900" %>
+          <% else %>
+            <span>Profesional</span>
+          <% end %>
+        <% end %>
+        <span>›</span>
+
+        <% if @booking_step == "schedule" %>
+          <span class="text-zinc-950">Día y hora</span>
+        <% elsif @booking_step.in?(%w[waitlist details reserve]) %>
+          <%= link_to "Día y hora", new_public_booking_path(@business.slug, selected_schedule_flow_params.merge(step: "schedule")), class: "hover:text-zinc-900" %>
+        <% else %>
+          <span>Día y hora</span>
+        <% end %>
+        <span>›</span>
+
+        <% if @booking_step == "waitlist" %>
+          <span class="text-zinc-950">Lista de espera</span>
+          <span>›</span>
+        <% end %>
+
+        <% if @booking_step == "details" %>
+          <span class="text-zinc-950">Responsable y mascota</span>
+        <% elsif @selected_starts_at.present? %>
+          <%= link_to "Responsable y mascota", new_public_booking_path(@business.slug, schedule_flow_params.merge(step: "details", starts_at: @selected_starts_at.iso8601, draft: @booking_draft_token).compact), class: "hover:text-zinc-900" %>
+        <% else %>
+          <span>Responsable y mascota</span>
+        <% end %>
+        <span>›</span>
+
+        <% if @booking_step == "reserve" %>
+          <span class="text-zinc-950">Reservar</span>
+        <% else %>
+          <span>Reservar</span>
+        <% end %>
+      </nav>
+
+      <% if @booking_step == "services" %>
+        <h2 class="mb-6 text-4xl font-bold tracking-tight">Seleccionar servicio</h2>
+
+        <div class="public-mobile-pill-rail">
+          <% @categories.each do |category| %>
+            <% active_category = category == active_service_category %>
+            <%= link_to category, new_public_booking_path(@business.slug, flow_params.merge(step: "services", category: category)), class: "rounded-full px-4 py-2 text-sm font-bold #{active_category ? "bg-zinc-950 text-white" : "border border-zinc-200 bg-white text-zinc-800 hover:border-zinc-950"}" %>
+          <% end %>
+        </div>
+
+        <% visible_services = active_service_category.present? ? @services.select { |service| service.category_label == active_service_category } : @services %>
+        <div class="mt-8 space-y-4">
+          <h2 class="text-lg font-bold"><%= active_service_category.presence || "Servicio" %></h2>
+          <% visible_services.each do |service| %>
+            <% selected = selected_service_slugs.include?(service.slug) %>
+            <% detail_service_params = flow_params.merge(step: "services", service_detail: service.slug, category: service.category_label).compact %>
+            <% service_selection_params = flow_params.merge(service_ids: [ service.slug ], step: "services", category: service.category_label, professional_mode: "any").except(:starts_at, :employee_membership_id, :professionals).compact %>
+            <%= render "public_booking/service_card",
+              business: @business,
+              service: service,
+              detail_path: new_public_booking_path(@business.slug, detail_service_params),
+              action_path: new_public_booking_path(@business.slug, service_selection_params),
+              action_label: "Reservar",
+              selected: selected %>
+          <% end %>
+        </div>
+
+        <% if @service_detail.present? %>
+          <% detail_images = @service_detail.service_images.to_a %>
+          <div class="public-service-detail-overlay fixed inset-x-0 z-50 flex items-center justify-center overscroll-contain bg-zinc-950/45 px-4 py-4 backdrop-blur-[1px] sm:px-6 sm:py-6" data-controller="public-service-gallery" data-public-service-gallery-title-value="<%= @service_detail.name %>" data-public-service-detail-modal>
+            <div class="flex h-[560px] w-full max-w-2xl max-h-full flex-col overflow-hidden rounded-[28px] bg-white shadow-2xl" data-public-service-detail-dialog>
+              <header class="flex shrink-0 items-start justify-between gap-4 border-b border-zinc-100 px-6 py-5 sm:px-7">
+                <h2 class="min-w-0 text-2xl font-bold tracking-tight sm:text-3xl"><%= @service_detail.name %></h2>
+                <%= link_to "×", new_public_booking_path(@business.slug, flow_params.merge(step: "services", category: active_service_category)), class: "grid h-9 w-9 shrink-0 place-items-center rounded-full text-2xl text-zinc-600 hover:bg-zinc-100", aria: { label: "Cerrar" } %>
+              </header>
+
+              <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-5 sm:px-7">
+                <p class="whitespace-pre-line text-sm leading-6 text-zinc-700" data-public-service-description><%= @service_detail.description.presence || "Servicio disponible para reservar online." %></p>
+                <% if detail_images.any? %>
+                  <div class="mt-7 flex flex-wrap gap-3" aria-label="Imágenes del servicio">
+                    <% detail_images.each_with_index do |image, index| %>
+                      <button
+                        type="button"
+                        class="h-20 w-20 overflow-hidden rounded-xl border border-zinc-200 bg-zinc-100 transition hover:border-zinc-950 focus:outline-none focus:ring-4 focus:ring-brand-100"
+                        data-public-service-gallery-target="thumbnail"
+                        data-public-service-gallery-url="<%= url_for(image) %>"
+                        data-public-service-gallery-alt="<%= "#{@service_detail.name} - imagen #{index + 1}" %>"
+                        data-public-service-gallery-index-param="<%= index %>"
+                        data-action="public-service-gallery#open"
+                        aria-label="Ver imagen <%= index + 1 %> de <%= @service_detail.name %>">
+                        <%= image_tag image.variant(resize_to_fill: [ 160, 160 ]), alt: "#{@service_detail.name} - imagen #{index + 1}", class: "h-full w-full object-cover" %>
+                      </button>
+                    <% end %>
+                  </div>
+                <% end %>
+              </div>
+
+              <footer class="flex shrink-0 flex-col gap-4 border-t border-zinc-100 px-6 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-7">
+                <div>
+                  <p class="text-lg font-bold"><%= public_service_price_ars(@service_detail) %></p>
+                  <p class="mt-1 text-sm font-semibold text-zinc-500"><%= public_service_duration_label(@service_detail.duration_minutes) %></p>
+                </div>
+                <% service_selection_params = flow_params.merge(service_ids: [ @service_detail.slug ], step: "services", category: @service_detail.category_label, professional_mode: "any").except(:starts_at, :employee_membership_id, :professionals).compact %>
+                <%= link_to "Reservar", new_public_booking_path(@business.slug, service_selection_params), class: "inline-flex h-12 w-full items-center justify-center rounded-full bg-zinc-950 px-7 text-sm font-bold text-white sm:w-auto", aria: { label: "Reservar #{@service_detail.name}" } %>
+              </footer>
+            </div>
+
+            <% if detail_images.any? %>
+              <div class="public-service-gallery-overlay fixed inset-x-0 z-[60] hidden bg-white/95 px-4 py-5 backdrop-blur" data-public-service-gallery-target="modal" data-action="click->public-service-gallery#closeOnBackdrop">
+                <button type="button" class="absolute right-4 top-5 z-30 grid h-11 w-11 place-items-center rounded-full bg-zinc-950 text-2xl leading-none text-white shadow-lg transition hover:bg-zinc-800 focus:outline-none focus:ring-4 focus:ring-brand-200" data-action="public-service-gallery#close" aria-label="Cerrar galería">
+                  <span aria-hidden="true">×</span>
+                </button>
+                <div class="relative mx-auto flex h-full max-w-7xl flex-col">
+                  <div class="flex min-w-0 items-center gap-4 pr-16">
+                    <h3 class="min-w-0 flex-1 truncate text-lg font-bold text-zinc-950 sm:text-xl" data-public-service-gallery-target="title"><%= @service_detail.name %></h3>
+                    <p class="shrink-0 rounded-full bg-zinc-100 px-4 py-2 text-sm font-bold text-zinc-950" data-public-service-gallery-target="count">1/<%= detail_images.size %></p>
+                  </div>
+
+                  <div class="relative mt-6 grid min-h-0 flex-1 place-items-center rounded-[28px] border border-zinc-200 bg-zinc-50 p-4 shadow-sm sm:p-8">
+                    <button type="button" class="absolute left-3 top-1/2 z-10 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-zinc-200 bg-white text-zinc-950 shadow-lg transition hover:border-zinc-950 disabled:pointer-events-none sm:left-6" data-public-service-gallery-target="previousButton" data-action="public-service-gallery#previous" aria-label="Imagen anterior">
+                      <%= public_icon("arrow_left", css: "h-5 w-5") %>
+                    </button>
+                    <img src="" alt="" class="max-h-[72vh] max-w-full rounded-2xl object-contain shadow-sm" data-public-service-gallery-target="image">
+                    <button type="button" class="absolute right-3 top-1/2 z-10 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-zinc-200 bg-white text-zinc-950 shadow-lg transition hover:border-zinc-950 disabled:pointer-events-none sm:right-6" data-public-service-gallery-target="nextButton" data-action="public-service-gallery#next" aria-label="Imagen siguiente">
+                      <%= public_icon("arrow_right", css: "h-5 w-5") %>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
+      <% elsif @booking_step == "professionals" %>
+        <h2 class="text-4xl font-bold tracking-tight">Seleccionar profesional</h2>
+
+        <div class="mt-8 space-y-4">
+          <% any_selected = @professional_mode == "any" %>
+          <%= link_to new_public_booking_path(@business.slug, flow_params.merge(step: "professionals", professional_mode: "any", employee_membership_id: nil).except(:starts_at, :professionals).compact), class: "flex items-center justify-between rounded-2xl border bg-white p-6 #{any_selected ? "border-brand-600 ring-1 ring-brand-600" : "border-zinc-200 hover:border-brand-500"}" do %>
+            <span class="flex items-center gap-4">
+              <span class="grid h-16 w-16 place-items-center rounded-full bg-brand-50 text-brand-700">↝</span>
+              <span>
+                <span class="block font-bold">Sin preferencia</span>
+                <span class="mt-1 block text-sm font-semibold text-zinc-500">Máxima disponibilidad</span>
+              </span>
+            </span>
+            <% if any_selected %>
+              <span class="grid h-10 w-10 place-items-center rounded-full bg-brand-600 text-white"><%= public_icon("check", css: "h-5 w-5") %></span>
+            <% else %>
+              <span class="rounded-full border border-zinc-200 px-5 py-2 text-sm font-bold">Seleccionar</span>
+            <% end %>
+          <% end %>
+
+          <% qualified_memberships.each do |membership| %>
+            <% selected = @professional_mode == "single" && @selected_employee_membership == membership %>
+            <%= link_to new_public_booking_path(@business.slug, flow_params.merge(step: "professionals", professional_mode: "single", employee_membership_id: membership.id).except(:starts_at, :professionals)), class: "flex items-center justify-between rounded-2xl border bg-white p-6 #{selected ? "border-brand-600 ring-1 ring-brand-600" : "border-zinc-200 hover:border-brand-500"}" do %>
+              <span class="flex items-center gap-4">
+                <span class="grid h-16 w-16 place-items-center rounded-full bg-zinc-100 text-lg font-bold"><%= membership.name.to_s.first&.upcase || "P" %></span>
+                <span>
+                  <span class="block font-bold"><%= membership.name %></span>
+                  <span class="mt-1 block text-sm font-semibold text-zinc-500"><%= membership.specialty.presence || membership.branch&.name || "Profesional" %></span>
+                </span>
+              </span>
+              <% if selected %>
+                <span class="grid h-10 w-10 place-items-center rounded-full bg-brand-600 text-white"><%= public_icon("check", css: "h-5 w-5") %></span>
+              <% else %>
+                <span class="rounded-full border border-zinc-200 px-5 py-2 text-sm font-bold">Seleccionar</span>
+              <% end %>
+            <% end %>
+          <% end %>
+        </div>
+      <% elsif @booking_step == "schedule" %>
+        <% selected_professional_label = @selected_employee_membership&.name || "Sin preferencia" %>
+        <% selected_professional_initial = @selected_employee_membership&.name.to_s.first&.upcase || "♙" %>
+        <h2 class="text-4xl font-bold tracking-tight">Seleccionar fecha y hora</h2>
+
+        <div class="mt-8 flex flex-wrap items-center <%= @professional_step_required ? "justify-between" : "justify-end" %> gap-4">
+          <% if @professional_step_required %>
+            <%= link_to new_public_booking_path(@business.slug, booking_calendar_params(date: @date, step: "schedule").merge(professional_modal: 1)), class: "inline-flex h-10 items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 text-sm font-bold text-zinc-950 shadow-sm hover:border-brand-500" do %>
+              <span class="grid h-7 w-7 place-items-center rounded-full bg-brand-50 text-xs font-bold text-brand-700"><%= selected_professional_initial %></span>
+              <span><%= selected_professional_label %></span>
+              <span class="text-zinc-500">⌄</span>
+            <% end %>
+          <% end %>
+
+          <div class="relative">
+            <%= link_to new_public_booking_path(@business.slug, booking_calendar_params(date: @date, step: "schedule").merge(calendar_open: 1)), class: "grid h-11 w-14 place-items-center rounded-full border border-zinc-300 bg-white text-zinc-950 shadow-sm hover:border-zinc-950", aria: { label: "Abrir calendario" } do %>
+              <%= public_icon("calendar", css: "h-5 w-5") %>
+            <% end %>
+
+            <% if params[:calendar_open].present? %>
+              <div class="absolute right-0 top-14 z-40 w-[350px] rounded-2xl border border-zinc-200 bg-white p-5 shadow-2xl">
+                <div class="mb-5 flex items-center justify-between">
+                  <% if @previous_month.present? %>
+                    <%= link_to "‹", new_public_booking_path(@business.slug, booking_calendar_params(date: @previous_month, month: @previous_month, step: "schedule").merge(calendar_open: 1, date_window_start: @previous_month)), class: "grid h-9 w-9 place-items-center rounded-full text-2xl hover:bg-zinc-100" %>
+                  <% else %>
+                    <span class="h-9 w-9"></span>
+                  <% end %>
+                  <p class="text-sm font-bold"><%= public_month_label(@month_date).downcase %></p>
+                  <% if @next_month.present? %>
+                    <%= link_to "›", new_public_booking_path(@business.slug, booking_calendar_params(date: @next_month, month: @next_month, step: "schedule").merge(calendar_open: 1, date_window_start: @next_month)), class: "grid h-9 w-9 place-items-center rounded-full text-2xl hover:bg-zinc-100" %>
+                  <% else %>
+                    <span class="h-9 w-9"></span>
+                  <% end %>
+                </div>
+
+                <div class="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-zinc-500">
+                  <% %w[lun mar mié jue vie sáb dom].each do |weekday| %>
+                    <span class="py-2"><%= weekday %></span>
+                  <% end %>
+                </div>
+                <div class="mt-1 grid grid-cols-7 gap-1 text-center text-sm font-semibold">
+                  <% ((@calendar_leading_blanks - 1) % 7).times do %>
+                    <span></span>
+                  <% end %>
+                  <% @calendar_days.each do |day| %>
+                    <% available = @available_dates.fetch(day) %>
+                    <% selected = day == @date %>
+                    <% if available %>
+                      <%= link_to day.day, new_public_booking_path(@business.slug, booking_calendar_params(date: day, month: day.beginning_of_month, step: "schedule", date_window_start: day)), class: "grid h-9 w-9 place-items-center rounded-full #{selected ? "bg-brand-600 text-white ring-2 ring-brand-200" : "text-zinc-950 hover:bg-zinc-100"}" %>
+                    <% else %>
+                      <span class="grid h-9 w-9 place-items-center rounded-full text-zinc-300"><%= day.day %></span>
+                    <% end %>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+
+        <div class="mt-7">
+          <h3 class="text-lg font-bold">Selecciona una fecha</h3>
+        </div>
+
+        <div class="public-date-window-nav">
+          <% if @previous_date_window_start.present? %>
+            <%= link_to "‹", new_public_booking_path(@business.slug, booking_calendar_params(date: @previous_date_window_start, step: "schedule", date_window_start: @previous_date_window_start)), class: "public-date-window-arrow", aria: { label: "Ver fechas anteriores" } %>
+          <% else %>
+            <span class="public-date-window-arrow is-placeholder" aria-hidden="true"></span>
+          <% end %>
+
+          <div class="public-date-rail">
+            <% @date_window_days.each do |day| %>
+              <% selected = day == @date %>
+              <% day_available = @date_window_availability.fetch(day) %>
+              <% date_card_class = "public-date-card flex flex-col items-center justify-center rounded-xl border px-1 py-2 text-center font-bold sm:rounded-2xl sm:p-3 #{selected ? "border-brand-600 bg-brand-600 text-white" : day_available ? "border-zinc-200 bg-white text-zinc-950 hover:border-brand-500" : "cursor-not-allowed border-zinc-100 bg-zinc-50 text-zinc-300"}" %>
+              <% date_card_content = capture do %>
+                <span class="block text-[10px] font-semibold leading-none sm:text-xs <%= selected ? "text-white/80" : day_available ? "text-zinc-500" : "text-zinc-300" %>"><%= %w[dom lun mar mié jue vie sáb].fetch(day.wday) %></span>
+                <span class="mt-1 block text-xl leading-none sm:text-2xl"><%= day.day %></span>
+                <span class="mt-1 block text-[10px] font-semibold leading-none sm:text-xs <%= selected ? "text-white/80" : day_available ? "text-zinc-400" : "text-zinc-300" %>"><%= PublicBookingHelper::SPANISH_MONTHS.fetch(day.month - 1).first(3) %></span>
+              <% end %>
+              <% if day_available %>
+                <%= link_to new_public_booking_path(@business.slug, booking_calendar_params(date: day, step: "schedule", date_window_start: @date_window_start)), class: date_card_class do %>
+                  <%= date_card_content %>
+                <% end %>
+              <% else %>
+                <span class="<%= date_card_class %>" aria-disabled="true"><%= date_card_content %></span>
+              <% end %>
+            <% end %>
+          </div>
+
+          <% if @next_date_window_start.present? %>
+            <%= link_to "›", new_public_booking_path(@business.slug, booking_calendar_params(date: @next_date_window_start, step: "schedule", date_window_start: @next_date_window_start)), class: "public-date-window-arrow", aria: { label: "Ver fechas siguientes" } %>
+          <% else %>
+            <span class="public-date-window-arrow is-placeholder" aria-hidden="true"></span>
+          <% end %>
+        </div>
+
+        <% if @slots.any? %>
+          <h3 class="mt-8 text-lg font-bold">Escoge una hora</h3>
+          <div class="mt-4 grid grid-cols-3 gap-2 md:grid-cols-5 md:gap-3">
+            <% @slots.each do |slot| %>
+              <% selected = @selected_starts_at.present? && @selected_starts_at.to_i == slot.to_i %>
+              <%= link_to new_public_booking_path(@business.slug, schedule_flow_params.merge(step: "schedule", starts_at: slot.iso8601)), class: "rounded-2xl border bg-white px-3 py-4 text-center font-bold #{selected ? "border-brand-600 ring-1 ring-brand-600" : "border-zinc-200 hover:border-brand-500"}" do %>
+                <span><%= slot.strftime("%H:%M") %></span>
+              <% end %>
+            <% end %>
+          </div>
+          <p class="mt-7 text-sm font-semibold text-zinc-950">
+            ¿Ninguna cita te viene bien?
+            <%= link_to "Únete a la lista de espera", new_public_booking_path(@business.slug, booking_calendar_params(date: @date, step: "waitlist")), class: "font-bold text-brand-700 hover:text-brand-900" %>
+          </p>
+        <% else %>
+          <div class="mt-24 flex flex-col items-center text-center">
+            <span class="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-b from-brand-700 to-brand-600 text-white shadow-lg shadow-brand-100">
+              <%= public_icon("calendar", css: "h-6 w-6") %>
+            </span>
+            <h3 class="mt-5 text-lg font-bold">Sin citas disponibles para esta fecha</h3>
+            <% if @next_available_date.present? %>
+              <p class="mt-2 text-sm font-semibold text-zinc-500">Disponible desde <%= public_short_date_label(@next_available_date) %></p>
+            <% else %>
+              <p class="mt-2 text-sm font-semibold text-zinc-500">No encontramos horarios disponibles en los próximos días.</p>
+            <% end %>
+            <div class="mt-6 flex flex-wrap justify-center gap-3">
+              <% if @next_available_date.present? %>
+                <%= link_to "Ir a la próxima fecha disponible", new_public_booking_path(@business.slug, booking_calendar_params(date: @next_available_date, step: "schedule", date_window_start: @next_available_date)), class: "inline-flex h-10 items-center justify-center rounded-full border border-zinc-200 bg-white px-5 text-sm font-bold text-zinc-950 shadow-sm hover:border-zinc-950" %>
+              <% end %>
+              <%= link_to "Únete a la lista de espera", new_public_booking_path(@business.slug, booking_calendar_params(date: @date, step: "waitlist")), class: "inline-flex h-10 items-center justify-center rounded-full border border-zinc-200 bg-white px-5 text-sm font-bold text-zinc-950 shadow-sm hover:border-brand-500 hover:text-brand-700" %>
+            </div>
+          </div>
+        <% end %>
+
+        <% if @show_professional_modal && @professional_step_required %>
+          <% professional_modal_base = booking_calendar_params(date: @date, step: "schedule").except(:employee_membership_id, :professionals) %>
+          <div class="fixed inset-0 z-50 grid place-items-center bg-zinc-950/40 px-4">
+            <div class="w-full max-w-3xl rounded-[28px] bg-white p-7 shadow-2xl">
+              <div class="flex justify-end">
+                <%= link_to "×", new_public_booking_path(@business.slug, booking_calendar_params(date: @date, step: "schedule")), class: "grid h-9 w-9 place-items-center rounded-full text-2xl text-zinc-600 hover:bg-zinc-100", aria: { label: "Cerrar" } %>
+              </div>
+              <h3 class="text-2xl font-bold tracking-tight"><%= @selected_services.one? ? @selected_services.first.name : "Seleccionar profesional" %></h3>
+              <div class="mt-7 space-y-3">
+                <% any_selected = @professional_mode == "any" %>
+                <%= link_to new_public_booking_path(@business.slug, professional_modal_base.merge(professional_mode: "any")), class: "flex items-center justify-between rounded-2xl border bg-white p-5 #{any_selected ? "border-brand-600 ring-1 ring-brand-600" : "border-zinc-200 hover:border-brand-500"}" do %>
+                  <span class="flex items-center gap-4">
+                    <span class="grid h-16 w-16 place-items-center rounded-full bg-brand-50 text-brand-700">↝</span>
+                    <span>
+                      <span class="block font-bold">Sin preferencia</span>
+                      <span class="mt-1 block text-sm font-semibold text-zinc-500">Máxima disponibilidad</span>
+                    </span>
+                  </span>
+                  <% if any_selected %>
+                    <span class="grid h-10 w-10 place-items-center rounded-full bg-brand-600 text-white"><%= public_icon("check", css: "h-5 w-5") %></span>
+                  <% else %>
+                    <span class="rounded-full border border-zinc-200 px-5 py-2 text-sm font-bold">Seleccionar</span>
+                  <% end %>
+                <% end %>
+
+                <% qualified_memberships.each do |membership| %>
+                  <% selected = @professional_mode == "single" && @selected_employee_membership == membership %>
+                  <%= link_to new_public_booking_path(@business.slug, professional_modal_base.merge(professional_mode: "single", employee_membership_id: membership.id)), class: "flex items-center justify-between rounded-2xl border bg-white p-5 #{selected ? "border-brand-600 ring-1 ring-brand-600" : "border-zinc-200 hover:border-brand-500"}" do %>
+                    <span class="flex items-center gap-4">
+                      <span class="grid h-16 w-16 place-items-center rounded-full bg-zinc-100 text-lg font-bold"><%= membership.name.to_s.first&.upcase || "P" %></span>
+                      <span>
+                        <span class="block font-bold"><%= membership.name %></span>
+                        <span class="mt-1 block text-sm font-semibold text-zinc-500">Ver perfil</span>
+                      </span>
+                    </span>
+                    <% if selected %>
+                      <span class="grid h-10 w-10 place-items-center rounded-full bg-brand-600 text-white"><%= public_icon("check", css: "h-5 w-5") %></span>
+                    <% else %>
+                      <span class="rounded-full border border-zinc-200 px-5 py-2 text-sm font-bold">Seleccionar</span>
+                    <% end %>
+                  <% end %>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      <% elsif @booking_step == "waitlist" %>
+        <% time_options = (0..23).flat_map { |hour| [ 0, 15, 30, 45 ].map { |minute| format("%02d:%02d", hour, minute) } } %>
+        <% default_waitlist_window = WaitlistEntry::TIME_PRESETS.fetch("night") %>
+        <h2 class="text-4xl font-bold tracking-tight">Únete a la lista de espera</h2>
+        <p class="mt-4 max-w-2xl text-base font-semibold leading-7 text-zinc-500">Selecciona la fecha y la hora que mejor te vengan. Te avisaremos cuando haya alguna cita disponible.</p>
+
+        <%= form_with url: public_waitlist_entries_path(@business.slug), class: "mt-8 space-y-6", data: { turbo_frame: "_top", controller: "waitlist-preferences" } do %>
+          <% selected_service_slugs.each do |service_slug| %>
+            <%= hidden_field_tag "waitlist_entry[service_ids][]", service_slug %>
+          <% end %>
+
+          <div class="rounded-2xl border border-zinc-200 bg-white p-5">
+            <div class="space-y-4" data-waitlist-preferences-target="rows">
+              <% @waitlist_preferences.each do |preference| %>
+                <% window = preference.fetch(:window) %>
+                <div class="grid gap-3 sm:grid-cols-2" data-waitlist-preferences-target="row">
+                  <div>
+                    <%= label_tag nil, "Fecha", class: "mb-2 block text-sm font-bold text-zinc-950" %>
+                    <%= select_tag "waitlist_entry[preferences][][date]",
+                      options_for_select(@waitlist_date_options.map { |date| [ public_short_date_label(date), date.iso8601 ] }, preference.fetch(:date).iso8601),
+                      class: "h-12 w-full rounded-2xl border border-zinc-200 bg-white px-4 pr-10 text-sm font-bold text-zinc-950 outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100" %>
+                  </div>
+                  <div>
+                    <%= label_tag nil, "Hora", class: "mb-2 block text-sm font-bold text-zinc-950" %>
+                    <button type="button" class="flex h-12 w-full items-center justify-between rounded-2xl border border-zinc-200 bg-white px-4 text-left text-sm font-bold text-zinc-950 outline-none transition hover:border-brand-500 focus:border-brand-400 focus:ring-4 focus:ring-brand-100" data-action="waitlist-preferences#open">
+                      <span data-waitlist-time-label><%= waitlist_time_window_label(window) %></span>
+                      <span class="text-zinc-500">⌄</span>
+                    </button>
+                    <%= hidden_field_tag "waitlist_entry[preferences][][period]", window.fetch("period"), data: { waitlist_period: true } %>
+                    <%= hidden_field_tag "waitlist_entry[preferences][][label]", waitlist_time_window_label(window), data: { waitlist_label: true } %>
+                    <%= hidden_field_tag "waitlist_entry[preferences][][start_time]", window.fetch("start_time"), data: { waitlist_start: true } %>
+                    <%= hidden_field_tag "waitlist_entry[preferences][][end_time]", window.fetch("end_time"), data: { waitlist_end: true } %>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+
+            <template data-waitlist-preferences-target="template">
+              <div class="grid gap-3 border-t border-zinc-100 pt-4 sm:grid-cols-2" data-waitlist-preferences-target="row">
+                <div>
+                  <label class="mb-2 block text-sm font-bold text-zinc-950">Fecha</label>
+                  <select name="waitlist_entry[preferences][][date]" class="h-12 w-full rounded-2xl border border-zinc-200 bg-white px-4 pr-10 text-sm font-bold text-zinc-950 outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100">
+                    <% @waitlist_date_options.each do |date| %>
+                      <option value="<%= date.iso8601 %>" <%= "selected" if date == @date %>><%= public_short_date_label(date) %></option>
+                    <% end %>
+                  </select>
+                </div>
+                <div>
+                  <label class="mb-2 block text-sm font-bold text-zinc-950">Hora</label>
+                  <button type="button" class="flex h-12 w-full items-center justify-between rounded-2xl border border-zinc-200 bg-white px-4 text-left text-sm font-bold text-zinc-950 outline-none transition hover:border-brand-500 focus:border-brand-400 focus:ring-4 focus:ring-brand-100" data-action="waitlist-preferences#open">
+                    <span data-waitlist-time-label><%= default_waitlist_window.fetch("label") %></span>
+                    <span class="text-zinc-500">⌄</span>
+                  </button>
+                  <input type="hidden" name="waitlist_entry[preferences][][period]" value="night" data-waitlist-period>
+                  <input type="hidden" name="waitlist_entry[preferences][][label]" value="<%= default_waitlist_window.fetch("label") %>" data-waitlist-label>
+                  <input type="hidden" name="waitlist_entry[preferences][][start_time]" value="<%= default_waitlist_window.fetch("start_time") %>" data-waitlist-start>
+                  <input type="hidden" name="waitlist_entry[preferences][][end_time]" value="<%= default_waitlist_window.fetch("end_time") %>" data-waitlist-end>
+                </div>
+              </div>
+            </template>
+          </div>
+
+          <button type="button" class="inline-flex h-10 items-center gap-2 rounded-full border border-zinc-200 bg-white px-4 text-sm font-bold text-zinc-950 shadow-sm hover:border-zinc-950" data-action="waitlist-preferences#add">
+            <span class="text-lg leading-none">+</span>
+            Añadir otra hora
+          </button>
+
+          <% if @waitlist_available_slots_present %>
+            <div class="rounded-2xl border border-brand-200 bg-brand-50 p-5 text-zinc-950">
+              <p class="max-w-2xl text-base font-semibold leading-7">Hay franjas horarias disponibles para reservar en las fechas seleccionadas, ajusta tu selección o reserva ahora.</p>
+              <%= link_to "Reservar ahora →", new_public_booking_path(@business.slug, booking_calendar_params(date: @date, step: "schedule")), class: "mt-4 inline-flex text-sm font-bold text-zinc-950 hover:text-brand-700" %>
+            </div>
+          <% else %>
+            <p class="text-sm font-semibold text-zinc-950">
+              ¿Has cambiado de opinión?
+              <%= link_to "Consulta los horarios disponibles para reservar", new_public_booking_path(@business.slug, booking_calendar_params(date: @date, step: "schedule")), class: "font-bold text-brand-700 hover:text-brand-900" %>
+            </p>
+          <% end %>
+
+          <div class="rounded-2xl border border-zinc-200 bg-white p-5">
+            <h3 class="text-lg font-bold">Datos de contacto</h3>
+            <div class="mt-5 grid gap-5 sm:grid-cols-2">
+              <div>
+                <%= label_tag "waitlist_entry_client_name", "Nombre y apellido", class: "mb-2 block text-sm font-bold text-zinc-800" %>
+                <%= text_field_tag "waitlist_entry[client_name]", nil, id: "waitlist_entry_client_name", required: true, autocomplete: "name", placeholder: "Ej. Julieta Pérez", class: "h-12 w-full rounded-2xl border border-zinc-200 bg-white px-4 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100" %>
+              </div>
+              <div>
+                <%= label_tag "waitlist_entry_client_phone", "WhatsApp", class: "mb-2 block text-sm font-bold text-zinc-800" %>
+                <%= telephone_field_tag "waitlist_entry[client_phone]", nil, id: "waitlist_entry_client_phone", required: true, autocomplete: "tel", placeholder: "+54 11 5555 5555", class: "h-12 w-full rounded-2xl border border-zinc-200 bg-white px-4 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100" %>
+              </div>
+            </div>
+            <div class="mt-5">
+              <div class="mb-2 flex items-center justify-between gap-4">
+                <%= label_tag "waitlist_entry_email", "Email", class: "block text-sm font-bold text-zinc-800" %>
+                <span class="text-xs font-semibold text-zinc-400">Obligatorio</span>
+              </div>
+              <%= email_field_tag "waitlist_entry[email]", nil, id: "waitlist_entry_email", required: true, autocomplete: "email", placeholder: "nombre@email.com", class: "h-12 w-full rounded-2xl border border-zinc-200 bg-white px-4 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100" %>
+            </div>
+            <div class="mt-5">
+              <div class="mb-2 flex items-center justify-between gap-4">
+                <%= label_tag "waitlist_entry_notes", "Comentario", class: "block text-sm font-bold text-zinc-800" %>
+                <span class="text-xs font-semibold text-zinc-400">Opcional</span>
+              </div>
+              <%= text_area_tag "waitlist_entry[notes]", nil, id: "waitlist_entry_notes", rows: 3, placeholder: "Preferencias u otra información relevante", class: "w-full resize-none rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100" %>
+            </div>
+          </div>
+
+          <%= submit_tag "Unirme a la lista de espera", class: "flex h-12 w-full cursor-pointer items-center justify-center rounded-full bg-zinc-950 px-5 text-sm font-bold text-white" %>
+
+          <div class="fixed inset-0 z-50 hidden place-items-center bg-zinc-950/35 px-4" data-waitlist-preferences-target="modal" data-action="click->waitlist-preferences#closeOnBackdrop">
+            <div class="w-full max-w-[520px] rounded-2xl bg-white p-5 shadow-2xl">
+              <div class="flex justify-end">
+                <button type="button" class="grid h-9 w-9 place-items-center rounded-full text-2xl text-zinc-600 hover:bg-zinc-100" data-action="waitlist-preferences#close" aria-label="Cerrar selector">×</button>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <% @waitlist_time_presets.each do |period, preset| %>
+                  <button type="button" class="rounded-full border px-4 py-2 text-sm font-bold transition" data-waitlist-preferences-target="preset" data-period="<%= period %>" data-action="waitlist-preferences#choosePreset"><%= preset.fetch("label") %></button>
+                <% end %>
+              </div>
+              <div class="mt-5 grid gap-4 sm:grid-cols-[1fr_1fr]">
+                <%= select_tag nil, options_for_select(time_options, default_waitlist_window.fetch("start_time")), class: "h-12 rounded-2xl border border-zinc-200 bg-white px-4 pr-10 text-sm font-bold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100", data: { waitlist_preferences_target: "modalStart", action: "change->waitlist-preferences#syncCustomWindow" } %>
+                <%= select_tag nil, options_for_select(time_options, default_waitlist_window.fetch("end_time")), class: "h-12 rounded-2xl border border-zinc-200 bg-white px-4 pr-10 text-sm font-bold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100", data: { waitlist_preferences_target: "modalEnd", action: "change->waitlist-preferences#syncCustomWindow" } %>
+              </div>
+              <input type="hidden" data-waitlist-preferences-target="currentPeriod">
+              <input type="hidden" data-waitlist-preferences-target="currentStart">
+              <input type="hidden" data-waitlist-preferences-target="currentEnd">
+              <input type="hidden" data-waitlist-preferences-target="currentLabel">
+              <div class="mt-5 flex justify-end gap-3">
+                <button type="button" class="h-12 rounded-full px-5 text-sm font-bold text-zinc-950 hover:bg-zinc-100" data-action="waitlist-preferences#remove">Eliminar</button>
+                <button type="button" class="h-12 rounded-full bg-zinc-950 px-6 text-sm font-bold text-white" data-action="waitlist-preferences#apply">OK</button>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      <% elsif @booking_step == "details" %>
+        <h2 class="text-4xl font-bold tracking-tight">Responsable y mascota</h2>
+
+        <%= form_with url: public_bookings_path(@business.slug), id: "public_booking_details_form", class: "mt-7 space-y-5 lg:mt-10", data: { turbo_frame: "_top" } do %>
+          <%= hidden_field_tag "booking[submission_step]", "details" %>
+          <%= hidden_field_tag "booking[draft_token]", @booking_draft_token if @booking_draft_token.present? %>
+          <% selected_service_slugs.each do |service_slug| %>
+            <%= hidden_field_tag "booking[service_ids][]", service_slug %>
+          <% end %>
+          <%= hidden_field_tag "booking[starts_at]", @selected_starts_at&.iso8601 %>
+          <%= hidden_field_tag "booking[professional_mode]", @professional_mode %>
+          <%= hidden_field_tag "booking[employee_membership_id]", @selected_employee_membership&.id %>
+          <% professionals_params.each do |service_id, employee_id| %>
+            <%= hidden_field_tag "booking[professionals][#{service_id}]", employee_id %>
+          <% end %>
+
+          <div class="grid gap-5 sm:grid-cols-2">
+            <div>
+              <%= label_tag "booking[customer_name]", "Nombre y apellido", class: "mb-2 block text-sm font-bold text-zinc-800" %>
+              <%= text_field_tag "booking[customer_name]", booking_draft[:customer_name], required: true, autocomplete: "name", placeholder: "Ej. Julieta Pérez", class: "h-12 w-full rounded-2xl border border-zinc-200 bg-white px-4 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100" %>
+            </div>
+            <div>
+              <%= label_tag "booking[customer_phone]", "WhatsApp", class: "mb-2 block text-sm font-bold text-zinc-800" %>
+              <%= telephone_field_tag "booking[customer_phone]", booking_draft[:customer_phone], required: true, autocomplete: "tel", placeholder: "+54 11 5555 5555", class: "h-12 w-full rounded-2xl border border-zinc-200 bg-white px-4 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100" %>
+            </div>
+          </div>
+          <div>
+            <div class="mb-2 flex items-center justify-between gap-4">
+              <%= label_tag "booking[customer_email]", "Email", class: "block text-sm font-bold text-zinc-800" %>
+              <span class="text-xs font-semibold text-zinc-400">Obligatorio</span>
+            </div>
+            <%= email_field_tag "booking[customer_email]", booking_draft[:customer_email], required: true, autocomplete: "email", placeholder: "nombre@email.com", class: "h-12 w-full rounded-2xl border border-zinc-200 bg-white px-4 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100" %>
+          </div>
+          <div class="rounded-2xl border border-brand-100 bg-brand-50/40 p-5">
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <h3 class="text-lg font-bold text-zinc-950">Datos de la mascota</h3>
+                <p class="mt-1 text-sm font-semibold text-zinc-500">El turno queda asociado a esta mascota.</p>
+              </div>
+              <span class="rounded-full bg-white px-3 py-1 text-xs font-bold text-brand-700">Requerido</span>
+            </div>
+            <div class="mt-5 grid gap-5 sm:grid-cols-2">
+              <div>
+                <%= label_tag "booking[pet_name]", "Nombre", class: "mb-2 block text-sm font-bold text-zinc-800" %>
+                <%= text_field_tag "booking[pet_name]", booking_draft[:pet_name], required: true, autocomplete: "off", placeholder: "Ej. Coco", class: "h-12 w-full rounded-2xl border border-zinc-200 bg-white px-4 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100" %>
+              </div>
+              <div>
+                <%= label_tag "booking[pet_breed]", "Raza", class: "mb-2 block text-sm font-bold text-zinc-800" %>
+                <%= text_field_tag "booking[pet_breed]", booking_draft[:pet_breed], autocomplete: "off", placeholder: "Ej. Caniche", class: "h-12 w-full rounded-2xl border border-zinc-200 bg-white px-4 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100" %>
+              </div>
+              <div>
+                <%= label_tag "booking[pet_size]", "Tamaño", class: "mb-2 block text-sm font-bold text-zinc-800" %>
+                <%= select_tag "booking[pet_size]", options_for_select([["No especificado", ""], ["Mini", "extra_small"], ["Chico", "small"], ["Mediano", "medium"], ["Grande", "large"], ["Gigante", "extra_large"]], booking_draft[:pet_size]), class: "h-12 w-full rounded-2xl border border-zinc-200 bg-white px-4 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100" %>
+              </div>
+              <div>
+                <%= label_tag "booking[pet_sex]", "Sexo", class: "mb-2 block text-sm font-bold text-zinc-800" %>
+                <%= select_tag "booking[pet_sex]", options_for_select([["No especificado", ""], ["Hembra", "female"], ["Macho", "male"]], booking_draft[:pet_sex]), class: "h-12 w-full rounded-2xl border border-zinc-200 bg-white px-4 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100" %>
+              </div>
+            </div>
+            <div class="mt-5">
+              <div class="mb-2 flex items-center justify-between gap-4">
+                <%= label_tag "booking[pet_notes]", "Cuidados o información importante", class: "block text-sm font-bold text-zinc-800" %>
+                <span class="text-xs font-semibold text-zinc-400">Opcional</span>
+              </div>
+              <%= text_area_tag "booking[pet_notes]", booking_draft[:pet_notes], rows: 3, placeholder: "Alergias, sensibilidad, comportamiento o indicaciones de cuidado", class: "w-full resize-none rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100" %>
+            </div>
+          </div>
+          <div>
+            <div class="mb-2 flex items-center justify-between gap-4">
+              <%= label_tag "booking[notes]", show_professional_details ? "Comentario para el profesional" : "Comentario para el negocio", class: "block text-sm font-bold text-zinc-800" %>
+              <span class="text-xs font-semibold text-zinc-400">Opcional</span>
+            </div>
+            <%= text_area_tag "booking[notes]", booking_draft[:notes], rows: 3, placeholder: "Alergias, preferencias u otra información relevante", class: "w-full resize-none rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100" %>
+          </div>
+          <p class="text-center text-[11px] leading-5 text-zinc-400"><%= @business.cancellation_policy_text %></p>
+        <% end %>
+      <% elsif @booking_step == "reserve" %>
+        <h2 class="text-4xl font-bold tracking-tight">Reservar</h2>
+        <div class="mt-6 grid gap-4">
+          <article class="rounded-2xl border border-zinc-200 bg-white p-5">
+            <p class="text-sm font-semibold text-zinc-500">Turno seleccionado</p>
+            <p class="mt-1 text-xl font-bold"><%= @selected_starts_at ? "#{public_date_label(@selected_starts_at.to_date)} · #{@selected_starts_at.strftime("%H:%M")}" : "Elegí un horario" %></p>
+            <div class="mt-5 grid gap-3 sm:grid-cols-3">
+              <div>
+                <p class="text-xs font-bold uppercase tracking-[.12em] text-zinc-400">Responsable</p>
+                <p class="mt-1 text-sm font-bold text-zinc-950"><%= booking_draft[:customer_name] %></p>
+                <p class="mt-1 text-sm font-semibold text-zinc-500"><%= booking_draft[:customer_phone] %></p>
+              </div>
+              <div>
+                <p class="text-xs font-bold uppercase tracking-[.12em] text-zinc-400">Mascota</p>
+                <p class="mt-1 text-sm font-bold text-zinc-950"><%= booking_draft[:pet_name] %></p>
+                <p class="mt-1 text-sm font-semibold text-zinc-500"><%= booking_draft[:pet_breed].presence || "Raza sin especificar" %></p>
+              </div>
+              <div>
+                <p class="text-xs font-bold uppercase tracking-[.12em] text-zinc-400">Total</p>
+                <p class="mt-1 text-sm font-bold text-zinc-950"><%= cart_total_label %></p>
+                <% if deposit_payment_services.any? %>
+                  <p class="mt-1 text-sm font-semibold text-zinc-500">Seña a pagar ahora: <%= price_cents_label(deposit_payment_amount_cents) %></p>
+                  <p class="mt-1 text-sm font-semibold text-zinc-500">A pagar el día del turno en el negocio: <%= remaining_balance_label %></p>
+                <% elsif no_deposit_payment_required %>
+                  <p class="mt-1 text-sm font-semibold text-zinc-500">No requiere seña</p>
+                  <p class="mt-1 text-sm font-semibold text-zinc-500">A pagar en el negocio: <%= cart_total_label %></p>
+                <% end %>
+              </div>
+            </div>
+          </article>
+
+          <% if deposit_payment_services.any? %>
+            <% if @manual_payment_appointment.present? %>
+              <section class="rounded-2xl border border-brand-200 bg-white p-5" data-manual-transfer-deadline data-deadline-at="<%= @manual_payment_deadline.iso8601 %>" data-redirect-url="<%= new_public_booking_path(@business.slug, selected_schedule_flow_params.merge(step: "reserve", draft: @booking_draft_token, starts_at: @selected_starts_at&.iso8601).compact) %>">
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p class="text-sm font-bold text-zinc-950">Subí el comprobante de transferencia</p>
+                    <p class="mt-1 text-sm font-semibold leading-6 text-zinc-500">
+                      El turno está temporalmente bloqueado, pero no queda reservado hasta que <%= @business.name %> confirme el comprobante.
+                    </p>
+                  </div>
+                  <span class="inline-flex h-10 items-center rounded-full bg-brand-50 px-4 text-sm font-bold text-brand-700">
+                    Tiempo restante: <span class="ml-1" data-manual-transfer-countdown>30:00</span>
+                  </span>
+                </div>
+
+                <div class="mt-5 grid gap-3">
+                  <% deposit_payment_services.each do |deposit_service| %>
+                    <% deposit_details = deposit_service.deposit_payment_details %>
+                    <% deposit_link = deposit_service.external_payment_link.presence || (deposit_service.effective_payment_account.blank? ? @business.deposit_payment_link.presence : nil) %>
+                    <article class="rounded-2xl bg-zinc-50 p-4">
+                      <div class="flex items-start justify-between gap-4">
+                        <div>
+                          <p class="text-sm font-bold text-zinc-950"><%= deposit_service.name %></p>
+                          <p class="mt-1 text-xs font-bold text-zinc-500"><%= deposit_service.deposit_summary %></p>
+                        </div>
+                        <% if deposit_service.effective_payment_account.present? %>
+                          <span class="rounded-full bg-brand-50 px-3 py-1 text-[10px] font-bold uppercase tracking-[.1em] text-brand-700"><%= deposit_service.effective_payment_account.display_name %></span>
+                        <% end %>
+                      </div>
+                      <% if deposit_details.present? %>
+                        <p class="mt-3 whitespace-pre-line text-sm font-semibold leading-6 text-zinc-700"><%= deposit_details %></p>
+                      <% end %>
+                      <% if deposit_link.present? %>
+                        <%= link_to "Abrir enlace de pago", deposit_link, target: "_blank", rel: "noopener", class: "mt-3 inline-flex h-10 items-center justify-center rounded-full bg-zinc-950 px-4 text-xs font-bold text-white" %>
+                      <% end %>
+                    </article>
+                  <% end %>
+                </div>
+
+                <%= form_with url: public_bookings_path(@business.slug), multipart: true, id: "public_booking_manual_upload_form", class: "mt-5 space-y-4", data: { turbo_frame: "_top" } do %>
+                  <%= hidden_field_tag "booking[submission_step]", "upload_manual_transfer" %>
+                  <%= hidden_field_tag "booking[draft_token]", @booking_draft_token %>
+                  <%= hidden_field_tag "booking[appointment_token]", @manual_payment_upload_token %>
+                  <%= file_field_tag "booking[deposit_receipt]", required: true, accept: "image/png,image/jpeg,image/jpg,image/webp,application/pdf", class: "block w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold text-zinc-700 file:mr-4 file:rounded-full file:border-0 file:bg-zinc-950 file:px-4 file:py-2 file:text-sm file:font-bold file:text-white" %>
+                <% end %>
+              </section>
+            <% else %>
+              <section class="rounded-2xl border border-zinc-200 bg-white p-5">
+                <p class="text-sm font-bold text-zinc-900">Método de pago de la seña</p>
+                <p class="mt-1 text-sm font-semibold leading-6 text-zinc-500">El saldo de <%= remaining_balance_label %> se paga el día del turno en el negocio.</p>
+
+                <% if deposit_payment_method.present? %>
+                  <article class="mt-4 rounded-2xl border border-brand-200 bg-brand-50 p-4">
+                    <% if deposit_payment_method == "mercado_pago" %>
+                      <p class="text-sm font-bold text-zinc-950">Mercado Pago</p>
+                      <p class="mt-1 text-sm font-semibold leading-6 text-zinc-600">Pagás la seña online y el turno se confirma automáticamente cuando el pago se acredita.</p>
+                      <p class="mt-4 text-sm font-bold text-brand-700">Pagar seña de <%= price_cents_label(deposit_payment_amount_cents) %></p>
+                    <% else %>
+                      <p class="text-sm font-bold text-zinc-950">Transferencia por Alias / CBU</p>
+                      <p class="mt-1 text-sm font-semibold leading-6 text-zinc-600">Bloqueamos el turno por <%= payment_deadline_minutes %> minutos mientras transferís la seña y subís el comprobante.</p>
+                      <p class="mt-4 text-sm font-semibold leading-6 text-zinc-600">Al continuar, te mostraremos los datos para transferir la seña.</p>
+                    <% end %>
+                  </article>
+
+                  <%= form_with url: public_bookings_path(@business.slug), id: "public_booking_payment_method_form", data: { turbo: false } do %>
+                    <%= hidden_field_tag "booking[submission_step]", deposit_payment_submission_step %>
+                    <%= hidden_field_tag "booking[draft_token]", @booking_draft_token %>
+                  <% end %>
+                <% else %>
+                  <div class="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold leading-6 text-amber-900">
+                    El centro todavía no tiene un método de pago disponible para tomar esta reserva.
+                  </div>
+                <% end %>
+              </section>
+            <% end %>
+          <% else %>
+            <section class="rounded-2xl border border-zinc-200 bg-white p-5">
+              <p class="text-sm font-bold text-zinc-950">Resumen</p>
+              <p class="mt-1 text-sm font-semibold leading-6 text-zinc-500">Este servicio no requiere seña ni pago online para reservar.</p>
+                <%= form_with url: public_bookings_path(@business.slug), id: "public_booking_confirm_form", class: "mt-5", data: { turbo_frame: "_top" } do %>
+                  <%= hidden_field_tag "booking[submission_step]", "confirm" %>
+                  <%= hidden_field_tag "booking[draft_token]", @booking_draft_token %>
+                <% end %>
+            </section>
+          <% end %>
+        </div>
+      <% end %>
+    </section>
+
+    <aside class="hidden self-start rounded-[28px] border border-white/90 bg-white/95 p-6 shadow-soft backdrop-blur-xl lg:sticky lg:top-6 lg:block" data-public-booking-summary>
+      <div class="flex gap-3 border-b border-zinc-200 pb-5">
+        <span class="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-2xl bg-zinc-100 text-sm font-bold">
+          <% if @business.logo.attached? %>
+            <%= image_tag @business.logo.variant(resize_to_fill: [ 96, 96 ]), class: "h-full w-full object-cover" %>
+          <% else %>
+            <%= @business.initials %>
+          <% end %>
+        </span>
+        <div class="min-w-0">
+          <p class="truncate font-bold"><%= @business.name %></p>
+          <% if @business.public_location_configured? %>
+            <p class="mt-1 text-sm font-semibold text-zinc-500"><%= @business.public_location %></p>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="mt-5 space-y-4">
+        <% @selected_services.each do |service| %>
+          <div class="border-b border-zinc-100 pb-4 last:border-b-0">
+            <p class="font-bold"><%= service.name %></p>
+            <% if @selected_starts_at.present? || show_professional_details %>
+              <p class="mt-1 text-sm font-semibold text-zinc-500">
+                <% if @selected_starts_at.present? %>
+                  <span class="block"><%= public_date_label(@selected_starts_at.to_date) %> · <%= @selected_starts_at.strftime("%H:%M") %>hs</span>
+                <% end %>
+                <% if show_professional_details %>
+                  <% professional = employee_for_service(service) %>
+                  <% professional_label = professional&.name || "cualquier profesional" %>
+                  <span class="<%= @selected_starts_at.present? ? "mt-1 block" : nil %>">Con <span class="text-brand-700"><%= professional_label %></span></span>
+                <% end %>
+              </p>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+
+      <div class="mt-5 flex justify-between gap-4 border-t border-zinc-200 pt-5">
+        <p class="font-bold">Total</p>
+        <p class="font-bold"><%= cart_total_label %></p>
+      </div>
+      <% if deposit_payment_services.any? %>
+        <div class="mt-3 flex justify-between gap-4 text-sm text-zinc-600">
+          <p class="font-semibold">Seña a pagar ahora</p>
+          <p class="font-bold text-zinc-950"><%= price_cents_label(deposit_payment_amount_cents) %></p>
+        </div>
+        <div class="mt-2 flex justify-between gap-4 text-sm text-zinc-600">
+          <p class="font-semibold">A pagar en el negocio</p>
+          <p class="font-bold text-zinc-950"><%= remaining_balance_label %></p>
+        </div>
+      <% elsif no_deposit_payment_required %>
+        <div class="mt-3 text-sm text-zinc-600">
+          <p class="font-semibold">No requiere seña</p>
+        </div>
+        <div class="mt-2 flex justify-between gap-4 text-sm text-zinc-600">
+          <p class="font-semibold">A pagar en el negocio</p>
+          <p class="font-bold text-zinc-950"><%= cart_total_label %></p>
+        </div>
+      <% end %>
+
+      <% if @booking_step == "services" %>
+        <% next_step_params = flow_params.merge(step: next_step_after_services) %>
+        <%= link_to "Continuar", new_public_booking_path(@business.slug, next_step_params), class: "mt-8 flex h-12 items-center justify-center rounded-full bg-zinc-950 px-5 text-sm font-bold text-white #{selected_service_slugs.any? ? "" : "pointer-events-none opacity-40"} lg:mt-64" %>
+      <% elsif @booking_step == "professionals" %>
+        <%= link_to "Continuar", new_public_booking_path(@business.slug, schedule_flow_params.merge(step: "schedule")), class: "mt-8 flex h-12 items-center justify-center rounded-full bg-zinc-950 px-5 text-sm font-bold text-white lg:mt-64" %>
+      <% elsif @booking_step == "schedule" %>
+        <% if @selected_starts_at.present? %>
+          <%= link_to "Continuar", new_public_booking_path(@business.slug, schedule_flow_params.merge(step: "details", starts_at: @selected_starts_at.iso8601)), class: "mt-8 flex h-12 items-center justify-center rounded-full bg-zinc-950 px-5 text-sm font-bold text-white lg:mt-64" %>
+        <% else %>
+          <span class="mt-8 flex h-12 items-center justify-center rounded-full bg-zinc-300 px-5 text-sm font-bold text-white lg:mt-64">Continuar</span>
+        <% end %>
+      <% elsif @booking_step == "details" %>
+        <button type="submit" form="public_booking_details_form" class="mt-8 flex h-12 w-full cursor-pointer items-center justify-center rounded-full bg-zinc-950 px-5 text-sm font-bold text-white lg:mt-64">Continuar</button>
+      <% elsif @booking_step == "reserve" %>
+        <% if deposit_payment_services.any? && @manual_payment_appointment.present? %>
+          <button type="submit" form="public_booking_manual_upload_form" class="mt-8 flex h-12 w-full cursor-pointer items-center justify-center rounded-full bg-zinc-950 px-5 text-sm font-bold text-white lg:mt-64">Enviar comprobante</button>
+        <% elsif deposit_payment_services.any? %>
+          <% if deposit_payment_methods.any? %>
+            <button type="submit" form="public_booking_payment_method_form" class="mt-8 flex h-12 w-full cursor-pointer items-center justify-center rounded-full bg-zinc-950 px-5 text-sm font-bold text-white lg:mt-64">Reservar</button>
+          <% else %>
+            <span class="mt-8 flex h-12 items-center justify-center rounded-full bg-zinc-300 px-5 text-sm font-bold text-white lg:mt-64">Reservar</span>
+          <% end %>
+        <% else %>
+          <button type="submit" form="public_booking_confirm_form" class="mt-8 flex h-12 w-full cursor-pointer items-center justify-center rounded-full bg-zinc-950 px-5 text-sm font-bold text-white lg:mt-64">Confirmar</button>
+        <% end %>
+      <% end %>
+    </aside>
+  </main>
+
+  <% if @selected_services.any? %>
+    <div class="fixed inset-x-0 bottom-0 z-40 border-t border-zinc-200 bg-white/95 px-4 pb-[calc(env(safe-area-inset-bottom)+14px)] pt-4 shadow-[0_-14px_40px_rgba(17,17,20,.10)] backdrop-blur lg:hidden" data-public-booking-mobile-footer>
+      <div class="mx-auto flex max-w-7xl items-center justify-between gap-4">
+        <div class="min-w-0">
+          <p class="truncate text-xl font-bold tracking-[-.02em] text-zinc-950"><%= mobile_cart_total_label %></p>
+          <p class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-semibold text-zinc-500">
+            <% if deposit_payment_services.any? %>
+              <span>Seña ahora: <%= price_cents_label(deposit_payment_amount_cents) %></span>
+              <span>·</span>
+              <span>En el negocio: <%= remaining_balance_label %></span>
+            <% elsif no_deposit_payment_required %>
+              <span class="inline-flex items-center gap-1">
+                <%= public_icon("cart", css: "h-4 w-4") %>
+                <%= selected_services_count_label %>
+              </span>
+              <% if selected_services_duration_label.present? %>
+                <span>·</span>
+                <span><%= selected_services_duration_label %></span>
+              <% end %>
+              <span>·</span>
+              <span>No requiere seña</span>
+              <span>·</span>
+              <span>En el negocio: <%= cart_total_label %></span>
+            <% else %>
+              <span class="inline-flex items-center gap-1">
+                <%= public_icon("cart", css: "h-4 w-4") %>
+                <%= selected_services_count_label %>
+              </span>
+              <% if selected_services_duration_label.present? %>
+                <span>·</span>
+                <span><%= selected_services_duration_label %></span>
+              <% end %>
+            <% end %>
+          </p>
+        </div>
+
+        <div class="shrink-0">
+          <% if @booking_step == "services" %>
+            <% next_step_params = flow_params.merge(step: next_step_after_services) %>
+            <%= link_to "Continuar", new_public_booking_path(@business.slug, next_step_params), class: "flex h-14 min-w-[148px] items-center justify-center rounded-full bg-zinc-950 px-7 text-sm font-bold text-white #{selected_service_slugs.any? ? "" : "pointer-events-none opacity-40"}" %>
+          <% elsif @booking_step == "professionals" %>
+            <%= link_to "Continuar", new_public_booking_path(@business.slug, schedule_flow_params.merge(step: "schedule")), class: "flex h-14 min-w-[148px] items-center justify-center rounded-full bg-zinc-950 px-7 text-sm font-bold text-white" %>
+          <% elsif @booking_step == "schedule" %>
+            <% if @selected_starts_at.present? %>
+              <%= link_to "Continuar", new_public_booking_path(@business.slug, schedule_flow_params.merge(step: "details", starts_at: @selected_starts_at.iso8601)), class: "flex h-14 min-w-[148px] items-center justify-center rounded-full bg-zinc-950 px-7 text-sm font-bold text-white" %>
+            <% else %>
+              <span class="flex h-14 min-w-[148px] items-center justify-center rounded-full bg-zinc-300 px-7 text-sm font-bold text-white">Continuar</span>
+            <% end %>
+          <% elsif @booking_step == "details" %>
+            <button type="submit" form="public_booking_details_form" class="flex h-14 min-w-[148px] cursor-pointer items-center justify-center rounded-full bg-zinc-950 px-7 text-sm font-bold text-white">Continuar</button>
+          <% elsif @booking_step == "reserve" %>
+            <% if deposit_payment_services.any? && @manual_payment_appointment.present? %>
+              <button type="submit" form="public_booking_manual_upload_form" class="flex h-14 min-w-[148px] cursor-pointer items-center justify-center rounded-full bg-zinc-950 px-7 text-sm font-bold text-white">Enviar comprobante</button>
+            <% elsif deposit_payment_services.any? %>
+              <% if deposit_payment_methods.any? %>
+                <button type="submit" form="public_booking_payment_method_form" class="flex h-14 min-w-[148px] cursor-pointer items-center justify-center rounded-full bg-zinc-950 px-7 text-sm font-bold text-white">Reservar</button>
+              <% else %>
+                <span class="flex h-14 min-w-[148px] items-center justify-center rounded-full bg-zinc-300 px-7 text-sm font-bold text-white">Reservar</span>
+              <% end %>
+            <% else %>
+              <button type="submit" form="public_booking_confirm_form" class="flex h-14 min-w-[148px] cursor-pointer items-center justify-center rounded-full bg-zinc-950 px-7 text-sm font-bold text-white">Confirmar</button>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  <% end %>
+  <% end %>
+
+</div>
+
+<script>
+  (() => {
+    const deadlineRoot = document.querySelector("[data-manual-transfer-deadline]");
+    if (!deadlineRoot) return;
+
+    const countdown = deadlineRoot.querySelector("[data-manual-transfer-countdown]");
+    const deadlineAt = Date.parse(deadlineRoot.dataset.deadlineAt);
+    const redirectUrl = deadlineRoot.dataset.redirectUrl;
+
+    const renderCountdown = () => {
+      const remainingSeconds = Math.max(0, Math.floor((deadlineAt - Date.now()) / 1000));
+      const minutes = Math.floor(remainingSeconds / 60).toString().padStart(2, "0");
+      const seconds = (remainingSeconds % 60).toString().padStart(2, "0");
+      if (countdown) countdown.textContent = `${minutes}:${seconds}`;
+      if (remainingSeconds <= 0 && redirectUrl) window.location.href = redirectUrl;
+    };
+
+    renderCountdown();
+    window.setInterval(renderCountdown, 1000);
+  })();
+</script>

@@ -1,0 +1,64 @@
+<% flash_messages = flash.to_hash.except("timedout").select { |_type, message| message.present? } %>
+
+<% if flash_messages.any? %>
+  <div class="pointer-events-none fixed right-4 top-4 z-[2147483647] flex w-[min(420px,calc(100vw-2rem))] flex-col gap-3" style="z-index: 2147483647;" aria-live="polite" aria-atomic="true">
+    <% flash_messages.each do |type, message| %>
+      <% type = type.to_s %>
+      <% alert_tone = type.in?(%w[alert error]) %>
+      <% warning_tone = type == "warning" %>
+      <% toast_classes = if alert_tone
+        "border-rose-200 bg-rose-50 text-rose-950"
+      elsif warning_tone
+        "border-amber-200 bg-amber-50 text-amber-950"
+      else
+        "border-emerald-200 bg-emerald-50 text-emerald-950"
+      end %>
+      <% icon_classes = if alert_tone
+        "bg-rose-100 text-rose-700"
+      elsif warning_tone
+        "bg-amber-100 text-amber-700"
+      else
+        "bg-emerald-100 text-emerald-700"
+      end %>
+      <% title = if alert_tone
+        "Atención"
+      elsif warning_tone
+        "Aviso"
+      else
+        "Listo"
+      end %>
+
+      <section id="<%= type %>"
+        class="pointer-events-auto flex items-start gap-3 rounded-2xl border px-4 py-3 shadow-[0_18px_55px_rgba(15,23,42,.14)] transition duration-200 ease-out <%= toast_classes %>"
+        data-controller="flash-toast"
+        role="<%= alert_tone ? "alert" : "status" %>">
+        <span class="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full <%= icon_classes %>">
+          <% if alert_tone %>
+            <svg aria-hidden="true" class="h-4 w-4" viewBox="0 0 24 24" fill="none">
+              <path d="M12 8v5M12 17h.01" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"/>
+              <path d="M10.4 4.7 3.2 17.1A1.9 1.9 0 0 0 4.8 20h14.4a1.9 1.9 0 0 0 1.6-2.9L13.6 4.7a1.9 1.9 0 0 0-3.2 0Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            </svg>
+          <% else %>
+            <svg aria-hidden="true" class="h-4 w-4" viewBox="0 0 24 24" fill="none">
+              <path d="m5 12 4 4L19 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          <% end %>
+        </span>
+
+        <div class="min-w-0 flex-1">
+          <p class="text-sm font-bold leading-5"><%= title %></p>
+          <p class="mt-0.5 text-sm font-semibold leading-5"><%= message %></p>
+        </div>
+
+        <button type="button"
+          class="-mr-1 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-current opacity-60 transition hover:bg-white/60 hover:opacity-100"
+          data-action="flash-toast#close"
+          aria-label="Cerrar mensaje">
+          <svg aria-hidden="true" class="h-4 w-4" viewBox="0 0 24 24" fill="none">
+            <path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </section>
+    <% end %>
+  </div>
+<% end %>

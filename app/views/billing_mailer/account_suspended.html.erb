@@ -1,0 +1,10 @@
+<% content_for :email_preheader, "Tu cuenta fue pausada temporalmente por pago pendiente." %>
+<% content_for :email_badge, "Facturación" %>
+<% content_for :email_status, "Cuenta pausada" %>
+<% content_for :email_footer_note, "Este email fue enviado por el estado de facturación de tu cuenta Dog Grooming." %>
+
+<h1>Cuenta pausada temporalmente</h1>
+
+<p>Tu cuenta de Dog Grooming fue pausada temporalmente por pago pendiente.</p>
+<p>Podés subir el comprobante para que revisemos el pago y reactivemos el acceso.</p>
+<p><%= link_to "Subir comprobante", @billing_url, class: "email-button button" %></p>

@@ -1,0 +1,109 @@
+name: dog_grooming
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: dog_grooming
+      POSTGRES_PASSWORD: dog_grooming
+      POSTGRES_DB: dog_grooming_development
+    volumes:
+      - dog_grooming_postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5435:5432"
+
+  mailpit:
+    image: axllent/mailpit:v1.21
+    ports:
+      - "1028:1025"
+      - "8028:8025"
+
+  evolution-db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: dog_grooming_evolution
+      POSTGRES_PASSWORD: dog_grooming_evolution
+      POSTGRES_DB: dog_grooming_evolution_development
+    volumes:
+      - dog_grooming_evolution_postgres_data:/var/lib/postgresql/data
+    expose:
+      - "5432"
+
+  evolution-redis:
+    image: redis:7-alpine
+    volumes:
+      - dog_grooming_evolution_redis_data:/data
+    expose:
+      - "6379"
+
+  evolution-api:
+    image: evoapicloud/evolution-api:v2.1.1
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: 8080
+      SERVER_URL: http://evolution-api:8080
+      AUTHENTICATION_API_KEY: ${EVOLUTION_API_KEY:-local_evolution_change_me}
+      DATABASE_PROVIDER: postgresql
+      DATABASE_CONNECTION_URI: postgresql://dog_grooming_evolution:dog_grooming_evolution@evolution-db:5432/dog_grooming_evolution_development
+      CACHE_REDIS_ENABLED: "true"
+      CACHE_REDIS_URI: redis://evolution-redis:6379/0
+      CACHE_REDIS_SAVE_INSTANCES: "true"
+      CONFIG_SESSION_PHONE_CLIENT: Dog Grooming
+      CONFIG_SESSION_PHONE_NAME: Chrome
+      CONFIG_SESSION_PHONE_VERSION: 2.3000.1042527945
+      QRCODE_LIMIT: 30
+      QRCODE_COLOR: "#ffded4"
+    volumes:
+      - dog_grooming_evolution_instances:/evolution/instances
+    expose:
+      - "8080"
+    depends_on:
+      - evolution-db
+      - evolution-redis
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: bash -lc "bundle install && bin/rails db:prepare && bin/rails tailwindcss:build && bin/rails server -b 0.0.0.0"
+    environment:
+      DB_HOST: db
+      DB_USER: dog_grooming
+      DB_PASSWORD: dog_grooming
+      APP_HOST: ${APP_HOST:-localhost:3003}
+      APP_PROTOCOL: ${APP_PROTOCOL:-http}
+      MAILPIT_HOST: mailpit
+      MAILPIT_SMTP_PORT: 1025
+      RAILS_ENV: development
+      WHATSAPP_PROVIDER: ${WHATSAPP_PROVIDER:-evolution}
+      EVOLUTION_API_BASE_URL: ${EVOLUTION_API_BASE_URL:-http://evolution-api:8080}
+      EVOLUTION_API_KEY: ${EVOLUTION_API_KEY:-local_evolution_change_me}
+      EVOLUTION_INSTANCE_NAME: ${EVOLUTION_INSTANCE_NAME:-dog-grooming-main}
+      EVOLUTION_WEBHOOK_SECRET: ${EVOLUTION_WEBHOOK_SECRET:-local_webhook_secret_change_me}
+      # El entorno de desarrollo siempre cobra contra las credenciales de prueba.
+      MERCADO_PAGO_ENV: test
+      MERCADO_PAGO_PUBLIC_KEY: ${MERCADO_PAGO_PUBLIC_KEY:-}
+      MERCADO_PAGO_ACCESS_TOKEN: ${MERCADO_PAGO_ACCESS_TOKEN:-}
+      MERCADO_PAGO_CLIENT_ID: ${MERCADO_PAGO_CLIENT_ID:-}
+      MERCADO_PAGO_CLIENT_SECRET: ${MERCADO_PAGO_CLIENT_SECRET:-}
+      MERCADO_PAGO_TEST_PUBLIC_KEY: ${MERCADO_PAGO_TEST_PUBLIC_KEY:-}
+      MERCADO_PAGO_TEST_ACCESS_TOKEN: ${MERCADO_PAGO_TEST_ACCESS_TOKEN:-}
+      MERCADO_PAGO_TEST_CLIENT_ID: ${MERCADO_PAGO_TEST_CLIENT_ID:-}
+      MERCADO_PAGO_TEST_CLIENT_SECRET: ${MERCADO_PAGO_TEST_CLIENT_SECRET:-}
+      MERCADO_PAGO_WEBHOOK_SECRET: ${MERCADO_PAGO_WEBHOOK_SECRET:-}
+    volumes:
+      - .:/rails
+      - dog_grooming_bundle_data:/usr/local/bundle
+    ports:
+      - "3003:3000"
+    depends_on:
+      - db
+      - mailpit
+      - evolution-api
+
+volumes:
+  dog_grooming_postgres_data:
+  dog_grooming_bundle_data:
+  dog_grooming_evolution_postgres_data:
+  dog_grooming_evolution_redis_data:
+  dog_grooming_evolution_instances:

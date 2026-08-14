@@ -1,0 +1,41 @@
+<% content_for :email_preheader, "Resumen semanal de #{@business.name} en Dog Grooming." %>
+<% content_for :email_badge, "Resumen" %>
+<% content_for :email_status, "Semanal" %>
+<% content_for :email_footer_note, "Este email fue enviado porque tenés activo el resumen semanal de Dog Grooming." %>
+
+<h1>Resumen semanal de Dog Grooming</h1>
+
+<div class="email-card" style="margin-top:24px;">
+  <div class="email-card-inner">
+    <div class="email-card-title">Indicadores de la semana</div>
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top:10px;">
+      <tr class="email-detail-row">
+        <td class="email-detail-label">Turnos realizados</td>
+        <td class="email-detail-value"><%= @completed_count %></td>
+      </tr>
+      <tr class="email-detail-row">
+        <td class="email-detail-label">Cancelaciones</td>
+        <td class="email-detail-value"><%= @cancelled_count %></td>
+      </tr>
+      <tr class="email-detail-row">
+        <td class="email-detail-label">No asistió</td>
+        <td class="email-detail-value"><%= @no_show_count %></td>
+      </tr>
+      <tr>
+        <td class="email-detail-label">Señas registradas</td>
+        <td class="email-detail-value">$<%= @deposit_cents.to_i / 100 %></td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<% if @top_services.any? %>
+  <h2>Servicios más reservados</h2>
+  <ul>
+    <% @top_services.each do |service, count| %>
+      <li><%= service.name %> · <%= count %> turno(s)</li>
+    <% end %>
+  </ul>
+<% end %>
+
+<p><%= link_to "Abrir panel", @url, class: "email-button button" %></p>

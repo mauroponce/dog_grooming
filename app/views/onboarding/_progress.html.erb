@@ -1,0 +1,15 @@
+<div class="mb-5 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+  <% labels = { 1 => "Identidad", 2 => "Horarios", 3 => "Servicio" } %>
+  <div class="mb-3 flex items-center justify-between">
+    <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Paso <%= step %> de 3</p>
+    <p class="text-xs font-semibold text-slate-500"><%= (step * 100 / 3.0).round %>%</p>
+  </div>
+  <div class="h-2 overflow-hidden rounded-full bg-slate-100">
+    <div class="h-full rounded-full bg-slate-950" style="width: <%= step * 100 / 3 %>%"></div>
+  </div>
+  <div class="mt-3 grid grid-cols-3 gap-2 text-xs font-medium">
+    <% labels.each do |number, label| %>
+      <div class="rounded-md px-2 py-1 <%= number == step ? "bg-slate-950 text-white" : "bg-slate-100 text-slate-500" %>"><%= number %>. <%= label %></div>
+    <% end %>
+  </div>
+</div>

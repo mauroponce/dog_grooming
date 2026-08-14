@@ -1,0 +1,44 @@
+<% content_for :email_preheader, "Resumen interno de cobros de Dog Grooming." %>
+<% content_for :email_badge, "Superadmin" %>
+<% content_for :email_status, "Resumen diario" %>
+<% content_for :email_footer_note, "Este email fue enviado al equipo interno de Dog Grooming." %>
+
+<h1>Resumen de cobros Dog Grooming</h1>
+
+<div class="email-card" style="margin-top:24px;">
+  <div class="email-card-inner">
+    <div class="email-card-title">Estado de cobros</div>
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top:10px;">
+      <tr class="email-detail-row">
+        <td class="email-detail-label">Pagos para revisar</td>
+        <td class="email-detail-value"><%= @summary.fetch(:pending_review_count) %></td>
+      </tr>
+      <tr class="email-detail-row">
+        <td class="email-detail-label">Pagos vencidos</td>
+        <td class="email-detail-value"><%= @summary.fetch(:overdue_count) %></td>
+      </tr>
+      <tr class="email-detail-row">
+        <td class="email-detail-label">Restricciones hoy</td>
+        <td class="email-detail-value"><%= @summary.fetch(:restricting_today_count) %></td>
+      </tr>
+      <tr class="email-detail-row">
+        <td class="email-detail-label">Suspensiones hoy</td>
+        <td class="email-detail-value"><%= @summary.fetch(:suspending_today_count) %></td>
+      </tr>
+      <tr class="email-detail-row">
+        <td class="email-detail-label">Trials por vencer</td>
+        <td class="email-detail-value"><%= @summary.fetch(:trials_ending_count) %></td>
+      </tr>
+      <tr class="email-detail-row">
+        <td class="email-detail-label">MRR activo</td>
+        <td class="email-detail-value"><%= @summary.fetch(:mrr_label) %></td>
+      </tr>
+      <tr>
+        <td class="email-detail-label">Monto vencido</td>
+        <td class="email-detail-value"><%= @summary.fetch(:overdue_label) %></td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<p><%= link_to "Abrir superadmin", @super_admin_url, class: "email-button button" %></p>

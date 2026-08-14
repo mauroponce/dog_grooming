@@ -1,0 +1,161 @@
+<% content_for :title, "Revisión de seña" %>
+
+<% status_tone_classes = {
+  "confirmed" => "bg-emerald-50 text-emerald-700 ring-emerald-200",
+  "pending_deposit_review" => "bg-amber-50 text-amber-800 ring-amber-200",
+  "pending_deposit" => "bg-rose-50 text-rose-700 ring-rose-200",
+  "deposit_rejected" => "bg-rose-50 text-rose-700 ring-rose-200",
+  "canceled" => "bg-zinc-100 text-zinc-600 ring-zinc-200"
+} %>
+<% review_open = @appointment.pending_deposit_review? || @appointment.deposit_submitted? %>
+<% can_review = review_open && !@appointment.confirmed? && !@appointment.canceled? %>
+<% receipt = @appointment.deposit_receipt %>
+
+<div class="min-h-screen bg-[#F4F4F5] px-4 pb-36 pt-5 text-zinc-950 sm:px-6 sm:py-10">
+  <div class="mx-auto grid max-w-5xl gap-5 lg:grid-cols-[1fr_22rem] lg:items-start">
+    <main class="grid gap-5">
+      <header class="rounded-[2rem] border border-zinc-200 bg-white p-5 shadow-[0_24px_70px_rgba(24,24,27,0.08)] sm:p-7">
+        <div class="flex items-start justify-between gap-4">
+          <div class="flex min-w-0 items-center gap-3">
+            <div class="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-[#111113] text-sm font-bold text-white shadow-lg shadow-zinc-950/15">
+              <%= @business.initials %>
+            </div>
+            <div class="min-w-0">
+              <p class="text-[11px] font-bold uppercase tracking-[.22em] text-brand-700">Revisión móvil</p>
+              <h1 class="mt-1 truncate text-2xl font-bold tracking-tight sm:text-4xl">Comprobante de seña</h1>
+            </div>
+          </div>
+
+          <span class="shrink-0 rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[.08em] ring-1 <%= status_tone_classes.fetch(@appointment.status, "bg-zinc-100 text-zinc-600 ring-zinc-200") %>">
+            <%= appointment_status_full_label(@appointment) %>
+          </span>
+        </div>
+
+        <div class="mt-6 grid gap-3 rounded-[1.5rem] bg-zinc-50 p-4">
+          <div>
+            <p class="text-xs font-bold uppercase tracking-[.14em] text-zinc-400">Cliente</p>
+            <p class="mt-1 text-2xl font-bold"><%= @appointment.customer_name %></p>
+            <% if @appointment.customer_phone.present? %>
+              <p class="mt-1 text-sm font-semibold text-zinc-500"><%= @appointment.customer_phone %></p>
+            <% end %>
+          </div>
+
+          <dl class="grid gap-3 border-t border-zinc-200 pt-4 text-sm sm:grid-cols-2">
+            <div>
+              <dt class="font-bold text-zinc-500">Servicio</dt>
+              <dd class="mt-1 font-bold text-zinc-950"><%= @appointment.service.name %></dd>
+            </div>
+            <div>
+              <dt class="font-bold text-zinc-500">Turno</dt>
+              <dd class="mt-1 font-bold text-zinc-950"><%= @appointment.customer_starts_at_label %></dd>
+            </div>
+            <div>
+              <dt class="font-bold text-zinc-500">Seña</dt>
+              <dd class="mt-1 font-bold text-zinc-950"><%= @appointment.formatted_deposit_amount %></dd>
+            </div>
+            <div>
+              <dt class="font-bold text-zinc-500">Profesional</dt>
+              <dd class="mt-1 font-bold text-zinc-950"><%= @appointment.employee_membership&.name.presence || "Sin asignar" %></dd>
+            </div>
+          </dl>
+        </div>
+      </header>
+
+      <section class="overflow-hidden rounded-[2rem] border border-zinc-200 bg-white shadow-[0_24px_70px_rgba(24,24,27,0.08)]">
+        <div class="border-b border-zinc-100 p-5 sm:p-7">
+          <p class="text-[11px] font-bold uppercase tracking-[.22em] text-brand-700">Comprobante</p>
+          <h2 class="mt-1 text-2xl font-bold tracking-tight">Revisá la imagen antes de confirmar</h2>
+          <p class="mt-2 max-w-2xl text-sm font-semibold leading-6 text-zinc-500">La acción confirma el turno en Dog Grooming y después abre WhatsApp con el mensaje listo para enviarle al tutor.</p>
+        </div>
+
+        <div class="p-5 sm:p-7">
+          <% if receipt.attached? %>
+            <% if receipt.blob.content_type.to_s.start_with?("image/") %>
+              <%= link_to url_for(receipt), target: "_blank", rel: "noopener", class: "block overflow-hidden rounded-[1.5rem] border border-zinc-200 bg-zinc-50" do %>
+                <%= image_tag receipt, alt: "Comprobante de #{@appointment.customer_name}", class: "mx-auto max-h-[72vh] w-full object-contain" %>
+              <% end %>
+              <%= link_to "Abrir imagen completa", url_for(receipt), target: "_blank", rel: "noopener", class: "mt-3 inline-flex h-11 items-center rounded-full border border-zinc-200 bg-white px-4 text-sm font-bold text-zinc-700 shadow-sm hover:bg-zinc-50" %>
+            <% else %>
+              <div class="rounded-[1.5rem] border border-zinc-200 bg-zinc-50 p-6 text-center">
+                <p class="text-lg font-bold">Comprobante en PDF</p>
+                <p class="mt-2 text-sm font-semibold text-zinc-500">Abrilo en otra pestaña para revisarlo.</p>
+                <%= link_to "Abrir PDF", url_for(receipt), target: "_blank", rel: "noopener", class: "mt-4 inline-flex h-12 items-center justify-center rounded-full bg-zinc-950 px-6 text-sm font-bold text-white shadow-lg shadow-zinc-950/15 hover:bg-zinc-800" %>
+              </div>
+            <% end %>
+          <% else %>
+            <p class="rounded-[1.5rem] border border-amber-200 bg-amber-50 p-5 text-sm font-bold text-amber-900">Este turno todavía no tiene comprobante adjunto.</p>
+          <% end %>
+        </div>
+      </section>
+
+      <% if can_review %>
+        <section class="rounded-[2rem] border border-rose-100 bg-white p-5 shadow-[0_24px_70px_rgba(24,24,27,0.06)] sm:p-7">
+          <details>
+            <summary class="cursor-pointer text-sm font-bold text-rose-600">Rechazar o pedir otro comprobante</summary>
+            <%= form_with url: reject_deposit_review_path(params[:token]), class: "mt-4 grid gap-3", data: { turbo: false } do %>
+              <label class="grid gap-2 text-sm font-bold">
+                Motivo para la clienta
+                <%= text_area_tag :reason, nil, rows: 4, placeholder: "Ej. No se llega a leer el comprobante o el monto no coincide.", class: "w-full resize-none rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-100" %>
+              </label>
+              <%= submit_tag "Rechazar y abrir WhatsApp", class: "inline-flex h-12 cursor-pointer items-center justify-center rounded-full border border-rose-200 bg-rose-50 px-5 text-sm font-bold text-rose-700 transition hover:bg-rose-100" %>
+            <% end %>
+          </details>
+        </section>
+      <% elsif @appointment.confirmed? && @confirm_whatsapp_url.present? %>
+        <section class="rounded-[2rem] border border-emerald-200 bg-emerald-50 p-5 text-sm font-bold text-emerald-800 sm:p-7">
+          El turno ya está confirmado. Si necesitás reenviar el aviso, usá el botón de WhatsApp.
+        </section>
+      <% elsif @appointment.deposit_status == "rejected" && @reject_whatsapp_url.present? %>
+        <section class="rounded-[2rem] border border-rose-200 bg-rose-50 p-5 text-sm font-bold text-rose-800 sm:p-7">
+          El comprobante fue rechazado. Podés reenviar el aviso por WhatsApp.
+        </section>
+      <% end %>
+    </main>
+
+    <aside class="rounded-[2rem] border border-zinc-200 bg-white p-5 shadow-[0_24px_70px_rgba(24,24,27,0.08)] lg:sticky lg:top-6">
+      <p class="text-[11px] font-bold uppercase tracking-[.22em] text-brand-700">Resumen</p>
+      <div class="mt-4 grid gap-4 text-sm">
+        <div class="flex items-start justify-between gap-4 border-b border-zinc-100 pb-4">
+          <span class="font-bold text-zinc-500">Centro</span>
+          <span class="text-right font-bold"><%= @business.name %></span>
+        </div>
+        <div class="flex items-start justify-between gap-4 border-b border-zinc-100 pb-4">
+          <span class="font-bold text-zinc-500">Cliente</span>
+          <span class="text-right font-bold"><%= @appointment.customer_name %></span>
+        </div>
+        <div class="flex items-start justify-between gap-4 border-b border-zinc-100 pb-4">
+          <span class="font-bold text-zinc-500">Fecha</span>
+          <span class="text-right font-bold"><%= @appointment.customer_starts_at_label %></span>
+        </div>
+        <div class="flex items-start justify-between gap-4">
+          <span class="font-bold text-zinc-500">Saldo restante</span>
+          <span class="text-right font-bold"><%= @appointment.formatted_remaining_balance %></span>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="fixed inset-x-0 bottom-0 z-[9999] border-t border-zinc-200 bg-white/95 px-4 py-3 shadow-[0_-24px_70px_rgba(24,24,27,0.14)] backdrop-blur sm:px-6">
+    <div class="mx-auto flex max-w-5xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <p class="text-xs font-bold leading-5 text-zinc-500">
+        <% if can_review %>
+          Confirmá solo si el comprobante coincide con la seña.
+        <% else %>
+          Estado actual: <span class="text-zinc-950"><%= appointment_status_full_label(@appointment) %></span>
+        <% end %>
+      </p>
+
+      <div class="grid gap-2 sm:min-w-80">
+        <% if can_review %>
+          <%= button_to "Confirmar turno y abrir WhatsApp", confirm_deposit_review_path(params[:token]), method: :post, form: { data: { turbo: false } }, class: "inline-flex h-12 w-full cursor-pointer items-center justify-center rounded-full bg-emerald-600 px-5 text-sm font-bold text-white shadow-lg shadow-emerald-900/20 transition hover:bg-emerald-700" %>
+        <% elsif @appointment.confirmed? && @confirm_whatsapp_url.present? %>
+          <%= link_to "Abrir WhatsApp de confirmación", @confirm_whatsapp_url, class: "inline-flex h-12 w-full items-center justify-center rounded-full bg-zinc-950 px-5 text-sm font-bold text-white shadow-lg shadow-zinc-950/15 transition hover:bg-zinc-800", target: "_blank", rel: "noopener" %>
+        <% elsif @appointment.deposit_status == "rejected" && @reject_whatsapp_url.present? %>
+          <%= link_to "Abrir WhatsApp al cliente", @reject_whatsapp_url, class: "inline-flex h-12 w-full items-center justify-center rounded-full bg-zinc-950 px-5 text-sm font-bold text-white shadow-lg shadow-zinc-950/15 transition hover:bg-zinc-800", target: "_blank", rel: "noopener" %>
+        <% else %>
+          <%= link_to "Abrir calendario", admin_appointment_path(@appointment), class: "inline-flex h-12 w-full items-center justify-center rounded-full bg-zinc-950 px-5 text-sm font-bold text-white shadow-lg shadow-zinc-950/15 transition hover:bg-zinc-800" %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

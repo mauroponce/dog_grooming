@@ -1,0 +1,48 @@
+# examples:
+#   periodic_cleanup:
+#     class: CleanSoftDeletedRecordsJob
+#     queue: background
+#     args: [ 1000, { batch_size: 500 } ]
+#     schedule: every hour
+#   periodic_cleanup_with_command:
+#     command: "SoftDeletedRecord.due.delete_all"
+#     priority: 2
+#     schedule: at 5am every day
+
+production:
+  clear_solid_queue_finished_jobs:
+    command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
+    schedule: every hour at minute 12
+  send_due_appointment_reminders:
+    class: SendDueAppointmentRemindersJob
+    schedule: every 15 minutes
+  summarize_ai_chat_conversations:
+    class: SummarizeAiChatConversationsJob
+    schedule: every day at 8pm
+  generate_follow_ups:
+    class: GenerateFollowUpsJob
+    schedule: every day at 7:30am
+  send_business_daily_digest:
+    class: SendBusinessDailyDigestJob
+    schedule: every day at 8am
+  billing_daily_processor:
+    class: Billing::DailyJob
+    schedule: every day at 8:30am
+  send_business_weekly_digest:
+    class: SendBusinessWeeklyDigestJob
+    schedule: every monday at 8:30am
+  sales_generate_opportunities:
+    class: Sales::GenerateOpportunitiesJob
+    schedule: every day at 7am
+  booking_intents_expire:
+    class: BookingIntents::ExpireJob
+    schedule: every 30 minutes
+  sales_daily_digest:
+    class: Sales::DailyDigestJob
+    schedule: every day at 8:15am
+  sales_weekly_digest:
+    class: Sales::WeeklyDigestJob
+    schedule: every monday at 8:45am
+  sales_expire_old_opportunities:
+    class: Sales::ExpireOldOpportunitiesJob
+    schedule: every day at 11pm

@@ -1,0 +1,10 @@
+Recordatorio de tu turno
+
+Hola <%= @appointment.customer_name %>, te recordamos tu turno en <%= @business.name %>.
+
+Servicio: <%= @appointment.service.name %>
+Turno: <%= CustomerDateFormatter.datetime_label(@appointment.starts_at) %>
+Ubicación: <%= @business.public_location %>
+
+Agregar a Google Calendar: <%= @google_calendar_url %>
+Ver o reprogramar mi turno: <%= @booking_url %>

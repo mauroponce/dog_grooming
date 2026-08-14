@@ -1,0 +1,54 @@
+test:
+  service: Disk
+  root: <%= Rails.root.join("tmp/storage") %>
+
+local:
+  service: Disk
+  root: <%= Rails.root.join("storage") %>
+
+# Use bin/rails credentials:edit to set the AWS secrets (as aws:access_key_id|secret_access_key)
+# amazon:
+#   service: S3
+#   access_key_id: <%= Rails.application.credentials.dig(:aws, :access_key_id) %>
+#   secret_access_key: <%= Rails.application.credentials.dig(:aws, :secret_access_key) %>
+#   region: us-east-1
+#   bucket: your_own_bucket-<%= Rails.env %>
+
+# Remember not to checkin your GCS keyfile to a repository
+# google:
+#   service: GCS
+#   project: your_project
+#   credentials: <%= Rails.root.join("path/to/gcs.keyfile") %>
+#   bucket: your_own_bucket-<%= Rails.env %>
+
+# mirror:
+#   service: Mirror
+#   primary: local
+#   mirrors: [ amazon, google, microsoft ]
+
+r2:
+  service: S3
+  access_key_id: <%= ENV["CLOUDFLARE_ACCESS_KEY_ID"].presence || ENV["R2_ACCESS_KEY_ID"] %>
+  secret_access_key: <%= ENV["CLOUDFLARE_SECRET_ACCESS_KEY"].presence || ENV["R2_SECRET_ACCESS_KEY"] %>
+  region: auto
+  bucket: <%= ENV["CLOUDFLARE_R2_BUCKET"].presence || ENV["R2_BUCKET"].presence || "dog-grooming" %>
+  endpoint: <%= ENV["CLOUDFLARE_R2_ENDPOINT"].presence || ENV["R2_ENDPOINT"].presence || "https://#{ENV["CLOUDFLARE_ACCOUNT_ID"].presence || "3d50f50186c8c9cfd2dbe6157bdb82cf"}.r2.cloudflarestorage.com" %>
+  force_path_style: true
+  request_checksum_calculation: when_required
+  response_checksum_validation: when_required
+
+service_images:
+<% if Rails.env.test? || (Rails.env.development? && ENV["CLOUDFLARE_R2_SERVICE_IMAGES_BUCKET"].blank? && ENV["SERVICE_IMAGES_BUCKET"].blank?) %>
+  service: Disk
+  root: <%= Rails.root.join(Rails.env.test? ? "tmp/storage/service_images" : "storage/service_images") %>
+<% else %>
+  service: S3
+  access_key_id: <%= ENV["CLOUDFLARE_ACCESS_KEY_ID"].presence || ENV["R2_ACCESS_KEY_ID"] %>
+  secret_access_key: <%= ENV["CLOUDFLARE_SECRET_ACCESS_KEY"].presence || ENV["R2_SECRET_ACCESS_KEY"] %>
+  region: auto
+  bucket: <%= ENV["CLOUDFLARE_R2_SERVICE_IMAGES_BUCKET"].presence || ENV["SERVICE_IMAGES_BUCKET"].presence || "dog-grooming-service-images" %>
+  endpoint: <%= ENV["CLOUDFLARE_R2_ENDPOINT"].presence || ENV["R2_ENDPOINT"].presence || "https://#{ENV["CLOUDFLARE_ACCOUNT_ID"].presence || "3d50f50186c8c9cfd2dbe6157bdb82cf"}.r2.cloudflarestorage.com" %>
+  force_path_style: true
+  request_checksum_calculation: when_required
+  response_checksum_validation: when_required
+<% end %>

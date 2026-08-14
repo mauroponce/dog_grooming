@@ -1,0 +1,68 @@
+<% detail_images = [] %>
+<% detail_images << service.cover_image if service.cover_image.attached? %>
+<% detail_images.concat(service.service_images.to_a) %>
+
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/45 px-4 py-4 backdrop-blur-[1px] sm:px-6 sm:py-6" data-controller="public-service-gallery" data-public-service-gallery-title-value="<%= service.name %>" data-public-service-detail-modal>
+  <div class="flex h-[560px] w-full max-w-3xl max-h-[calc(100dvh-32px)] flex-col overflow-hidden rounded-[30px] bg-white shadow-2xl sm:max-h-[calc(100dvh-48px)]" data-public-service-detail-dialog>
+    <header class="flex shrink-0 items-start justify-between gap-4 border-b border-zinc-100 px-6 py-5 sm:px-8">
+      <h2 class="min-w-0 text-2xl font-bold tracking-[-.03em] text-zinc-950 sm:text-3xl"><%= service.name %></h2>
+      <%= link_to close_path, class: "grid h-10 w-10 shrink-0 place-items-center rounded-full text-zinc-950 transition hover:bg-zinc-100", aria: { label: "Cerrar" } do %>
+        <%= public_icon("close", css: "h-5 w-5") %>
+      <% end %>
+    </header>
+
+    <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-5 sm:px-8">
+      <p class="whitespace-pre-line text-base leading-7 text-zinc-950" data-public-service-description><%= service.description.presence || "Servicio disponible para reservar online." %></p>
+
+      <% if detail_images.any? %>
+        <div class="mt-7 flex gap-3 overflow-x-auto pb-1" aria-label="Imágenes del servicio">
+          <% detail_images.each_with_index do |image, index| %>
+            <button
+                type="button"
+                class="h-24 w-24 shrink-0 overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100 transition hover:border-zinc-950 focus:outline-none focus:ring-4 focus:ring-brand-100 sm:h-28 sm:w-28"
+                data-public-service-gallery-target="thumbnail"
+                data-public-service-gallery-url="<%= url_for(image) %>"
+                data-public-service-gallery-alt="<%= "#{service.name} - imagen #{index + 1}" %>"
+                data-public-service-gallery-index-param="<%= index %>"
+                data-action="public-service-gallery#open"
+              aria-label="Ver imagen <%= index + 1 %> de <%= service.name %>">
+              <%= image_tag image.variant(resize_to_fill: [ 224, 224 ]), alt: "#{service.name} - imagen #{index + 1}", class: "h-full w-full object-cover" %>
+            </button>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+
+    <footer class="flex shrink-0 flex-col gap-4 border-t border-zinc-100 px-6 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-8">
+      <div>
+        <p class="text-lg font-bold text-zinc-950"><%= public_service_price_ars(service) %></p>
+        <p class="mt-1 text-sm font-semibold text-zinc-500"><%= public_service_duration_label(service.duration_minutes) %></p>
+      </div>
+      <%= link_to "Reservar", reserve_path, class: "inline-flex h-12 w-full items-center justify-center rounded-full bg-zinc-950 px-8 text-sm font-bold text-white transition hover:bg-zinc-800 sm:w-auto", aria: { label: "Reservar #{service.name}" } %>
+    </footer>
+  </div>
+
+  <% if detail_images.any? %>
+    <div class="fixed inset-0 z-[60] hidden bg-white/95 px-4 py-5 backdrop-blur" data-public-service-gallery-target="modal" data-action="click->public-service-gallery#closeOnBackdrop">
+      <button type="button" class="absolute right-4 top-5 z-30 grid h-11 w-11 place-items-center rounded-full bg-zinc-950 text-2xl leading-none text-white shadow-lg transition hover:bg-zinc-800 focus:outline-none focus:ring-4 focus:ring-brand-200" data-action="public-service-gallery#close" aria-label="Cerrar galería">
+        <span aria-hidden="true">×</span>
+      </button>
+      <div class="relative mx-auto flex h-full max-w-7xl flex-col">
+        <div class="flex min-w-0 items-center gap-4 pr-16">
+          <h3 class="min-w-0 flex-1 truncate text-lg font-bold text-zinc-950 sm:text-xl" data-public-service-gallery-target="title"><%= service.name %></h3>
+          <p class="shrink-0 rounded-full bg-zinc-100 px-4 py-2 text-sm font-bold text-zinc-950" data-public-service-gallery-target="count">1/<%= detail_images.size %></p>
+        </div>
+
+        <div class="relative mt-6 grid min-h-0 flex-1 place-items-center rounded-[28px] border border-zinc-200 bg-zinc-50 p-4 shadow-sm sm:p-8">
+          <button type="button" class="absolute left-3 top-1/2 z-10 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-zinc-200 bg-white text-zinc-950 shadow-lg transition hover:border-zinc-950 disabled:pointer-events-none sm:left-6" data-public-service-gallery-target="previousButton" data-action="public-service-gallery#previous" aria-label="Imagen anterior">
+            <%= public_icon("arrow_left", css: "h-5 w-5") %>
+          </button>
+          <img src="" alt="" class="max-h-[72vh] max-w-full rounded-2xl object-contain shadow-sm" data-public-service-gallery-target="image">
+          <button type="button" class="absolute right-3 top-1/2 z-10 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-zinc-200 bg-white text-zinc-950 shadow-lg transition hover:border-zinc-950 disabled:pointer-events-none sm:right-6" data-public-service-gallery-target="nextButton" data-action="public-service-gallery#next" aria-label="Imagen siguiente">
+            <%= public_icon("arrow_right", css: "h-5 w-5") %>
+          </button>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>

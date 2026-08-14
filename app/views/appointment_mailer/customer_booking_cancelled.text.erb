@@ -1,0 +1,18 @@
+Tu turno fue cancelado
+
+<% if @cancelled_by_business %>
+Hola <%= @appointment.customer_name %>, el equipo de <%= @business.name %> canceló tu turno.
+
+Motivo de la cancelación: <%= @appointment.cancellation_reason %>
+
+Alguien del equipo se va a estar comunicando con vos a la brevedad para ayudarte con los próximos pasos.
+<% else %>
+Hola <%= @appointment.customer_name %>, confirmamos la cancelación de tu turno en <%= @business.name %>.
+<% end %>
+
+Servicio: <%= @appointment.service.name %>
+Fecha y hora: <%= CustomerDateFormatter.datetime_label(@appointment.starts_at) %>
+
+<% unless @cancelled_by_business %>
+Si querés reservar otro horario, ingresá nuevamente a la página de <%= @business.name %>.
+<% end %>

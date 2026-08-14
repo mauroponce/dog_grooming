@@ -1,0 +1,9 @@
+Tu turno está confirmado
+
+Hola <%= @appointment.customer_name %>, tu turno en <%= @business.name %> quedó confirmado.
+
+Servicio: <%= @appointment.service.name %>
+Turno: <%= CustomerDateFormatter.datetime_label(@appointment.starts_at) %>
+
+Agregar a Google Calendar: <%= @google_calendar_url %>
+Ver o reprogramar mi turno: <%= @booking_url %>

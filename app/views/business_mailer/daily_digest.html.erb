@@ -1,0 +1,45 @@
+<% content_for :email_preheader, "Resumen operativo de hoy para #{@business.name}." %>
+<% content_for :email_badge, "Resumen" %>
+<% content_for :email_status, "Hoy" %>
+<% content_for :email_footer_note, "Este email fue enviado porque tenés activo el resumen diario de Dog Grooming." %>
+
+<h1>Resumen de hoy en Dog Grooming</h1>
+
+<div class="email-card" style="margin-top:24px;">
+  <div class="email-card-inner">
+    <div class="email-card-title">Indicadores principales</div>
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top:10px;">
+      <tr class="email-detail-row">
+        <td class="email-detail-label">Turnos de hoy</td>
+        <td class="email-detail-value"><%= @appointments.size %></td>
+      </tr>
+      <tr class="email-detail-row">
+        <td class="email-detail-label">Comprobantes pendientes</td>
+        <td class="email-detail-value"><%= @pending_proofs.size %></td>
+      </tr>
+      <tr class="email-detail-row">
+        <td class="email-detail-label">Seguimientos pendientes</td>
+        <td class="email-detail-value"><%= @follow_ups.size %></td>
+      </tr>
+      <tr class="email-detail-row">
+        <td class="email-detail-label">Lista de espera activa</td>
+        <td class="email-detail-value"><%= @waitlist_entries.size %></td>
+      </tr>
+      <tr>
+        <td class="email-detail-label">Huecos para ofrecer</td>
+        <td class="email-detail-value"><%= @gaps.size %></td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<% if @appointments.any? %>
+  <h2>Agenda</h2>
+  <ul>
+    <% @appointments.first(8).each do |appointment| %>
+      <li><%= CustomerDateFormatter.time_label(appointment.starts_at) %> · <%= appointment.customer_name %> · <%= appointment.service.name %></li>
+    <% end %>
+  </ul>
+<% end %>
+
+<p><%= link_to "Abrir panel", @url, class: "email-button button" %></p>

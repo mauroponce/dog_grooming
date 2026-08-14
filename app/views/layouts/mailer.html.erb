@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="x-apple-disable-message-reformatting">
+    <style>
+      @media only screen and (max-width: 640px) {
+        .container { width: 100% !important; max-width: 100% !important; }
+        .px { padding-left: 20px !important; padding-right: 20px !important; }
+        .hero-title { font-size: 30px !important; line-height: 36px !important; }
+        .stack { display: block !important; width: 100% !important; padding: 0 0 12px 0 !important; }
+        .button { display: block !important; width: 100% !important; text-align: center !important; box-sizing: border-box !important; }
+      }
+
+      .email-content h1 {
+        margin: 18px 0 0 0;
+        font-size: 38px;
+        line-height: 44px;
+        letter-spacing: -.04em;
+        font-weight: 700;
+        color: #111114;
+      }
+
+      .email-content h2 {
+        margin: 28px 0 12px 0;
+        font-size: 20px;
+        line-height: 26px;
+        letter-spacing: -.02em;
+        font-weight: 700;
+        color: #111114;
+      }
+
+      .email-content p {
+        margin: 14px 0 0 0;
+        font-size: 16px;
+        line-height: 26px;
+        font-weight: 600;
+        color: #52525b;
+      }
+
+      .email-content strong {
+        color: #111114;
+        font-weight: 700;
+      }
+
+      .email-content ul {
+        margin: 16px 0 0 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .email-content li {
+        margin: 0 0 8px 0;
+        border: 1px solid #eeeeef;
+        border-radius: 14px;
+        background: #ffffff;
+        padding: 12px 14px;
+        font-size: 14px;
+        line-height: 21px;
+        font-weight: 700;
+        color: #52525b;
+      }
+
+      .email-button {
+        display: inline-block;
+        background: #111114;
+        color: #ffffff !important;
+        text-decoration: none;
+        padding: 15px 22px;
+        border-radius: 16px;
+        font-size: 15px;
+        line-height: 18px;
+        font-weight: 700;
+      }
+
+      .email-link {
+        color: #A63826 !important;
+        text-decoration: underline;
+        font-weight: 700;
+      }
+
+      .email-card {
+        border: 1px solid #e5e7eb;
+        border-radius: 22px;
+        background: #fafafa;
+      }
+
+      .email-card-inner {
+        padding: 22px;
+      }
+
+      .email-card-title {
+        font-size: 14px;
+        line-height: 18px;
+        font-weight: 700;
+        color: #111114;
+      }
+
+      .email-note {
+        margin-top: 16px;
+        padding: 14px 16px;
+        border-radius: 16px;
+        background: #ffded4;
+        color: #A63826;
+        font-size: 13px;
+        line-height: 20px;
+        font-weight: 700;
+      }
+
+      .email-detail-row {
+        border-bottom: 1px solid #eeeeef;
+      }
+
+      .email-detail-label {
+        padding: 12px 0;
+        font-size: 12px;
+        line-height: 18px;
+        font-weight: 700;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        color: #71717a;
+      }
+
+      .email-detail-value {
+        padding: 12px 0;
+        font-size: 14px;
+        line-height: 20px;
+        font-weight: 700;
+        color: #111114;
+        text-align: right;
+      }
+
+      .email-feature {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 14px;
+        border: 1px solid #eeeeef;
+      }
+
+      .email-feature-icon {
+        font-size: 20px;
+        line-height: 24px;
+      }
+
+      .email-feature-title {
+        margin-top: 8px;
+        font-size: 13px;
+        line-height: 18px;
+        font-weight: 700;
+        color: #111114;
+      }
+
+      .email-feature-copy {
+        margin-top: 4px;
+        font-size: 12px;
+        line-height: 18px;
+        font-weight: 600;
+        color: #71717a;
+      }
+    </style>
+  </head>
+
+  <% preheader = content_for?(:email_preheader) ? yield(:email_preheader).to_s : message.subject.to_s %>
+  <% badge = content_for?(:email_badge) ? yield(:email_badge).to_s : "Dog Grooming" %>
+  <% status = content_for?(:email_status) ? yield(:email_status).to_s : "Notificación" %>
+  <% footer_note = content_for?(:email_footer_note) ? yield(:email_footer_note).to_s : "Este email fue enviado por Dog Grooming." %>
+  <% logo_path = "/icon.png" %>
+  <% logo_url = logo_path.start_with?("http") ? logo_path : "#{AppUrl.base_url}#{logo_path}" %>
+
+  <body style="margin:0; padding:0; background:#ffded4; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif; color:#111114;">
+    <div style="display:none; max-height:0; overflow:hidden; opacity:0; color:transparent;">
+      <%= strip_tags(preheader).squish %>
+    </div>
+
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#ffded4; margin:0; padding:0;">
+      <tr>
+        <td align="center" style="padding:32px 14px;">
+          <table role="presentation" class="container" width="620" cellspacing="0" cellpadding="0" border="0" style="width:620px; max-width:620px; background:#ffffff; border-radius:28px; overflow:hidden; box-shadow:0 22px 60px rgba(17,17,20,.10);">
+            <tr>
+              <td style="background:#111114; padding:26px 32px;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                  <tr>
+                    <td align="left">
+                      <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                        <tr>
+                          <td style="width:44px; height:44px;">
+                            <img src="<%= logo_url %>" width="44" height="44" alt="Dog Grooming" style="display:block; width:44px; height:44px; border:0; border-radius:14px; object-fit:cover; box-shadow:0 10px 26px rgba(255, 222, 212, .32);">
+                          </td>
+                          <td style="padding-left:12px;">
+                            <div style="font-size:18px; line-height:22px; font-weight:700; color:#ffffff;">Dog Grooming</div>
+                            <div style="font-size:12px; line-height:18px; font-weight:600; color:#a1a1aa;">Reservas, señas y agenda online</div>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                    <td align="right" style="font-size:12px; line-height:18px; font-weight:700; color:#FFEDE8;">
+                      <%= status %>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <tr>
+              <td class="px email-content" style="padding:38px 42px 34px 42px;">
+                <div style="display:inline-block; padding:7px 11px; border-radius:999px; background:#ffded4; color:#A63826; font-size:12px; line-height:16px; font-weight:700; letter-spacing:.08em; text-transform:uppercase;">
+                  <%= badge %>
+                </div>
+
+                <%= yield %>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding:24px 42px 34px 42px; background:#fafafa; border-top:1px solid #eeeeef;">
+                <p style="margin:0; font-size:13px; line-height:21px; font-weight:700; color:#52525b;">
+                  Equipo Dog Grooming
+                </p>
+                <p style="margin:6px 0 0 0; font-size:12px; line-height:20px; font-weight:600; color:#71717a;">
+                  <%= footer_note %>
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

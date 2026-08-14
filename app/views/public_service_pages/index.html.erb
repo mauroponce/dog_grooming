@@ -1,0 +1,6 @@
+<% content_for :title, "#{@business.name} · Servicios" %>
+<% content_for :full_width, true %>
+<% content_for :head, landing_head_tags(@landing) %>
+
+<%= render "public_booking/full_website", landing: @landing, business: @business %>
+<%= render "public_booking/chat_widget" if @business.chatbot_enabled? && @business.ai_chat_available? %>

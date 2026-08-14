@@ -1,0 +1,13 @@
+Resumen semanal de Dog Grooming
+
+Turnos realizados: <%= @completed_count %>
+Cancelaciones: <%= @cancelled_count %>
+No asistió: <%= @no_show_count %>
+Señas registradas: $<%= @deposit_cents.to_i / 100 %>
+
+Servicios más reservados:
+<% @top_services.each do |service, count| %>
+- <%= service.name %> · <%= count %> turno(s)
+<% end %>
+
+Panel: <%= @url %>

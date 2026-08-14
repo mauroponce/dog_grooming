@@ -1,0 +1,8 @@
+Nueva clienta en lista de espera
+
+Clienta: <%= @entry.client_name %>
+WhatsApp: <%= @entry.client_phone %>
+Servicio: <%= @entry.service.name %>
+Fecha preferida: <%= CustomerDateFormatter.date_label(@entry.desired_date) %>
+
+Panel: <%= @url %>

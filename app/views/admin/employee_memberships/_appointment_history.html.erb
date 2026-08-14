@@ -1,0 +1,45 @@
+<% appointments = local_assigns.fetch(:appointments) %>
+<% pagy = local_assigns.fetch(:pagy) %>
+<% appointment_date_label = local_assigns.fetch(:appointment_date_label) %>
+<% cancellation_timestamp_label = local_assigns.fetch(:cancellation_timestamp_label) %>
+
+<% if appointments.any? %>
+  <div class="team-appointments">
+    <% appointments.each do |appointment| %>
+      <% appointment_details = capture do %>
+        <span class="team-appointment-main">
+          <strong><%= appointment.service&.name || "Servicio sin nombre" %></strong>
+          <span><%= appointment.customer_name %> · <%= appointment_date_label.call(appointment.starts_at) %></span>
+          <% if appointment.canceled? %>
+            <span class="team-appointment-cancellation">Cancelado por <%= appointment.cancellation_actor_label %><%= " · #{cancellation_timestamp_label.call(appointment.canceled_at)}" if appointment.canceled_at.present? %></span>
+            <% if appointment.cancellation_reason.present? %>
+              <span class="team-appointment-cancellation-note">Nota: <%= appointment.cancellation_reason %></span>
+            <% end %>
+          <% end %>
+        </span>
+        <span class="team-appointment-status team-appointment-status--<%= Appointment.status_tone(appointment.status) %>"><%= appointment.status_label %></span>
+      <% end %>
+      <% if appointment.canceled? %>
+        <article class="team-appointment team-appointment--canceled"><%= appointment_details %></article>
+      <% else %>
+        <%= link_to admin_calendar_path(date: appointment.starts_at.to_date.iso8601, t: appointment.short_uuid), class: "team-appointment" do %>
+          <%= appointment_details %>
+        <% end %>
+      <% end %>
+    <% end %>
+  </div>
+
+  <%= render "admin/shared/pagination",
+    pagy: pagy,
+    item_name: "turnos",
+    aria_label: "Paginación de turnos del profesional",
+    turbo_frame: "employee_appointment_history",
+    pagination_params: { section: "appointments" } %>
+<% else %>
+  <div class="team-appointments-empty">
+    <div>
+      <strong>Todavía no tiene turnos asignados</strong>
+      <p>Las reservas de este profesional aparecerán en esta sección.</p>
+    </div>
+  </div>
+<% end %>

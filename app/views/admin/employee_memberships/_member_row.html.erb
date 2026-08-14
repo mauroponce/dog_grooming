@@ -1,0 +1,66 @@
+<% avatar_color = employee.calendar_color.presence || "#ffded4" %>
+<% avatar_state_class = employee.pending? ? "is-pending" : employee.archived? ? "is-archived" : "" %>
+<% status_state_class = employee.pending? ? "is-pending" : employee.archived? ? "is-archived" : "is-active" %>
+<% status_label = employee.owner_profile? ? "Propietario" : team_status_label(employee) %>
+<% specialty = employee.specialty.presence || (employee.owner_profile? ? "Miembro principal del negocio" : "Profesional del equipo") %>
+<% search_text = [employee.display_name, employee.name, employee.email_address, employee.phone, employee.additional_phone, specialty, team_access_level_label(employee), team_status_label(employee)].compact.join(" ").downcase %>
+<% profile_photo = employee.effective_profile_photo %>
+
+<article class="team-row" data-team-member-row data-team-member-id="<%= employee.id %>" data-team-search="<%= search_text %>">
+  <div class="team-member">
+    <span class="team-avatar <%= avatar_state_class %>" style="--team-avatar-color: <%= avatar_color %>;">
+      <% if profile_photo.attached? %>
+        <%= image_tag profile_photo, alt: employee.display_name %>
+      <% else %>
+        <%= employee.initials %>
+      <% end %>
+    </span>
+
+    <div class="team-member-copy">
+      <div class="team-member-title">
+        <%= link_to employee.display_name, edit_admin_employee_membership_path(employee), class: "team-member-name" %>
+        <span class="team-status-badge <%= status_state_class %>"><%= status_label %></span>
+        <span class="team-status-badge <%= employee.billable_professional? ? 'is-agenda' : 'is-no-agenda' %>">
+          <%= employee.billable_professional? ? "Con agenda" : "Sin agenda" %>
+        </span>
+      </div>
+
+      <p class="team-member-subtitle"><%= specialty %></p>
+
+      <% if employee.pending? %>
+        <p class="team-pending-note">
+          <%= team_icons.fetch(:clock).html_safe %>
+          Invitación pendiente
+        </p>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="team-contact">
+    <%= mail_to employee.email_address do %>
+      <%= team_icons.fetch(:mail).html_safe %>
+      <span class="team-contact-value"><%= employee.email_address %></span>
+    <% end %>
+
+    <% if employee.phone.present? %>
+      <%= link_to "tel:#{employee.phone}" do %>
+        <%= team_icons.fetch(:phone).html_safe %>
+        <span class="team-contact-value"><%= employee.phone %></span>
+      <% end %>
+    <% else %>
+      <span>
+        <%= team_icons.fetch(:phone).html_safe %>
+        <span class="team-contact-value">Sin teléfono</span>
+      </span>
+    <% end %>
+  </div>
+
+  <div class="team-role-text">
+    <strong><%= team_access_level_label(employee) %></strong>
+    <span><%= team_access_level_description(employee) %></span>
+  </div>
+
+  <div class="team-action-cell">
+    <%= render "admin/employee_memberships/member_actions", employee:, team_icons: %>
+  </div>
+</article>

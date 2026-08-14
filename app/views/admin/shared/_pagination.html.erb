@@ -1,0 +1,53 @@
+<% if pagy.present? && pagy.last > 1 %>
+  <% item_name = local_assigns.fetch(:item_name, "registros") %>
+  <% summary_suffix = local_assigns[:summary_suffix].presence %>
+  <% wrapper_class = local_assigns.fetch(:wrapper_class, "admin-pagination mt-5 border-t border-zinc-100 pt-4") %>
+  <% nav_label = local_assigns.fetch(:aria_label, "Paginación") %>
+  <% previous_page = pagy.page > 1 ? pagy.page - 1 : nil %>
+  <% next_page = pagy.page < pagy.last ? pagy.page + 1 : nil %>
+  <% button_base = "inline-flex h-10 items-center justify-center rounded-2xl px-4 text-sm font-bold transition" %>
+  <% page_base = "inline-flex h-10 min-w-10 items-center justify-center rounded-2xl px-4 text-sm font-bold transition" %>
+  <% enabled_classes = "border border-zinc-200 bg-white text-zinc-800 hover:bg-zinc-50" %>
+  <% disabled_classes = "border border-zinc-200 bg-zinc-50 text-zinc-400" %>
+  <% current_classes = "bg-ink text-white shadow-lg shadow-zinc-900/10" %>
+  <% turbo_frame = local_assigns[:turbo_frame].presence %>
+  <% link_data = turbo_frame.present? ? { turbo_frame: turbo_frame } : {} %>
+  <% pagination_params = local_assigns.fetch(:pagination_params, {}) %>
+  <% page_url = ->(page) { pagination_params.present? ? url_for(request.query_parameters.merge(pagination_params).merge(page: page)) : pagy.page_url(page) } %>
+
+  <div class="<%= wrapper_class %>">
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+      <p class="text-sm font-semibold text-zinc-500">
+        Mostrando
+        <strong class="font-bold text-zinc-950"><%= pagy.from %>-<%= pagy.to %></strong>
+        de
+        <strong class="font-bold text-zinc-950"><%= pagy.count %></strong>
+        <%= item_name %><%= ", #{summary_suffix}" if summary_suffix.present? %>
+      </p>
+
+      <nav class="flex flex-wrap items-center gap-2" aria-label="<%= nav_label %>">
+        <% if previous_page.present? %>
+          <%= link_to "Anterior", page_url.call(previous_page), class: "#{button_base} #{enabled_classes}", rel: "prev", data: link_data %>
+        <% else %>
+          <span class="<%= "#{button_base} #{disabled_classes}" %>" aria-disabled="true">Anterior</span>
+        <% end %>
+
+        <% pagy.send(:series).each do |item| %>
+          <% if item == :gap %>
+            <span class="inline-flex h-10 min-w-10 items-center justify-center rounded-2xl px-2 text-sm font-bold text-zinc-400" aria-hidden="true">&hellip;</span>
+          <% elsif item.is_a?(String) %>
+            <span class="<%= "#{page_base} #{current_classes}" %>" aria-current="page"><%= item %></span>
+          <% else %>
+            <%= link_to item, page_url.call(item), class: "#{page_base} #{enabled_classes}", data: link_data %>
+          <% end %>
+        <% end %>
+
+        <% if next_page.present? %>
+          <%= link_to "Siguiente", page_url.call(next_page), class: "#{button_base} #{enabled_classes}", rel: "next", data: link_data %>
+        <% else %>
+          <span class="<%= "#{button_base} #{disabled_classes}" %>" aria-disabled="true">Siguiente</span>
+        <% end %>
+      </nav>
+    </div>
+  </div>
+<% end %>

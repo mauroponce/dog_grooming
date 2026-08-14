@@ -1,0 +1,541 @@
+<%
+  form_id = dom_id(customer, :editor)
+  birth_date = customer.birth_date
+  active_section = active_section.presence || "personal"
+  return_to = local_assigns.fetch(:return_to, nil)
+  first_name_value = customer.first_name.presence || customer.name.to_s.squish.split.first
+  last_name_value = customer.last_name.presence || customer.name.to_s.squish.split.drop(1).join(" ").presence
+  appointment_date_label = lambda do |time|
+    local_time = time.in_time_zone
+    "#{CustomerDateFormatter.date_label(local_time)} · #{local_time.strftime('%H:%M')}"
+  end
+  cancellation_timestamp_label = lambda do |time|
+    local_time = time.in_time_zone
+    "#{CustomerDateFormatter.date_label(local_time)} · #{local_time.strftime('%H:%M')}"
+  end
+  tabs = [
+    [ "personal", "datos-personales", "Responsable", "Información de contacto", "user" ],
+    [ "pets", "mascotas", "Mascotas", "Ficha y cuidados", "paw" ],
+    [ "appointments", "turnos", "Turnos", "Historial de reservas", "calendar" ],
+    [ "notes", "notas", "Notas", "Información interna", "note" ],
+    [ "photos", "fotos", "Fotos", "Galería privada", "image" ]
+  ]
+  icons = {
+    user: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.9"/><path d="M4 21a8 8 0 0 1 16 0" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>',
+    paw: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="14.5" r="4.5" stroke="currentColor" stroke-width="1.9"/><circle cx="5.5" cy="8" r="2.1" stroke="currentColor" stroke-width="1.9"/><circle cx="10" cy="4.8" r="2.1" stroke="currentColor" stroke-width="1.9"/><circle cx="14" cy="4.8" r="2.1" stroke="currentColor" stroke-width="1.9"/><circle cx="18.5" cy="8" r="2.1" stroke="currentColor" stroke-width="1.9"/></svg>',
+    calendar: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3" stroke="currentColor" stroke-width="1.9"/><path d="M7 3v4M17 3v4M3 10h18" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>',
+    note: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 4h14v16H5z" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M8 9h8M8 13h8M8 17h5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>',
+    image: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3" stroke="currentColor" stroke-width="1.9"/><circle cx="8.5" cy="9" r="1.5" stroke="currentColor" stroke-width="1.9"/><path d="m4 17 5-5 3.5 3.5 2.5-2.5 5 4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    close: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+    clock: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
+    info: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 11v5M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+    check: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m5 12 4 4L19 6" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+  }
+  icon = ->(name) { icons.fetch(name).html_safe }
+%>
+
+<style>
+  .customer-profile-editor {
+    --customer-editor-brand: #ffded4;
+    --customer-editor-brand-dark: #ffded4;
+    --customer-editor-brand-soft: #ffded4;
+    --customer-editor-border: #e4e4e7;
+    --customer-editor-muted: #667085;
+    height: 100%;
+    min-height: 0;
+    overflow-y: auto;
+    background:
+      radial-gradient(circle at 82% 0%, rgba(255, 222, 212, .12), transparent 34%),
+      radial-gradient(circle at 9% 24%, rgba(236, 72, 153, .08), transparent 27%),
+      #f7f7f9;
+    color: #0b0b0f;
+  }
+
+  .customer-profile-editor__container { width: min(var(--admin-content-max-width, 1600px), calc(100% - var(--admin-content-horizontal-space, 48px))); margin: 0 auto; padding: 34px 0 64px; }
+  .customer-profile-editor__topbar { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px; align-items: start; margin-bottom: 24px; }
+  .customer-profile-editor__eyebrow { margin: 0 0 10px; color: var(--customer-editor-brand); font-size: 12px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; }
+  .customer-profile-editor__title { margin: 0; color: #050509; font-size: clamp(38px, 5vw, 64px); font-weight: 700; line-height: .98; letter-spacing: -.055em; }
+  .customer-profile-editor__copy { max-width: 780px; margin: 14px 0 0; color: var(--customer-editor-muted); font-size: 16px; font-weight: 700; line-height: 1.55; }
+  .customer-profile-editor__actions { display: flex; gap: 12px; align-items: center; }
+  .customer-profile-editor__button { display: inline-flex; min-height: 52px; align-items: center; justify-content: center; gap: 9px; border-radius: 18px; padding: 0 22px; font-size: 14px; font-weight: 700; text-decoration: none; white-space: nowrap; transition: transform .18s ease, box-shadow .18s ease; }
+  .customer-profile-editor__button:hover { transform: translateY(-1px); }
+  .customer-profile-editor__button--secondary { border: 1px solid var(--customer-editor-border); background: rgba(255, 255, 255, .9); color: #111827; box-shadow: 0 10px 25px rgba(15, 23, 42, .05); }
+  .customer-profile-editor__button--primary { border: 0; background: #08090c; color: #fff; cursor: pointer; box-shadow: 0 18px 40px rgba(8, 9, 12, .18); }
+  .customer-profile-editor__button svg { width: 17px; height: 17px; }
+
+  .customer-profile-editor__layout { display: grid; grid-template-columns: 280px minmax(0, 1fr); align-items: start; gap: 24px; }
+  .customer-profile-editor__sidebar { position: sticky; top: 24px; border: 1px solid rgba(228, 228, 231, .85); border-radius: 28px; background: rgba(255, 255, 255, .92); padding: 14px; box-shadow: 0 26px 70px rgba(17, 17, 20, .08); backdrop-filter: blur(16px); }
+  .customer-profile-editor__sidebar-heading { padding: 12px 12px 16px; border-bottom: 1px solid #f1f1f4; }
+  .customer-profile-editor__sidebar-heading strong { display: block; font-size: 14px; font-weight: 700; }
+  .customer-profile-editor__sidebar-heading span { display: block; margin-top: 5px; color: var(--customer-editor-muted); font-size: 12px; font-weight: 700; line-height: 1.45; }
+  .customer-profile-editor__tabs { display: grid; gap: 6px; margin-top: 12px; }
+  .customer-profile-editor__tab { display: flex; width: 100%; min-height: 72px; align-items: center; gap: 12px; border: 0; border-radius: 20px; background: transparent; padding: 12px; color: #344054; font-size: 14px; font-weight: 700; text-align: left; text-decoration: none; cursor: pointer; transition: background .18s ease, color .18s ease, box-shadow .18s ease; }
+  .customer-profile-editor__tab:hover { background: #f8fafc; }
+  .customer-profile-editor__tab.is-active { background: var(--customer-editor-brand-soft); color: var(--customer-editor-brand-dark); box-shadow: inset 0 0 0 1px #ffded4; }
+  .customer-profile-editor__tab-icon { display: grid; width: 42px; height: 42px; flex: 0 0 auto; place-items: center; border-radius: 15px; background: #f8fafc; color: #667085; }
+  .customer-profile-editor__tab-icon svg { width: 22px; height: 22px; }
+  .customer-profile-editor__tab.is-active .customer-profile-editor__tab-icon { background: #fff; color: var(--customer-editor-brand); box-shadow: 0 8px 22px rgba(255, 222, 212, .1); }
+  .customer-profile-editor__tab-text { min-width: 0; flex: 1; }
+  .customer-profile-editor__tab-text span, .customer-profile-editor__tab-text small { display: block; }
+  .customer-profile-editor__tab-text small { margin-top: 4px; color: #98a2b3; font-size: 11px; font-weight: 700; }
+  .customer-profile-editor__tip { margin-top: 12px; border-radius: 20px; background: #f8fafc; padding: 14px; color: var(--customer-editor-muted); font-size: 12px; font-weight: 700; line-height: 1.55; }
+  .customer-profile-editor__tip svg { width: 15px; height: 15px; margin: 1px 8px 0 0; float: left; color: #98a2b3; }
+
+  .customer-profile-editor__panel[hidden] { display: none; }
+  .customer-profile-editor__card { overflow: hidden; border: 1px solid rgba(228, 228, 231, .85); border-radius: 30px; background: rgba(255, 255, 255, .96); box-shadow: 0 30px 80px rgba(17, 17, 20, .08); }
+  .customer-profile-editor__card-header { display: flex; gap: 16px; align-items: flex-start; border-bottom: 1px solid #f1f1f4; padding: 30px 34px; }
+  .customer-profile-editor__panel-icon { display: grid; width: 50px; height: 50px; flex: 0 0 auto; place-items: center; border-radius: 18px; background: var(--customer-editor-brand-soft); color: var(--customer-editor-brand); }
+  .customer-profile-editor__panel-icon svg { width: 25px; height: 25px; }
+  .customer-profile-editor__card-title { margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -.035em; }
+  .customer-profile-editor__card-copy { margin: 6px 0 0; color: var(--customer-editor-muted); font-size: 14px; font-weight: 700; line-height: 1.55; }
+  .customer-profile-editor__card-body { padding: 32px 34px 36px; }
+  .customer-profile-editor__errors { margin: 0 0 24px; border: 1px solid #fecdd3; border-radius: 16px; background: #fff1f2; padding: 14px 16px; color: #be123c; font-size: 13px; font-weight: 700; line-height: 1.5; }
+  .customer-profile-editor__field-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+  .customer-profile-editor__field--wide { grid-column: 1 / -1; }
+  .customer-profile-editor__field label { display: block; color: #1e293b; font-size: 12px; font-weight: 700; }
+  .customer-profile-editor__field-label-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .customer-profile-editor__whatsapp-link { color: #047857; font-size: 12px; font-weight: 700; text-decoration: none; }
+  .customer-profile-editor__whatsapp-link:hover { color: #065f46; text-decoration: underline; }
+  .customer-profile-editor__whatsapp-link.is-disabled { pointer-events: none; color: #94a3b8; }
+  .customer-profile-editor__required { color: #e11d48; }
+  .customer-profile-editor__input { width: 100%; height: 50px; margin-top: 8px; border: 1px solid #e2e8f0; border-radius: 16px; background: #f8fafc; padding: 0 15px; color: #111827; font: inherit; font-size: 14px; font-weight: 700; outline: 0; transition: border-color .18s ease, background .18s ease, box-shadow .18s ease; box-sizing: border-box; }
+  .customer-profile-editor__input:focus { border-color: #A63826; background: #fff; box-shadow: 0 0 0 4px rgba(255, 222, 212, .62); }
+  .customer-profile-editor__input.is-invalid { border-color: #f43f5e; background: #fff1f2; box-shadow: 0 0 0 4px rgba(244, 63, 94, .12); }
+  .customer-profile-editor__field-help { margin: 8px 0 0; color: #98a2b3; font-size: 12px; font-weight: 650; line-height: 1.45; }
+  .customer-profile-editor__field-error { margin: 8px 0 0; color: #be123c; font-size: 12px; font-weight: 700; line-height: 1.45; }
+  .customer-profile-editor__gender-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 8px; }
+  .customer-profile-editor__field .customer-profile-editor__gender-option { position: relative; display: flex; height: 50px; align-items: center; justify-content: center; border: 1px solid #e2e8f0; border-radius: 14px; background: #f8fafc; padding: 0 10px; color: #475569; font-size: 12px; font-weight: 700; line-height: 1.2; text-align: center; cursor: pointer; box-sizing: border-box; }
+  .customer-profile-editor__gender-option:has(input:checked) { border-color: #A63826; background: #ffded4; color: var(--customer-editor-brand-dark); box-shadow: inset 0 0 0 1px #ffded4; }
+  .customer-profile-editor__gender-option input { position: absolute; opacity: 0; pointer-events: none; }
+
+  .customer-profile-editor__empty { display: grid; min-height: 250px; place-items: center; border: 1px dashed #d6d3d1; border-radius: 22px; background: #fafafa; padding: 28px; text-align: center; }
+  .customer-profile-editor__empty strong { display: block; font-size: 16px; font-weight: 700; }
+  .customer-profile-editor__empty p { margin: 8px 0 0; color: var(--customer-editor-muted); font-size: 13px; font-weight: 650; }
+  .customer-profile-editor__portal-access { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 18px; border: 1px solid #ffded4; border-radius: 20px; background: linear-gradient(135deg, #ffded4, #ffded4); padding: 17px 18px; }
+  .customer-profile-editor__portal-access-copy { min-width: 0; }
+  .customer-profile-editor__portal-access strong { display: block; color: #A63826; font-size: 14px; font-weight: 700; }
+  .customer-profile-editor__portal-access p { margin: 5px 0 0; color: #6b7280; font-size: 12px; font-weight: 700; line-height: 1.45; }
+  .customer-profile-editor__portal-url-group { display: flex; min-width: 0; max-width: 54%; flex: 0 1 auto; align-items: center; gap: 8px; }
+  .customer-profile-editor__portal-url { min-width: 0; color: var(--customer-editor-brand-dark); font-size: 12px; font-weight: 700; line-height: 1.45; overflow-wrap: anywhere; text-decoration: underline; text-decoration-color: #A63826; text-underline-offset: 3px; }
+  .customer-profile-editor__portal-url:hover { color: #A63826; text-decoration-color: currentColor; }
+  .customer-profile-editor__portal-copy { display: inline-flex; width: 34px; height: 34px; flex: 0 0 auto; align-items: center; justify-content: center; border: 1px solid #ffded4; border-radius: 11px; background: #fff; color: var(--customer-editor-brand-dark); cursor: pointer; transition: border-color .18s ease, background .18s ease, box-shadow .18s ease; }
+  .customer-profile-editor__portal-copy:hover { border-color: #A63826; background: #ffded4; box-shadow: 0 8px 18px rgba(255, 222, 212, .12); }
+  .customer-profile-editor__portal-copy svg { width: 16px; height: 16px; }
+  .customer-profile-editor__appointments { display: grid; gap: 10px; }
+  .customer-profile-editor__appointment { display: grid; width: 100%; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 16px; appearance: none; border: 1px solid #ececf0; border-radius: 18px; background: #fff; padding: 16px; color: inherit; cursor: pointer; font: inherit; text-align: left; text-decoration: none; transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease; }
+  .customer-profile-editor__appointment:hover { border-color: #A63826; box-shadow: 0 12px 26px rgba(255, 222, 212, .08); transform: translateY(-1px); }
+  .customer-profile-editor__appointment-main { min-width: 0; }
+  .customer-profile-editor__appointment-main strong { display: block; overflow: hidden; font-size: 14px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+  .customer-profile-editor__appointment-main span { display: block; margin-top: 5px; color: var(--customer-editor-muted); font-size: 12px; font-weight: 700; }
+  .customer-profile-editor__appointment-cancellation { color: #be123c !important; }
+  .customer-profile-editor__appointment-cancellation-note { color: #9f1239 !important; font-weight: 700 !important; }
+  .customer-profile-editor__appointment-status { display: inline-flex; align-items: center; border-radius: 999px; background: #f4f4f5; padding: 7px 10px; color: #52525b; font-size: 11px; font-weight: 700; white-space: nowrap; }
+  .customer-profile-editor__appointment-status.customer-status-green { background: #ecfdf5; color: #047857; }
+  .customer-profile-editor__appointment-status.customer-status-amber { background: #fffbeb; color: #b45309; }
+  .customer-profile-editor__appointment-status.customer-status-red { background: #fff1f2; color: #be123c; }
+  .customer-profile-editor__appointment-status.customer-status-violet { background: #ffded4; color: #A63826; }
+
+  .customer-profile-editor__notes-label { display: block; color: #1e293b; font-size: 13px; font-weight: 700; }
+  .customer-profile-editor__notes-textarea { box-sizing: border-box; display: block; width: 100%; min-height: 260px; margin-top: 10px; resize: vertical; border: 1px solid #ffded4; border-radius: 22px; background: linear-gradient(135deg, #ffded4, #ffded4); padding: 18px; color: #1e293b; font: inherit; font-size: 14px; font-weight: 650; line-height: 1.6; outline: 0; transition: border-color .18s ease, box-shadow .18s ease, background .18s ease; }
+  .customer-profile-editor__pet-notes { min-height: 112px; }
+  .customer-profile-editor__notes-textarea:focus { border-color: #A63826; background: #fff; box-shadow: 0 0 0 4px rgba(255, 222, 212, .72); }
+  .customer-profile-editor__notes-help { display: flex; gap: 10px; margin-top: 14px; border-radius: 16px; background: #f8fafc; padding: 14px; color: #64748b; font-size: 12px; font-weight: 700; line-height: 1.55; }
+  .customer-profile-editor__notes-help svg { width: 17px; height: 17px; flex: 0 0 auto; color: #94a3b8; }
+  .customer-profile-editor__photo-upload-zone { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 16px; min-height: 128px; border: 1px dashed #ffded4; border-radius: 22px; background: linear-gradient(135deg, #ffded4, #ffded4); padding: 20px; transition: border-color .18s ease, background .18s ease, box-shadow .18s ease; }
+  .customer-profile-editor__photo-upload-zone.is-dragging { border-color: #A63826; background: #ffded4; box-shadow: 0 18px 36px rgba(255, 222, 212, .14); }
+  .customer-profile-editor__photo-upload-icon { display: grid; width: 46px; height: 46px; place-items: center; border-radius: 16px; background: #fff; color: var(--customer-editor-brand); box-shadow: 0 8px 18px rgba(255, 222, 212, .08); }
+  .customer-profile-editor__photo-upload-icon svg { width: 23px; height: 23px; }
+  .customer-profile-editor__photo-upload-title { display: block; color: #111827; font-size: 15px; font-weight: 700; }
+  .customer-profile-editor__photo-upload-copy { display: block; margin-top: 5px; color: var(--customer-editor-muted); font-size: 13px; font-weight: 700; line-height: 1.45; }
+  .customer-profile-editor__photo-upload-button { display: inline-flex; height: 42px; align-items: center; justify-content: center; border: 1px solid #e4e4e7; border-radius: 999px; background: #fff; padding: 0 15px; color: #1f2937; font-size: 12px; font-weight: 700; white-space: nowrap; }
+  .customer-profile-editor__photo-file-input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+  .customer-profile-editor__photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 14px; margin-top: 20px; }
+  .customer-profile-editor__photo-grid[hidden] { display: none; }
+  .customer-profile-editor__photo-card { overflow: hidden; border: 1px solid #e4e4e7; border-radius: 16px; background: #fff; color: inherit; }
+  .customer-profile-editor__photo-card--pending { border-color: #A63826; box-shadow: 0 12px 28px rgba(255, 222, 212, .12); }
+  .customer-profile-editor__photo-card--saved { cursor: zoom-in; text-align: left; transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease; }
+  .customer-profile-editor__photo-card--saved:hover { border-color: #A63826; box-shadow: 0 16px 34px rgba(255, 222, 212, .14); transform: translateY(-1px); }
+  .customer-profile-editor__photo-card img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+  .customer-profile-editor__photo-filename { display: block; overflow: hidden; padding: 9px 10px; color: #52525b; font-size: 11px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+  .customer-profile-editor__photo-empty { margin-top: 20px; border: 1px dashed #d4d4d8; border-radius: 18px; background: #fafafa; padding: 18px; color: #64748b; font-size: 13px; font-weight: 700; text-align: center; }
+  .customer-profile-editor__photo-actions { display: flex; justify-content: flex-end; margin-top: 20px; }
+  .customer-profile-editor__photo-save { min-height: 46px; border: 0; border-radius: 16px; background: #08090c; padding: 0 18px; color: #fff; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+  .customer-profile-editor__photo-modal { position: fixed; top: 50%; left: 50%; width: min(900px, calc(100vw - 40px)); max-height: calc(100dvh - 40px); margin: 0; overflow: auto; transform: translate(-50%, -50%); border: 0; border-radius: 28px; background: #fff; padding: 0; color: #09090b; }
+  .customer-profile-editor__photo-modal::backdrop { background: rgba(15, 23, 42, .54); backdrop-filter: blur(3px); }
+  .customer-profile-editor__photo-modal-inner { display: grid; gap: 18px; padding: 22px; }
+  .customer-profile-editor__photo-modal-header { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+  .customer-profile-editor__photo-modal-title { min-width: 0; overflow: hidden; margin: 0; font-size: 19px; font-weight: 700; letter-spacing: -.03em; text-overflow: ellipsis; white-space: nowrap; }
+  .customer-profile-editor__photo-modal-close { display: inline-flex; width: 42px; height: 42px; flex: 0 0 auto; align-items: center; justify-content: center; border: 1px solid #e4e4e7; border-radius: 999px; background: #f4f4f5; color: #18181b; font-size: 22px; line-height: 1; cursor: pointer; }
+  .customer-profile-editor__photo-modal-preview { display: flex; min-height: 380px; align-items: center; justify-content: center; overflow: hidden; border: 1px solid #e4e4e7; border-radius: 20px; background: #f7f7f8; }
+  .customer-profile-editor__photo-modal-preview img { display: block; max-width: 100%; max-height: min(68dvh, 640px); object-fit: contain; }
+  .customer-profile-editor__photo-modal-actions { display: flex; justify-content: flex-end; }
+  .customer-profile-editor__photo-delete { display: inline-flex; height: 42px; align-items: center; justify-content: center; border: 1px solid #fecdd3; border-radius: 999px; background: #fff1f2; padding: 0 16px; color: #e11d48; font-size: 13px; font-weight: 700; text-decoration: none; }
+
+  @media (max-width: 840px) {
+    .customer-profile-editor__container { width: min(100% - 32px, 680px); padding: 20px 0 40px; }
+    .customer-profile-editor__topbar { grid-template-columns: 1fr; gap: 18px; }
+    .customer-profile-editor__title { font-size: 40px; }
+    .customer-profile-editor__actions { width: 100%; }
+    .customer-profile-editor__button { flex: 1; padding: 0 14px; }
+    .customer-profile-editor__layout { grid-template-columns: 1fr; }
+    .customer-profile-editor__sidebar { position: static; }
+    .customer-profile-editor__tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .customer-profile-editor__tab { min-height: auto; justify-content: center; padding: 10px 6px; text-align: center; }
+    .customer-profile-editor__tab-icon, .customer-profile-editor__tab-text small { display: none; }
+    .customer-profile-editor__tab-text { font-size: 12px; }
+    .customer-profile-editor__card-header, .customer-profile-editor__card-body { padding: 24px 20px; }
+    .customer-profile-editor__field-grid { grid-template-columns: 1fr; }
+    .customer-profile-editor__field--wide { grid-column: auto; }
+    .customer-profile-editor__portal-access { align-items: flex-start; flex-direction: column; }
+    .customer-profile-editor__portal-url-group { max-width: 100%; }
+    .customer-profile-editor__photo-upload-zone { grid-template-columns: auto minmax(0, 1fr); }
+    .customer-profile-editor__photo-upload-button { grid-column: 2; justify-self: start; }
+  }
+
+  @media (max-width: 480px) {
+    .customer-profile-editor__title { font-size: 34px; }
+    .customer-profile-editor__copy { font-size: 14px; }
+    .customer-profile-editor__actions { gap: 8px; }
+    .customer-profile-editor__button { min-height: 48px; font-size: 13px; }
+    .customer-profile-editor__button--secondary svg { display: none; }
+    .customer-profile-editor__sidebar-heading { display: none; }
+    .customer-profile-editor__tabs { margin-top: 0; }
+    .customer-profile-editor__photo-upload-zone { grid-template-columns: 1fr; text-align: center; }
+    .customer-profile-editor__photo-upload-icon, .customer-profile-editor__photo-upload-button { justify-self: center; }
+    .customer-profile-editor__photo-upload-button { grid-column: auto; }
+  }
+</style>
+
+<div class="customer-profile-editor" data-controller="customer-editor-tabs" data-customer-editor-tabs-active-value="<%= active_section %>">
+  <div class="customer-profile-editor__container">
+    <header class="customer-profile-editor__topbar">
+      <div>
+        <p class="customer-profile-editor__eyebrow">Ficha del responsable</p>
+        <h1 class="customer-profile-editor__title"><%= customer.name.presence || "Editar responsable" %></h1>
+        <p class="customer-profile-editor__copy">Actualizá los datos del responsable, sus mascotas y el historial de turnos.</p>
+      </div>
+      <div class="customer-profile-editor__actions">
+        <%= link_to return_to.presence || admin_customer_profiles_path, class: "customer-profile-editor__button customer-profile-editor__button--secondary" do %>
+          <%= icon.call(:close) %>
+          Cerrar
+        <% end %>
+        <button type="submit" form="<%= form_id %>" class="customer-profile-editor__button customer-profile-editor__button--primary">Guardar cambios</button>
+      </div>
+    </header>
+
+    <div class="customer-profile-editor__layout">
+      <aside class="customer-profile-editor__sidebar">
+        <div class="customer-profile-editor__sidebar-heading">
+          <strong>Ficha del responsable</strong>
+          <span>Podés navegar entre las secciones antes de guardar los cambios.</span>
+        </div>
+        <nav class="customer-profile-editor__tabs" aria-label="Secciones de cliente">
+          <% tabs.each do |key, anchor, title, description, icon_name| %>
+            <%= link_to edit_admin_customer_profile_path(customer, anchor: anchor),
+              class: "customer-profile-editor__tab #{"is-active" if key == active_section}",
+              data: {
+                customer_editor_tabs_target: "tab",
+                customer_editor_tabs_tab_value: key,
+                customer_editor_tabs_anchor_value: anchor,
+                action: "customer-editor-tabs#select"
+              },
+              aria: { controls: "customer-section-#{key}" } do %>
+              <span class="customer-profile-editor__tab-icon"><%= icon.call(icon_name.to_sym) %></span>
+              <span class="customer-profile-editor__tab-text"><span><%= title %></span><small><%= description %></small></span>
+            <% end %>
+          <% end %>
+        </nav>
+        <p class="customer-profile-editor__tip"><%= icon.call(:info) %>Los datos se guardan al confirmar los cambios.</p>
+      </aside>
+
+      <%= form_with model: [ :admin, customer ], id: form_id, data: { controller: "customer-birth-date" } do |form| %>
+        <%= hidden_field_tag :section, active_section, data: { customer_editor_tabs_target: "input" } %>
+        <%= hidden_field_tag :return_to, return_to if return_to.present? %>
+
+        <section id="customer-section-personal" class="customer-profile-editor__panel" data-customer-editor-tabs-target="panel" data-customer-editor-tabs-panel-value="personal" <%= "hidden" unless active_section == "personal" %>>
+          <div class="customer-profile-editor__card">
+            <header class="customer-profile-editor__card-header">
+              <span class="customer-profile-editor__panel-icon"><%= icon.call(:user) %></span>
+              <div>
+                <h2 class="customer-profile-editor__card-title">Datos personales</h2>
+                <p class="customer-profile-editor__card-copy">Información de contacto para encontrar e identificar a la persona rápidamente.</p>
+              </div>
+            </header>
+            <div class="customer-profile-editor__card-body">
+              <% if customer.errors.any? %>
+                <div class="customer-profile-editor__errors"><%= customer.errors.full_messages.to_sentence %></div>
+              <% end %>
+              <div class="customer-profile-editor__field-grid">
+                <div class="customer-profile-editor__field">
+                  <%= form.label :first_name do %>Nombre <span class="customer-profile-editor__required">*</span><% end %>
+                  <%= form.text_field :first_name, value: first_name_value, class: "customer-profile-editor__input", autocomplete: "given-name", required: true %>
+                </div>
+                <div class="customer-profile-editor__field">
+                  <%= form.label :last_name do %>Apellido<% end %>
+                  <%= form.text_field :last_name, value: last_name_value, class: "customer-profile-editor__input", autocomplete: "family-name" %>
+                </div>
+                <div class="customer-profile-editor__field">
+                  <div class="customer-profile-editor__field-label-row">
+                    <%= form.label :phone do %>WhatsApp <span class="customer-profile-editor__required">*</span><% end %>
+                    <%= link_to "Abrir en WhatsApp",
+                      PhoneNumber.whatsapp_link(customer.phone).presence || "#",
+                      target: "_blank",
+                      rel: "noopener",
+                      class: "customer-profile-editor__whatsapp-link #{'is-disabled' if customer.phone.blank?}",
+                      data: { customer_editor_tabs_target: "whatsapp" } %>
+                  </div>
+                  <%= form.telephone_field :phone,
+                    class: "customer-profile-editor__input",
+                    autocomplete: "tel",
+                    required: true,
+                    data: {
+                      customer_editor_tabs_target: "phone",
+                      action: "input->customer-editor-tabs#syncWhatsapp"
+                    } %>
+                </div>
+                <div class="customer-profile-editor__field">
+                  <%= form.label :email do %>Email <span class="customer-profile-editor__required">*</span><% end %>
+                  <%= form.email_field :email, class: "customer-profile-editor__input", required: true, autocomplete: "email" %>
+                </div>
+                <div class="customer-profile-editor__field">
+                  <%= form.label :birth_date, "Fecha de nacimiento" %>
+                  <%= form.text_field :birth_date,
+                    value: birth_date&.strftime("%d/%m/%Y"),
+                    inputmode: "numeric",
+                    maxlength: 10,
+                    placeholder: "dd/mm/aaaa",
+                    class: "customer-profile-editor__input",
+                    autocomplete: "bday",
+                    aria: { describedby: "customer_profile_birth_date_error" },
+                    data: {
+                      customer_birth_date_target: "input",
+                      action: "input->customer-birth-date#format blur->customer-birth-date#validateFromInput"
+                    } %>
+                  <p id="customer_profile_birth_date_error" class="customer-profile-editor__field-error" data-customer-birth-date-target="error" hidden></p>
+                </div>
+                <div class="customer-profile-editor__field">
+                  <label>Género</label>
+                  <div class="customer-profile-editor__gender-options">
+                    <% CustomerProfile::GENDER_OPTIONS.each do |value, label| %>
+                      <label class="customer-profile-editor__gender-option">
+                        <%= form.radio_button :gender, value, checked: customer.gender == value %>
+                        <%= label %>
+                      </label>
+                    <% end %>
+                    <label class="customer-profile-editor__gender-option">
+                      <%= form.radio_button :gender, "", checked: customer.gender.blank? %>
+                      Prefiero no indicarlo
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="customer-section-pets" class="customer-profile-editor__panel" data-customer-editor-tabs-target="panel" data-customer-editor-tabs-panel-value="pets" <%= "hidden" unless active_section == "pets" %>>
+          <div class="customer-profile-editor__card">
+            <header class="customer-profile-editor__card-header">
+              <span class="customer-profile-editor__panel-icon"><%= icon.call(:paw) %></span>
+              <div>
+                <h2 class="customer-profile-editor__card-title">Mascotas</h2>
+                <p class="customer-profile-editor__card-copy">Cada turno se asocia a una mascota. Podés completar o actualizar su ficha desde acá.</p>
+              </div>
+            </header>
+            <div class="customer-profile-editor__card-body space-y-5">
+              <% form.fields_for :pets do |pet_form| %>
+                <% pet = pet_form.object %>
+                <article class="rounded-2xl border border-zinc-200 bg-zinc-50/70 p-5">
+                  <div class="mb-5 flex items-start justify-between gap-4">
+                    <div>
+                      <h3 class="text-lg font-bold text-zinc-950"><%= pet.name.presence || "Nueva mascota" %></h3>
+                      <p class="mt-1 text-sm font-semibold text-zinc-500"><%= pet.persisted? ? "Actualizá sus datos y cuidados." : "Completá los datos para agregar otra mascota." %></p>
+                    </div>
+                    <% if pet.persisted? %>
+                      <span class="rounded-full bg-white px-3 py-1 text-xs font-bold text-zinc-600"><%= pet.bookings.count %> <%= pet.bookings.count == 1 ? "turno" : "turnos" %></span>
+                    <% end %>
+                  </div>
+                  <%= pet_form.hidden_field :id if pet.persisted? %>
+                  <div class="customer-profile-editor__field-grid">
+                    <div class="customer-profile-editor__field">
+                      <%= pet_form.label :name, "Nombre" %>
+                      <%= pet_form.text_field :name, class: "customer-profile-editor__input", placeholder: "Ej. Coco", required: pet.persisted? %>
+                    </div>
+                    <div class="customer-profile-editor__field">
+                      <%= pet_form.label :breed, "Raza" %>
+                      <%= pet_form.text_field :breed, class: "customer-profile-editor__input", placeholder: "Ej. Caniche" %>
+                    </div>
+                    <div class="customer-profile-editor__field">
+                      <%= pet_form.label :size, "Tamaño" %>
+                      <%= pet_form.select :size, [[ "No especificado", "" ]] + Pet::SIZE_OPTIONS.map { |value, label| [ label, value ] }, {}, class: "customer-profile-editor__input" %>
+                    </div>
+                    <div class="customer-profile-editor__field">
+                      <%= pet_form.label :sex, "Sexo" %>
+                      <%= pet_form.select :sex, [[ "No especificado", "" ]] + Pet::SEX_OPTIONS.map { |value, label| [ label, value ] }, {}, class: "customer-profile-editor__input" %>
+                    </div>
+                    <div class="customer-profile-editor__field">
+                      <%= pet_form.label :birth_date, "Fecha de nacimiento" %>
+                      <%= pet_form.date_field :birth_date, class: "customer-profile-editor__input" %>
+                    </div>
+                    <div class="customer-profile-editor__field customer-profile-editor__field--wide">
+                      <%= pet_form.label :notes, "Cuidados e información importante" %>
+                      <%= pet_form.text_area :notes, rows: 3, class: "customer-profile-editor__notes-textarea customer-profile-editor__pet-notes", placeholder: "Alergias, sensibilidad, comportamiento o indicaciones para el equipo." %>
+                    </div>
+                  </div>
+                </article>
+              <% end %>
+              <p class="text-sm font-semibold text-zinc-500">Guardá los cambios para agregar la nueva mascota. Después podés volver a esta sección para sumar todas las que necesites.</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="customer-section-appointments" class="customer-profile-editor__panel" data-customer-editor-tabs-target="panel" data-customer-editor-tabs-panel-value="appointments" <%= "hidden" unless active_section == "appointments" %>>
+          <div class="customer-profile-editor__card">
+            <header class="customer-profile-editor__card-header">
+              <span class="customer-profile-editor__panel-icon"><%= icon.call(:calendar) %></span>
+              <div>
+                <h2 class="customer-profile-editor__card-title">Turnos</h2>
+                <p class="customer-profile-editor__card-copy"><%= @customer_appointments_pagy.count %> turnos registrados para este cliente.</p>
+              </div>
+            </header>
+            <div class="customer-profile-editor__card-body">
+              <div class="customer-profile-editor__portal-access" data-controller="copy-text" data-copy-text-preserve-content-value="true">
+                <div class="customer-profile-editor__portal-access-copy">
+                  <strong>Portal del cliente</strong>
+                  <p>Compartile este link al cliente para que pueda acceder a sus turnos, reprogramarlos o cancelarlos.</p>
+                </div>
+                <div class="customer-profile-editor__portal-url-group">
+                  <%= link_to customer.customer_portal_url,
+                    customer.customer_portal_url,
+                    class: "customer-profile-editor__portal-url",
+                    target: "_blank",
+                    rel: "noopener",
+                    data: { copy_text_target: "source" } %>
+                  <button type="button" class="customer-profile-editor__portal-copy" data-copy-text-target="button" data-action="copy-text#copy" title="Copiar" aria-label="Copiar link del portal">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 8V5.8C8 4.8 8.8 4 9.8 4h8.4c1 0 1.8.8 1.8 1.8v8.4c0 1-.8 1.8-1.8 1.8H16" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M4 9.8C4 8.8 4.8 8 5.8 8h8.4c1 0 1.8.8 1.8 1.8v8.4c0 1-.8 1.8-1.8 1.8H5.8C4.8 20 4 19.2 4 18.2V9.8Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+                  </button>
+                </div>
+              </div>
+
+              <div
+                data-controller="customers-results-loader customer-appointments"
+                data-customers-results-loader-frame-id-value="customer_appointment_history"
+                data-action="turbo:before-fetch-request->customers-results-loader#start turbo:frame-load->customers-results-loader#stop turbo:fetch-request-error->customers-results-loader#stop">
+                <%= turbo_frame_tag "customer_appointment_history", data: { customer_appointment_history_page: @customer_appointments_pagy.page } do %>
+                  <%= render "appointment_history",
+                    appointments: appointments,
+                    pagy: @customer_appointments_pagy,
+                    appointment_date_label: appointment_date_label,
+                    cancellation_timestamp_label: cancellation_timestamp_label %>
+                <% end %>
+
+                <span class="admin-results-loader" data-customers-results-loader-target="indicator" aria-hidden="true">
+                  <span class="admin-results-loader-ring"></span>
+                </span>
+
+                <div class="appointment-detail-overlay" data-customer-appointments-target="overlay" data-action="click->customer-appointments#close"></div>
+                <aside class="appointment-detail-drawer" data-customer-appointments-target="drawer" aria-hidden="true">
+                  <button type="button" class="appointment-detail-drawer__close" data-action="click->customer-appointments#close" aria-label="Cerrar detalle del turno">×</button>
+                  <div class="appointment-detail-drawer__content" data-customer-appointments-target="content"></div>
+                </aside>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="customer-section-notes" class="customer-profile-editor__panel" data-customer-editor-tabs-target="panel" data-customer-editor-tabs-panel-value="notes" <%= "hidden" unless active_section == "notes" %>>
+          <div class="customer-profile-editor__card">
+            <header class="customer-profile-editor__card-header">
+              <span class="customer-profile-editor__panel-icon"><%= icon.call(:note) %></span>
+              <div>
+                <h2 class="customer-profile-editor__card-title">Notas</h2>
+                <p class="customer-profile-editor__card-copy">Información interna relevante para atender mejor a este cliente.</p>
+              </div>
+            </header>
+            <div class="customer-profile-editor__card-body">
+              <%= form.label :internal_notes, "Notas internas", class: "customer-profile-editor__notes-label" %>
+              <%= form.text_area :internal_notes, class: "customer-profile-editor__notes-textarea", rows: 12, placeholder: "Ej.: alergias, preferencias de atención, seguimiento del tratamiento o información importante para el equipo." %>
+              <div class="customer-profile-editor__notes-help"><%= icon.call(:info) %><span>Estas notas son internas y no se comparten con el cliente en la reserva pública ni en su portal.</span></div>
+            </div>
+          </div>
+        </section>
+
+        <section id="customer-section-photos" class="customer-profile-editor__panel" data-customer-editor-tabs-target="panel" data-customer-editor-tabs-panel-value="photos" <%= "hidden" unless active_section == "photos" %>>
+          <div class="customer-profile-editor__card">
+            <header class="customer-profile-editor__card-header">
+              <span class="customer-profile-editor__panel-icon"><%= icon.call(:image) %></span>
+              <div>
+                <h2 class="customer-profile-editor__card-title">Fotos</h2>
+                <p class="customer-profile-editor__card-copy">Galería privada de referencia para el equipo. No se muestra en la reserva pública.</p>
+              </div>
+            </header>
+            <div class="customer-profile-editor__card-body" data-controller="customer-photo-upload">
+              <label class="customer-profile-editor__photo-upload-zone" data-action="dragover->customer-photo-upload#dragOver dragleave->customer-photo-upload#dragLeave drop->customer-photo-upload#drop">
+                <span class="customer-profile-editor__photo-upload-icon"><%= icon.call(:image) %></span>
+                <span>
+                  <span class="customer-profile-editor__photo-upload-title">Arrastrá fotos acá</span>
+                  <span class="customer-profile-editor__photo-upload-copy" data-customer-photo-upload-target="summary">o hacé click para elegir archivos JPG, PNG o WEBP.</span>
+                </span>
+                <span class="customer-profile-editor__photo-upload-button">Hasta 6 fotos · Máx. 10 MB</span>
+                <%= form.file_field :customer_photos,
+                  multiple: true,
+                  accept: "image/png,image/jpeg,image/jpg,image/webp",
+                  class: "customer-profile-editor__photo-file-input",
+                  data: {
+                    customer_photo_upload_target: "input",
+                    action: "change->customer-photo-upload#sync"
+                  } %>
+              </label>
+
+              <div class="customer-profile-editor__photo-grid" data-customer-photo-upload-target="preview" hidden></div>
+
+              <% if customer.customer_photos.attached? %>
+                <div class="customer-profile-editor__photo-grid">
+                  <% customer.customer_photos.each do |photo| %>
+                    <button type="button"
+                      class="customer-profile-editor__photo-card customer-profile-editor__photo-card--saved"
+                      data-action="customer-photo-upload#openSavedPhoto"
+                      data-customer-photo-url="<%= url_for(photo) %>"
+                      data-customer-photo-name="<%= photo.filename %>"
+                      data-customer-photo-delete-url="<%= destroy_photo_admin_customer_profile_path(customer, attachment_id: photo.id, return_to: return_to) %>">
+                      <%= image_tag url_for(photo), alt: photo.filename.to_s %>
+                      <span class="customer-profile-editor__photo-filename"><%= photo.filename %></span>
+                    </button>
+                  <% end %>
+                </div>
+              <% else %>
+                <div class="customer-profile-editor__photo-empty">Este cliente todavía no tiene fotos cargadas.</div>
+              <% end %>
+
+              <dialog class="customer-profile-editor__photo-modal" data-customer-photo-upload-target="modal" data-action="click->customer-photo-upload#closeSavedPhotoOnBackdrop">
+                <div class="customer-profile-editor__photo-modal-inner">
+                  <div class="customer-profile-editor__photo-modal-header">
+                    <h3 class="customer-profile-editor__photo-modal-title" data-customer-photo-upload-target="modalTitle">Foto del cliente</h3>
+                    <button type="button" class="customer-profile-editor__photo-modal-close" data-action="customer-photo-upload#closeSavedPhoto" aria-label="Cerrar">×</button>
+                  </div>
+                  <div class="customer-profile-editor__photo-modal-preview">
+                    <img src="" alt="Foto del cliente" data-customer-photo-upload-target="modalImage">
+                  </div>
+                  <div class="customer-profile-editor__photo-modal-actions">
+                    <%= link_to "Eliminar",
+                      "#",
+                      class: "customer-profile-editor__photo-delete",
+                      data: {
+                        customer_photo_upload_target: "deleteLink",
+                        turbo_method: :delete,
+                        turbo_confirm: "¿Eliminar esta foto del cliente? Esta acción no se puede deshacer."
+                      } %>
+                  </div>
+                </div>
+              </dialog>
+
+              <div class="customer-profile-editor__photo-actions" data-customer-photo-upload-target="actions" hidden>
+                <%= form.submit "Guardar fotos", class: "customer-profile-editor__photo-save" %>
+              </div>
+            </div>
+          </div>
+        </section>
+      <% end %>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,33 @@
+<% content_for :title, "#{@category.name} · #{@business.name}" %>
+<% content_for :full_width, true %>
+<% content_for :head, landing_head_tags(@landing) %>
+
+<%= public_full_website_base_styles_tag %>
+<%= public_custom_html_styles_tag(@landing) %>
+<%= public_custom_html_styles_tag(@landing, html: @business.public_category_custom_html, category: @category) %>
+
+<main class="ht-full-website">
+  <% category_template_parts = public_custom_sections_parts(@landing, html: @business.public_category_custom_html, category: @category, slot: :services) %>
+  <% category_services_inserted = category_template_parts.size > 1 %>
+
+  <% if category_template_parts.any? %>
+    <% category_template_parts.each_with_index do |part, index| %>
+      <%= tag.div(part.html_safe, class: "ht-custom-sections", data: { public_custom_sections: true }) if part.present? %>
+      <%= render "public_service_pages/services_grid", landing: @landing, services: @services if category_services_inserted && index.zero? %>
+    <% end %>
+  <% else %>
+    <section class="ht-category-page" data-dog-grooming-category-page>
+      <div class="ht-category-page__inner">
+        <%= link_to "← Volver a servicios", @landing.home_path(anchor: "servicios"), class: "ht-category-page__back" %>
+        <p class="ht-services__eyebrow">Servicios</p>
+        <h1><%= @category.name %></h1>
+        <% if @category.description.present? %>
+          <p class="ht-category-page__description"><%= @category.description %></p>
+        <% end %>
+        <%= render "public_service_pages/services_grid", landing: @landing, services: @services %>
+      </div>
+    </section>
+  <% end %>
+
+  <%= render "public_service_pages/services_grid", landing: @landing, services: @services if category_template_parts.any? && !category_services_inserted %>
+</main>

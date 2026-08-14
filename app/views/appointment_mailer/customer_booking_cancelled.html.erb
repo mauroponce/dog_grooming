@@ -1,0 +1,34 @@
+<% content_for :email_preheader, @cancelled_by_business ? "El equipo de #{@business.name} canceló tu turno y se va a comunicar con vos." : "Tu turno en #{@business.name} fue cancelado." %>
+<% content_for :email_badge, "Reserva cancelada" %>
+<% content_for :email_status, @cancelled_by_business ? "El equipo se comunicará con vos" : "Turno cancelado" %>
+<% content_for :email_footer_note, @cancelled_by_business ? "Este email fue enviado porque el centro canceló tu turno." : "Este email confirma la cancelación solicitada desde tu portal de turnos." %>
+
+<h1>Tu turno fue cancelado</h1>
+
+<% if @cancelled_by_business %>
+  <p>Hola <%= @appointment.customer_name %>, el equipo de <strong><%= @business.name %></strong> canceló tu turno.</p>
+  <p><strong>Motivo de la cancelación:</strong> <%= @appointment.cancellation_reason %></p>
+  <p>Alguien del equipo se va a estar comunicando con vos a la brevedad para ayudarte con los próximos pasos.</p>
+<% else %>
+  <p>Hola <%= @appointment.customer_name %>, confirmamos la cancelación de tu turno en <strong><%= @business.name %></strong>.</p>
+<% end %>
+
+<div class="email-card" style="margin-top:24px;">
+  <div class="email-card-inner">
+    <div class="email-card-title">Turno cancelado</div>
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top:10px;">
+      <tr class="email-detail-row">
+        <td class="email-detail-label">Servicio</td>
+        <td class="email-detail-value"><%= @appointment.service.name %></td>
+      </tr>
+      <tr>
+        <td class="email-detail-label">Fecha y hora</td>
+        <td class="email-detail-value"><%= CustomerDateFormatter.datetime_label(@appointment.starts_at) %></td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<% unless @cancelled_by_business %>
+  <p>Si querés reservar otro horario, ingresá nuevamente a la página de <strong><%= @business.name %></strong>.</p>
+<% end %>

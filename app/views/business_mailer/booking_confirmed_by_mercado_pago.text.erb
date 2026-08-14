@@ -1,0 +1,10 @@
+Turno confirmado por Mercado Pago
+
+Mercado Pago acreditó el pago de <%= @appointment.customer_name %> y el turno quedó confirmado automáticamente.
+
+Servicio: <%= @appointment.service.name %>
+Turno: <%= CustomerDateFormatter.datetime_label(@appointment.starts_at) %>
+Seña acreditada: <%= @appointment.formatted_deposit_amount %>
+
+Agregar a Google Calendar: <%= @google_calendar_url %>
+Ver turno en Dog Grooming: <%= @url %>

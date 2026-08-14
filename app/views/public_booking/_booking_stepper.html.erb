@@ -1,0 +1,57 @@
+<% current_step = local_assigns.fetch(:current_step, 1) %>
+<% interactive = local_assigns.fetch(:interactive, false) %>
+<% step_urls = local_assigns.fetch(:step_urls, {}) %>
+<% steps = [
+  [ 1, "Servicio" ],
+  [ 2, "Fecha y hora" ],
+  [ 3, "Tus datos" ]
+] %>
+
+<div class="border-b border-zinc-100 px-4 py-4 sm:px-7">
+  <div class="mx-auto flex max-w-3xl items-center">
+    <% steps.each_with_index do |(number, label), index| %>
+      <% completed = number < current_step %>
+      <% active = number == current_step %>
+      <% circle_class = if completed
+        "bg-emerald-500 text-white"
+      elsif active
+        "bg-ink text-white"
+      else
+        "bg-zinc-100 text-zinc-400"
+      end %>
+      <% label_class = active || completed ? "text-zinc-800" : "text-zinc-400" %>
+      <% item_classes = "flex flex-1 items-center gap-2.5 rounded-2xl px-2 py-1 text-left transition #{index == 1 ? "justify-center" : index == 2 ? "justify-end" : ""}" %>
+      <% step_content = capture do %>
+        <span data-slot-picker-target="stepCircle" data-step="<%= number %>" class="grid h-8 w-8 shrink-0 place-items-center rounded-full text-xs font-bold <%= circle_class %>">
+          <% if completed %>
+            <%= public_icon("check", css: "h-4 w-4") %>
+          <% else %>
+            <%= number %>
+          <% end %>
+        </span>
+        <span class="hidden sm:block">
+          <span class="block text-[10px] font-bold uppercase tracking-[.12em] text-zinc-400">Paso <%= number %></span>
+          <span data-slot-picker-target="stepLabel" data-step="<%= number %>" class="block text-xs font-bold <%= label_class %>"><%= label %></span>
+        </span>
+      <% end %>
+
+      <% if step_urls[number].present? && completed %>
+        <%= link_to step_urls[number], class: "#{item_classes} hover:bg-zinc-50", data: { slot_picker_target: "stepItem", step: number }, aria: { label: "Volver al paso #{number}: #{label}" } do %>
+          <%= step_content %>
+        <% end %>
+      <% elsif interactive && number > 1 %>
+        <%= button_tag type: "button", disabled: number > current_step, class: "#{item_classes} disabled:cursor-not-allowed disabled:opacity-35 hover:bg-zinc-50", data: { slot_picker_target: "stepItem", step: number, action: "slot-picker#goToStep", slot_picker_step_param: number }, aria: (active ? { current: "step" } : {}) do %>
+          <%= step_content %>
+        <% end %>
+      <% else %>
+        <div class="<%= item_classes %>" data-slot-picker-target="stepItem" data-step="<%= number %>" <%= active ? "aria-current=\"step\"" : "" %>>
+          <%= step_content %>
+        </div>
+      <% end %>
+
+      <% unless index == steps.length - 1 %>
+        <span class="mx-2 h-px flex-1 bg-zinc-200 sm:mx-5"></span>
+      <% end %>
+    <% end %>
+  </div>
+</div>

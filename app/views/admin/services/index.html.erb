@@ -1,0 +1,1871 @@
+<% content_for :admin_full_bleed, true %>
+<% content_for :admin_section_title, "Servicios" %>
+<% content_for :title, "Servicios · Dog Grooming" %>
+
+<% selected_category = @selected_service_category %>
+<% visible_categories = @service_categories %>
+<% selected_category_id = selected_category&.id&.to_s %>
+<% selected_service_id = params[:service_id].to_s %>
+<% grouped_category_names = if selected_category.present?
+  [ selected_category.name ]
+else
+  visible_categories.map(&:name)
+end %>
+<% services_count_by_category_id = @business.services.where(service_category_id: visible_categories.map(&:id), archived_at: nil).group(:service_category_id).count %>
+<% all_services_count = @business.services.where(archived_at: nil).count %>
+<% active_services_count = @business.services.active.count %>
+<% visible_services_count = @services.size %>
+<% service_icons = {
+  search: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  plus: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  sliders: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M2 14h4M10 8h4M18 16h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  grid: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="2" stroke="currentColor" stroke-width="2"/><rect x="14" y="3" width="7" height="7" rx="2" stroke="currentColor" stroke-width="2"/><rect x="3" y="14" width="7" height="7" rx="2" stroke="currentColor" stroke-width="2"/><rect x="14" y="14" width="7" height="7" rx="2" stroke="currentColor" stroke-width="2"/></svg>',
+  folder: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 7.8A2.8 2.8 0 0 1 5.8 5H10l2 2h6.2A2.8 2.8 0 0 1 21 9.8v6.4a2.8 2.8 0 0 1-2.8 2.8H5.8A2.8 2.8 0 0 1 3 16.2V7.8Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>',
+  folder_plus: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 7.8A2.8 2.8 0 0 1 5.8 5H10l2 2h6.2A2.8 2.8 0 0 1 21 9.8v6.4a2.8 2.8 0 0 1-2.8 2.8H5.8A2.8 2.8 0 0 1 3 16.2V7.8Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 11v5M9.5 13.5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  sparkles: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3 9.8 8.8 4 11l5.8 2.2L12 19l2.2-5.8L20 11l-5.8-2.2L12 3ZM5 3v4M3 5h4M19 17v4M17 19h4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  clock: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  users: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="9.5" cy="7" r="4" stroke="currentColor" stroke-width="2"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  more: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="5" r="1.5" fill="currentColor"/><circle cx="12" cy="19" r="1.5" fill="currentColor"/></svg>',
+  chevron_down: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  pencil: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 20h9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>',
+  copy: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 8V5.8C8 4.8 8.8 4 9.8 4h8.4c1 0 1.8.8 1.8 1.8v8.4c0 1-.8 1.8-1.8 1.8H16" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M4 9.8C4 8.8 4.8 8 5.8 8h8.4c1 0 1.8.8 1.8 1.8v8.4c0 1-.8 1.8-1.8 1.8H5.8C4.8 20 4 19.2 4 18.2V9.8Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>',
+  archive: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21 8v13H3V8M1 3h22v5H1Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M10 12h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  trash: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 14h10l1-14M9 7V4h6v3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  eye: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/></svg>',
+  x: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m5 12 4 4L19 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  search_x: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="m20 20-3.5-3.5M9 9l4 4M13 9l-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>'
+} %>
+
+<style>
+  .services-menu-shell {
+    box-sizing: border-box;
+    height: 100%;
+    min-height: 0;
+    overflow-y: auto;
+    background:
+      radial-gradient(circle at 85% 0%, rgba(255, 222, 212, .055), transparent 32rem),
+      #f7f7f9;
+    color: #0f172a;
+  }
+
+  .services-menu-container {
+    box-sizing: border-box;
+    width: min(var(--admin-content-max-width, 1600px), calc(100% - var(--admin-content-horizontal-space, 48px)));
+    margin: 0 auto;
+    padding: 34px 0 52px;
+  }
+
+  .services-menu-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 24px;
+  }
+
+  .services-menu-title-row {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .services-menu-title {
+    margin: 0;
+    color: #0f172a;
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -.04em;
+    line-height: 1.08;
+  }
+
+  .services-menu-count-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 30px;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    background: #fff;
+    padding: 0 11px;
+    color: #334155;
+    font-size: 12px;
+    font-weight: 700;
+    box-shadow: 0 1px 2px rgba(15,23,42,.04);
+  }
+
+  .services-menu-count-pill svg {
+    width: 14px;
+    height: 14px;
+    color: var(--admin-brand-600);
+  }
+
+  .services-menu-copy {
+    max-width: 760px;
+    margin: 9px 0 0;
+    color: #64748b;
+    font-size: 14px;
+    font-weight: 650;
+    line-height: 1.65;
+  }
+
+  .services-menu-copy a,
+  .services-menu-link {
+    color: var(--admin-brand-600);
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .services-menu-actions {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .services-menu-primary,
+  .services-small-button,
+  .services-filter-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    border-radius: 18px;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: .16s ease;
+  }
+
+  .services-menu-primary {
+    min-height: 48px;
+    border: 0;
+    background: #05080a;
+    padding: 0 20px;
+    color: #fff;
+    box-shadow: 0 16px 34px rgba(15,23,42,.12);
+  }
+
+  .services-menu-primary:hover {
+    background: var(--admin-brand-700);
+    transform: translateY(-1px);
+  }
+
+  .services-menu-primary svg,
+  .services-small-button svg,
+  .services-filter-button svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .services-toolbar {
+    overflow: visible;
+    border: 1px solid rgba(226,232,240,.88);
+    border-radius: 26px;
+    background: #fff;
+    box-shadow: 0 10px 32px rgba(255, 222, 212, .055);
+  }
+
+  .services-toolbar-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px;
+  }
+
+  .services-search-row {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .services-search {
+    position: relative;
+    display: block;
+    width: min(660px, 100%);
+  }
+
+  .services-search svg {
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    width: 18px;
+    height: 18px;
+    transform: translateY(-50%);
+    color: #94a3b8;
+  }
+
+  .services-search input {
+    box-sizing: border-box;
+    width: 100%;
+    height: 50px;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    background: rgba(248,250,252,.82);
+    padding: 0 18px 0 50px;
+    color: #0f172a;
+    font-size: 14px;
+    font-weight: 700;
+    outline: none;
+    transition: .16s ease;
+  }
+
+  .services-search input::placeholder {
+    color: #94a3b8;
+    font-weight: 650;
+  }
+
+  .services-search input:focus {
+    border-color: var(--admin-brand-200);
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(255, 222, 212, .12);
+  }
+
+  .services-filter-button,
+  .services-small-button {
+    min-height: 44px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    padding: 0 16px;
+    color: #334155;
+    cursor: pointer;
+  }
+
+  .services-filter-button:hover,
+  .services-small-button:hover {
+    border-color: var(--admin-brand-200);
+    background: var(--admin-brand-50);
+    color: var(--admin-brand-700);
+  }
+
+  .services-layout {
+    display: grid;
+    grid-template-columns: 280px minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
+    margin-top: 24px;
+  }
+
+  .services-category-panel {
+    position: sticky;
+    top: calc(var(--topbar-height) + 8px);
+    display: flex;
+    max-height: calc(100vh - var(--topbar-height) - 16px);
+    max-height: calc(100dvh - var(--topbar-height) - 16px);
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid rgba(226,232,240,.88);
+    border-radius: 26px;
+    background: #fff;
+    box-shadow: 0 10px 32px rgba(255, 222, 212, .055);
+  }
+
+  .services-category-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 1px solid rgba(226,232,240,.7);
+    padding: 18px 20px;
+  }
+
+  .services-category-title {
+    margin: 0;
+    color: #0f172a;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -.03em;
+    line-height: 1.15;
+  }
+
+  .services-category-subtitle {
+    margin: 3px 0 0;
+    color: #94a3b8;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .services-category-icon-button {
+    display: grid;
+    width: 40px;
+    height: 40px;
+    place-items: center;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    background: #fff;
+    color: #64748b;
+    cursor: pointer;
+    transition: .16s ease;
+  }
+
+  .services-category-icon-button:hover {
+    border-color: var(--admin-brand-200);
+    background: var(--admin-brand-50);
+    color: var(--admin-brand-700);
+  }
+
+  .services-category-icon-button svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .services-category-list {
+    display: grid;
+    gap: 6px;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 12px;
+  }
+
+  .services-category-list::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .services-category-list::-webkit-scrollbar-thumb {
+    border: 2px solid #fff;
+    border-radius: 999px;
+    background: #cbd5e1;
+  }
+
+  .services-category-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 58px;
+    border-radius: 18px;
+    padding: 10px 12px;
+    color: #475569;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: .16s ease;
+  }
+
+  .services-category-link:hover {
+    background: #f8fafc;
+    color: #0f172a;
+  }
+
+  .services-category-link.is-active {
+    border: 1px solid var(--admin-brand-100);
+    background: linear-gradient(135deg, #ffded4, #ffded4);
+    color: var(--admin-brand-700);
+    box-shadow: 0 10px 30px rgba(255, 222, 212, .06);
+  }
+
+  .services-category-link-icon {
+    display: grid;
+    overflow: hidden;
+    width: 38px;
+    height: 38px;
+    place-items: center;
+    flex-shrink: 0;
+    border-radius: 14px;
+    background: #f8fafc;
+    color: #64748b;
+  }
+
+  .services-category-link.is-active .services-category-link-icon {
+    background: rgba(255,255,255,.9);
+    color: var(--admin-brand-700);
+  }
+
+  .services-category-link-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .services-category-thumbnail {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .services-category-image-preview-trigger {
+    display: block;
+    width: 100%;
+    height: 100%;
+    cursor: zoom-in;
+  }
+
+  .services-category-image-preview-trigger:focus-visible {
+    outline: 3px solid var(--admin-brand-500);
+    outline-offset: -3px;
+  }
+
+  .services-category-link-label {
+    min-width: 0;
+    flex: 1;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+
+  .services-category-count {
+    display: grid;
+    min-width: 28px;
+    height: 28px;
+    place-items: center;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    background: #fff;
+    padding: 0 8px;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .services-add-category-footer {
+    border-top: 1px solid rgba(226,232,240,.7);
+    padding: 12px;
+  }
+
+  .services-add-category-button {
+    display: flex;
+    width: 100%;
+    min-height: 48px;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    border: 1px dashed var(--admin-brand-200);
+    border-radius: 18px;
+    background: rgba(255, 222, 212, .66);
+    color: var(--admin-brand-700);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 700;
+    transition: .16s ease;
+  }
+
+  .services-add-category-button:hover {
+    border-color: var(--admin-brand-500);
+    background: var(--admin-brand-50);
+  }
+
+  .services-add-category-button svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .services-content {
+    min-width: 0;
+  }
+
+  .services-category-section + .services-category-section {
+    margin-top: 28px;
+  }
+
+  .services-category-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 14px;
+  }
+
+  .services-category-title-block {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 13px;
+  }
+
+  .services-category-heading-icon {
+    display: grid;
+    overflow: hidden;
+    width: 46px;
+    height: 46px;
+    place-items: center;
+    flex-shrink: 0;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    background: #fff;
+    color: var(--admin-brand-700);
+    box-shadow: 0 1px 2px rgba(15,23,42,.04);
+  }
+
+  .services-category-heading-icon svg {
+    width: 21px;
+    height: 21px;
+  }
+
+  .services-category-heading {
+    margin: 0;
+    color: #0f172a;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -.04em;
+    line-height: 1.12;
+  }
+
+  .services-category-section-count {
+    margin: 4px 0 0;
+    color: #94a3b8;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .services-category-heading-editor {
+    min-width: 0;
+  }
+
+  .services-category-heading-display {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .services-category-image-form {
+    display: inline-flex;
+  }
+
+  .services-category-image-button {
+    display: inline-flex;
+    min-height: 32px;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    background: #fff;
+    color: #64748b;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 0 10px;
+    transition: .16s ease;
+  }
+
+  .services-category-image-button:hover {
+    border-color: var(--admin-brand-300);
+    background: var(--admin-brand-50);
+    color: var(--admin-brand-700);
+  }
+
+  .services-category-image-button svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .services-category-image-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .services-category-heading-editor.is-editing .services-category-heading-display {
+    display: none;
+  }
+
+  .services-category-heading-edit-button,
+  .services-category-heading-delete-button,
+  .services-category-inline-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: #94a3b8;
+    cursor: pointer;
+    transition: .16s ease;
+  }
+
+  .services-category-heading-edit-button,
+  .services-category-heading-delete-button {
+    width: 34px;
+    height: 34px;
+  }
+
+  .services-category-heading-edit-button:hover,
+  .services-category-heading-delete-button:hover {
+    background: #fff;
+    color: var(--admin-brand-700);
+    box-shadow: 0 1px 2px rgba(15,23,42,.05);
+  }
+
+  .services-category-heading-delete-button:hover {
+    background: #fff1f2;
+    color: #be123c;
+  }
+
+  .services-category-inline-form {
+    display: none;
+    min-width: min(460px, 100%);
+    align-items: center;
+    gap: 8px;
+  }
+
+  .services-category-heading-editor.is-editing .services-category-inline-form {
+    display: flex;
+  }
+
+  .services-category-inline-input {
+    box-sizing: border-box;
+    min-width: 0;
+    width: min(360px, 100%);
+    height: 46px;
+    border: 1px solid #d4d4d8;
+    border-radius: 14px;
+    background: #fff;
+    color: #0f172a;
+    font: inherit;
+    font-size: 18px;
+    font-weight: 700;
+    outline: 0;
+    padding: 0 14px;
+  }
+
+  .services-category-inline-input:focus {
+    border-color: var(--admin-brand-500);
+    box-shadow: 0 0 0 4px rgba(255, 222, 212, .14);
+  }
+
+  .services-category-inline-button {
+    width: 42px;
+    height: 42px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+  }
+
+  .services-category-inline-button.is-save {
+    color: #059669;
+  }
+
+  .services-category-inline-button.is-save:hover {
+    border-color: #a7f3d0;
+    background: #ecfdf5;
+  }
+
+  .services-category-inline-button.is-cancel {
+    color: #e11d48;
+  }
+
+  .services-category-inline-button.is-cancel:hover {
+    border-color: #fecdd3;
+    background: #fff1f2;
+  }
+
+  .services-category-inline-error {
+    margin: 8px 0 0;
+    color: #e11d48;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .services-category-image-field {
+    display: grid;
+    gap: 6px;
+    margin-top: 2px;
+    color: #334155;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .services-category-image-field input {
+    width: 100%;
+    color: #475569;
+    font: inherit;
+    font-weight: 700;
+  }
+
+  .services-category-image-help {
+    color: #94a3b8;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .services-category-actions {
+    position: relative;
+    z-index: 30;
+  }
+
+  .services-category-actions[open] {
+    z-index: 2147483300;
+  }
+
+  .services-category-actions summary,
+  .service-row-actions summary {
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .services-category-actions summary::-webkit-details-marker,
+  .service-row-actions summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .services-category-menu,
+  .service-row-actions-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 10px);
+    z-index: 2147483301;
+    display: grid;
+    gap: 2px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    background: #fff;
+    padding: 7px;
+    box-shadow: 0 18px 50px rgba(255, 222, 212, .14);
+  }
+
+  .services-category-menu {
+    min-width: 230px;
+  }
+
+  .service-row-actions-menu {
+    width: 250px;
+  }
+
+  .services-category-menu-item,
+  .service-row-action {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    gap: 11px;
+    border: 0;
+    border-radius: 13px;
+    background: transparent;
+    color: #334155;
+    cursor: pointer;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 11px 12px;
+    text-align: left;
+    text-decoration: none;
+  }
+
+  .services-category-menu-item:hover,
+  .service-row-action:hover {
+    background: #f8fafc;
+    color: var(--admin-brand-700);
+  }
+
+  .services-category-menu-item.is-danger,
+  .service-row-action.is-danger {
+    color: #e11d48;
+  }
+
+  .services-category-menu-item.is-danger:hover,
+  .service-row-action.is-danger:hover {
+    background: #fff1f2;
+    color: #be123c;
+  }
+
+  .services-category-menu-item svg,
+  .service-row-action svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  .service-row-actions-menu form {
+    margin: 0;
+  }
+
+  .services-row-stack {
+    display: grid;
+    gap: 12px;
+  }
+
+  .service-row {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 18px;
+    align-items: center;
+    overflow: visible;
+    border: 1px solid rgba(226,232,240,.88);
+    border-radius: 26px;
+    background: #fff;
+    padding: 18px;
+    box-shadow: 0 10px 32px rgba(255, 222, 212, .055);
+    color: inherit;
+    text-decoration: none;
+    transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+  }
+
+  .service-row:hover {
+    transform: translateY(-2px);
+    border-color: var(--admin-brand-200);
+    box-shadow: 0 16px 36px rgba(255, 222, 212, .08);
+  }
+
+  .service-row.is-selected {
+    border-color: var(--admin-brand-300, #ffded4);
+    box-shadow: 0 0 0 4px rgba(255, 222, 212, .12), 0 16px 36px rgba(255, 222, 212, .08);
+  }
+
+  .service-row-link {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: inherit;
+  }
+
+  .service-row-link:focus-visible {
+    outline: 3px solid var(--admin-brand-500);
+    outline-offset: 3px;
+  }
+
+  .service-row-main {
+    display: flex;
+    min-width: 0;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .service-row-icon {
+    display: grid;
+    width: 56px;
+    height: 56px;
+    place-items: center;
+    flex-shrink: 0;
+    border: 1px solid var(--admin-brand-100);
+    border-radius: 20px;
+    background: linear-gradient(135deg, #fff, var(--admin-brand-50));
+    color: var(--admin-brand-700);
+  }
+
+  .service-row-icon svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .service-row-copy {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .service-row-heading {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .service-row-title {
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #0f172a;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: -.02em;
+  }
+
+  .service-row-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 5px 9px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    line-height: 1;
+  }
+
+  .service-row-badge.is-public {
+    background: #ecfdf5;
+    color: #047857;
+  }
+
+  .service-row-badge.is-link {
+    background: var(--admin-brand-50);
+    color: var(--admin-brand-700);
+  }
+
+  .service-row-badge.is-muted {
+    background: #f1f5f9;
+    color: #64748b;
+  }
+
+  .service-row-badge.is-no-deposit {
+    background: #f1f5f9;
+    color: #64748b;
+  }
+
+  .service-row-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px 16px;
+    margin: 10px 0 0;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.35;
+  }
+
+  .service-row-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .service-row-meta svg {
+    width: 15px;
+    height: 15px;
+    color: #94a3b8;
+  }
+
+  .service-row-description {
+    display: -webkit-box;
+    max-width: 720px;
+    margin: 12px 0 0;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    color: #64748b;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.55;
+  }
+
+  .service-row-side {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    min-width: 150px;
+    justify-items: end;
+    gap: 12px;
+    border-left: 1px solid #f1f5f9;
+    padding-left: 18px;
+  }
+
+  .service-row-price-label {
+    margin: 0;
+    color: #94a3b8;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-align: right;
+    text-transform: uppercase;
+  }
+
+  .service-row-price {
+    margin: 2px 0 0;
+    color: #0f172a;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -.03em;
+    white-space: nowrap;
+  }
+
+  .service-row-actions {
+    position: relative;
+  }
+
+  .service-row-actions[open] {
+    z-index: 2147483300;
+  }
+
+  .service-row-menu {
+    display: grid;
+    width: 42px;
+    height: 42px;
+    place-items: center;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    background: #fff;
+    color: #64748b;
+    text-decoration: none;
+    transition: .16s ease;
+  }
+
+  .service-row-menu:hover,
+  .service-row-actions[open] .service-row-menu {
+    border-color: var(--admin-brand-200);
+    background: var(--admin-brand-50);
+    color: var(--admin-brand-700);
+  }
+
+  .service-row-menu svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .services-summary-strip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-top: 14px;
+    border: 1px solid rgba(226,232,240,.78);
+    border-radius: 20px;
+    background: rgba(255,255,255,.72);
+    padding: 12px 16px;
+  }
+
+  .services-summary-strip p {
+    margin: 0;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.45;
+  }
+
+  .services-summary-strip strong {
+    color: #334155;
+    font-weight: 700;
+  }
+
+  .services-summary-note {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .services-summary-note svg {
+    width: 16px;
+    height: 16px;
+    color: #94a3b8;
+  }
+
+  .services-empty {
+    border: 1px dashed #cbd5e1;
+    border-radius: 26px;
+    background: #fff;
+    padding: 52px 28px;
+    text-align: center;
+    box-shadow: 0 10px 32px rgba(255, 222, 212, .055);
+  }
+
+  .services-empty-icon {
+    display: grid;
+    width: 58px;
+    height: 58px;
+    place-items: center;
+    margin: 0 auto;
+    border-radius: 20px;
+    background: #f1f5f9;
+    color: #64748b;
+  }
+
+  .services-empty-icon svg {
+    width: 26px;
+    height: 26px;
+  }
+
+  .services-empty h2 {
+    margin: 16px 0 0;
+    color: #0f172a;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -.03em;
+  }
+
+  .services-empty p {
+    max-width: 440px;
+    margin: 8px auto 0;
+    color: #64748b;
+    font-size: 14px;
+    font-weight: 650;
+    line-height: 1.55;
+  }
+
+  .services-modal {
+    width: min(520px, calc(100vw - 32px));
+    border: 0;
+    border-radius: 28px;
+    background: #fff;
+    color: #0f172a;
+    padding: 0;
+    box-shadow: 0 28px 80px rgba(15,23,42,.24);
+  }
+
+  .services-modal[open] {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    margin: 0;
+    transform: translate(-50%, -50%);
+  }
+
+  .services-modal::backdrop {
+    background: rgba(15,23,42,.46);
+    backdrop-filter: blur(4px);
+  }
+
+  .services-modal-inner {
+    padding: 26px;
+  }
+
+  .services-modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+  }
+
+  .services-modal-title {
+    margin: 0;
+    color: #0f172a;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -.04em;
+  }
+
+  .services-modal-copy {
+    margin: 8px 0 0;
+    color: #64748b;
+    font-size: 14px;
+    font-weight: 650;
+    line-height: 1.55;
+  }
+
+  .services-category-image-modal {
+    width: min(980px, calc(100vw - 32px));
+    max-height: min(860px, calc(100vh - 32px));
+  }
+
+  .services-category-image-modal .services-modal-inner {
+    display: flex;
+    max-height: inherit;
+    flex-direction: column;
+  }
+
+  .services-category-image-preview-body {
+    display: grid;
+    min-height: 0;
+    place-items: center;
+    margin-top: 20px;
+    overflow: hidden;
+    border-radius: 20px;
+    background: #f8fafc;
+  }
+
+  .services-category-image-preview-image {
+    display: block;
+    width: 100%;
+    max-height: min(680px, calc(100vh - 180px));
+    object-fit: contain;
+  }
+
+  .services-modal-close {
+    display: grid;
+    width: 42px;
+    height: 42px;
+    place-items: center;
+    flex-shrink: 0;
+    border: 1px solid #e2e8f0;
+    border-radius: 15px;
+    background: #fff;
+    color: #64748b;
+    cursor: pointer;
+  }
+
+  .services-modal-close svg {
+    width: 19px;
+    height: 19px;
+  }
+
+  .services-modal-form {
+    display: grid;
+    gap: 12px;
+    margin-top: 22px;
+  }
+
+  .services-category-input {
+    box-sizing: border-box;
+    width: 100%;
+    height: 50px;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    background: #fff;
+    color: #0f172a;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    outline: 0;
+    padding: 0 16px;
+  }
+
+  .services-category-input:focus {
+    border-color: var(--admin-brand-500);
+    box-shadow: 0 0 0 4px rgba(255, 222, 212, .14);
+  }
+
+  .services-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 22px;
+  }
+
+  .services-modal-secondary,
+  .services-modal-primary,
+  .services-modal-danger {
+    display: inline-flex;
+    min-height: 46px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 16px;
+    cursor: pointer;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 0 18px;
+  }
+
+  .services-modal-secondary {
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    color: #334155;
+  }
+
+  .services-modal-primary {
+    border: 0;
+    background: #05080a;
+    color: #fff;
+  }
+
+  .services-modal-danger {
+    border: 0;
+    background: #e11d48;
+    color: #fff;
+  }
+
+  .services-category-delete-form {
+    display: contents;
+  }
+
+  @media (max-width: 1180px) {
+    .services-menu-container {
+      width: calc(100% - 40px);
+    }
+
+    .services-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .services-category-panel {
+      position: static;
+      max-height: none;
+    }
+
+    .services-category-list {
+      overflow-y: visible;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .services-menu-container {
+      width: calc(100% - 28px);
+      padding-block: 24px 38px;
+    }
+
+    .services-menu-header,
+    .services-toolbar-inner,
+    .services-category-section-header,
+    .services-summary-strip {
+      align-items: stretch;
+      flex-direction: column;
+    }
+
+    .services-menu-actions,
+    .services-menu-primary,
+    .services-search,
+    .services-filter-button {
+      width: 100%;
+    }
+
+    .service-row {
+      grid-template-columns: 1fr;
+      padding: 16px;
+    }
+
+    .service-row-main {
+      gap: 13px;
+    }
+
+    .service-row-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 18px;
+    }
+
+    .service-row-side {
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      justify-items: start;
+      min-width: 0;
+      border-left: 0;
+      border-top: 1px solid #f1f5f9;
+      padding: 14px 0 0;
+    }
+
+    .service-row-price-label,
+    .service-row-price {
+      text-align: left;
+    }
+
+    .service-row-actions {
+      justify-self: end;
+    }
+
+    .service-row-actions-menu {
+      right: 0;
+    }
+
+    .services-modal-actions {
+      display: grid;
+    }
+  }
+</style>
+
+<div class="services-menu-shell" data-services-index>
+  <div class="services-menu-container">
+    <header class="services-menu-header">
+      <div>
+        <div class="services-menu-title-row">
+          <h1 class="services-menu-title">Catálogo de servicios</h1>
+          <span class="services-menu-count-pill">
+            <%= service_icons.fetch(:sparkles).html_safe %>
+            <%= pluralize(active_services_count, "servicio activo", plural: "servicios activos") %>
+          </span>
+        </div>
+        <p class="services-menu-copy">
+          Configurá los servicios que pueden reservar tus clientes, sus precios, duración, visibilidad y categoría.
+          <span class="services-menu-link">Más información</span>
+        </p>
+      </div>
+
+      <div class="services-menu-actions">
+        <%= link_to new_admin_service_path(service_category_id: selected_category&.id), class: "services-menu-primary" do %>
+          <%= service_icons.fetch(:plus).html_safe %>
+          Añadir servicio
+        <% end %>
+      </div>
+    </header>
+
+    <section class="services-toolbar">
+      <div class="services-toolbar-inner">
+        <%= form_with url: admin_services_path, method: :get, class: "services-search-row", data: { services_search_form: true } do |form| %>
+          <label class="services-search">
+            <%= service_icons.fetch(:search).html_safe %>
+            <%= form.search_field :q,
+              value: @service_query.query,
+              placeholder: "Buscar por nombre de servicio",
+              autocomplete: "off",
+              data: { services_search_input: true } %>
+          </label>
+          <% if selected_category.present? %>
+            <%= hidden_field_tag :service_category_id, selected_category.id %>
+          <% end %>
+        <% end %>
+
+        <button type="button" class="services-filter-button" data-services-filter-button>
+          <%= service_icons.fetch(:sliders).html_safe %>
+          Filtros
+        </button>
+      </div>
+    </section>
+
+    <section class="services-layout">
+      <aside class="services-category-panel" aria-label="Categorías de servicios">
+        <div class="services-category-panel-header">
+          <div>
+            <h2 class="services-category-title">Categorías</h2>
+            <p class="services-category-subtitle">Organizá tu menú</p>
+          </div>
+          <button type="button" class="services-category-icon-button" data-services-add-category-open aria-label="Añadir categoría">
+            <%= service_icons.fetch(:plus).html_safe %>
+          </button>
+        </div>
+
+        <div class="services-category-list">
+          <%= link_to admin_services_path, class: "services-category-link #{selected_category.blank? ? "is-active" : ""}" do %>
+            <span class="services-category-link-icon"><%= service_icons.fetch(:grid).html_safe %></span>
+            <span class="services-category-link-label">Todas las categorías</span>
+            <span class="services-category-count"><%= all_services_count %></span>
+          <% end %>
+
+          <% visible_categories.each do |category| %>
+            <% active = selected_category_id == category.id.to_s %>
+            <% category_count = services_count_by_category_id.fetch(category.id, 0) %>
+            <%= link_to admin_services_path(service_category_id: category.id), class: "services-category-link #{active ? "is-active" : ""}" do %>
+              <%= render "admin/services/category_icon", category: category, fallback_icon: service_icons.fetch(:folder), css_class: "services-category-link-icon" %>
+              <span class="services-category-link-label"><%= render "admin/services/category_sidebar_name", category: category %></span>
+              <span class="services-category-count"><%= category_count %></span>
+            <% end %>
+          <% end %>
+        </div>
+
+        <div class="services-add-category-footer">
+          <button type="button" class="services-add-category-button" data-services-add-category-open>
+            <%= service_icons.fetch(:folder_plus).html_safe %>
+            Añadir categoría
+          </button>
+        </div>
+      </aside>
+
+      <div class="services-content">
+        <% if selected_category.present? && @services.empty? %>
+          <section class="services-category-section">
+            <div class="services-category-section-header">
+              <div class="services-category-title-block">
+                <%= render "admin/services/category_icon", category: selected_category, fallback_icon: service_icons.fetch(:folder), css_class: "services-category-heading-icon" %>
+                <div class="min-w-0">
+                  <%= render "admin/services/category_heading_editor", category: selected_category %>
+                  <p class="services-category-section-count">0 servicios disponibles</p>
+                </div>
+              </div>
+            </div>
+          </section>
+        <% end %>
+
+        <% if @services.any? %>
+          <% grouped_category_names.each do |category_name| %>
+            <% services = @services_by_category_name.fetch(category_name, []) %>
+            <% next if services.blank? %>
+            <% category = visible_categories.find { |row| row.name == category_name } %>
+
+            <section class="services-category-section" data-services-category-section>
+              <div class="services-category-section-header">
+                <div class="services-category-title-block">
+                  <% if category.present? %>
+                    <%= render "admin/services/category_icon", category: category, fallback_icon: service_icons.fetch(:folder), css_class: "services-category-heading-icon" %>
+                  <% else %>
+                    <span class="services-category-heading-icon"><%= service_icons.fetch(:folder).html_safe %></span>
+                  <% end %>
+                  <div class="min-w-0">
+                    <% if category.present? %>
+                      <%= render "admin/services/category_heading_editor", category: category %>
+                    <% else %>
+                      <h2 class="services-category-heading"><%= category_name %></h2>
+                    <% end %>
+                    <p class="services-category-section-count"><%= pluralize(services.size, "servicio disponible", plural: "servicios disponibles") %></p>
+                  </div>
+                </div>
+
+                <% if category.present? %>
+                  <details class="services-category-actions" data-services-category-actions>
+                    <summary class="services-small-button">
+                      Acciones
+                      <%= service_icons.fetch(:chevron_down).html_safe %>
+                    </summary>
+                    <div class="services-category-menu">
+                      <%= link_to new_admin_service_path(service_category_id: category.id), class: "services-category-menu-item" do %>
+                        <%= service_icons.fetch(:plus).html_safe %>
+                        Agregar servicio
+                      <% end %>
+                    </div>
+                  </details>
+                <% end %>
+              </div>
+
+              <div class="services-row-stack">
+                <% services.each do |service| %>
+                  <% service_search_text = service.name %>
+                  <% public_state_label = service_public_state_label(service) %>
+                  <% public_state_class = if service.public?
+                    "is-public"
+                  elsif service.link_only?
+                    "is-link"
+                  else
+                    "is-muted"
+                  end %>
+                  <% service_price_label = @show_financials ? service.display_price.sub("Sin precio", "$0") : public_state_label %>
+                  <article class="service-row <%= "is-selected" if selected_service_id == service.id.to_s %>"
+                           data-services-service-row
+                           data-services-search="<%= service_search_text %>">
+                    <%= link_to edit_admin_service_path(service), class: "service-row-link", aria: { label: "Editar #{service.name}" } do %>
+                      <span class="sr-only">Editar <%= service.name %></span>
+                    <% end %>
+
+                    <div class="service-row-main">
+                      <div class="service-row-icon"><%= service_icons.fetch(:sparkles).html_safe %></div>
+                      <div class="service-row-copy">
+                        <div class="service-row-heading">
+                          <h3 class="service-row-title"><%= service.name.presence || "Servicio sin nombre" %></h3>
+                          <span class="service-row-badge <%= public_state_class %>"><%= public_state_label %></span>
+                          <% if service.deposit_required? %>
+                            <span class="service-row-badge is-link">Seña: <%= service_money(service.expected_deposit_amount_cents) %></span>
+                          <% else %>
+                            <span class="service-row-badge is-no-deposit">No requiere seña</span>
+                          <% end %>
+                        </div>
+
+                        <p class="service-row-meta">
+                          <span><%= service_icons.fetch(:clock).html_safe %><%= service_duration_label(service.duration_minutes) %></span>
+                          <span><%= service_icons.fetch(:folder).html_safe %><%= service.service_category&.name.presence || service.category_label %></span>
+                          <span><%= service_icons.fetch(:users).html_safe %><%= service_team_label(service, @business) %></span>
+                        </p>
+
+                        <% if service.description.present? %>
+                          <p class="service-row-description"><%= service.description %></p>
+                        <% else %>
+                          <p class="service-row-description">Sin descripción cargada.</p>
+                        <% end %>
+                      </div>
+                    </div>
+
+                    <div class="service-row-side">
+                      <div>
+                        <p class="service-row-price-label"><%= @show_financials ? "Precio" : "Estado" %></p>
+                        <p class="service-row-price"><%= service_price_label %></p>
+                      </div>
+
+                      <details class="service-row-actions" data-service-row-actions>
+                        <summary class="service-row-menu" aria-label="Acciones para <%= service.name %>" title="Acciones">
+                          <%= service_icons.fetch(:more).html_safe %>
+                        </summary>
+                        <div class="service-row-actions-menu">
+                          <%= link_to edit_admin_service_path(service), class: "service-row-action" do %>
+                            <%= service_icons.fetch(:pencil).html_safe %>
+                            Editar
+                          <% end %>
+                          <%= button_to duplicate_admin_service_path(service), method: :post, form: { class: "contents" }, class: "service-row-action" do %>
+                            <%= service_icons.fetch(:copy).html_safe %>
+                            Duplicar
+                          <% end %>
+                          <%= link_to short_public_service_path(service.business.slug, service.slug), target: "_blank", rel: "noopener", class: "service-row-action" do %>
+                            <%= service_icons.fetch(:eye).html_safe %>
+                            Enlace de reserva rápida
+                          <% end %>
+                          <%= button_to admin_service_path(service), method: :delete, form: { class: "contents", data: { turbo_confirm: "¿Querés archivar este servicio?" } }, class: "service-row-action" do %>
+                            <%= service_icons.fetch(:archive).html_safe %>
+                            Archivar
+                          <% end %>
+                          <%= button_to permanently_destroy_admin_service_path(service), method: :delete, form: { class: "contents", data: { turbo_confirm: "¿Eliminar este servicio permanentemente? Esta acción no se puede deshacer." } }, class: "service-row-action is-danger" do %>
+                            <%= service_icons.fetch(:trash).html_safe %>
+                            Eliminar permanentemente
+                          <% end %>
+                        </div>
+                      </details>
+                    </div>
+                  </article>
+                <% end %>
+              </div>
+
+            </section>
+          <% end %>
+
+          <section id="services-search-empty" class="services-empty" hidden>
+            <span class="services-empty-icon"><%= service_icons.fetch(:search_x).html_safe %></span>
+            <h2>No encontramos servicios</h2>
+            <p>Probá buscar con otro nombre o limpiá la búsqueda.</p>
+            <button type="button" class="services-small-button mt-5" data-services-clear-search>Limpiar búsqueda</button>
+          </section>
+
+          <div class="services-summary-strip">
+            <p>Mostrando <strong data-services-visible-count><%= visible_services_count %></strong> de <%= visible_services_count %> servicios en esta vista.</p>
+            <p class="services-summary-note"><%= service_icons.fetch(:eye).html_safe %>Los servicios públicos aparecen en la página de reservas.</p>
+          </div>
+        <% else %>
+          <section class="services-empty">
+            <span class="services-empty-icon"><%= service_icons.fetch(:folder_plus).html_safe %></span>
+            <h2>No hay servicios para mostrar</h2>
+            <p>Creá un servicio o limpiá la búsqueda actual.</p>
+            <%= link_to new_admin_service_path(service_category_id: selected_category&.id), class: "services-menu-primary mt-5" do %>
+              <%= service_icons.fetch(:plus).html_safe %>
+              Añadir servicio
+            <% end %>
+          </section>
+        <% end %>
+      </div>
+    </section>
+  </div>
+
+  <% visible_categories.each do |category| %>
+    <% category_service_count = category.services.size %>
+    <% category_pack_count = @service_pack_counts_by_category_id.fetch(category.id, 0) %>
+
+    <dialog id="service-category-delete-modal-<%= category.id %>" class="services-modal services-category-modal">
+      <div class="services-modal-inner">
+        <div class="services-modal-header">
+          <div>
+            <h2 class="services-modal-title">Eliminar categoría permanentemente</h2>
+            <p class="services-modal-copy">
+              <% if category_service_count.positive? || category_pack_count.positive? %>
+                Se eliminarán <%= pluralize(category_service_count, "servicio", plural: "servicios") %> y <%= pluralize(category_pack_count, "paquete", plural: "paquetes") %> vinculados a esta categoría.
+              <% else %>
+                Esta categoría no tiene servicios vinculados.
+              <% end %>
+              Esta acción no se puede deshacer.
+            </p>
+          </div>
+          <button type="button" class="services-modal-close" data-service-category-modal-close aria-label="Cerrar">
+            <%= service_icons.fetch(:x).html_safe %>
+          </button>
+        </div>
+
+        <div class="services-modal-actions">
+          <button type="button" class="services-modal-secondary" data-service-category-modal-close>Cancelar</button>
+          <%= button_to "Eliminar categoría", admin_service_category_path(category), method: :delete, form: { class: "services-category-delete-form" }, class: "services-modal-danger" %>
+        </div>
+      </div>
+    </dialog>
+  <% end %>
+
+  <dialog id="services-add-category-modal" class="services-modal">
+    <div class="services-modal-inner">
+      <div class="services-modal-header">
+        <div>
+          <h2 class="services-modal-title">Añadir categoría</h2>
+          <p class="services-modal-copy">Agrupá servicios similares para que tus clientes encuentren más rápido lo que quieren reservar.</p>
+        </div>
+        <button type="button" class="services-modal-close" data-services-add-category-close aria-label="Cerrar">
+          <%= service_icons.fetch(:x).html_safe %>
+        </button>
+      </div>
+
+      <%= form_with model: [ :admin, ServiceCategory.new ], class: "services-modal-form" do |form| %>
+        <%= form.text_field :name, required: true, placeholder: "Nombre de categoría", class: "services-category-input", data: { services_add_category_input: true } %>
+        <label class="services-category-image-field">
+          Imagen para Web Completa <span class="services-category-image-help">Opcional · se mostrará en las tarjetas de categorías.</span>
+          <%= form.file_field :cover_image, accept: "image/png,image/jpeg,image/webp" %>
+        </label>
+        <div class="services-modal-actions">
+          <button type="button" class="services-modal-secondary" data-services-add-category-close>Cancelar</button>
+          <%= form.submit "Crear categoría", class: "services-modal-primary" %>
+        </div>
+      <% end %>
+    </div>
+  </dialog>
+
+  <dialog id="services-category-image-preview-modal" class="services-modal services-category-image-modal">
+    <div class="services-modal-inner">
+      <div class="services-modal-header">
+        <div>
+          <h2 class="services-modal-title" data-category-image-preview-title>Imagen de categoría</h2>
+          <p class="services-modal-copy">Vista ampliada de la imagen de portada.</p>
+        </div>
+        <button type="button" class="services-modal-close" data-category-image-preview-close aria-label="Cerrar imagen ampliada">
+          <%= service_icons.fetch(:x).html_safe %>
+        </button>
+      </div>
+      <div class="services-category-image-preview-body">
+        <img class="services-category-image-preview-image" data-category-image-preview-image alt="">
+      </div>
+    </div>
+  </dialog>
+</div>
+
+<script>
+  (() => {
+    const root = document.querySelector("[data-services-index]");
+    if (!root) return;
+
+    const form = root.querySelector("[data-services-search-form]");
+    const input = root.querySelector("[data-services-search-input]");
+    const sections = Array.from(root.querySelectorAll("[data-services-category-section]"));
+    const emptyState = root.querySelector("#services-search-empty");
+    const visibleCountTarget = root.querySelector("[data-services-visible-count]");
+    const selectedRow = root.querySelector(".service-row.is-selected");
+    const categoryImagePreviewDialog = root.querySelector("#services-category-image-preview-modal");
+    const categoryImagePreviewImage = categoryImagePreviewDialog?.querySelector("[data-category-image-preview-image]");
+    const categoryImagePreviewTitle = categoryImagePreviewDialog?.querySelector("[data-category-image-preview-title]");
+    const normalize = (value) => value.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+
+    const actionMenus = () => Array.from(root.querySelectorAll("[data-services-category-actions], [data-service-row-actions]"));
+    const closeActionMenus = (except = null) => {
+      actionMenus().forEach((menu) => {
+        if (menu !== except) menu.removeAttribute("open");
+      });
+    };
+
+    const openCategoryImagePreview = (trigger) => {
+      if (!categoryImagePreviewDialog || !categoryImagePreviewImage) return;
+
+      const name = trigger.dataset.categoryImagePreviewName || "Categoría";
+      const imageUrl = trigger.dataset.categoryImagePreviewUrl;
+      if (!imageUrl) return;
+
+      categoryImagePreviewImage.src = imageUrl;
+      categoryImagePreviewImage.alt = `Imagen de ${name}`;
+      if (categoryImagePreviewTitle) categoryImagePreviewTitle.textContent = name;
+      categoryImagePreviewDialog.showModal();
+    };
+
+    const applyLocalSearch = () => {
+      if (!input) return;
+
+      const query = normalize(input.value);
+      let visibleCount = 0;
+
+      sections.forEach((section) => {
+        let sectionHasMatches = false;
+        const rows = Array.from(section.querySelectorAll("[data-services-service-row]"));
+
+        rows.forEach((row) => {
+          const matches = query.length === 0 || normalize(row.dataset.servicesSearch || row.textContent || "").includes(query);
+          row.hidden = !matches;
+
+          if (matches) {
+            visibleCount += 1;
+            sectionHasMatches = true;
+          }
+        });
+
+        section.hidden = !sectionHasMatches;
+      });
+
+      if (emptyState) {
+        emptyState.hidden = query.length === 0 || visibleCount > 0;
+      }
+
+      if (visibleCountTarget) {
+        visibleCountTarget.textContent = visibleCount;
+      }
+    };
+
+    if (form) {
+      form.addEventListener("submit", (event) => event.preventDefault());
+    }
+
+    if (input) {
+      input.addEventListener("input", applyLocalSearch);
+      input.addEventListener("search", applyLocalSearch);
+      applyLocalSearch();
+    }
+
+    root.addEventListener("change", (event) => {
+      const categoryImageInput = event.target.closest("[data-category-image-input]");
+      if (!categoryImageInput?.files?.length) return;
+
+      categoryImageInput.closest("[data-category-image-form]")?.requestSubmit();
+    });
+
+    root.querySelectorAll("[data-services-clear-search]").forEach((button) => {
+      button.addEventListener("click", () => {
+        if (!input) return;
+        input.value = "";
+        applyLocalSearch();
+        input.focus();
+      });
+    });
+
+    if (selectedRow) {
+      requestAnimationFrame(() => {
+        selectedRow.scrollIntoView({ block: "center", behavior: "smooth" });
+      });
+    }
+
+    root.addEventListener("click", (event) => {
+      const categoryImagePreviewTrigger = event.target.closest("[data-category-image-preview]");
+      if (categoryImagePreviewTrigger) {
+        event.preventDefault();
+        event.stopPropagation();
+        openCategoryImagePreview(categoryImagePreviewTrigger);
+        return;
+      }
+
+      const summary = event.target.closest("[data-services-category-actions] summary, [data-service-row-actions] summary");
+      if (summary) {
+        const details = summary.closest("[data-services-category-actions], [data-service-row-actions]");
+        const willOpen = !details.open;
+        closeActionMenus(details);
+        if (!willOpen) return;
+        return;
+      }
+
+      const inlineEditButton = event.target.closest("[data-category-inline-edit]");
+      if (inlineEditButton) {
+        event.preventDefault();
+        closeActionMenus();
+        const editor = inlineEditButton.closest("[data-category-inline-editor]");
+        const inlineInput = editor?.querySelector("[data-category-inline-input]");
+        if (!editor || !inlineInput) return;
+
+        inlineInput.value = editor.dataset.categoryInlineCurrentName || inlineInput.value;
+        editor.classList.add("is-editing");
+        requestAnimationFrame(() => {
+          inlineInput.focus();
+          inlineInput.select();
+        });
+        return;
+      }
+
+      const inlineCancelButton = event.target.closest("[data-category-inline-cancel]");
+      if (inlineCancelButton) {
+        event.preventDefault();
+        const editor = inlineCancelButton.closest("[data-category-inline-editor]");
+        const inlineInput = editor?.querySelector("[data-category-inline-input]");
+        if (!editor || !inlineInput) return;
+
+        inlineInput.value = editor.dataset.categoryInlineCurrentName || "";
+        editor.classList.remove("is-editing");
+        return;
+      }
+
+      const modalTrigger = event.target.closest("[data-service-category-modal]");
+      if (modalTrigger) {
+        event.preventDefault();
+        closeActionMenus();
+        const dialog = document.getElementById(modalTrigger.dataset.serviceCategoryModal);
+        if (dialog) dialog.showModal();
+        return;
+      }
+
+      const deleteModalClose = event.target.closest("[data-service-category-modal-close]");
+      if (deleteModalClose) {
+        const dialog = deleteModalClose.closest("dialog");
+        if (dialog) dialog.close();
+        return;
+      }
+
+      const categoryImagePreviewClose = event.target.closest("[data-category-image-preview-close]");
+      if (categoryImagePreviewClose) {
+        categoryImagePreviewDialog?.close();
+        return;
+      }
+
+      const addCategoryOpen = event.target.closest("[data-services-add-category-open]");
+      if (addCategoryOpen) {
+        event.preventDefault();
+        closeActionMenus();
+        const dialog = root.querySelector("#services-add-category-modal");
+        const categoryInput = dialog?.querySelector("[data-services-add-category-input]");
+        if (!dialog) return;
+        dialog.showModal();
+        requestAnimationFrame(() => categoryInput?.focus());
+        return;
+      }
+
+      const addCategoryClose = event.target.closest("[data-services-add-category-close]");
+      if (addCategoryClose) {
+        const dialog = addCategoryClose.closest("dialog");
+        if (dialog) dialog.close();
+        return;
+      }
+
+      if (event.target.closest("[data-services-filter-button]")) {
+        event.preventDefault();
+        if (input) input.focus();
+      }
+    });
+
+    root.querySelectorAll(".services-modal").forEach((dialog) => {
+      dialog.addEventListener("click", (event) => {
+        if (event.target === dialog) dialog.close();
+      });
+    });
+
+    document.addEventListener("click", (event) => {
+      if (!event.target.closest("[data-services-category-actions], [data-service-row-actions]")) {
+        closeActionMenus();
+      }
+    });
+
+    document.addEventListener("keydown", (event) => {
+      const categoryImagePreviewTrigger = event.target.closest?.("[data-category-image-preview]");
+      if (categoryImagePreviewTrigger && [ "Enter", " " ].includes(event.key)) {
+        event.preventDefault();
+        openCategoryImagePreview(categoryImagePreviewTrigger);
+        return;
+      }
+
+      if (event.key === "Escape") closeActionMenus();
+    });
+  })();
+</script>

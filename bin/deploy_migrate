@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+max_attempts="${MIGRATION_LOCK_RETRIES:-60}"
+sleep_seconds="${MIGRATION_LOCK_SLEEP:-5}"
+attempt=1
+
+echo "Running database migrations..."
+
+while [ "$attempt" -le "$max_attempts" ]; do
+  output_file="$(mktemp)"
+
+  if bin/rails db:migrate >"$output_file" 2>&1; then
+    cat "$output_file"
+    rm -f "$output_file"
+    exit 0
+  fi
+
+  status=$?
+
+  if grep -q "ActiveRecord::ConcurrentMigrationError" "$output_file"; then
+    rm -f "$output_file"
+
+    if [ "$attempt" -eq "$max_attempts" ]; then
+      echo "Could not acquire the migration lock after $max_attempts attempts." >&2
+      exit 1
+    fi
+
+    echo "Another migration process is running. Retrying in ${sleep_seconds}s (${attempt}/${max_attempts})..." >&2
+    sleep "$sleep_seconds"
+    attempt=$((attempt + 1))
+    continue
+  fi
+
+  cat "$output_file" >&2
+  rm -f "$output_file"
+  exit "$status"
+done

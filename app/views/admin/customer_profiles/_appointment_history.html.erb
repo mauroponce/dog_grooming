@@ -1,0 +1,45 @@
+<% appointments = local_assigns.fetch(:appointments) %>
+<% pagy = local_assigns.fetch(:pagy) %>
+<% appointment_date_label = local_assigns.fetch(:appointment_date_label) %>
+<% cancellation_timestamp_label = local_assigns.fetch(:cancellation_timestamp_label) %>
+
+<% if appointments.any? %>
+  <div class="customer-profile-editor__appointments">
+    <% appointments.each do |appointment| %>
+      <%= button_tag type: "button",
+        class: "customer-profile-editor__appointment",
+        data: {
+          action: "click->customer-appointments#open",
+          customer_appointments_details_url: admin_appointment_details_path(appointment, format: :json, context: "customer_profile"),
+          customer_appointments_variant_param: "customer-profile"
+        },
+        aria: { label: "Ver detalle del turno de #{appointment.service&.name || 'este cliente'}" } do %>
+        <span class="customer-profile-editor__appointment-main">
+          <strong><%= appointment.service&.name || "Servicio sin nombre" %></strong>
+          <span><%= appointment.employee_membership&.name || @business.name %> · <%= appointment_date_label.call(appointment.starts_at) %></span>
+          <% if appointment.canceled? %>
+            <span class="customer-profile-editor__appointment-cancellation">Cancelado por <%= appointment.cancellation_actor_label %><%= " · #{cancellation_timestamp_label.call(appointment.canceled_at)}" if appointment.canceled_at.present? %></span>
+            <% if appointment.cancellation_reason.present? %>
+              <span class="customer-profile-editor__appointment-cancellation-note">Nota: <%= appointment.cancellation_reason %></span>
+            <% end %>
+          <% end %>
+        </span>
+        <span class="customer-profile-editor__appointment-status <%= customer_appointment_status_classes(appointment) %>"><%= customer_appointment_status_label(appointment) %></span>
+      <% end %>
+    <% end %>
+  </div>
+
+  <%= render "admin/shared/pagination",
+    pagy: pagy,
+    item_name: "turnos",
+    aria_label: "Paginación de turnos del cliente",
+    turbo_frame: "customer_appointment_history",
+    pagination_params: { section: "appointments" } %>
+<% else %>
+  <div class="customer-profile-editor__empty">
+    <div>
+      <strong>Todavía no tiene turnos registrados</strong>
+      <p>Las próximas reservas aparecerán en esta sección.</p>
+    </div>
+  </div>
+<% end %>

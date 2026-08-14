@@ -1,0 +1,30 @@
+<div class="mx-auto max-w-xl">
+  <header class="mb-6 flex items-center justify-between border-b border-zinc-200 pb-4">
+    <%= link_to root_path, class: "flex items-center gap-3" do %>
+      <span class="block h-11 w-11 overflow-hidden rounded-xl shadow-sm shadow-zinc-900/15">
+        <%= image_tag "/icon.png?v=3", alt: "", class: "h-full w-full object-cover" %>
+      </span>
+      <span>
+        <span class="block text-sm font-bold tracking-tight text-zinc-950">Dog Grooming</span>
+        <span class="block text-[11px] font-semibold text-zinc-500">Reservas en línea para peluquerías caninas</span>
+      </span>
+    <% end %>
+  </header>
+
+  <section class="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm sm:p-8">
+    <p class="text-xs font-bold uppercase tracking-[.16em] text-brand-700">Recuperar acceso</p>
+    <h1 class="mt-2 text-2xl font-bold tracking-tight text-zinc-950 sm:text-3xl">Restablecé tu contraseña</h1>
+    <p class="mt-2 text-sm leading-6 text-zinc-500">Ingresá tu email y te enviaremos instrucciones para crear una nueva contraseña.</p>
+
+    <%= form_with url: passwords_path, class: "mt-7 space-y-5" do |form| %>
+      <div>
+        <%= form.label :email_address, "Correo electrónico", class: "mb-2 block text-sm font-bold text-zinc-800" %>
+        <%= form.email_field :email_address, required: true, autofocus: true, autocomplete: "username", placeholder: "tu@email.com", value: params[:email_address], class: "h-12 w-full rounded-lg border border-zinc-200 bg-white px-4 text-sm font-semibold outline-none transition placeholder:text-zinc-400 focus:border-brand-400 focus:ring-4 focus:ring-brand-100" %>
+      </div>
+
+      <%= form.submit "Enviar instrucciones", class: "flex h-12 w-full cursor-pointer items-center justify-center rounded-lg bg-zinc-950 px-5 text-sm font-bold text-white shadow-lg shadow-zinc-900/15 transition hover:-translate-y-0.5 hover:bg-zinc-800" %>
+    <% end %>
+
+    <%= link_to "Volver al inicio de sesión", new_session_path, class: "mt-5 inline-block text-xs font-bold text-zinc-500 underline decoration-zinc-300 underline-offset-4 hover:text-zinc-900" %>
+  </section>
+</div>

@@ -1,0 +1,216 @@
+<style>
+  .customer-profile-drawer-backdrop { position: fixed; inset: var(--topbar-height, 78px) 0 0 var(--sidebar-width, 56px); z-index: 2147483646; display: none; background: rgba(15,23,42,.18); }
+  .customer-profile-drawer-backdrop.open { display: block; }
+  .customer-profile-drawer { position: absolute; inset: 0 0 0 auto; width: min(1050px, calc(100vw - var(--sidebar-width, 56px))); overflow: hidden; border-left: 1px solid #e4e4e7; background: #fff; box-shadow: -24px 0 70px rgba(15,23,42,.18); }
+  .customer-profile-drawer.quick { width: min(390px, calc(100vw - var(--sidebar-width, 56px))); }
+  .customer-profile-drawer-grid { display: grid; grid-template-columns: 290px 190px minmax(0, 1fr); height: 100%; min-height: 0; }
+  .customer-profile-summary { overflow-y: auto; border-right: 1px solid #e4e4e7; background: #fafafa; }
+  .customer-profile-summary-main { display: flex; flex-direction: column; align-items: center; padding: 38px 24px 28px; text-align: center; }
+  .customer-profile-avatar { display: grid; width: 104px; height: 104px; place-items: center; border-radius: 999px; background: #ffded4; color: #A63826; font-size: 31px; font-weight: 700; }
+  .customer-profile-name { margin-top: 18px; font-size: 23px; font-weight: 700; line-height: 1.15; }
+  .customer-profile-contact { margin-top: 7px; color: #71717a; font-size: 13px; font-weight: 650; overflow-wrap: anywhere; }
+  .customer-profile-actions { display: flex; gap: 9px; margin-top: 22px; }
+  .customer-actions-wrap { position: relative; }
+  .customer-actions-menu { position: absolute; top: calc(100% + 9px); left: 0; z-index: 30; display: none; width: 250px; overflow: hidden; border: 1px solid #e4e4e7; border-radius: 14px; background: #fff; padding: 8px; text-align: left; box-shadow: 0 18px 45px rgba(15,23,42,.18); }
+  .customer-actions-menu.open { display: block; }
+  .customer-actions-menu a, .customer-actions-menu button { display: flex; width: 100%; min-height: 43px; align-items: center; border-radius: 9px; padding: 0 12px; color: #27272a; font-size: 13px; font-weight: 700; text-decoration: none; }
+  .customer-actions-menu a:hover, .customer-actions-menu button:hover { background: #f4f4f5; }
+  .customer-actions-menu .danger { color: #e11d48; }
+  .customer-profile-action { display: inline-flex; min-height: 42px; align-items: center; justify-content: center; border: 1px solid #d4d4d8; border-radius: 999px; background: #fff; padding: 0 15px; color: #18181b; font-size: 13px; font-weight: 700; text-decoration: none; }
+  .customer-profile-action.primary { border-color: #18181b; background: #18181b; color: #fff; }
+  .customer-profile-facts { border-top: 1px solid #e4e4e7; padding: 24px; }
+  .customer-profile-fact { display: flex; gap: 11px; margin-bottom: 17px; color: #3f3f46; font-size: 13px; font-weight: 700; }
+  .customer-profile-alert { margin: 0 18px 22px; border: 1px solid #fecdd3; border-radius: 14px; background: #fff1f2; padding: 14px; color: #be123c; font-size: 12px; font-weight: 700; }
+  .customer-profile-nav { border-right: 1px solid #e4e4e7; background: #fff; padding: 30px 14px; }
+  .customer-profile-nav-label { padding: 0 12px 10px; color: #71717a; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+  .customer-profile-nav-item { display: flex; width: 100%; min-height: 48px; align-items: center; justify-content: space-between; border: 0; border-radius: 10px; background: transparent; padding: 0 13px; color: #27272a; font-size: 14px; font-weight: 700; }
+  .customer-profile-nav-item.active { background: #ffded4; color: #A63826; }
+  .customer-profile-nav-count { display: inline-flex; min-width: 25px; height: 25px; align-items: center; justify-content: center; border: 1px solid #ffded4; border-radius: 999px; background: #fff; padding: 0 6px; font-size: 11px; }
+  .customer-profile-content { min-width: 0; min-height: 0; overflow-y: auto; background: #f7f7f8; padding: 34px 34px 60px; }
+  .customer-profile-content-header { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+  .customer-profile-content-title { margin: 0; font-size: 31px; font-weight: 700; letter-spacing: -.03em; }
+  .customer-profile-close { display: grid; width: 46px; height: 46px; place-items: center; border: 1px solid #e4e4e7; border-radius: 999px; background: #fff; color: #18181b; font-size: 27px; box-shadow: 0 8px 22px rgba(15,23,42,.10); }
+  .customer-appointment-list { position: relative; margin-top: 28px; padding-left: 23px; }
+  .customer-appointment-list::before { content: ""; position: absolute; left: 8px; top: 20px; bottom: 20px; width: 2px; background: #ffded4; }
+  .customer-appointment-card { position: relative; margin-bottom: 18px; border: 1px solid #e4e4e7; border-radius: 17px; background: #fff; padding: 19px; box-shadow: 0 8px 24px rgba(15,23,42,.05); }
+  .customer-appointment-card::before { content: ""; position: absolute; left: -23px; top: 25px; width: 14px; height: 14px; border: 3px solid #fff; border-radius: 999px; background: #ffded4; box-shadow: 0 0 0 1px #ffded4; }
+  .customer-appointment-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+  .customer-appointment-date { font-size: 13px; font-weight: 700; }
+  .customer-appointment-status { border-radius: 999px; background: #ffded4; padding: 6px 10px; color: #A63826; font-size: 11px; font-weight: 700; }
+  .customer-appointment-service { margin-top: 17px; font-size: 16px; font-weight: 700; }
+  .customer-appointment-meta { margin-top: 5px; color: #71717a; font-size: 12px; font-weight: 700; }
+  .customer-appointment-bottom { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-top: 18px; }
+  .customer-profile-loading { padding: 18px; text-align: center; color: #71717a; font-size: 12px; font-weight: 700; }
+  .customer-summary-alert { margin-top: 28px; border: 1px solid #ffded4; border-radius: 15px; background: #ffded4; padding: 18px; color: #A63826; font-size: 14px; font-weight: 700; }
+  .customer-summary-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 20px; }
+  .customer-summary-card { border: 1px solid #e4e4e7; border-radius: 16px; background: #fff; padding: 20px; }
+  .customer-summary-card.wide { grid-column: 1 / -1; }
+  .customer-summary-label { color: #52525b; font-size: 13px; font-weight: 700; }
+  .customer-summary-value { margin-top: 9px; font-size: 27px; font-weight: 700; }
+  @media (max-width: 1050px) { .customer-profile-drawer-grid { grid-template-columns: 250px 150px minmax(0, 1fr); } }
+</style>
+
+<div id="customerProfileDrawerBackdrop" class="customer-profile-drawer-backdrop" aria-hidden="true">
+  <aside class="customer-profile-drawer" role="dialog" aria-modal="true" aria-label="Perfil del cliente">
+    <div id="customerProfileDrawerContent" class="h-full"></div>
+  </aside>
+</div>
+
+<script>
+  (() => {
+    if (window.customerProfileDrawerInstalled) return;
+    window.customerProfileDrawerInstalled = true;
+    const state = { url: null, page: 0, hasMore: false, loading: false, customer: null, appointments: [], mode: "quick", tab: "summary" };
+
+    const escapeHTML = value => String(value ?? "").replace(/[&<>"']/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[character]));
+    const money = value => `$${new Intl.NumberFormat("es-AR").format(Number(value || 0))}`;
+    const duration = minutes => Number(minutes) >= 60 ? `${Math.floor(Number(minutes) / 60)} h${Number(minutes) % 60 ? ` ${Number(minutes) % 60} min` : ""}` : `${minutes} min`;
+    const dateLabel = iso => new Intl.DateTimeFormat("es-AR", { weekday: "short", day: "numeric", month: "short", year: "numeric" }).format(new Date(`${iso}T12:00:00`));
+
+    function summaryHTML(customer, full = false) {
+      return `
+        <section class="customer-profile-summary">
+          <div class="customer-profile-summary-main">
+            <span class="customer-profile-avatar">${escapeHTML(customer.initials)}</span>
+            <h2 class="customer-profile-name">${escapeHTML(customer.name)}</h2>
+            <p class="customer-profile-contact">${escapeHTML(customer.email || customer.phone || "Sin datos de contacto")}</p>
+            <div class="customer-profile-actions">
+              <div class="customer-actions-wrap">
+                <button type="button" onclick="toggleCustomerActionsMenu(event)" class="customer-profile-action">Acciones&nbsp;⌄</button>
+                <div id="customerActionsMenu" class="customer-actions-menu">
+                  ${customer.whatsappUrl ? `<a href="${escapeHTML(customer.whatsappUrl)}" target="_blank" rel="noopener">Mensajes</a>` : ""}
+                  <a href="${escapeHTML(customer.profileUrl)}">Editar datos del cliente</a>
+                  <button type="button">Editar la alerta para el equipo</button>
+                  <button type="button">Añadir alergia</button>
+                  <button type="button">Añadir etiqueta</button>
+                  <a href="${escapeHTML(customer.profileUrl)}" class="danger">Eliminar cliente</a>
+                </div>
+              </div>
+              ${full ? `<a href="<%= admin_calendar_path %>" class="customer-profile-action primary">Reservar ahora</a>` : `<button type="button" onclick="showFullCustomerProfile()" class="customer-profile-action">Ver perfil</button>`}
+            </div>
+          </div>
+          ${customer.blocked ? `<div class="customer-profile-alert"><strong>Alerta para el equipo</strong><br>${escapeHTML(customer.blockedReason || "Cliente bloqueado")}</div>` : ""}
+          <div class="customer-profile-facts">
+            <p class="customer-profile-fact"><span>☎</span><span>${escapeHTML(customer.phone || "Sin teléfono")}</span></p>
+            <p class="customer-profile-fact"><span>✉</span><span>${escapeHTML(customer.email || "Sin email")}</span></p>
+            ${customer.gender ? `<p class="customer-profile-fact"><span>◇</span><span>${escapeHTML(customer.gender)}</span></p>` : ""}
+            ${customer.birthDate ? `<p class="customer-profile-fact"><span>▣</span><span>${escapeHTML(customer.birthDate)}</span></p>` : ""}
+            ${customer.portalUrl ? `<p class="customer-profile-fact"><span>↗</span><span>${escapeHTML(customer.portalUrl)}</span></p>` : ""}
+            <p class="customer-profile-fact"><span>+</span><span>Creado el ${escapeHTML(customer.createdAt)}</span></p>
+          </div>
+        </section>
+      `;
+    }
+
+    function appointmentHTML(item) {
+      return `
+        <article class="customer-appointment-card">
+          <div class="customer-appointment-top"><div><p class="customer-appointment-date">${escapeHTML(dateLabel(item.date))} · ${escapeHTML(item.start)}</p><p class="customer-appointment-meta">${escapeHTML(item.branch)}</p></div><span class="customer-appointment-status">${escapeHTML(item.status)}</span></div>
+          <p class="customer-appointment-service">${escapeHTML(item.service)}</p>
+          <p class="customer-appointment-meta">${escapeHTML(item.start)} · ${duration(item.duration)} · ${escapeHTML(item.professional)}</p>
+          <div class="customer-appointment-bottom"><a href="${escapeHTML(item.calendarUrl)}" class="customer-profile-action">Ver en calendario</a><strong>${money(item.price)}</strong></div>
+        </article>
+      `;
+    }
+
+    function quickShellHTML(customer) {
+      return `<div class="h-full">${summaryHTML(customer)}<button type="button" onclick="closeCustomerProfileDrawer()" class="customer-profile-close absolute right-4 top-4" aria-label="Cerrar">×</button></div>`;
+    }
+
+    function summaryPanelHTML(customer) {
+      return `<header class="customer-profile-content-header"><h2 class="customer-profile-content-title">Resumen</h2><button type="button" onclick="closeCustomerProfileDrawer()" class="customer-profile-close" aria-label="Cerrar">×</button></header>
+        ${customer.blocked ? `<div class="customer-summary-alert"><strong>Alerta para el equipo</strong><br>${escapeHTML(customer.blockedReason || "Cliente bloqueado")}</div>` : ""}
+        <div class="customer-summary-grid">
+          <div class="customer-summary-card wide"><p class="customer-summary-label">Total de ventas</p><p class="customer-summary-value">${money(customer.totalSales)}</p></div>
+          <div class="customer-summary-card"><p class="customer-summary-label">Turnos</p><p class="customer-summary-value">${customer.appointmentsCount}</p></div>
+          <div class="customer-summary-card"><p class="customer-summary-label">Cancelados</p><p class="customer-summary-value">${customer.canceledCount}</p></div>
+          <div class="customer-summary-card"><p class="customer-summary-label">Inasistencias</p><p class="customer-summary-value">${customer.noShowCount}</p></div>
+        </div>`;
+    }
+
+    function fullShellHTML(customer) {
+      return `<div class="customer-profile-drawer-grid">${summaryHTML(customer, true)}
+        <nav class="customer-profile-nav"><p class="customer-profile-nav-label">Perfil</p>
+          <button type="button" onclick="selectCustomerProfileTab('summary')" class="customer-profile-nav-item ${state.tab === "summary" ? "active" : ""}">Resumen</button>
+          <button type="button" onclick="selectCustomerProfileTab('appointments')" class="customer-profile-nav-item ${state.tab === "appointments" ? "active" : ""}">Turnos <span class="customer-profile-nav-count">${customer.appointmentsCount}</span></button>
+        </nav>
+        <section id="customerProfileAppointmentsScroll" class="customer-profile-content">
+          <div id="customerProfileMain">${state.tab === "summary" ? summaryPanelHTML(customer) : appointmentsPanelHTML()}</div>
+        </section>
+      </div>`;
+    }
+
+    function appointmentsPanelHTML() {
+      const items = state.appointments.map(appointmentHTML).join("");
+      return `<header class="customer-profile-content-header"><h2 class="customer-profile-content-title">Turnos</h2><button type="button" onclick="closeCustomerProfileDrawer()" class="customer-profile-close" aria-label="Cerrar">×</button></header><div id="customerProfileAppointments" class="customer-appointment-list">${items || `<p class="rounded-2xl border border-dashed border-zinc-300 bg-white p-8 text-center text-sm font-bold text-zinc-500">Este cliente todavía no tiene turnos.</p>`}</div><div id="customerProfileLoading" class="customer-profile-loading" ${state.hasMore ? "" : "hidden"}>Cargando turnos...</div>`;
+    }
+
+    async function loadPage(reset = false) {
+      if (state.loading || (!reset && !state.hasMore)) return;
+      state.loading = true;
+      const loading = document.getElementById("customerProfileLoading");
+      if (loading) loading.hidden = false;
+      const page = reset ? 1 : state.page + 1;
+      const url = new URL(state.url, window.location.origin);
+      url.searchParams.set("page", page);
+      try {
+        const response = await fetch(url, { headers: { Accept: "application/json" } });
+        if (!response.ok) throw new Error("profile request failed");
+        const payload = await response.json();
+        state.page = payload.page; state.hasMore = payload.has_more; state.customer = payload.customer;
+        state.appointments.push(...payload.appointments);
+        const content = document.getElementById("customerProfileDrawerContent");
+        if (reset) {
+          document.querySelector(".customer-profile-drawer")?.classList.add("quick");
+          content.innerHTML = quickShellHTML(payload.customer);
+        }
+        const list = document.getElementById("customerProfileAppointments");
+        if (list && !reset) list.insertAdjacentHTML("beforeend", payload.appointments.map(appointmentHTML).join(""));
+      } catch (_error) {
+        const list = document.getElementById("customerProfileAppointments");
+        if (list && reset) list.innerHTML = `<p class="rounded-2xl bg-red-50 p-5 text-sm font-bold text-red-700">No se pudo cargar el perfil.</p>`;
+      } finally {
+        state.loading = false;
+        const currentLoading = document.getElementById("customerProfileLoading");
+        if (currentLoading) currentLoading.hidden = !state.hasMore;
+      }
+    }
+
+    window.openCustomerProfileDrawer = url => {
+      state.url = url; state.page = 0; state.hasMore = true; state.loading = false; state.appointments = []; state.mode = "quick"; state.tab = "summary";
+      const backdrop = document.getElementById("customerProfileDrawerBackdrop");
+      backdrop.classList.add("open"); backdrop.setAttribute("aria-hidden", "false");
+      document.getElementById("customerProfileDrawerContent").innerHTML = `<div class="customer-profile-loading">Cargando perfil...</div>`;
+      loadPage(true);
+    };
+    window.closeCustomerProfileDrawer = () => { const backdrop = document.getElementById("customerProfileDrawerBackdrop"); backdrop?.classList.remove("open"); backdrop?.setAttribute("aria-hidden", "true"); document.querySelector(".customer-profile-drawer")?.classList.remove("quick"); };
+    window.toggleCustomerActionsMenu = event => { event.stopPropagation(); document.getElementById("customerActionsMenu")?.classList.toggle("open"); };
+    window.showFullCustomerProfile = () => {
+      state.mode = "full"; state.tab = "summary";
+      document.querySelector(".customer-profile-drawer")?.classList.remove("quick");
+      document.getElementById("customerProfileDrawerContent").innerHTML = fullShellHTML(state.customer);
+    };
+    window.selectCustomerProfileTab = tab => {
+      state.tab = tab;
+      document.getElementById("customerProfileDrawerContent").innerHTML = fullShellHTML(state.customer);
+      const scroll = document.getElementById("customerProfileAppointmentsScroll");
+      if (tab === "appointments") {
+        scroll?.addEventListener("scroll", event => {
+          const target = event.currentTarget;
+          if (target.scrollTop + target.clientHeight >= target.scrollHeight - 160) loadPage();
+        });
+      }
+    };
+
+    document.addEventListener("click", event => {
+      const trigger = event.target.closest("[data-customer-profile-drawer-url]");
+      if (!trigger) return;
+      const interactive = event.target.closest("a, button, input, select, textarea");
+      if (interactive && !interactive.hasAttribute("data-customer-profile-drawer-url")) return;
+      event.preventDefault();
+      openCustomerProfileDrawer(trigger.dataset.customerProfileDrawerUrl);
+    });
+    document.addEventListener("keydown", event => { if (event.key === "Escape") closeCustomerProfileDrawer(); });
+    document.addEventListener("click", event => { if (!event.target.closest(".customer-actions-wrap")) document.getElementById("customerActionsMenu")?.classList.remove("open"); });
+  })();
+</script>

@@ -1,0 +1,64 @@
+<% modal_id = "team-role-modal-#{employee.id}" %>
+
+<details class="team-filter">
+  <summary class="team-action-button">
+    Acciones
+    <%= team_icons.fetch(:chevron).html_safe %>
+  </summary>
+
+  <div class="team-menu">
+    <%= link_to team_member_calendar_path(employee) do %>
+      <%= team_icons.fetch(:calendar).html_safe %>
+      Ver calendario
+    <% end %>
+
+    <%= link_to edit_admin_employee_membership_path(employee) do %>
+      <%= team_icons.fetch(:pencil).html_safe %>
+      Editar datos
+    <% end %>
+
+    <% unless employee.owner_profile? %>
+      <button type="button" onclick="document.getElementById('<%= modal_id %>').showModal()">
+        <%= team_icons.fetch(:shield).html_safe %>
+        Gestionar permisos
+      </button>
+    <% end %>
+
+    <%= link_to team_member_appointments_path(employee) do %>
+      <%= team_icons.fetch(:list).html_safe %>
+      Ver turnos programados
+    <% end %>
+
+    <% unless employee.owner_profile? %>
+      <div class="team-menu-divider"></div>
+
+      <% if employee.archived? %>
+        <%= link_to reactivate_admin_employee_membership_path(employee), data: { turbo_method: :patch } do %>
+          <%= team_icons.fetch(:refresh).html_safe %>
+          Reactivar miembro
+        <% end %>
+      <% else %>
+        <%= link_to admin_employee_membership_path(employee),
+          data: { turbo_method: :delete, turbo_confirm: "¿Querés archivar este miembro del equipo? No se borrará el historial." },
+          class: "team-menu-emphasis" do %>
+          <%= team_icons.fetch(:archive).html_safe %>
+          Desactivar miembro
+        <% end %>
+
+        <%= link_to permanently_destroy_admin_employee_membership_path(employee),
+          data: { turbo_method: :delete, turbo_confirm: "¿Eliminar este miembro del equipo permanentemente? No se podrá deshacer." },
+          class: "team-menu-emphasis" do %>
+          <%= team_icons.fetch(:trash).html_safe %>
+          Eliminar permanentemente
+        <% end %>
+      <% end %>
+
+      <% if employee.pending? %>
+        <%= link_to resend_admin_employee_membership_path(employee), data: { turbo_method: :post }, class: "team-menu-emphasis" do %>
+          <%= team_icons.fetch(:mail).html_safe %>
+          Reenviar invitación
+        <% end %>
+      <% end %>
+    <% end %>
+  </div>
+</details>

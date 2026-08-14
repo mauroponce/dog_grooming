@@ -1,0 +1,10 @@
+Oportunidades para llenar más turnos hoy
+
+Oportunidades abiertas: <%= @opportunities.size %>
+Huecos detectados: <%= @gaps.size %>
+
+<% @opportunities.first(5).each do |opportunity| %>
+- <%= opportunity.title %>: <%= opportunity.body %>
+<% end %>
+
+Abrir Ventas: <%= @url %>

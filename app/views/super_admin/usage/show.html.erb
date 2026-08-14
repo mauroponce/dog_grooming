@@ -1,0 +1,354 @@
+<% content_for :full_width, true %>
+<% rows = @dashboard.all_rows %>
+<% metrics = @dashboard.metrics %>
+<% business_count = rows.count %>
+<% gemini = @usage.gemini_summary %>
+<% storage = @usage.storage_snapshot %>
+<% r2 = @usage.r2_snapshot %>
+<% monthly_budget = @usage.gemini_monthly_budget_usd %>
+<% monthly_cost = gemini.fetch(:cost_month_usd) %>
+<% budget_percent = monthly_budget.positive? ? ((monthly_cost / monthly_budget) * 100).round(1) : nil %>
+
+<div class="min-h-screen bg-[#F7F7FA] font-sans text-zinc-950 antialiased">
+  <header class="sticky top-0 z-50 border-b border-zinc-200 bg-white/95 px-4 py-3 backdrop-blur xl:hidden">
+    <div class="flex items-center justify-between gap-3">
+      <div class="flex min-w-0 items-center gap-3">
+        <div class="h-10 w-10 shrink-0 overflow-hidden rounded-2xl shadow-lg shadow-brand-300/30">
+          <%= image_tag "/icon.png?v=3", alt: "", class: "h-full w-full object-cover" %>
+        </div>
+        <div class="min-w-0">
+          <p class="truncate text-sm font-bold">Superadmin</p>
+          <p class="truncate text-xs font-semibold text-zinc-500">Uso de infraestructura</p>
+        </div>
+      </div>
+      <%= link_to "Negocios", super_admin_businesses_path, class: "rounded-2xl bg-ink px-4 py-2 text-sm font-bold text-white" %>
+    </div>
+  </header>
+
+  <div class="mx-auto grid max-w-[1680px] gap-6 px-4 py-5 sm:px-6 lg:px-8 xl:grid-cols-[250px_1fr] xl:py-8">
+    <aside class="hidden xl:block">
+      <div class="sticky top-8 flex min-h-[calc(100vh-4rem)] flex-col rounded-[32px] border border-white bg-white p-4 shadow-card">
+        <%= link_to super_admin_root_path, class: "flex items-center gap-3 border-b border-zinc-100 pb-4" do %>
+          <span class="block h-12 w-12 shrink-0 overflow-hidden rounded-2xl shadow-lg shadow-brand-300/30">
+            <%= image_tag "/icon.png?v=3", alt: "", class: "h-full w-full object-cover" %>
+          </span>
+          <span class="min-w-0">
+            <span class="block truncate font-bold">Dog Grooming</span>
+            <span class="mt-1 block truncate text-xs font-semibold text-zinc-500">Panel superadmin</span>
+          </span>
+        <% end %>
+
+        <nav class="mt-4 space-y-1">
+          <%= link_to super_admin_businesses_path, class: "flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-bold text-zinc-600 hover:bg-zinc-50" do %>
+            <span class="flex items-center gap-3">
+              <span class="grid h-7 w-7 place-items-center rounded-xl bg-zinc-100">
+                <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 13h6V4H4v9Zm10 7h6V4h-6v16ZM4 20h6v-4H4v4Z" /></svg>
+              </span>
+              Negocios
+            </span>
+            <span class="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-bold text-zinc-600"><%= business_count %></span>
+          <% end %>
+
+          <%= link_to super_admin_billing_path, class: "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold text-zinc-600 hover:bg-zinc-50" do %>
+            <span class="grid h-7 w-7 place-items-center rounded-xl bg-zinc-100">$</span>
+            Cobros
+          <% end %>
+
+          <%= link_to super_admin_whatsapp_path, class: "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold text-zinc-600 hover:bg-zinc-50" do %>
+            <span class="grid h-7 w-7 place-items-center rounded-xl bg-zinc-100">
+              <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.4-4.3A8 8 0 1 1 20 11.5Z" /><path d="M9 9h.01M12 9h.01M15 9h.01" /></svg>
+            </span>
+            WhatsApp API
+          <% end %>
+
+          <%= link_to super_admin_tutorials_path, class: "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold text-zinc-600 hover:bg-zinc-50" do %>
+            <span class="grid h-7 w-7 place-items-center rounded-xl bg-zinc-100">▶</span>
+            Tutoriales
+          <% end %>
+
+          <%= link_to super_admin_usage_path, class: "flex items-center gap-3 rounded-2xl bg-ink px-4 py-3 text-sm font-bold text-white" do %>
+            <span class="grid h-7 w-7 place-items-center rounded-xl bg-white/10">
+              <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 19V5M4 19h16M8 16v-5M12 16V8M16 16v-9" /></svg>
+            </span>
+            Uso
+          <% end %>
+        </nav>
+
+        <div class="mt-auto space-y-3 pt-6">
+          <%= button_to "Salir", session_path, method: :delete, class: "w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-bold text-zinc-700 hover:bg-zinc-50" %>
+        </div>
+      </div>
+    </aside>
+
+    <main class="min-w-0">
+      <header class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <div class="flex flex-wrap items-center gap-2">
+            <%= link_to "Superadmin", super_admin_root_path, class: "rounded-full bg-ink px-3 py-1.5 text-xs font-bold text-white" %>
+            <span class="rounded-full bg-brand-50 px-3 py-1.5 text-xs font-bold text-brand-700">Infraestructura</span>
+          </div>
+          <h1 class="mt-4 text-4xl font-bold tracking-tight text-zinc-950">Uso y costos</h1>
+          <p class="mt-2 max-w-3xl text-sm font-semibold leading-6 text-zinc-500">
+            Seguimiento operativo de Cloudflare R2 y Gemini. R2 combina datos locales de Active Storage con métricas oficiales si Cloudflare está configurado.
+          </p>
+        </div>
+        <p class="text-xs font-bold uppercase tracking-[.14em] text-zinc-400">Actualizado <%= l(Time.current, format: :short) %></p>
+      </header>
+
+      <section class="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <article class="rounded-[30px] border border-white bg-white p-5 shadow-card">
+          <p class="text-xs font-bold uppercase tracking-[.14em] text-zinc-400">R2 conocido por Rails</p>
+          <p class="mt-3 text-3xl font-bold text-zinc-950"><%= number_to_human_size(storage.fetch(:total_bytes)) %></p>
+          <p class="mt-2 text-sm font-semibold text-zinc-500"><%= number_with_delimiter(storage.fetch(:total_objects)) %> objetos · <%= storage.fetch(:unattached_objects) %> sin adjuntar</p>
+        </article>
+
+        <article class="rounded-[30px] border border-white bg-white p-5 shadow-card">
+          <p class="text-xs font-bold uppercase tracking-[.14em] text-zinc-400">Gemini hoy</p>
+          <p class="mt-3 text-3xl font-bold text-zinc-950"><%= number_with_delimiter(gemini.fetch(:tokens_today)) %></p>
+          <p class="mt-2 text-sm font-semibold text-zinc-500"><%= gemini.fetch(:calls_today) %> llamadas · <%= gemini.fetch(:errors_today) %> errores</p>
+        </article>
+
+        <article class="rounded-[30px] border border-white bg-white p-5 shadow-card">
+          <p class="text-xs font-bold uppercase tracking-[.14em] text-zinc-400">Gemini mes</p>
+          <p class="mt-3 text-3xl font-bold text-zinc-950"><%= number_with_delimiter(gemini.fetch(:tokens_month)) %></p>
+          <p class="mt-2 text-sm font-semibold text-zinc-500"><%= gemini.fetch(:calls_month) %> llamadas · <%= gemini.fetch(:errors_month) %> errores</p>
+        </article>
+
+        <article class="rounded-[30px] border border-white bg-white p-5 shadow-card">
+          <p class="text-xs font-bold uppercase tracking-[.14em] text-zinc-400">Costo estimado mes</p>
+          <p class="mt-3 text-3xl font-bold text-zinc-950"><%= number_to_currency(monthly_cost, unit: "US$ ", precision: 4) %></p>
+          <p class="mt-2 text-sm font-semibold text-zinc-500">
+            <% if budget_percent.present? %>
+              <%= budget_percent %>% de <%= number_to_currency(monthly_budget, unit: "US$ ", precision: 2) %>
+            <% else %>
+              Sin presupuesto mensual configurado.
+            <% end %>
+          </p>
+        </article>
+      </section>
+
+      <section class="mt-6 grid gap-6 xl:grid-cols-2">
+        <article class="rounded-[34px] border border-white bg-white shadow-card">
+          <div class="border-b border-zinc-100 p-5">
+            <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <p class="text-xs font-bold uppercase tracking-[.14em] text-brand-600">Gemini API</p>
+                <h2 class="mt-2 text-2xl font-bold tracking-tight text-zinc-950">Consumo por funcionalidad</h2>
+                <p class="mt-1 text-sm font-semibold leading-6 text-zinc-500">
+                  Se registran llamadas generadas por la app desde esta implementación. El costo requiere tarifas en ENV.
+                </p>
+              </div>
+              <span class="w-fit rounded-full px-3 py-1.5 text-xs font-bold <%= @usage.gemini_available? ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700' %>">
+                <%= @usage.gemini_available? ? "API key activa" : "Sin API key" %>
+              </span>
+            </div>
+          </div>
+
+          <div class="grid gap-4 p-5 sm:grid-cols-2">
+            <div class="rounded-[24px] bg-zinc-50 p-4">
+              <p class="text-xs font-bold uppercase tracking-[.12em] text-zinc-400">Modelo</p>
+              <p class="mt-2 break-all text-sm font-bold text-zinc-900"><%= @usage.gemini_model %></p>
+            </div>
+            <div class="rounded-[24px] bg-zinc-50 p-4">
+              <p class="text-xs font-bold uppercase tracking-[.12em] text-zinc-400">Tarifas</p>
+              <% if @usage.gemini_pricing_configured? %>
+                <p class="mt-2 text-sm font-bold text-zinc-900">
+                  In <%= number_to_currency(@usage.gemini_input_rate, unit: "US$ ", precision: 4) %> · Out <%= number_to_currency(@usage.gemini_output_rate, unit: "US$ ", precision: 4) %> / 1M tokens
+                </p>
+              <% else %>
+                <p class="mt-2 text-sm font-semibold text-amber-700">Configurá GEMINI_INPUT_USD_PER_1M_TOKENS y GEMINI_OUTPUT_USD_PER_1M_TOKENS.</p>
+              <% end %>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full min-w-[640px] text-left text-sm">
+              <thead class="bg-zinc-50 text-xs font-bold uppercase tracking-[.12em] text-zinc-400">
+                <tr>
+                  <th class="px-5 py-4">Feature</th>
+                  <th class="px-5 py-4 text-right">Llamadas</th>
+                  <th class="px-5 py-4 text-right">Tokens</th>
+                  <th class="px-5 py-4 text-right">Costo</th>
+                  <th class="px-5 py-4 text-right">Errores</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-zinc-100">
+                <% @usage.gemini_feature_rows.each do |row| %>
+                  <tr>
+                    <td class="px-5 py-4 font-bold text-zinc-950"><%= row.feature.humanize %></td>
+                    <td class="px-5 py-4 text-right font-semibold text-zinc-600"><%= number_with_delimiter(row.calls) %></td>
+                    <td class="px-5 py-4 text-right font-semibold text-zinc-600"><%= number_with_delimiter(row.tokens) %></td>
+                    <td class="px-5 py-4 text-right font-semibold text-zinc-600"><%= number_to_currency(row.estimated_cost_usd, unit: "US$ ", precision: 4) %></td>
+                    <td class="px-5 py-4 text-right font-semibold text-zinc-600"><%= row.errors %></td>
+                  </tr>
+                <% end %>
+                <% if @usage.gemini_feature_rows.blank? %>
+                  <tr>
+                    <td colspan="5" class="px-5 py-10 text-center text-sm font-semibold text-zinc-500">Todavía no hay llamadas registradas este mes.</td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="rounded-[34px] border border-white bg-white shadow-card">
+          <div class="border-b border-zinc-100 p-5">
+            <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <p class="text-xs font-bold uppercase tracking-[.14em] text-brand-600">Cloudflare R2</p>
+                <h2 class="mt-2 text-2xl font-bold tracking-tight text-zinc-950">Buckets y almacenamiento</h2>
+                <p class="mt-1 text-sm font-semibold leading-6 text-zinc-500">
+                  Active Storage muestra lo que la app conoce. Cloudflare muestra métricas oficiales de bucket si está conectado.
+                </p>
+              </div>
+              <span class="w-fit rounded-full px-3 py-1.5 text-xs font-bold <%= r2.fetch(:configured) ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700' %>">
+                <%= r2.fetch(:configured) ? "Cloudflare conectado" : "Cloudflare no conectado" %>
+              </span>
+            </div>
+          </div>
+
+          <div class="p-5">
+            <% if r2.fetch(:error).present? %>
+              <div class="rounded-[24px] border border-amber-200 bg-amber-50 p-4 text-sm font-semibold leading-6 text-amber-900">
+                <%= r2.fetch(:error) %>
+              </div>
+            <% end %>
+
+            <div class="mt-4 grid gap-3">
+              <% r2.fetch(:buckets).each do |bucket| %>
+                <div class="rounded-[24px] border border-zinc-200 bg-white p-4">
+                  <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <p class="break-all font-bold text-zinc-950"><%= bucket.name %></p>
+                      <p class="mt-1 text-xs font-semibold text-zinc-500">
+                        <%= bucket.measured_at.present? ? "Medido #{l(bucket.measured_at, format: :short)}" : "Sin medición reciente" %>
+                      </p>
+                    </div>
+                    <p class="text-right text-lg font-bold text-zinc-950"><%= number_to_human_size(bucket.payload_bytes + bucket.metadata_bytes) %></p>
+                  </div>
+                  <div class="mt-4 grid gap-2 text-sm font-semibold text-zinc-600 sm:grid-cols-3">
+                    <p><span class="font-bold text-zinc-950"><%= number_with_delimiter(bucket.object_count) %></span> objetos</p>
+                    <p><span class="font-bold text-zinc-950"><%= number_with_delimiter(bucket.requests_24h) %></span> requests 24h</p>
+                    <p><span class="font-bold text-zinc-950"><%= number_with_delimiter(bucket.upload_count) %></span> uploads pendientes</p>
+                  </div>
+                </div>
+              <% end %>
+              <% if r2.fetch(:buckets).blank? && r2.fetch(:configured) %>
+                <div class="rounded-[24px] border border-zinc-200 bg-zinc-50 p-5 text-sm font-semibold text-zinc-500">No se pudieron leer buckets desde Cloudflare.</div>
+              <% end %>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="mt-6 grid gap-6 xl:grid-cols-2">
+        <article class="rounded-[34px] border border-white bg-white shadow-card">
+          <div class="border-b border-zinc-100 p-5">
+            <h2 class="text-2xl font-bold tracking-tight text-zinc-950">Active Storage por servicio</h2>
+            <p class="mt-1 text-sm font-semibold text-zinc-500">Objetos guardados por cada servicio configurado en Rails.</p>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full min-w-[520px] text-left text-sm">
+              <thead class="bg-zinc-50 text-xs font-bold uppercase tracking-[.12em] text-zinc-400">
+                <tr>
+                  <th class="px-5 py-4">Service</th>
+                  <th class="px-5 py-4 text-right">Objetos</th>
+                  <th class="px-5 py-4 text-right">Tamaño</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-zinc-100">
+                <% storage.fetch(:services).each do |row| %>
+                  <tr>
+                    <td class="px-5 py-4 font-bold text-zinc-950"><%= row.name %></td>
+                    <td class="px-5 py-4 text-right font-semibold text-zinc-600"><%= number_with_delimiter(row.objects) %></td>
+                    <td class="px-5 py-4 text-right font-semibold text-zinc-600"><%= number_to_human_size(row.bytes) %></td>
+                  </tr>
+                <% end %>
+                <% if storage.fetch(:services).blank? %>
+                  <tr>
+                    <td colspan="3" class="px-5 py-10 text-center text-sm font-semibold text-zinc-500">No hay blobs cargados.</td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="rounded-[34px] border border-white bg-white shadow-card">
+          <div class="border-b border-zinc-100 p-5">
+            <h2 class="text-2xl font-bold tracking-tight text-zinc-950">Active Storage por tipo</h2>
+            <p class="mt-1 text-sm font-semibold text-zinc-500">Dónde están adjuntos los archivos dentro de la app.</p>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full min-w-[520px] text-left text-sm">
+              <thead class="bg-zinc-50 text-xs font-bold uppercase tracking-[.12em] text-zinc-400">
+                <tr>
+                  <th class="px-5 py-4">Tipo</th>
+                  <th class="px-5 py-4 text-right">Adjuntos</th>
+                  <th class="px-5 py-4 text-right">Tamaño</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-zinc-100">
+                <% storage.fetch(:record_types).each do |row| %>
+                  <tr>
+                    <td class="px-5 py-4 font-bold text-zinc-950"><%= row.name %></td>
+                    <td class="px-5 py-4 text-right font-semibold text-zinc-600"><%= number_with_delimiter(row.attachments) %></td>
+                    <td class="px-5 py-4 text-right font-semibold text-zinc-600"><%= number_to_human_size(row.bytes) %></td>
+                  </tr>
+                <% end %>
+                <% if storage.fetch(:record_types).blank? %>
+                  <tr>
+                    <td colspan="3" class="px-5 py-10 text-center text-sm font-semibold text-zinc-500">No hay adjuntos cargados.</td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+
+      <section class="mt-6 rounded-[34px] border border-white bg-white shadow-card">
+        <div class="border-b border-zinc-100 p-5">
+          <h2 class="text-2xl font-bold tracking-tight text-zinc-950">Últimas llamadas Gemini</h2>
+          <p class="mt-1 text-sm font-semibold text-zinc-500">Eventos recientes para detectar errores o consumos inesperados.</p>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full min-w-[880px] text-left text-sm">
+            <thead class="bg-zinc-50 text-xs font-bold uppercase tracking-[.12em] text-zinc-400">
+              <tr>
+                <th class="px-5 py-4">Fecha</th>
+                <th class="px-5 py-4">Negocio</th>
+                <th class="px-5 py-4">Feature</th>
+                <th class="px-5 py-4">Modelo</th>
+                <th class="px-5 py-4 text-right">Tokens</th>
+                <th class="px-5 py-4 text-right">Costo</th>
+                <th class="px-5 py-4 text-right">Estado</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-zinc-100">
+              <% @usage.recent_gemini_events.each do |event| %>
+                <tr>
+                  <td class="px-5 py-4 font-semibold text-zinc-500"><%= l(event.request_started_at, format: :short) %></td>
+                  <td class="px-5 py-4 font-bold text-zinc-950"><%= event.business&.name || "Global" %></td>
+                  <td class="px-5 py-4 font-semibold text-zinc-700"><%= event.feature.humanize %></td>
+                  <td class="px-5 py-4 font-semibold text-zinc-700"><%= event.model %></td>
+                  <td class="px-5 py-4 text-right font-semibold text-zinc-600"><%= number_with_delimiter(event.total_tokens) %></td>
+                  <td class="px-5 py-4 text-right font-semibold text-zinc-600"><%= number_to_currency(event.estimated_cost_usd, unit: "US$ ", precision: 4) %></td>
+                  <td class="px-5 py-4 text-right">
+                    <span class="rounded-full px-3 py-1 text-xs font-bold <%= event.status == 'success' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700' %>"><%= event.status == "success" ? "OK" : "Error" %></span>
+                  </td>
+                </tr>
+              <% end %>
+              <% if @usage.recent_gemini_events.blank? %>
+                <tr>
+                  <td colspan="7" class="px-5 py-10 text-center text-sm font-semibold text-zinc-500">No hay llamadas registradas todavía.</td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>

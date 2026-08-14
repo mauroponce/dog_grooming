@@ -1,0 +1,23 @@
+<% content_for :email_preheader, "La campaña #{@campaign.name} ya quedó lista para contactar clientas." %>
+<% content_for :email_badge, "Ventas" %>
+<% content_for :email_status, "Campaña lista" %>
+<% content_for :email_footer_note, "Este email fue enviado porque se generó una campaña comercial en Dog Grooming." %>
+
+<h1>Campaña lista para contactar</h1>
+
+<p>La campaña <strong><%= @campaign.name %></strong> ya quedó lista.</p>
+
+<div class="email-card" style="margin-top:24px;">
+  <div class="email-card-inner">
+    <div class="email-card-title">Resumen</div>
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top:10px;">
+      <tr>
+        <td class="email-detail-label">Destinatarias preparadas</td>
+        <td class="email-detail-value"><%= @campaign.sales_campaign_recipients.count %></td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<p>Dog Grooming prepara los mensajes, pero vos decidís cuándo enviarlos por WhatsApp.</p>
+<p><%= link_to "Abrir campaña", @url, class: "email-button button" %></p>

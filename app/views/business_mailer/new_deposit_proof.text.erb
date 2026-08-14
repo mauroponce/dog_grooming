@@ -1,0 +1,7 @@
+Nuevo comprobante para revisar
+
+Clienta: <%= @appointment.customer_name %>
+Servicio: <%= @appointment.service.name %>
+Turno: <%= CustomerDateFormatter.datetime_label(@appointment.starts_at) %>
+
+Revisar: <%= @url %>

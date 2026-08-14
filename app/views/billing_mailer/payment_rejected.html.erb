@@ -1,0 +1,13 @@
+<% content_for :email_preheader, "No pudimos validar el comprobante de #{@business.name}." %>
+<% content_for :email_badge, "Facturación" %>
+<% content_for :email_status, "Revisión requerida" %>
+<% content_for :email_footer_note, "Este email fue enviado por el estado de facturación de tu cuenta Dog Grooming." %>
+
+<h1>No pudimos validar tu comprobante</h1>
+
+<p>Revisamos el comprobante de <strong><%= @business.name %></strong>, pero no pudimos validarlo.</p>
+<% if @proof&.rejection_reason.present? %>
+  <div class="email-note"><strong>Motivo:</strong> <%= @proof.rejection_reason %></div>
+<% end %>
+<p>Podés subir un nuevo comprobante desde el panel.</p>
+<p><%= link_to "Subir nuevo comprobante", @billing_url, class: "email-button button" %></p>

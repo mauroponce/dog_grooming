@@ -1,0 +1,10 @@
+<% content_for :email_preheader, "Recibimos tu comprobante de pago de #{@business.name}." %>
+<% content_for :email_badge, "Facturación" %>
+<% content_for :email_status, "Comprobante recibido" %>
+<% content_for :email_footer_note, "Este email fue enviado porque subiste un comprobante de pago en Dog Grooming." %>
+
+<h1>Recibimos tu comprobante</h1>
+
+<p>Recibimos el comprobante de pago de <strong><%= @business.name %></strong> por <strong><%= @invoice.amount_label %></strong>.</p>
+<p>Tu pago queda pendiente de revisión. Te avisaremos por email cuando esté aprobado.</p>
+<p><%= link_to "Ver estado del pago", @billing_url, class: "email-button button" %></p>

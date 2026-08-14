@@ -1,0 +1,196 @@
+# Name of your application. Used to uniquely configure containers.
+service: dog_grooming
+
+# Name of the container image (use your-user/app-name on external registries).
+image: <%= ENV.fetch("KAMAL_IMAGE", "mauroponce/dog_grooming") %>
+
+# Deploy to these servers.
+servers:
+  web:
+    - <%= ENV.fetch("KAMAL_HOST", "dog-grooming.example.com") %>
+
+# Enable SSL auto certification via Let's Encrypt and allow for multiple apps on a single web server.
+# If used with Cloudflare, set encryption mode in SSL/TLS setting to "Full" to enable CF-to-app encryption.
+#
+# Using an SSL proxy like this requires turning on config.assume_ssl and config.force_ssl in production.rb!
+#
+# Don't use this when deploying to multiple web servers (then you have to terminate SSL at your load balancer).
+#
+proxy:
+  ssl: true
+  host: <%= ENV.fetch("APP_HOST", "dog-grooming.example.com") %>
+
+# Where you keep your container images.
+registry:
+  # Alternatives: hub.docker.com / registry.digitalocean.com / ghcr.io / ...
+  server: <%= ENV.fetch("KAMAL_REGISTRY_SERVER", "ghcr.io") %>
+
+  # Needed for authenticated registries.
+  username: <%= ENV.fetch("KAMAL_REGISTRY_USERNAME", "mauroponce") %>
+
+  # Always use an access token rather than real password when possible.
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+# Inject ENV variables into containers (secrets come from .kamal/secrets).
+env:
+  secret:
+    - RAILS_MASTER_KEY
+    - DOG_GROOMING_DATABASE_PASSWORD
+    - GEMINI_API_KEY
+    - RESEND_API_KEY
+    - CLOUDFLARE_R2_ANALYTICS_TOKEN
+    - CLOUDFLARE_API_TOKEN
+    - CLOUDFLARE_ACCESS_KEY_ID
+    - CLOUDFLARE_SECRET_ACCESS_KEY
+    - R2_ACCESS_KEY_ID
+    - R2_SECRET_ACCESS_KEY
+    - EVOLUTION_API_KEY
+    - EVOLUTION_WEBHOOK_SECRET
+    - MERCADO_PAGO_CLIENT_ID
+    - MERCADO_PAGO_CLIENT_SECRET
+    - MERCADO_PAGO_WEBHOOK_SECRET
+    - MERCADO_PAGO_PRODUCTION_PUBLIC_KEY
+    - MERCADO_PAGO_PRODUCTION_ACCESS_TOKEN
+    - MERCADO_PAGO_PRODUCTION_CLIENT_ID
+    - MERCADO_PAGO_PRODUCTION_CLIENT_SECRET
+    - MERCADO_PAGO_TEST_PUBLIC_KEY
+    - MERCADO_PAGO_TEST_ACCESS_TOKEN
+  clear:
+    # Run the Solid Queue Supervisor inside the web server's Puma process to do jobs.
+    # When you start using multiple servers, you should split out job processing to a dedicated machine.
+    SOLID_QUEUE_IN_PUMA: true
+    AUTOMATED_WHATSAPP_NOTIFICATIONS_ENABLED: false
+    APP_HOST: "<%= ENV.fetch("APP_HOST", "dog-grooming.example.com") %>"
+    APP_PROTOCOL: "<%= ENV.fetch("APP_PROTOCOL", "https") %>"
+    APP_HOSTS: "<%= ENV.fetch("APP_HOSTS", "dog-grooming.example.com,www.dog-grooming.example.com") %>"
+    FORCE_SSL: "<%= ENV.fetch("FORCE_SSL", "true") %>"
+    # El .env de desarrollo usa test; no debe cambiar el cobro del sitio público.
+    MERCADO_PAGO_ENV: production
+    DB_HOST: dog_grooming-db
+    ACTIVE_STORAGE_SERVICE: "<%= ENV["ACTIVE_STORAGE_SERVICE"].to_s == "" ? ((ENV["CLOUDFLARE_ACCESS_KEY_ID"].to_s != "" || ENV["R2_ACCESS_KEY_ID"].to_s != "") ? "r2" : "local") : ENV["ACTIVE_STORAGE_SERVICE"] %>"
+    GEMINI_MODEL: "<%= ENV.fetch("GEMINI_MODEL", "gemini-flash-lite-latest") %>"
+    GEMINI_RECEIPT_MODEL: "<%= ENV.fetch("GEMINI_RECEIPT_MODEL", ENV.fetch("GEMINI_MODEL", "gemini-flash-lite-latest")) %>"
+    GEMINI_INPUT_USD_PER_1M_TOKENS: "<%= ENV.fetch("GEMINI_INPUT_USD_PER_1M_TOKENS", "0") %>"
+    GEMINI_OUTPUT_USD_PER_1M_TOKENS: "<%= ENV.fetch("GEMINI_OUTPUT_USD_PER_1M_TOKENS", "0") %>"
+    GEMINI_MONTHLY_BUDGET_USD: "<%= ENV.fetch("GEMINI_MONTHLY_BUDGET_USD", "0") %>"
+    MAIL_FROM: "<%= ENV.fetch("MAIL_FROM", "Dog Grooming <notificaciones@dog-grooming.example.com>") %>"
+    RESEND_FROM: "<%= ENV.fetch("RESEND_FROM", ENV.fetch("MAIL_FROM", "Dog Grooming <notificaciones@dog-grooming.example.com>")) %>"
+    RESEND_ENDPOINT: "<%= ENV.fetch("RESEND_ENDPOINT", "https://api.resend.com/emails") %>"
+    WHATSAPP_PROVIDER: "<%= ENV.fetch("WHATSAPP_PROVIDER", "evolution") %>"
+    EVOLUTION_API_BASE_URL: "<%= ENV.fetch("EVOLUTION_API_BASE_URL", "http://dog_grooming-evolution-api:8080") %>"
+    EVOLUTION_INSTANCE_NAME: "<%= ENV.fetch("EVOLUTION_INSTANCE_NAME", "dog-grooming-main") %>"
+    CLOUDFLARE_ACCOUNT_ID: "<%= ENV.fetch("CLOUDFLARE_ACCOUNT_ID", "3d50f50186c8c9cfd2dbe6157bdb82cf") %>"
+    CLOUDFLARE_R2_BUCKET: "<%= ENV.fetch("CLOUDFLARE_R2_BUCKET", ENV.fetch("R2_BUCKET", "dog-grooming")) %>"
+    CLOUDFLARE_R2_SERVICE_IMAGES_BUCKET: "<%= ENV.fetch("CLOUDFLARE_R2_SERVICE_IMAGES_BUCKET", ENV.fetch("SERVICE_IMAGES_BUCKET", "dog-grooming-service-images")) %>"
+    CLOUDFLARE_R2_ENDPOINT: "<%= ENV.fetch("CLOUDFLARE_R2_ENDPOINT", ENV.fetch("R2_ENDPOINT", "https://3d50f50186c8c9cfd2dbe6157bdb82cf.r2.cloudflarestorage.com")) %>"
+    R2_BUCKET: "<%= ENV.fetch("R2_BUCKET", ENV.fetch("CLOUDFLARE_R2_BUCKET", "dog-grooming")) %>"
+    SERVICE_IMAGES_BUCKET: "<%= ENV.fetch("SERVICE_IMAGES_BUCKET", ENV.fetch("CLOUDFLARE_R2_SERVICE_IMAGES_BUCKET", "dog-grooming-service-images")) %>"
+    R2_ENDPOINT: "<%= ENV.fetch("R2_ENDPOINT", ENV.fetch("CLOUDFLARE_R2_ENDPOINT", "https://3d50f50186c8c9cfd2dbe6157bdb82cf.r2.cloudflarestorage.com")) %>"
+
+    # Set number of processes dedicated to Solid Queue (default: 1)
+    # JOB_CONCURRENCY: 3
+
+    # Set number of cores available to the application on each server (default: 1).
+    # WEB_CONCURRENCY: 2
+
+    # Match this to any external database server to configure Active Record correctly
+    # Use dog_grooming-db for a db accessory server on the same Kamal Docker network.
+    # DB_HOST: 192.168.0.2
+
+    # Log everything from Rails
+    # RAILS_LOG_LEVEL: debug
+
+# Aliases are triggered with "bin/kamal <alias>". You can overwrite arguments on invocation:
+# "bin/kamal logs -r job" will tail logs from the first server in the job section.
+aliases:
+  console: app exec --interactive --reuse "bin/rails console"
+  shell: app exec --interactive --reuse "bash"
+  logs: app logs -f
+  dbc: app exec --interactive --reuse "bin/rails dbconsole --include-password"
+
+# Use a persistent storage volume for sqlite database files and local Active Storage files.
+# Recommended to change this to a mounted volume path that is backed up off server.
+volumes:
+  - "dog_grooming_storage:/rails/storage"
+
+# Bridge fingerprinted assets, like JS and CSS, between versions to avoid
+# hitting 404 on in-flight requests. Combines all files from new and old
+# version inside the asset_path.
+asset_path: /rails/public/assets
+
+# Configure the image builder.
+builder:
+  arch: amd64
+
+  # # Build image via remote server (useful for faster amd64 builds on arm64 computers)
+  # remote: ssh://docker@docker-builder-server
+  #
+  # # Pass arguments and secrets to the Docker build process
+  # args:
+  #   RUBY_VERSION: 3.4.1
+  # secrets:
+  #   - GITHUB_TOKEN
+  #   - RAILS_MASTER_KEY
+
+# Use a different ssh user than root
+# ssh:
+#   user: app
+
+# Use accessory services (secrets come from .kamal/secrets).
+accessories:
+  db:
+    image: postgres:16
+    host: <%= ENV.fetch("KAMAL_HOST", "dog-grooming.example.com") %>
+    port: "127.0.0.1:5432:5432"
+    env:
+      clear:
+        POSTGRES_USER: dog_grooming
+        POSTGRES_DB: dog_grooming_production
+      secret:
+        - POSTGRES_PASSWORD:DOG_GROOMING_DATABASE_PASSWORD
+    directories:
+      - data:/var/lib/postgresql/data
+  evolution-db:
+    image: postgres:16
+    host: <%= ENV.fetch("KAMAL_HOST", "dog-grooming.example.com") %>
+    env:
+      clear:
+        POSTGRES_USER: dog_grooming_evolution
+        POSTGRES_DB: dog_grooming_evolution_production
+      secret:
+        - POSTGRES_PASSWORD:EVOLUTION_DATABASE_PASSWORD
+    directories:
+      - data:/var/lib/postgresql/data
+  evolution-redis:
+    image: redis:7-alpine
+    host: <%= ENV.fetch("KAMAL_HOST", "dog-grooming.example.com") %>
+    directories:
+      - data:/data
+  evolution-api:
+    image: evoapicloud/evolution-api:v2.1.1
+    host: <%= ENV.fetch("KAMAL_HOST", "dog-grooming.example.com") %>
+    env:
+      clear:
+        SERVER_PORT: 8080
+        SERVER_URL: http://dog_grooming-evolution-api:8080
+        DATABASE_PROVIDER: postgresql
+        CACHE_REDIS_ENABLED: true
+        CACHE_REDIS_URI: redis://dog_grooming-evolution-redis:6379/0
+        CACHE_REDIS_SAVE_INSTANCES: true
+        CONFIG_SESSION_PHONE_CLIENT: Dog Grooming
+        CONFIG_SESSION_PHONE_NAME: Chrome
+        CONFIG_SESSION_PHONE_VERSION: 2.3000.1042527945
+        QRCODE_LIMIT: 30
+        QRCODE_COLOR: "#ffded4"
+      secret:
+        - AUTHENTICATION_API_KEY:EVOLUTION_API_KEY
+        - DATABASE_CONNECTION_URI:EVOLUTION_DATABASE_CONNECTION_URI
+    directories:
+      - instances:/evolution/instances
+#   redis:
+#     image: valkey/valkey:8
+#     host: 192.168.0.2
+#     port: 6379
+#     directories:
+#       - data:/data

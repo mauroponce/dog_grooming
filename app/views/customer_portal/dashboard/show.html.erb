@@ -1,0 +1,817 @@
+<% content_for :title, "Mis turnos · #{@business.name}" %>
+<% content_for :full_width, true %>
+
+<%
+  customer_name = portal_customer_full_name(@customer_profile)
+  customer_first_name = portal_customer_first_name(@customer_profile).capitalize
+  favorite_service = portal_favorite_service(@history_appointments)
+  confirmed_upcoming_count = @upcoming_appointments.count(&:confirmed?)
+%>
+
+<style>
+  .customer-portal-page {
+    background:
+      radial-gradient(circle at 15% 8%, rgba(255, 222, 212, .12), transparent 28%),
+      radial-gradient(circle at 85% 18%, rgba(255, 222, 212, .10), transparent 24%),
+      #f8f7fb;
+  }
+
+  .customer-portal-glass {
+    background: rgba(255, 255, 255, .78);
+    border: 1px solid rgba(255, 255, 255, .82);
+    box-shadow: 0 24px 70px rgba(24, 24, 27, .10);
+    backdrop-filter: blur(20px);
+  }
+
+  .customer-portal-hero {
+    background:
+      radial-gradient(circle at 82% 16%, rgba(255, 255, 255, .22), transparent 26%),
+      linear-gradient(135deg, #842D21 0%, #A63826 48%, #A63826 100%);
+  }
+
+  .customer-portal-tab-panel {
+    display: none;
+  }
+
+  .customer-portal-tab-panel.active {
+    display: block;
+  }
+
+  .customer-portal-tab-button.active {
+    background: #111111;
+    color: #ffffff;
+    box-shadow: 0 12px 30px rgba(24, 24, 27, .16);
+  }
+
+  .customer-portal-appointment {
+    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+  }
+
+  .customer-portal-appointment:hover {
+    border-color: #A63826;
+    box-shadow: 0 22px 65px rgba(24, 24, 27, .12);
+    transform: translateY(-2px);
+  }
+
+  .customer-portal-timeline::before {
+    background: linear-gradient(to bottom, #ffded4, rgba(255, 222, 212, 0));
+    content: "";
+    inset: 38px auto 0 19px;
+    position: absolute;
+    width: 2px;
+  }
+
+  .customer-portal-modal-card {
+    animation: customerPortalModalEnter .18s ease-out;
+  }
+
+  @keyframes customerPortalModalEnter {
+    from {
+      opacity: 0;
+      transform: translateY(10px) scale(.98);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .customer-portal-slot-option.active {
+    background: #BF482F;
+    border-color: #A63826;
+    color: white;
+    box-shadow: 0 12px 28px rgba(255, 222, 212, .22);
+  }
+
+  .customer-portal-safe-bottom {
+    padding-bottom: calc(env(safe-area-inset-bottom) + 12px);
+  }
+</style>
+
+<div id="customer-portal-root" class="customer-portal-page min-h-screen pb-28 text-slate-950 lg:pb-0">
+  <header class="sticky top-0 z-40 border-b border-white/80 bg-white/85 px-4 py-3 backdrop-blur-xl sm:px-6">
+    <div class="mx-auto flex max-w-6xl items-center justify-between gap-4">
+      <%= link_to public_business_path(@business.slug), class: "flex min-w-0 items-center gap-3" do %>
+        <span class="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-brand-700 to-brand-600 text-white shadow-glow">
+          <%= public_icon("spark", css: "h-6 w-6") %>
+        </span>
+        <span class="min-w-0">
+          <span class="block truncate text-base font-bold tracking-tight"><%= @business.name %></span>
+          <span class="block truncate text-xs font-bold text-brand-700">Portal privado</span>
+        </span>
+      <% end %>
+
+      <div class="flex items-center gap-2">
+        <span class="hidden rounded-full border border-brand-100 bg-brand-50 px-3 py-1.5 text-xs font-bold text-brand-700 sm:inline-flex">Acceso privado</span>
+        <button type="button" data-open-modal="customer-portal-help-modal" class="grid h-11 w-11 place-items-center rounded-2xl border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-brand-200 hover:text-brand-700" aria-label="Ayuda">
+          <%= public_icon("message", css: "h-4 w-4") %>
+        </button>
+        <%= button_to "Salir", customer_portal_logout_path(@business.slug), method: :delete, class: "hidden h-11 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 shadow-sm sm:inline-flex sm:items-center" %>
+      </div>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:py-8">
+    <section class="customer-portal-hero rounded-[30px] p-5 text-white shadow-soft sm:p-7 lg:p-8">
+      <div class="grid gap-7 lg:grid-cols-[1fr_auto] lg:items-center">
+        <div>
+          <div class="flex flex-wrap items-center gap-3">
+            <span class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-bold backdrop-blur">
+              <%= public_icon("shield", css: "h-3.5 w-3.5") %>
+              Tu espacio privado
+            </span>
+            <span class="text-xs font-semibold text-brand-100">Identificado por tu enlace personal</span>
+          </div>
+
+          <h1 class="mt-5 text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">Hola, <%= customer_first_name %>.</h1>
+          <p class="mt-3 max-w-2xl text-sm leading-6 text-brand-100 sm:text-base">
+            Desde acá podés ver tus próximos turnos, reprogramarlos, cancelarlos cuando la política lo permita y volver a reservar tus servicios favoritos.
+          </p>
+
+          <div class="mt-6 flex flex-wrap gap-3">
+            <button type="button" data-jump-tab="upcoming" class="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-brand-700 shadow-lg shadow-brand-950/20 transition hover:-translate-y-0.5">
+              Ver próximo turno
+              <%= public_icon("arrow_right", css: "h-4 w-4 rotate-90") %>
+            </button>
+            <%= link_to short_public_service_path(@business.slug, favorite_service.slug), class: "inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-sm font-bold text-white backdrop-blur transition hover:bg-white/15" do %>
+              Reservar otro turno
+              <%= public_icon("calendar", css: "h-4 w-4") %>
+            <% end if favorite_service.present? %>
+            <%= link_to public_business_path(@business.slug), class: "inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-sm font-bold text-white backdrop-blur transition hover:bg-white/15" do %>
+              Ver servicios
+              <%= public_icon("list", css: "h-4 w-4") %>
+            <% end if favorite_service.blank? %>
+          </div>
+        </div>
+
+        <div class="grid gap-3 lg:min-w-[300px]">
+          <div class="rounded-3xl border border-white/15 bg-white/10 p-4 backdrop-blur">
+            <p class="text-xs font-bold text-brand-100">Próximos turnos</p>
+            <p class="mt-2 text-3xl font-bold"><%= @upcoming_appointments.size %></p>
+            <p class="mt-1 text-xs text-brand-200"><%= confirmed_upcoming_count %> confirmado<%= "s" if confirmed_upcoming_count != 1 %></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="sticky top-[77px] z-30 mt-5">
+      <div class="customer-portal-glass flex gap-1 overflow-x-auto rounded-2xl p-1.5">
+        <button type="button" class="customer-portal-tab-button active whitespace-nowrap rounded-xl px-4 py-2.5 text-xs font-bold text-slate-500" data-tab="upcoming">Próximos turnos</button>
+        <button type="button" class="customer-portal-tab-button whitespace-nowrap rounded-xl px-4 py-2.5 text-xs font-bold text-slate-500" data-tab="history">Historial</button>
+        <button type="button" class="customer-portal-tab-button whitespace-nowrap rounded-xl px-4 py-2.5 text-xs font-bold text-slate-500" data-tab="profile">Mis datos</button>
+      </div>
+    </section>
+
+    <section id="panel-upcoming" class="customer-portal-tab-panel active mt-6">
+      <div class="grid gap-6 lg:grid-cols-[1.18fr_.82fr]">
+        <div class="space-y-4">
+          <div>
+            <p class="text-xs font-bold uppercase tracking-[.14em] text-brand-700">Tus reservas</p>
+            <h2 class="mt-2 text-2xl font-bold tracking-tight">Próximos turnos</h2>
+            <p class="mt-1 text-sm leading-6 text-slate-500">Podés modificar cada reserva según la política de <%= @business.name %>.</p>
+          </div>
+
+          <% if @upcoming_appointments.any? %>
+            <% @upcoming_appointments.each_with_index do |appointment, index| %>
+              <% calendar_badge = portal_calendar_badge(appointment) %>
+
+              <article class="customer-portal-appointment overflow-hidden rounded-[26px] border <%= index.zero? ? "border-brand-200" : "border-slate-200" %> bg-white shadow-card">
+                <div class="border-b <%= index.zero? ? "border-brand-100 bg-gradient-to-r from-brand-50 to-white" : "border-slate-100 bg-slate-50/65" %> p-5">
+                  <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+                    <div class="flex items-start gap-4">
+                      <span class="grid h-14 w-14 shrink-0 place-items-center rounded-2xl <%= index.zero? ? "bg-brand-600 text-white shadow-lg shadow-brand-500/20" : "bg-pink-100 text-pink-700" %>">
+                        <span class="text-center">
+                          <span class="block text-[10px] font-bold uppercase tracking-wide"><%= calendar_badge[:month] %></span>
+                          <span class="block text-xl font-bold leading-none"><%= calendar_badge[:day] %></span>
+                        </span>
+                      </span>
+
+                      <div>
+                        <div class="flex flex-wrap items-center gap-2">
+                          <h3 class="text-lg font-bold text-slate-950"><%= appointment.service.name %></h3>
+                          <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ring-1 ring-current/10 <%= portal_booking_status_classes(appointment) %>">
+                            <%= public_icon("check", css: "h-3 w-3") %>
+                            <%= appointment_status_label(appointment) %>
+                          </span>
+                        </div>
+
+                        <p class="mt-2 text-sm font-semibold text-slate-600"><%= portal_appointment_date_label(appointment) %></p>
+                        <p class="mt-1 text-xs text-slate-500"><%= portal_service_detail_line(appointment) %></p>
+                        <% if appointment.pet.present? %>
+                          <p class="mt-2 text-sm font-bold text-slate-800">Mascota: <%= appointment.pet.name %> <span class="font-semibold text-slate-500">· Responsable: <%= appointment.customer_name %></span></p>
+                        <% else %>
+                          <p class="mt-2 text-sm font-bold text-slate-800">Reserva para: <%= appointment.customer_name %></p>
+                        <% end %>
+                      </div>
+                    </div>
+
+                    <div class="self-start rounded-2xl bg-white px-4 py-3 text-right shadow-sm ring-1 ring-brand-100 sm:max-w-64">
+                      <p class="text-[10px] font-bold uppercase tracking-wide text-slate-400">Seña</p>
+                      <p class="mt-1 text-sm font-bold leading-5 <%= portal_payment_tone_classes(appointment) %>"><%= portal_deposit_payment_label(appointment) %></p>
+                      <p class="mt-1.5 text-xs font-semibold leading-5 text-slate-500"><%= portal_remaining_balance_label(appointment) %></p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="p-5">
+                  <div class="grid gap-3 sm:grid-cols-2">
+                    <%= link_to portal_appointment_directions_url(appointment), target: "_blank", rel: "noopener", class: "rounded-2xl bg-slate-50 p-3.5 transition hover:bg-brand-50" do %>
+                      <p class="text-[10px] font-bold uppercase tracking-wide text-slate-400">Ubicación</p>
+                      <p class="mt-1 text-sm font-bold text-slate-800"><%= @business.name %></p>
+                      <p class="mt-1 text-xs text-slate-500 underline decoration-brand-200 underline-offset-2"><%= portal_appointment_location(appointment) %></p>
+                    <% end %>
+
+                    <div class="rounded-2xl bg-slate-50 p-3.5">
+                      <p class="text-[10px] font-bold uppercase tracking-wide text-slate-400">Podés reprogramar hasta</p>
+                      <p class="mt-1 text-sm font-bold text-slate-800"><%= portal_change_deadline_label(appointment) %></p>
+                      <p class="mt-1 text-xs <%= appointment.customer_portal_reschedulable? ? "text-emerald-700" : "text-amber-700" %>"><%= appointment.customer_portal_reschedulable? ? "La ventana sigue abierta" : "Contactá al centro" %></p>
+                    </div>
+
+                  </div>
+
+                  <% if appointment.deposit_required? && !appointment.confirmed? && appointment.deposit_status != "approved" && !appointment.terminal_status? %>
+                    <%= link_to customer_portal_short_booking_path(@business.slug, appointment.customer_portal_booking_token), class: "mt-4 flex items-start gap-3 rounded-2xl border border-amber-100 bg-amber-50/65 p-4 transition hover:border-amber-200" do %>
+                      <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white text-amber-700"><%= public_icon("receipt", css: "h-4 w-4") %></span>
+                      <span>
+                        <span class="block text-sm font-bold text-amber-950">Revisar pago o comprobante</span>
+                        <span class="mt-1 block text-xs font-semibold leading-5 text-amber-800">El centro necesita validar esta seña para confirmar la reserva.</span>
+                      </span>
+                    <% end %>
+                  <% end %>
+
+                  <% unless appointment.customer_portal_reschedulable? %>
+                    <div class="mt-4 rounded-2xl border border-amber-100 bg-amber-50/65 p-4">
+                      <div class="flex items-start gap-3">
+                        <%= public_icon("shield", css: "mt-0.5 h-4 w-4 shrink-0 text-amber-700") %>
+                        <p class="text-xs leading-5 text-amber-900">
+                          La reprogramación online ya no está disponible. Contactá al centro para consultar una excepción.
+                        </p>
+                      </div>
+                    </div>
+                  <% end %>
+
+                  <div class="mt-5 flex flex-col gap-3 sm:flex-row">
+                    <% if appointment.customer_portal_reschedulable? %>
+                      <button type="button" data-open-modal="reschedule-modal-<%= appointment.short_uuid %>" class="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-bold text-white transition hover:bg-brand-700">
+                        <%= public_icon("clock", css: "h-4 w-4") %>
+                        Reprogramar
+                      </button>
+                    <% else %>
+                      <button type="button" data-toast="La reprogramación online cerró <%= @business.rescheduling_notice_hours %> horas antes del turno. Contactá al centro para consultar una excepción." class="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm font-bold text-slate-400">
+                        <%= public_icon("shield", css: "h-4 w-4") %>
+                        Reprogramar
+                      </button>
+                    <% end %>
+
+                    <% if appointment.customer_portal_cancellable? %>
+                      <button type="button" data-open-modal="cancel-modal-<%= appointment.short_uuid %>" class="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700">
+                        <%= public_icon("close", css: "h-4 w-4") %>
+                        Cancelar turno
+                      </button>
+                    <% else %>
+                      <button type="button" data-toast="La cancelación online cerró <%= @business.cancellation_notice_hours %> horas antes del turno." class="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm font-bold text-slate-400">
+                        <%= public_icon("shield", css: "h-4 w-4") %>
+                        Cancelar
+                      </button>
+                    <% end %>
+
+                  </div>
+                </div>
+              </article>
+
+              <div id="reschedule-modal-<%= appointment.short_uuid %>" class="customer-portal-modal fixed inset-0 z-[2147483646] hidden items-center justify-center p-4" data-reschedule-modal="true" data-reschedule-availability-url="<%= customer_portal_booking_reschedule_availability_path(@business.slug, appointment.customer_portal_booking_token) %>">
+                <button type="button" data-close-modal class="absolute inset-0 bg-slate-950/50 backdrop-blur-sm" aria-label="Cerrar"></button>
+                <div class="customer-portal-modal-card relative z-10 max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-[30px] bg-white shadow-popover">
+                  <div class="sticky top-0 z-10 flex items-start justify-between border-b border-slate-100 bg-white p-5 sm:p-6">
+                    <div>
+                      <p class="text-xs font-bold uppercase tracking-[.14em] text-brand-700">Reprogramar</p>
+                      <h2 class="mt-1 text-xl font-bold">Elegí un nuevo horario</h2>
+                      <p class="mt-1 text-sm text-slate-500">Turno actual: <%= portal_appointment_date_label(appointment) %></p>
+                    </div>
+                    <button type="button" data-close-modal class="grid h-10 w-10 place-items-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-700" aria-label="Cerrar">
+                      <%= public_icon("close", css: "h-5 w-5") %>
+                    </button>
+                  </div>
+
+                  <div class="p-5 sm:p-6">
+                    <% if appointment.deposit_required? && appointment.deposit_status == "approved" %>
+                      <div class="rounded-2xl border border-emerald-100 bg-emerald-50/65 p-4">
+                        <div class="flex items-start gap-3">
+                          <%= public_icon("check", css: "mt-0.5 h-4 w-4 shrink-0 text-emerald-700") %>
+                          <p class="text-xs leading-5 text-emerald-900">Tu seña de <%= appointment.formatted_deposit_amount %> se conserva y queda asociada al nuevo horario.</p>
+                        </div>
+                      </div>
+                    <% end %>
+
+                    <div class="mt-6" data-reschedule-picker-content>
+                      <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5 text-center">
+                        <p class="text-sm font-bold text-slate-600">Buscando fechas y horarios disponibles…</p>
+                      </div>
+                    </div>
+
+                    <%= form_with url: customer_portal_booking_reschedule_path(@business.slug, appointment.customer_portal_booking_token), method: :post, class: "mt-6", data: { reschedule_form: true } do %>
+                      <%= hidden_field_tag :starts_at, nil, data: { reschedule_starts_at: true } %>
+                      <div class="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                        <button type="button" data-close-modal class="rounded-2xl border border-slate-200 px-5 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50">Volver</button>
+                        <%= submit_tag "Confirmar nuevo horario", disabled: true, class: "rounded-2xl bg-brand-600 px-5 py-3 text-sm font-bold text-white transition enabled:hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50", data: { reschedule_submit: true } %>
+                      </div>
+                    <% end %>
+                  </div>
+                </div>
+              </div>
+
+              <div id="cancel-modal-<%= appointment.short_uuid %>" class="customer-portal-modal fixed inset-0 z-[2147483646] hidden items-center justify-center p-4">
+                <button type="button" data-close-modal class="absolute inset-0 bg-slate-950/50 backdrop-blur-sm" aria-label="Cerrar"></button>
+                <div class="customer-portal-modal-card relative z-10 w-full max-w-md rounded-[30px] bg-white p-5 shadow-popover sm:p-6">
+                  <span class="grid h-14 w-14 place-items-center rounded-[20px] bg-rose-50 text-rose-700"><%= public_icon("close", css: "h-6 w-6") %></span>
+                  <h2 class="mt-5 text-xl font-bold">¿Cancelar este turno?</h2>
+                  <p class="mt-2 text-sm font-bold text-slate-700"><%= appointment.service.name %> · <%= portal_appointment_date_label(appointment) %></p>
+                  <p class="mt-2 text-sm leading-6 text-slate-500">El turno quedará disponible para otra persona. La seña no se devuelve automáticamente por cancelación.</p>
+                  <% if @business.whatsapp_contact_link.present? %>
+                    <%= link_to @business.whatsapp_contact_link, target: "_blank", rel: "noopener", class: "mt-4 inline-flex items-center gap-2 text-sm font-bold text-emerald-700 underline decoration-emerald-200 underline-offset-4 hover:text-emerald-800" do %>
+                      <%= public_icon("message", css: "h-4 w-4") %>
+                      Contactar al centro por WhatsApp
+                    <% end %>
+                  <% end %>
+
+                  <%= form_with url: customer_portal_booking_cancel_path(@business.slug, appointment.customer_portal_booking_token), method: :post, class: "mt-5" do %>
+                    <label class="block">
+                      <span class="text-xs font-bold text-slate-800">Motivo <span class="font-semibold text-slate-400">(opcional)</span></span>
+                      <%= select_tag :cancellation_reason, options_for_select([ "No puedo asistir", "Necesito cambiar el horario", "Reservé por error", "Otro motivo" ]), class: "mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold outline-none focus:border-brand-300 focus:ring-4 focus:ring-brand-100" %>
+                    </label>
+
+                    <div class="mt-6 grid grid-cols-2 gap-3">
+                      <button type="button" data-close-modal class="rounded-2xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50">Mantener turno</button>
+                      <%= submit_tag "Confirmar cancelación", class: "rounded-2xl bg-rose-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-rose-700" %>
+                    </div>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+          <% else %>
+            <div class="rounded-[26px] border border-dashed border-slate-200 bg-white p-8 text-center shadow-card">
+              <span class="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-brand-50 text-brand-700"><%= public_icon("calendar", css: "h-6 w-6") %></span>
+              <h3 class="mt-5 text-xl font-bold">No tenés próximos turnos</h3>
+              <p class="mx-auto mt-2 max-w-md text-sm font-semibold leading-6 text-slate-500">Podés reservar desde la página pública del centro y tus turnos aparecerán automáticamente en este portal.</p>
+              <%= link_to "Reservar turno", public_business_path(@business.slug), class: "mt-5 inline-flex h-12 items-center justify-center rounded-2xl bg-slate-950 px-5 text-sm font-bold text-white" %>
+            </div>
+          <% end %>
+        </div>
+
+        <aside class="space-y-4">
+          <article class="rounded-[26px] border border-slate-200 bg-white p-5 shadow-card">
+            <div class="flex items-center gap-3">
+              <span class="grid h-11 w-11 place-items-center rounded-2xl bg-brand-50 text-brand-700"><%= public_icon("shield", css: "h-5 w-5") %></span>
+              <div>
+                <h3 class="text-base font-bold">Política de cambios</h3>
+                <p class="mt-0.5 text-xs text-slate-500"><%= @business.name %></p>
+              </div>
+            </div>
+
+            <div class="mt-5 space-y-3 text-sm leading-6 text-slate-600">
+              <p class="flex gap-3"><%= public_icon("check", css: "mt-1 h-4 w-4 shrink-0 text-emerald-600") %>Reprogramación online hasta <%= @business.rescheduling_notice_hours %> horas antes.</p>
+              <p class="flex gap-3"><%= public_icon("check", css: "mt-1 h-4 w-4 shrink-0 text-emerald-600") %>La seña se conserva al reprogramar dentro del plazo.</p>
+              <p class="flex gap-3"><%= public_icon("warning", css: "mt-1 h-4 w-4 shrink-0 text-amber-600") %>La seña no se devuelve por cancelación.</p>
+              <p class="flex gap-3"><%= public_icon("warning", css: "mt-1 h-4 w-4 shrink-0 text-amber-600") %>Fuera del plazo, el cambio depende de la aprobación del centro.</p>
+            </div>
+          </article>
+
+          <% if favorite_service.present? %>
+            <article class="rounded-[26px] border border-brand-100 bg-gradient-to-br from-brand-50 to-white p-5 shadow-card">
+              <div class="flex items-center gap-3">
+                <span class="grid h-11 w-11 place-items-center rounded-2xl bg-white text-brand-700 shadow-sm ring-1 ring-brand-100"><%= public_icon("heart", css: "h-5 w-5") %></span>
+                <div>
+                  <h3 class="text-base font-bold">Tu servicio frecuente</h3>
+                  <p class="mt-0.5 text-xs text-slate-500">Según tu historial</p>
+                </div>
+              </div>
+
+              <div class="mt-5 rounded-2xl bg-white p-4 ring-1 ring-brand-100">
+                <p class="text-sm font-bold text-slate-900"><%= favorite_service.name %></p>
+                <p class="mt-1 text-xs leading-5 text-slate-500">Podés reservarlo de nuevo desde tu enlace privado.</p>
+                <%= link_to portal_booking_again_path(@business, favorite_service), class: "mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-brand-700" do %>
+                  Volver a reservar
+                  <%= public_icon("arrow_right", css: "h-4 w-4") %>
+                <% end %>
+              </div>
+            </article>
+          <% end %>
+
+          <article class="rounded-[26px] border border-slate-200 bg-white p-5 shadow-card">
+            <p class="text-xs font-bold uppercase tracking-[.14em] text-slate-400">Contacto</p>
+            <h3 class="mt-2 text-base font-bold">¿Necesitás ayuda?</h3>
+            <p class="mt-2 text-sm leading-6 text-slate-500"><%= @business.name %> responde consultas por WhatsApp.</p>
+            <%= link_to @business.whatsapp_contact_link, target: "_blank", rel: "noopener", class: "mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-emerald-700" do %>
+              <%= public_icon("message", css: "h-4 w-4") %>
+              Hablar con el centro
+            <% end %>
+          </article>
+        </aside>
+      </div>
+    </section>
+
+    <section id="panel-history" class="customer-portal-tab-panel mt-6">
+      <div class="grid gap-6 lg:grid-cols-[1fr_300px]">
+        <div>
+          <p class="text-xs font-bold uppercase tracking-[.14em] text-brand-700">Tu recorrido</p>
+          <h2 class="mt-2 text-2xl font-bold tracking-tight">Historial de visitas</h2>
+          <p class="mt-1 text-sm leading-6 text-slate-500">Tus reservas anteriores, profesionales y servicios favoritos.</p>
+
+          <div class="customer-portal-timeline relative mt-6 space-y-5">
+            <% if @history_appointments.any? %>
+              <% @history_appointments.each do |appointment| %>
+                <article class="relative pl-14">
+                  <span class="absolute left-0 top-0 grid h-10 w-10 place-items-center rounded-2xl bg-brand-100 text-brand-700 ring-4 ring-white"><%= public_icon("spark", css: "h-4 w-4") %></span>
+                  <div class="rounded-[24px] border border-slate-200 bg-white p-5 shadow-card">
+                    <div class="flex flex-col justify-between gap-4 sm:flex-row">
+                      <div>
+                        <p class="text-xs font-bold uppercase tracking-wide text-slate-400"><%= format_ar_date(appointment.starts_at) %></p>
+                        <h3 class="mt-2 text-lg font-bold"><%= appointment.service.name %></h3>
+                        <p class="mt-1 text-sm text-slate-500"><%= portal_service_detail_line(appointment) %></p>
+                        <% if appointment.pet.present? %>
+                          <p class="mt-2 text-sm font-bold text-slate-700">Mascota: <%= appointment.pet.name %> <span class="font-semibold text-slate-500">· Responsable: <%= appointment.customer_name %></span></p>
+                        <% else %>
+                          <p class="mt-2 text-sm font-bold text-slate-700">Reserva para: <%= appointment.customer_name %></p>
+                        <% end %>
+                      </div>
+                      <span class="self-start rounded-full px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide <%= portal_booking_status_classes(appointment) %>"><%= appointment_status_label(appointment) %></span>
+                    </div>
+
+                    <div class="mt-5 flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row">
+                      <%= link_to portal_booking_again_path(@business, appointment.service), class: "inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-brand-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-brand-700" do %>
+                        Reservar de nuevo
+                        <%= public_icon("heart", css: "h-4 w-4") %>
+                      <% end %>
+                      <%= link_to customer_portal_short_booking_path(@business.slug, appointment.customer_portal_booking_token), class: "inline-flex flex-1 items-center justify-center gap-2 rounded-2xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-700 transition hover:border-brand-200 hover:text-brand-700" do %>
+                        Ver detalle
+                        <%= public_icon("arrow_right", css: "h-4 w-4") %>
+                      <% end %>
+                    </div>
+                  </div>
+                </article>
+              <% end %>
+            <% else %>
+              <div class="rounded-[24px] border border-dashed border-slate-200 bg-white p-6 text-center shadow-card">
+                <h3 class="text-lg font-bold">Todavía no hay historial</h3>
+                <p class="mt-2 text-sm font-semibold leading-6 text-slate-500">Cuando completes turnos en <%= @business.name %>, aparecerán acá.</p>
+              </div>
+            <% end %>
+          </div>
+        </div>
+
+        <aside class="space-y-4">
+          <article class="rounded-[24px] border border-slate-200 bg-white p-5 shadow-card">
+            <p class="text-xs font-bold uppercase tracking-[.14em] text-slate-400">Resumen</p>
+            <div class="mt-5 space-y-4">
+              <div class="flex items-center justify-between"><span class="text-sm text-slate-500">Servicio favorito</span><strong class="text-right text-sm"><%= favorite_service&.name || "A definir" %></strong></div>
+              <div class="flex items-center justify-between"><span class="text-sm text-slate-500">Próximos turnos</span><strong class="text-sm"><%= @upcoming_appointments.size %></strong></div>
+            </div>
+          </article>
+
+          <article class="rounded-[24px] border border-brand-100 bg-brand-50/60 p-5">
+            <%= public_icon("heart", css: "h-6 w-6 text-brand-700") %>
+            <h3 class="mt-4 text-lg font-bold">Gracias por elegirnos</h3>
+            <p class="mt-2 text-sm leading-6 text-slate-500">Tu historial ayuda al centro a darte una atención más personalizada en cada visita.</p>
+          </article>
+        </aside>
+      </div>
+    </section>
+
+    <section id="panel-profile" class="customer-portal-tab-panel mt-6">
+      <div class="mx-auto max-w-3xl rounded-[28px] border border-slate-200 bg-white p-5 shadow-card sm:p-7">
+        <div class="flex items-start gap-4">
+          <span class="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-brand-50 text-brand-700"><%= public_icon("settings", css: "h-5 w-5") %></span>
+          <div>
+            <p class="text-xs font-bold uppercase tracking-[.14em] text-brand-700">Tus datos</p>
+            <h2 class="mt-1 text-2xl font-bold">Información de contacto</h2>
+            <p class="mt-1 text-sm leading-6 text-slate-500">Estos datos se usan para identificar tus reservas y enviarte recordatorios.</p>
+          </div>
+        </div>
+
+        <%= form_with model: @customer_profile, url: customer_portal_dashboard_update_path(@business.slug), method: :patch, class: "mt-7 grid gap-5 sm:grid-cols-2" do |form| %>
+          <label>
+            <span class="text-xs font-bold text-slate-800">Nombre</span>
+            <%= form.text_field :first_name, value: @customer_profile.first_name.presence || @customer_profile.name.to_s.split.first, class: "mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50/70 px-4 text-sm font-semibold outline-none transition focus:border-brand-300 focus:bg-white focus:ring-4 focus:ring-brand-100" %>
+          </label>
+
+          <label>
+            <span class="text-xs font-bold text-slate-800">Apellido</span>
+            <%= form.text_field :last_name, value: @customer_profile.last_name.presence || @customer_profile.name.to_s.split.drop(1).join(" "), class: "mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50/70 px-4 text-sm font-semibold outline-none transition focus:border-brand-300 focus:bg-white focus:ring-4 focus:ring-brand-100" %>
+          </label>
+
+          <label>
+            <span class="text-xs font-bold text-slate-800">WhatsApp</span>
+            <%= form.telephone_field :phone, required: true, autocomplete: "tel", inputmode: "tel", placeholder: "+54 11 5555 5555", class: "mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50/70 px-4 text-sm font-semibold outline-none transition focus:border-brand-300 focus:bg-white focus:ring-4 focus:ring-brand-100" %>
+            <p class="mt-2 text-[11px] leading-5 text-slate-400">Usalo para recibir las confirmaciones y recordatorios de tus turnos.</p>
+          </label>
+
+          <label>
+            <span class="text-xs font-bold text-slate-800">Email *</span>
+            <%= form.email_field :email, required: true, class: "mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50/70 px-4 text-sm font-semibold outline-none transition focus:border-brand-300 focus:bg-white focus:ring-4 focus:ring-brand-100" %>
+          </label>
+
+          <div class="sm:col-span-2 rounded-2xl border border-amber-100 bg-amber-50/65 p-4">
+            <div class="flex items-start gap-3">
+              <%= public_icon("shield", css: "mt-0.5 h-4 w-4 shrink-0 text-amber-700") %>
+              <div>
+                <p class="text-sm font-bold text-amber-900">Este enlace es personal</p>
+                <p class="mt-1 text-xs leading-5 text-amber-800">No lo compartas. Cualquier persona que tenga el enlace puede ver y gestionar tus reservas en <%= @business.name %>.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="sm:col-span-2 grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:grid-cols-[1fr_auto] sm:items-center">
+            <div class="min-w-0">
+              <p class="text-xs font-bold uppercase tracking-[.12em] text-slate-400">Tu link privado</p>
+              <p class="mt-1 truncate text-sm font-bold text-slate-800"><%= @customer_profile.customer_portal_url %></p>
+            </div>
+            <button type="button" data-copy-url="<%= @customer_profile.customer_portal_url %>" class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm">Copiar</button>
+          </div>
+
+          <div class="sm:col-span-2 flex justify-end">
+            <%= form.submit "Guardar cambios", class: "rounded-2xl bg-slate-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-brand-700" %>
+          </div>
+        <% end %>
+      </div>
+    </section>
+
+    <footer class="mt-10 border-t border-slate-200/70 py-8">
+      <div class="flex flex-col gap-5 text-center sm:flex-row sm:items-center sm:text-left">
+        <div>
+          <p class="text-sm font-bold"><%= @business.name %></p>
+          <p class="mt-1 text-xs text-slate-500"><%= @business.public_location %> · <%= @business.weekly_hours_summary %></p>
+        </div>
+        <% unless @business.custom_domain_active? %>
+          <div class="sm:ml-auto">
+            <p class="text-xs font-semibold text-slate-400">Portal privado gestionado con <%= link_to "Dog Grooming", "https://dog-grooming.example.com", class: "font-bold text-brand-700 hover:underline", target: "_blank", rel: "noopener noreferrer" %></p>
+          </div>
+        <% end %>
+      </div>
+    </footer>
+  </main>
+
+  <div class="customer-portal-safe-bottom fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/92 p-3 backdrop-blur lg:hidden">
+    <%= link_to public_business_path(@business.slug), class: "flex w-full items-center justify-center gap-2 rounded-2xl bg-brand-600 px-4 py-3.5 text-sm font-bold text-white shadow-lg shadow-brand-500/20" do %>
+      <%= public_icon("calendar", css: "h-5 w-5") %>
+      Reservar nuevo turno
+    <% end %>
+  </div>
+
+  <div id="customer-portal-help-modal" class="customer-portal-modal fixed inset-0 z-[2147483646] hidden items-center justify-center p-4">
+    <button type="button" data-close-modal class="absolute inset-0 bg-slate-950/50 backdrop-blur-sm" aria-label="Cerrar"></button>
+    <div class="customer-portal-modal-card relative z-10 w-full max-w-lg rounded-[30px] bg-white p-5 shadow-popover sm:p-6">
+      <div class="flex items-start justify-between gap-4">
+        <span class="grid h-12 w-12 place-items-center rounded-2xl bg-brand-50 text-brand-700"><%= public_icon("shield", css: "h-5 w-5") %></span>
+        <button type="button" data-close-modal class="grid h-10 w-10 place-items-center rounded-xl text-slate-400 transition hover:bg-slate-100" aria-label="Cerrar"><%= public_icon("close", css: "h-5 w-5") %></button>
+      </div>
+      <h2 class="mt-5 text-xl font-bold">Ayuda con tu portal</h2>
+      <div class="mt-3 space-y-3 text-sm leading-6 text-slate-500">
+        <p>Este enlace te identifica como cliente de <%= @business.name %>. No necesitás iniciar sesión.</p>
+        <p>Desde acá podés revisar tus próximos turnos, consultar el historial, reprogramar, cancelar y volver a reservar.</p>
+        <p>No compartas el enlace: quien lo tenga puede acceder a tus reservas.</p>
+      </div>
+      <button type="button" data-close-modal class="mt-6 w-full rounded-2xl bg-slate-950 px-4 py-3 text-sm font-bold text-white transition hover:bg-brand-700">Entendido</button>
+    </div>
+  </div>
+
+  <div id="customer-portal-toast" class="pointer-events-none fixed bottom-5 right-5 z-[2147483647] hidden max-w-sm rounded-2xl border border-brand-100 bg-white px-4 py-3 shadow-2xl">
+    <div class="flex items-center gap-3">
+      <span class="grid h-9 w-9 place-items-center rounded-xl bg-brand-50 text-brand-700"><%= public_icon("message", css: "h-4 w-4") %></span>
+      <p data-toast-text class="text-sm font-bold text-slate-700"></p>
+    </div>
+  </div>
+</div>
+
+<script>
+  (() => {
+    function initCustomerPortal() {
+      const root = document.getElementById("customer-portal-root");
+      if (!root || root.dataset.initialized === "true") return;
+
+      root.dataset.initialized = "true";
+
+      const tabButtons = root.querySelectorAll(".customer-portal-tab-button");
+      const tabPanels = root.querySelectorAll(".customer-portal-tab-panel");
+      const toast = document.getElementById("customer-portal-toast");
+      let toastTimer;
+
+      function showToast(message) {
+        if (!toast) return;
+
+        toast.querySelector("[data-toast-text]").textContent = message;
+        toast.classList.remove("hidden");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.add("hidden"), 3500);
+      }
+
+      function setTab(tabName, scroll = true) {
+        tabButtons.forEach((button) => {
+          button.classList.toggle("active", button.dataset.tab === tabName);
+        });
+
+        tabPanels.forEach((panel) => {
+          panel.classList.toggle("active", panel.id === `panel-${tabName}`);
+        });
+
+        if (scroll) window.scrollTo({ top: 245, behavior: "smooth" });
+      }
+
+      tabButtons.forEach((button) => {
+        button.addEventListener("click", () => setTab(button.dataset.tab));
+      });
+
+      root.querySelectorAll("[data-jump-tab]").forEach((button) => {
+        button.addEventListener("click", () => setTab(button.dataset.jumpTab));
+      });
+
+      const hashTab = window.location.hash.replace("#", "");
+      if (hashTab && root.querySelector(`#panel-${hashTab}`)) setTab(hashTab, false);
+
+      function openModal(id) {
+        const modal = document.getElementById(id);
+        if (!modal) return;
+
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+        document.body.classList.add("overflow-hidden");
+        if (modal.dataset.rescheduleModal === "true") loadRescheduleAvailability(modal);
+      }
+
+      function closeModal(modal) {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+        document.body.classList.remove("overflow-hidden");
+      }
+
+      function rescheduleDateLabel(value) {
+        return new Intl.DateTimeFormat("es-AR", { weekday: "short", day: "numeric", month: "short" })
+          .format(new Date(`${value}T12:00:00`))
+          .replace(".", "");
+      }
+
+      function rescheduleDateParts(value) {
+        const date = new Date(`${value}T12:00:00`);
+        return {
+          weekday: new Intl.DateTimeFormat("es-AR", { weekday: "short" }).format(date).replace(".", ""),
+          day: date.getDate(),
+          month: new Intl.DateTimeFormat("es-AR", { month: "short" }).format(date).replace(".", "")
+        };
+      }
+
+      function rescheduleNavButton(label, windowStart, disabled, direction) {
+        if (disabled) return `<span class="grid h-10 w-10 place-items-center rounded-xl text-slate-300" aria-hidden="true">${label}</span>`;
+
+        return `<button type="button" data-reschedule-window-${direction}="${windowStart}" class="grid h-10 w-10 place-items-center rounded-xl border border-slate-200 bg-white text-xl font-bold text-slate-700 transition hover:border-brand-300 hover:text-brand-700" aria-label="Ver más fechas">${label}</button>`;
+      }
+
+      function renderRescheduleAvailability(modal, payload) {
+        const content = modal.querySelector("[data-reschedule-picker-content]");
+        const startsAtInput = modal.querySelector("[data-reschedule-starts-at]");
+        const submit = modal.querySelector("[data-reschedule-submit]");
+        if (!content || !startsAtInput || !submit) return;
+
+        if (payload.error) {
+          content.innerHTML = `<div class="rounded-2xl border border-rose-100 bg-rose-50 p-5 text-center text-sm font-bold text-rose-800">${payload.error}</div>`;
+          startsAtInput.value = "";
+          submit.disabled = true;
+          return;
+        }
+
+        const dates = payload.dates.map((date) => {
+          const parts = rescheduleDateParts(date.date);
+          const selected = date.date === payload.selectedDate;
+          const classes = selected
+            ? "border-brand-600 bg-brand-600 text-white"
+            : date.available
+              ? "border-slate-200 bg-white text-slate-900 hover:border-brand-300"
+              : "cursor-not-allowed border-slate-100 bg-slate-50 text-slate-300";
+          const content = `<span class="block text-[10px] font-semibold ${selected ? "text-white/80" : ""}">${parts.weekday}</span><span class="mt-1 block text-xl leading-none">${parts.day}</span><span class="mt-1 block text-[10px] font-semibold ${selected ? "text-white/80" : ""}">${parts.month}</span>`;
+
+          return date.available
+            ? `<button type="button" data-reschedule-date="${date.date}" data-reschedule-window-start="${payload.windowStart}" class="flex min-h-20 flex-1 flex-col items-center justify-center rounded-2xl border p-2 text-center font-bold transition ${classes}">${content}</button>`
+            : `<span class="flex min-h-20 flex-1 flex-col items-center justify-center rounded-2xl border p-2 text-center font-bold ${classes}" aria-disabled="true">${content}</span>`;
+        }).join("");
+
+        const slots = payload.slots.map((slot, index) => `<button type="button" data-reschedule-slot="${slot.startsAt}" class="customer-portal-slot-option ${index === 0 ? "active" : ""} rounded-2xl border border-slate-200 px-4 py-3 text-center text-sm font-bold transition hover:border-brand-300">${slot.time}</button>`).join("");
+        const slotsContent = slots || "<div class=\"rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-5 text-center text-sm font-semibold text-slate-500\">No hay horarios disponibles para esta fecha.</div>";
+
+        content.innerHTML = `
+          <div class="flex items-center justify-between gap-3">
+            ${rescheduleNavButton("‹", payload.previousWindowStart, !payload.previousWindowStart, "previous")}
+            <p class="text-center text-xs font-bold uppercase tracking-[.12em] text-slate-400">Elegí una fecha</p>
+            ${rescheduleNavButton("›", payload.nextWindowStart, !payload.nextWindowStart, "next")}
+          </div>
+          <div class="mt-4 flex gap-2 overflow-x-auto pb-1">${dates}</div>
+          <div class="mt-7">
+            <p class="text-xs font-bold uppercase tracking-[.12em] text-slate-400">Horarios disponibles · ${rescheduleDateLabel(payload.selectedDate)}</p>
+            <p class="mt-2 text-xs font-semibold leading-5 text-slate-500">Te asignaremos el primer profesional disponible para el servicio.</p>
+            <div class="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-4">${slotsContent}</div>
+          </div>
+        `;
+
+        startsAtInput.value = payload.slots[0]?.startsAt || "";
+        submit.disabled = payload.slots.length === 0;
+      }
+
+      async function loadRescheduleAvailability(modal, options = {}) {
+        const content = modal.querySelector("[data-reschedule-picker-content]");
+        if (!content) return;
+
+        content.innerHTML = "<div class=\"rounded-2xl border border-slate-200 bg-slate-50 p-5 text-center text-sm font-bold text-slate-600\">Buscando fechas y horarios disponibles…</div>";
+        const query = new URLSearchParams();
+        if (options.windowStart) query.set("date_window_start", options.windowStart);
+        if (options.date) query.set("date", options.date);
+
+        try {
+          const response = await fetch(`${modal.dataset.rescheduleAvailabilityUrl}?${query.toString()}`, { headers: { Accept: "application/json" } });
+          const payload = await response.json();
+          renderRescheduleAvailability(modal, payload);
+        } catch (_) {
+          renderRescheduleAvailability(modal, { error: "No pudimos cargar la disponibilidad. Intentá nuevamente." });
+        }
+      }
+
+      root.querySelectorAll("[data-open-modal]").forEach((button) => {
+        button.addEventListener("click", () => openModal(button.dataset.openModal));
+      });
+
+      root.querySelectorAll("[data-close-modal]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const modal = button.closest(".customer-portal-modal");
+          if (modal) closeModal(modal);
+        });
+      });
+
+      root.querySelectorAll("[data-toast]").forEach((button) => {
+        button.addEventListener("click", () => showToast(button.dataset.toast));
+      });
+
+      root.querySelectorAll("[data-copy-url]").forEach((button) => {
+        button.addEventListener("click", async () => {
+          const url = button.dataset.copyUrl;
+
+          if (navigator.share && button.textContent.trim().toLowerCase().includes("compartir")) {
+            try {
+              await navigator.share({ title: "<%= j @business.name %>", text: "Reservá tu turno en <%= j @business.name %>", url });
+              return;
+            } catch (_) {}
+          }
+
+          try {
+            await navigator.clipboard.writeText(url);
+            showToast("Enlace copiado.");
+          } catch (_) {
+            showToast("No pudimos copiar el enlace.");
+          }
+        });
+      });
+
+      root.addEventListener("click", (event) => {
+        const dateButton = event.target.closest("[data-reschedule-date]");
+        if (dateButton) {
+          const modal = dateButton.closest("[data-reschedule-modal]");
+          if (modal) loadRescheduleAvailability(modal, { windowStart: dateButton.dataset.rescheduleWindowStart, date: dateButton.dataset.rescheduleDate });
+          return;
+        }
+
+        const previousButton = event.target.closest("[data-reschedule-window-previous]");
+        if (previousButton) {
+          const modal = previousButton.closest("[data-reschedule-modal]");
+          if (modal) loadRescheduleAvailability(modal, { windowStart: previousButton.dataset.rescheduleWindowPrevious });
+          return;
+        }
+
+        const nextButton = event.target.closest("[data-reschedule-window-next]");
+        if (nextButton) {
+          const modal = nextButton.closest("[data-reschedule-modal]");
+          if (modal) loadRescheduleAvailability(modal, { windowStart: nextButton.dataset.rescheduleWindowNext });
+          return;
+        }
+
+        const slotButton = event.target.closest("[data-reschedule-slot]");
+        if (!slotButton) return;
+
+        const modal = slotButton.closest("[data-reschedule-modal]");
+        const form = modal?.querySelector("[data-reschedule-form]");
+        if (!form) return;
+
+        form.querySelectorAll("[data-reschedule-slot]").forEach((button) => {
+          button.classList.remove("active");
+        });
+        slotButton.classList.add("active");
+        form.querySelector("[data-reschedule-starts-at]").value = slotButton.dataset.rescheduleSlot;
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key !== "Escape") return;
+
+        root.querySelectorAll(".customer-portal-modal:not(.hidden)").forEach(closeModal);
+      });
+    }
+
+    document.addEventListener("turbo:load", initCustomerPortal);
+    document.addEventListener("DOMContentLoaded", initCustomerPortal);
+    initCustomerPortal();
+  })();
+</script>

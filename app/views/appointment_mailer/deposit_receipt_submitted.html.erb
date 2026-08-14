@@ -1,0 +1,38 @@
+<% content_for :email_preheader, "Hay un nuevo comprobante de seña para revisar." %>
+<% content_for :email_badge, "Señas" %>
+<% content_for :email_status, "Revisión pendiente" %>
+<% content_for :email_footer_note, "Este email fue enviado porque un cliente subió un comprobante de seña." %>
+
+<h1>Nuevo comprobante de seña para revisar</h1>
+
+<div class="email-card" style="margin-top:24px;">
+  <div class="email-card-inner">
+    <div class="email-card-title">Datos del comprobante</div>
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top:10px;">
+      <tr class="email-detail-row">
+        <td class="email-detail-label">Cliente</td>
+        <td class="email-detail-value"><%= @appointment.customer_name %></td>
+      </tr>
+      <tr class="email-detail-row">
+        <td class="email-detail-label">WhatsApp</td>
+        <td class="email-detail-value"><%= @appointment.customer_phone %></td>
+      </tr>
+      <tr class="email-detail-row">
+        <td class="email-detail-label">Servicio</td>
+        <td class="email-detail-value"><%= @appointment.service.name %></td>
+      </tr>
+      <tr class="email-detail-row">
+        <td class="email-detail-label">Turno</td>
+        <td class="email-detail-value"><%= CustomerDateFormatter.datetime_label(@appointment.starts_at) %></td>
+      </tr>
+      <tr>
+        <td class="email-detail-label">Seña esperada</td>
+        <td class="email-detail-value"><%= @appointment.formatted_deposit_amount %></td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<p>
+  <%= link_to "Revisar comprobante", @deposit_review_url, class: "email-button button" %>
+</p>

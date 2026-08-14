@@ -1,0 +1,48 @@
+<% choices = Array(local_assigns.fetch(:choices)).map { |label, value| [ label.to_s, value.to_s ] } %>
+<% selected_value = local_assigns[:selected_value].to_s %>
+<% selected_choice = choices.find { |_label, value| value == selected_value } || choices.first || [ "", "" ] %>
+<% icon_html = local_assigns[:icon_html].presence %>
+<% aria_label = local_assigns[:aria_label].presence || "Seleccionar opción" %>
+<% compact = local_assigns[:compact] == true %>
+<% wrapper_class = [ "service-custom-select", local_assigns[:class_name] ].compact.join(" ") %>
+<% trigger_class = [
+  "service-custom-select-trigger",
+  icon_html ? "service-field-shell" : "service-custom-select-trigger-plain",
+  compact ? "is-compact" : nil
+].compact.join(" ") %>
+
+<div class="<%= wrapper_class %>" data-controller="custom-select">
+  <%= select_html %>
+
+  <button type="button"
+          class="<%= trigger_class %>"
+          aria-label="<%= aria_label %>"
+          aria-haspopup="listbox"
+          aria-expanded="false"
+          data-custom-select-target="trigger"
+          data-action="click->custom-select#toggle keydown->custom-select#keydown">
+    <% if icon_html %>
+      <span class="service-input-icon"><%= icon_html.html_safe %></span>
+    <% end %>
+    <span class="service-custom-select-label" data-custom-select-target="label"><%= selected_choice.first %></span>
+    <svg class="service-custom-select-chevron" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path d="m5 7.5 5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+  </button>
+
+  <div class="service-custom-select-options" role="listbox" aria-label="<%= aria_label %>" data-custom-select-target="menu" hidden>
+    <% choices.each do |label, value| %>
+      <% selected = value == selected_choice.second %>
+      <button type="button"
+              class="service-custom-select-option <%= "is-selected" if selected %>"
+              role="option"
+              aria-selected="<%= selected %>"
+              data-custom-select-target="option"
+              data-custom-select-value="<%= value %>"
+              data-custom-select-label="<%= label %>"
+              data-action="click->custom-select#choose keydown->custom-select#keydown">
+        <%= label %>
+      </button>
+    <% end %>
+  </div>
+</div>

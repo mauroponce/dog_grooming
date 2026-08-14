@@ -1,0 +1,28 @@
+<% content_for :email_preheader, "Hay un comprobante de seña pendiente de tu revisión en #{@business.name}." %>
+<% content_for :email_badge, "Señas" %>
+<% content_for :email_status, "Revisión pendiente" %>
+<% content_for :email_footer_note, "Este email fue enviado porque un cliente subió un comprobante de seña pendiente de revisión." %>
+
+<h1>Comprobante de seña pendiente de revisión</h1>
+
+<div class="email-card" style="margin-top:24px;">
+  <div class="email-card-inner">
+    <div class="email-card-title">Detalle del turno</div>
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top:10px;">
+      <tr class="email-detail-row">
+        <td class="email-detail-label">Clienta</td>
+        <td class="email-detail-value"><%= @appointment.customer_name %></td>
+      </tr>
+      <tr class="email-detail-row">
+        <td class="email-detail-label">Servicio</td>
+        <td class="email-detail-value"><%= @appointment.service.name %></td>
+      </tr>
+      <tr>
+        <td class="email-detail-label">Turno</td>
+        <td class="email-detail-value"><%= CustomerDateFormatter.datetime_label(@appointment.starts_at) %></td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<p><%= link_to "Revisar comprobante", @url, class: "email-button button" %></p>

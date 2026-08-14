@@ -1,0 +1,25 @@
+<% content_for :email_preheader, "#{@inviter_name} te invitó a sumarte al equipo de #{@business.name}." %>
+<% content_for :email_badge, "Invitación" %>
+<% content_for :email_status, "Equipo" %>
+<% content_for :email_footer_note, "Este email fue enviado porque te invitaron a operar un negocio en Dog Grooming." %>
+
+<h1><%= @inviter_name %> te invitó a unirte a <%= @business.name %> en Dog Grooming</h1>
+
+<p>
+  Hola <%= @membership.name %>, <%= @inviter_name %> te invitó a sumarte al equipo de <%= @business.name %> en Dog Grooming.
+</p>
+
+<p>
+  Desde este acceso vas a poder operar las herramientas habilitadas para tu rol dentro del negocio.
+</p>
+
+<p>
+  Este enlace vence el <%= CustomerDateFormatter.datetime_label(@membership.invitation_expires_at) %>.
+</p>
+
+<p>
+  <%= link_to "Crear mi contraseña", @invitation_url, class: "email-button button" %>
+</p>
+
+<p>Si el botón no funciona, copiá y pegá este enlace en tu navegador:</p>
+<p><%= link_to @invitation_url, @invitation_url, class: "email-link" %></p>

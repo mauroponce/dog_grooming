@@ -1,0 +1,18 @@
+<% landing = local_assigns.fetch(:landing) %>
+<% services = local_assigns.fetch(:services) %>
+
+<div class="ht-service-grid" data-dog-grooming-category-services>
+  <% services.each do |service| %>
+    <%= link_to landing.service_path(service), class: "ht-service-card" do %>
+      <% if service.cover_image.attached? %>
+        <%= image_tag service.cover_image.variant(resize_to_fill: [ 720, 420 ]), class: "ht-service-card__image", alt: service.name %>
+      <% end %>
+      <span class="ht-service-card__body">
+        <h2><%= service.name %></h2>
+        <p><%= landing_service_meta(service, landing).join(" · ") %></p>
+        <% if service.description.present? %><p><%= service.description %></p><% end %>
+        <span class="ht-service-card__action">Elegir día y horario →</span>
+      </span>
+    <% end %>
+  <% end %>
+</div>

@@ -1,0 +1,12 @@
+<% content_for :admin_full_bleed, true %>
+<% content_for :title, "Nuevo servicio · Dog Grooming" %>
+
+<%= render "simple_form_page",
+  service: @service,
+  service_categories: @service_categories,
+  title: "Nuevo servicio",
+  copy: "Configurá la información, duración, precio, pagos, profesionales, imágenes y horarios que verá el cliente al reservar.",
+  back_path: admin_services_path(service_category_id: @service.service_category_id),
+  cancel_path: admin_services_path(service_category_id: @service.service_category_id),
+  submit_label: "Crear servicio",
+  minimal: true %>

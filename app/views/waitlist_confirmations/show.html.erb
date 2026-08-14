@@ -1,0 +1,29 @@
+<div class="min-h-screen bg-[#f7f2ef] px-4 py-8 text-zinc-950 sm:px-6">
+  <div class="mx-auto max-w-xl">
+    <div class="mb-6 flex items-center gap-3">
+      <div class="grid h-12 w-12 place-items-center rounded-lg bg-zinc-950 text-sm font-bold text-white"><%= @entry.center.initials %></div>
+      <div>
+        <p class="text-xs font-bold uppercase tracking-[.16em] text-brand-700">Lista de espera</p>
+        <h1 class="text-2xl font-bold tracking-tight"><%= @entry.center.name %></h1>
+      </div>
+    </div>
+
+    <section class="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm sm:p-6">
+      <% if @entry.booked? %>
+        <span class="rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-bold uppercase tracking-[.08em] text-emerald-700">Confirmado</span>
+        <h2 class="mt-4 text-2xl font-bold tracking-tight">El turno quedó a tu nombre</h2>
+        <p class="mt-2 text-sm leading-6 text-zinc-500">Te esperamos para <%= @entry.service.name %> el <%= format_ar_datetime(@appointment.starts_at) %>.</p>
+      <% elsif @appointment&.canceled? && @entry.offered? && !@entry.expired_notification? %>
+        <span class="rounded-full bg-brand-50 px-3 py-1 text-[11px] font-bold uppercase tracking-[.08em] text-brand-700">Disponible ahora</span>
+        <h2 class="mt-4 text-2xl font-bold tracking-tight">Se liberó un turno</h2>
+        <p class="mt-2 text-sm leading-6 text-zinc-500"><%= @entry.service.name %> el <%= format_ar_datetime(@appointment.starts_at) %>. El primer cliente que confirme se queda con el horario.</p>
+        <%= button_to "Confirmar este turno", confirm_waitlist_confirmation_path(params[:token]), method: :post, class: "mt-6 inline-flex h-12 w-full cursor-pointer items-center justify-center rounded-lg bg-zinc-950 px-4 text-sm font-bold text-white shadow-lg shadow-zinc-900/15 transition hover:-translate-y-0.5 hover:bg-zinc-800" %>
+      <% else %>
+        <span class="rounded-full bg-amber-50 px-3 py-1 text-[11px] font-bold uppercase tracking-[.08em] text-amber-700">No disponible</span>
+        <h2 class="mt-4 text-2xl font-bold tracking-tight">Este turno ya fue tomado</h2>
+        <p class="mt-2 text-sm leading-6 text-zinc-500">Podés volver a la agenda pública y elegir otro horario.</p>
+        <%= link_to "Ver agenda", public_business_path(@entry.center.slug), class: "mt-6 inline-flex h-12 w-full items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-bold text-zinc-700 hover:bg-zinc-50" %>
+      <% end %>
+    </section>
+  </div>
+</div>

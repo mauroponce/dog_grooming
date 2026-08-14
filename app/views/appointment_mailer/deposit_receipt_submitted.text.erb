@@ -1,0 +1,10 @@
+Nuevo comprobante de seña para revisar
+
+Cliente: <%= @appointment.customer_name %>
+WhatsApp: <%= @appointment.customer_phone %>
+Servicio: <%= @appointment.service.name %>
+Turno: <%= CustomerDateFormatter.datetime_label(@appointment.starts_at) %>
+Seña esperada: <%= @appointment.formatted_deposit_amount %>
+
+Revisar comprobante:
+<%= @deposit_review_url %>

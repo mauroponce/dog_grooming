@@ -1,0 +1,40 @@
+<div id="<%= dom_id(business, :public_services) %>">
+  <% cache [ :public_service_selection, business, services.map(&:cache_key_with_version) ] do %>
+    <section id="services-section" class="overflow-hidden rounded-[30px] border border-white/90 bg-white/95 shadow-soft backdrop-blur-xl" data-controller="public-services">
+      <%= render "public_booking/booking_stepper", current_step: 1 %>
+
+      <div class="public-screen p-4 sm:p-7 lg:p-8">
+        <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p class="text-xs font-bold uppercase text-brand-700">Reservá tu turno</p>
+            <h2 class="mt-2 text-2xl font-bold text-zinc-950 sm:text-3xl"><%= business.public_service_selection_title %></h2>
+            <p class="mt-2 text-sm leading-6 text-zinc-500"><%= business.public_service_selection_hint %></p>
+          </div>
+
+          <label class="flex h-11 w-full items-center gap-2 rounded-2xl border border-zinc-200 bg-white px-3.5 transition focus-within:border-brand-400 focus-within:ring-4 focus-within:ring-brand-100 lg:w-72">
+            <%= public_icon("search", css: "h-4 w-4 shrink-0 text-zinc-400") %>
+            <input type="search" data-public-services-target="query" data-action="input->public-services#search" class="min-w-0 flex-1 bg-transparent text-sm font-semibold outline-none placeholder:text-zinc-400" placeholder="<%= business.public_service_search_placeholder %>" />
+          </label>
+        </div>
+
+        <div data-public-services-target="rail" class="public-service-pill-rail mt-6 gap-2">
+          <button type="button" data-public-services-target="tab" data-action="public-services#selectCategory" data-category="Todos" class="shrink-0 rounded-full bg-ink px-4 py-2 text-xs font-bold text-white">Todos</button>
+          <% categories.each do |category| %>
+            <button type="button" data-public-services-target="tab" data-action="public-services#selectCategory" data-category="<%= category %>" class="shrink-0 rounded-full bg-zinc-100 px-4 py-2 text-xs font-bold text-zinc-600 transition hover:bg-zinc-200"><%= category %></button>
+          <% end %>
+        </div>
+
+        <div class="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <% services.each do |service| %>
+            <%= render "public_booking/service_card", business: business, service: service %>
+          <% end %>
+        </div>
+
+        <div data-public-services-target="empty" class="mt-7 hidden rounded-3xl border border-dashed border-zinc-200 bg-zinc-50 p-10 text-center">
+          <p class="font-bold text-zinc-800">No encontramos ese tratamiento</p>
+          <p class="mt-1 text-sm text-zinc-500">Probá con otro nombre o categoría.</p>
+        </div>
+      </div>
+    </section>
+  <% end %>
+</div>

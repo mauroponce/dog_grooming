@@ -1,0 +1,23 @@
+<details class="customers-row-actions">
+  <summary class="customers-action-button" aria-label="Acciones para <%= customer.name.presence || customer.phone %>">
+    Acciones
+    <%= customer_icons.fetch(:chevron).html_safe %>
+  </summary>
+
+  <div class="customers-actions-menu">
+    <%= link_to edit_admin_customer_profile_path(customer), data: { turbo_frame: "_top" } do %>
+      <%= customer_icons.fetch(:pencil).html_safe %>
+      Editar
+    <% end %>
+
+    <%= link_to admin_customer_profile_path(customer),
+      data: {
+        turbo_method: :delete,
+        turbo_confirm: "¿Eliminar permanentemente a #{customer.name.presence || customer.phone}? No se podrá recuperar desde la aplicación."
+      },
+      class: "is-danger" do %>
+      <%= customer_icons.fetch(:trash).html_safe %>
+      Eliminar permanentemente
+    <% end %>
+  </div>
+</details>

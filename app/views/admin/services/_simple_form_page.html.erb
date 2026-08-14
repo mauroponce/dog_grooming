@@ -1,0 +1,2829 @@
+<% employee_memberships = Array(local_assigns[:employee_memberships] || @employee_memberships) %>
+<% selected_employee_ids = service.employee_membership_ids %>
+<% all_team_selected = selected_employee_ids.blank? %>
+<% selected_team_count = all_team_selected ? employee_memberships.size : selected_employee_ids.size %>
+<% page_mode = service.persisted? ? "Editar servicio" : "Nuevo servicio" %>
+<% page_title = service.persisted? ? service.name.presence || title : "Crear servicio" %>
+<% public_service_url = service.persisted? ? admin_public_service_url(service) : "" %>
+<% requested_service_tab = params[:tab].presence || params[:return_tab].presence %>
+<% active_service_tab = %w[basic team images availability].include?(requested_service_tab.to_s) ? requested_service_tab.to_s : "basic" %>
+<% service_availability_weekdays = [ [ 0, "Domingo" ], [ 1, "Lunes" ], [ 2, "Martes" ], [ 3, "Miércoles" ], [ 4, "Jueves" ], [ 5, "Viernes" ], [ 6, "Sábado" ] ] %>
+<% service_availability_rules_by_weekday = service.service_availability_rules.active.order(:weekday, :start_time).group_by(&:weekday) %>
+<% service_availability_time_options = (0..23).flat_map { |hour| (0..55).step(5).map { |minute| time = format("%02d:%02d", hour, minute); [ time, time ] } } %>
+<% service_availability_time_value = ->(value) { value.respond_to?(:strftime) ? value.strftime("%H:%M") : value.to_s.presence } %>
+<% payment_accounts = service.business.payment_accounts.active.ordered.to_a %>
+<% payment_account_options = [ [ "Usar cuenta principal", "" ] ] + payment_accounts.map { |account| [ account.display_name, account.id ] } %>
+<% enabled_payment_methods = service.business.enabled_payment_methods %>
+<% mercado_pago_enabled = enabled_payment_methods.include?("mercado_pago") %>
+<% manual_transfer_enabled = enabled_payment_methods.include?("manual_transfer") %>
+<% only_mercado_pago_enabled = mercado_pago_enabled && enabled_payment_methods.one? %>
+<% show_manual_payment_account_selector = manual_transfer_enabled && payment_accounts.many? %>
+
+<style>
+  .service-field-hidden {
+    display: none;
+  }
+
+  .service-editor-shell {
+    box-sizing: border-box;
+    background: #f7f7f8;
+    color: #071014;
+    height: 100%;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .service-editor-container {
+    width: min(var(--admin-content-max-width, 1600px), calc(100% - var(--admin-content-horizontal-space, 48px)));
+    margin: 0 auto;
+    padding: 38px 0 64px;
+  }
+
+  .service-editor-form {
+    min-height: 100%;
+  }
+
+  .service-editor-header {
+    align-items: flex-start;
+    display: flex;
+    gap: 32px;
+    justify-content: space-between;
+    margin-bottom: 34px;
+  }
+
+  .service-editor-header-main {
+    max-width: 760px;
+  }
+
+  .service-editor-back {
+    align-items: center;
+    color: #71717a;
+    display: inline-flex;
+    font-size: 14px;
+    font-weight: 700;
+    gap: 8px;
+    line-height: 1;
+    text-decoration: none;
+  }
+
+  .service-editor-back:hover {
+    color: #111;
+  }
+
+  .service-editor-back span {
+    font-size: 20px;
+    line-height: .8;
+  }
+
+  .service-editor-eyebrow,
+  .service-content-eyebrow {
+    color: #A63826;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0;
+    line-height: 1.2;
+    margin: 0;
+    text-transform: uppercase;
+  }
+
+  .service-editor-topbar {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+  }
+
+  .service-editor-button {
+    align-items: center;
+    border-radius: 16px;
+    display: inline-flex;
+    font-size: 16px;
+    font-weight: 700;
+    height: 48px;
+    justify-content: center;
+    padding: 0 22px;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .service-editor-button-secondary {
+    background: #fff;
+    border: 1px solid #e4e4e7;
+    color: #111;
+  }
+
+  .service-editor-button-primary {
+    background: #111;
+    border: 0;
+    color: #fff;
+    cursor: pointer;
+  }
+
+  .service-editor-title {
+    font-size: 44px;
+    font-weight: 700;
+    letter-spacing: 0;
+    line-height: 1.05;
+    margin: 10px 0 0;
+  }
+
+  .service-editor-title-row {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 10px;
+  }
+
+  .service-editor-title-row .service-editor-title {
+    margin: 0;
+  }
+
+  .service-editor-public-url {
+    align-items: center;
+    background: #fff;
+    border: 1px solid #e4e4e7;
+    border-radius: 999px;
+    color: #A63826;
+    display: inline-flex;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.2;
+    max-width: min(100%, 520px);
+    overflow: hidden;
+    padding: 8px 12px;
+    text-decoration: none;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .service-editor-public-url:hover {
+    background: #ffded4;
+    border-color: #A63826;
+  }
+
+  .service-editor-public-url-group {
+    align-items: center;
+    display: inline-flex;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .service-editor-public-url-copy {
+    align-items: center;
+    background: #fff;
+    border: 1px solid #e4e4e7;
+    border-radius: 999px;
+    color: #71717a;
+    cursor: pointer;
+    display: inline-flex;
+    height: 34px;
+    justify-content: center;
+    transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+    width: 34px;
+  }
+
+  .service-editor-public-url-copy:hover {
+    background: #ffded4;
+    border-color: #A63826;
+    color: #A63826;
+  }
+
+  .service-editor-header-copy {
+    color: #71717a;
+    font-size: 15px;
+    font-weight: 650;
+    line-height: 1.55;
+    margin: 12px 0 0;
+  }
+
+  .service-editor-layout {
+    display: grid;
+    gap: 28px;
+    grid-template-columns: 360px minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .service-editor-sidebar {
+    background: #fff;
+    border: 1px solid #e4e4e7;
+    border-radius: 12px;
+    padding: 28px 20px 24px;
+    position: sticky;
+    top: 24px;
+  }
+
+  .service-editor-nav {
+    display: grid;
+    gap: 10px;
+  }
+
+  .service-editor-tab {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    border-radius: 8px;
+    color: #27272a;
+    cursor: pointer;
+    display: flex;
+    font-size: 16px;
+    font-weight: 700;
+    min-height: 56px;
+    justify-content: space-between;
+    padding: 0 18px;
+    text-align: left;
+    width: 100%;
+  }
+
+  .service-editor-tab:hover {
+    background: #f4f4f5;
+  }
+
+  .service-editor-tab.is-active {
+    background: #ffded4;
+    color: #A63826;
+  }
+
+  .service-editor-badge {
+    align-items: center;
+    background: #fff;
+    border: 1px solid #e4e4e7;
+    border-radius: 999px;
+    color: #52525b;
+    display: inline-flex;
+    font-size: 13px;
+    font-weight: 700;
+    height: 30px;
+    justify-content: center;
+    min-width: 30px;
+    padding: 0 8px;
+  }
+
+  .service-editor-tab.is-active .service-editor-badge {
+    color: #A63826;
+  }
+
+  .service-editor-content {
+    min-width: 0;
+  }
+
+  .service-panel[hidden] {
+    display: none;
+  }
+
+  .service-content-card {
+    background: #fff;
+    border: 1px solid #fff;
+    border-radius: 28px;
+    box-shadow: 0 20px 55px rgba(17, 17, 20, .08);
+    overflow: hidden;
+  }
+
+  .service-content-header {
+    border-bottom: 1px solid #f4f4f5;
+    padding: 28px;
+  }
+
+  .service-content-header-row {
+    align-items: flex-start;
+    display: flex;
+    gap: 20px;
+    justify-content: space-between;
+  }
+
+  .service-content-body {
+    padding: 28px;
+  }
+
+  .service-panel-title,
+  .service-content-heading {
+    color: #111;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 0;
+    line-height: 1.2;
+    margin: 8px 0 0;
+  }
+
+  .service-panel-copy,
+  .service-content-copy {
+    color: #71717a;
+    font-size: 15px;
+    font-weight: 650;
+    line-height: 1.45;
+    margin: 8px 0 0;
+  }
+
+  .service-selected-pill {
+    align-items: center;
+    background: #ffded4;
+    border-radius: 999px;
+    color: #A63826;
+    display: inline-flex;
+    flex-shrink: 0;
+    font-size: 14px;
+    font-weight: 700;
+    gap: 8px;
+    padding: 8px 12px;
+  }
+
+  .service-selected-pill span:first-child {
+    align-items: center;
+    background: #BF482F;
+    border-radius: 999px;
+    color: #fff;
+    display: inline-flex;
+    font-size: 12px;
+    height: 28px;
+    justify-content: center;
+    min-width: 28px;
+    padding: 0 8px;
+  }
+
+  .service-section-title {
+    color: #111;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 0;
+    line-height: 1.2;
+    margin: 36px 0 4px;
+  }
+
+  .service-form-grid {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    display: grid;
+    gap: 22px 18px;
+    margin-top: 0;
+    padding: 0;
+  }
+
+  .service-form-row {
+    display: grid;
+    gap: 20px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .service-field-label-row {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 8px;
+  }
+
+  .service-description-label-actions {
+    align-items: center;
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: flex-end;
+  }
+
+  .service-ai-button {
+    align-items: center;
+    background: #fff;
+    border: 2px solid #090814;
+    border-radius: 999px;
+    color: #090814;
+    cursor: pointer;
+    display: inline-flex;
+    font-size: 14px;
+    font-weight: 700;
+    gap: 8px;
+    height: 38px;
+    justify-content: center;
+    padding: 0 16px 0 18px;
+    transition: background-color .15s ease, opacity .15s ease, transform .15s ease;
+    white-space: nowrap;
+  }
+
+  .service-ai-button:hover:not(:disabled) {
+    background: #fafafa;
+    transform: translateY(-1px);
+  }
+
+  .service-ai-button:disabled {
+    cursor: wait;
+    opacity: .65;
+  }
+
+  .service-ai-status {
+    color: #A63826;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.45;
+    margin-top: 8px;
+  }
+
+  .service-ai-status.is-error {
+    color: #e11d48;
+  }
+
+  .service-field-label {
+    color: #18181b;
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  .service-field-hint,
+  .service-counter {
+    color: #71717a;
+    font-size: 13px;
+    font-weight: 650;
+    line-height: 1.45;
+    margin-top: 7px;
+  }
+
+  .service-input,
+  .service-select,
+  .service-textarea {
+    background: #fff;
+    border: 1px solid #e4e4e7;
+    border-radius: 9px;
+    color: #111;
+    font-size: 15px;
+    font-weight: 650;
+    outline: none;
+    width: 100%;
+  }
+
+  .service-input,
+  .service-select {
+    height: 52px;
+    padding: 0 16px;
+  }
+
+  .service-select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg width='22' height='22' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5' stroke='%23111111' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-position: right 18px center;
+    background-repeat: no-repeat;
+    background-size: 22px 22px;
+    padding-right: 54px;
+  }
+
+  .service-textarea {
+    min-height: 130px;
+    padding: 14px 16px;
+    resize: vertical;
+  }
+
+  .service-input::placeholder,
+  .service-textarea::placeholder {
+    color: #a1a1aa;
+  }
+
+  .service-input:focus,
+  .service-select:focus,
+  .service-textarea:focus {
+    border-color: #A63826;
+    box-shadow: 0 0 0 4px rgba(255, 222, 212, .14);
+  }
+
+  .service-money-input {
+    display: flex;
+    overflow: hidden;
+    padding: 0;
+  }
+
+  .service-money-input span {
+    align-items: center;
+    background: #f4f4f5;
+    border-right: 1px solid #e4e4e7;
+    color: #71717a;
+    display: flex;
+    font-size: 15px;
+    font-weight: 700;
+    justify-content: center;
+    width: 50px;
+  }
+
+  .service-money-input input {
+    border: 0;
+    border-radius: 0;
+    min-width: 0;
+    padding: 0 16px;
+  }
+
+  .service-money-input input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+
+  .service-money-input input[type="number"]::-webkit-inner-spin-button,
+  .service-money-input input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  .service-switch-card {
+    background: #f7f7f8;
+    border: 1px solid #e4e4e7;
+    border-radius: 16px;
+    min-width: 0;
+    padding: 16px;
+  }
+
+  .service-check {
+    accent-color: #A63826;
+    height: 18px;
+    width: 18px;
+  }
+
+  .service-availability-stack {
+    display: grid;
+    gap: 26px;
+  }
+
+  .service-availability-option {
+    align-items: flex-start;
+    display: grid;
+    gap: 14px;
+    grid-template-columns: 24px minmax(0, 1fr);
+  }
+
+  .service-availability-option-title {
+    color: #111;
+    display: block;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.35;
+  }
+
+  .service-availability-option-copy {
+    color: #71717a;
+    display: block;
+    font-size: 13px;
+    font-weight: 650;
+    line-height: 1.45;
+    margin-top: 2px;
+  }
+
+  .service-availability-dates[hidden],
+  .service-availability-weekly[hidden],
+  .service-availability-day-fields[hidden],
+  .service-availability-unavailable[hidden] {
+    display: none;
+  }
+
+  .service-availability-dates {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    margin-left: 38px;
+    margin-top: -14px;
+  }
+
+  .service-availability-weekly {
+    display: grid;
+    gap: 18px;
+    margin-top: -12px;
+  }
+
+  .service-availability-day {
+    align-items: flex-start;
+    display: grid;
+    gap: 18px;
+    grid-template-columns: 196px minmax(0, 1fr);
+  }
+
+  .service-availability-day-toggle {
+    align-items: center;
+    display: flex;
+    gap: 12px;
+    min-height: 52px;
+  }
+
+  .service-availability-day-name {
+    color: #52525b;
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  .service-availability-day-toggle .service-check:checked + .service-availability-day-name {
+    color: #111;
+  }
+
+  .service-availability-unavailable {
+    align-items: center;
+    color: #a1a1aa;
+    display: flex;
+    font-size: 15px;
+    font-weight: 650;
+    min-height: 52px;
+  }
+
+  .service-availability-day-fields {
+    display: grid;
+    gap: 12px;
+  }
+
+  .service-availability-intervals {
+    display: grid;
+    gap: 12px;
+  }
+
+  .service-availability-interval {
+    align-items: center;
+    display: grid;
+    gap: 14px;
+    grid-template-columns: minmax(120px, 156px) auto minmax(120px, 156px) 38px 38px;
+  }
+
+  .service-availability-to {
+    color: #52525b;
+    font-size: 14px;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  .service-availability-icon-button {
+    align-items: center;
+    background: #fff;
+    border: 1px solid #e4e4e7;
+    border-radius: 999px;
+    color: #111;
+    cursor: pointer;
+    display: inline-flex;
+    font-size: 20px;
+    font-weight: 650;
+    height: 34px;
+    justify-content: center;
+    width: 34px;
+  }
+
+  .service-availability-icon-button:hover {
+    border-color: #A63826;
+    color: #A63826;
+  }
+
+  .service-availability-remove {
+    color: #f43f5e;
+  }
+
+  .service-team-toolbar {
+    align-items: center;
+    display: flex;
+    gap: 14px;
+    justify-content: space-between;
+    margin-bottom: 18px;
+  }
+
+  .service-team-search {
+    max-width: 420px;
+    position: relative;
+    width: 100%;
+  }
+
+  .service-team-search::before {
+    color: #a1a1aa;
+    content: "⌕";
+    font-size: 18px;
+    font-weight: 700;
+    left: 16px;
+    line-height: 1;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .service-team-search input {
+    background: #fafafa;
+    border: 1px solid #e4e4e7;
+    border-radius: 16px;
+    color: #111;
+    font-size: 14px;
+    font-weight: 650;
+    height: 48px;
+    outline: none;
+    padding: 0 16px 0 44px;
+    width: 100%;
+  }
+
+  .service-team-search input:focus {
+    background: #fff;
+    border-color: #A63826;
+    box-shadow: 0 0 0 4px rgba(255, 222, 212, .14);
+  }
+
+  .service-team-actions {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+
+  .service-team-button {
+    border-radius: 16px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 700;
+    height: 44px;
+    padding: 0 16px;
+  }
+
+  .service-team-button-primary {
+    background: #111;
+    border: 1px solid #111;
+    color: #fff;
+  }
+
+  .service-team-button-secondary {
+    background: #fff;
+    border: 1px solid #e4e4e7;
+    color: #3f3f46;
+  }
+
+  .service-team-button-secondary:hover {
+    background: #fafafa;
+  }
+
+  .service-team-list {
+    background: #fff;
+    border: 1px solid #e4e4e7;
+    border-radius: 24px;
+    display: block;
+    margin-top: 0;
+    overflow: hidden;
+  }
+
+  .service-team-row {
+    align-items: center;
+    border-bottom: 1px solid #e4e4e7;
+    cursor: pointer;
+    display: flex;
+    gap: 16px;
+    min-height: 96px;
+    padding: 20px 22px;
+  }
+
+  .service-team-row:hover {
+    background: #fafafa;
+  }
+
+  .service-team-row[hidden] {
+    display: none;
+  }
+
+  .service-team-row-all {
+    background: #fafafa;
+    min-height: 74px;
+  }
+
+  .service-team-row:last-child {
+    border-bottom: 0;
+  }
+
+  .service-avatar {
+    align-items: center;
+    background: #f4f4f5;
+    border: 2px solid #38bdf8;
+    border-radius: 999px;
+    color: #67e8f9;
+    display: flex;
+    font-size: 18px;
+    font-weight: 700;
+    height: 54px;
+    justify-content: center;
+    flex-shrink: 0;
+    overflow: hidden;
+    width: 54px;
+  }
+
+  .service-avatar img {
+    height: 100%;
+    object-fit: cover;
+    width: 100%;
+  }
+
+  .service-team-name {
+    color: #111;
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.2;
+    margin: 0;
+  }
+
+  .service-team-role {
+    color: #71717a;
+    font-size: 13px;
+    font-weight: 650;
+    margin: 4px 0 0;
+  }
+
+  .service-team-copy {
+    color: #71717a;
+    font-size: 13px;
+    font-weight: 650;
+    line-height: 1.45;
+    margin: 4px 0 0;
+  }
+
+  .service-team-main {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .service-team-name-row {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .service-team-tag,
+  .service-team-status {
+    align-items: center;
+    border-radius: 999px;
+    display: inline-flex;
+    font-size: 12px;
+    font-weight: 700;
+    min-height: 26px;
+    padding: 0 10px;
+  }
+
+  .service-team-tag {
+    background: #f4f4f5;
+    color: #71717a;
+  }
+
+  .service-team-status {
+    background: #ecfdf5;
+    color: #047857;
+    flex-shrink: 0;
+  }
+
+  .service-team-count-badge {
+    background: #fff;
+    border: 1px solid #e4e4e7;
+    border-radius: 999px;
+    color: #3f3f46;
+    flex-shrink: 0;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 7px 12px;
+  }
+
+  .service-team-recommendation {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 20px;
+    margin-top: 22px;
+    padding: 18px;
+  }
+
+  .service-team-recommendation-title {
+    color: #451a03;
+    font-size: 15px;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  .service-team-recommendation-copy {
+    color: #92400e;
+    font-size: 14px;
+    font-weight: 650;
+    line-height: 1.55;
+    margin: 4px 0 0;
+  }
+
+  .service-upload-zone {
+    background: #fafafa;
+    border: 1px dashed #d4d4d8;
+    border-radius: 22px;
+    cursor: pointer;
+    display: flex;
+    gap: 20px;
+    justify-content: space-between;
+    margin-top: 0;
+    min-height: 104px;
+    overflow: hidden;
+    padding: 24px;
+    position: relative;
+    transition: background-color .15s ease, border-color .15s ease, box-shadow .15s ease;
+  }
+
+  .service-upload-zone.is-dragging {
+    background: #ffded4;
+    border-color: #A63826;
+    box-shadow: 0 18px 36px rgba(255, 222, 212, .14);
+  }
+
+  .service-upload-title {
+    color: #111;
+    font-size: 17px;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  .service-upload-copy {
+    color: #71717a;
+    font-size: 15px;
+    font-weight: 650;
+    margin: 4px 0 0;
+  }
+
+  .service-upload-button {
+    align-items: center;
+    align-self: center;
+    border: 1px solid #e4e4e7;
+    border-radius: 999px;
+    color: #111;
+    display: inline-flex;
+    font-size: 14px;
+    font-weight: 700;
+    height: 46px;
+    padding: 0 18px;
+    white-space: nowrap;
+  }
+
+  .service-file-input {
+    cursor: pointer;
+    height: 100%;
+    inset: 0;
+    opacity: 0;
+    position: absolute;
+    width: 100%;
+  }
+
+  .service-image-pending-grid[hidden] {
+    display: none;
+  }
+
+  .service-image-pending-grid {
+    background: #fafafa;
+    border: 1px dashed #d4d4d8;
+    border-radius: 22px;
+    padding: 18px;
+  }
+
+  .service-image-pending-card {
+    border-color: #A63826;
+    box-shadow: 0 12px 28px rgba(255, 222, 212, .12);
+  }
+
+  .service-images-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 22px;
+  }
+
+  .service-image-grid {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    margin-top: 24px;
+  }
+
+  .service-image-card {
+    background: #fff;
+    border: 1px solid #e4e4e7;
+    border-radius: 12px;
+    color: inherit;
+    overflow: hidden;
+  }
+
+  .service-image-saved-card {
+    cursor: zoom-in;
+    text-align: left;
+    transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+  }
+
+  .service-image-saved-card:hover {
+    border-color: #A63826;
+    box-shadow: 0 16px 34px rgba(255, 222, 212, .14);
+    transform: translateY(-1px);
+  }
+
+  .service-image-card img {
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    width: 100%;
+  }
+
+  .service-image-filename {
+    color: #52525b;
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    overflow: hidden;
+    padding: 10px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .service-image-modal {
+    background: #fff;
+    border: 0;
+    border-radius: 28px;
+    color: #09090b;
+    left: 50%;
+    margin: 0;
+    max-height: calc(100vh - 40px);
+    max-width: min(980px, calc(100vw - 40px));
+    overflow: auto;
+    padding: 0;
+    position: fixed;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 980px;
+  }
+
+  .service-image-modal::backdrop {
+    background: rgba(15, 23, 42, .54);
+    backdrop-filter: blur(3px);
+  }
+
+  .service-image-modal[open] {
+    animation: service-image-modal-in .16s ease-out;
+  }
+
+  .service-image-modal-inner {
+    display: grid;
+    gap: 18px;
+    padding: 22px;
+  }
+
+  .service-image-modal-header {
+    align-items: center;
+    display: flex;
+    gap: 14px;
+    justify-content: space-between;
+  }
+
+  .service-image-modal-title {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -.03em;
+    margin: 0;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .service-image-modal-close {
+    align-items: center;
+    background: #f4f4f5;
+    border: 1px solid #e4e4e7;
+    border-radius: 999px;
+    color: #18181b;
+    display: inline-flex;
+    flex: 0 0 auto;
+    font-size: 22px;
+    height: 42px;
+    justify-content: center;
+    line-height: 1;
+    width: 42px;
+  }
+
+  .service-image-modal-close:hover {
+    background: #e4e4e7;
+  }
+
+  .service-image-modal-preview {
+    align-items: center;
+    background: #f7f7f8;
+    border: 1px solid #e4e4e7;
+    border-radius: 22px;
+    display: flex;
+    justify-content: center;
+    min-height: 420px;
+    overflow: hidden;
+  }
+
+  .service-image-modal-preview img {
+    display: block;
+    max-height: min(70vh, 680px);
+    max-width: 100%;
+    object-fit: contain;
+  }
+
+  .service-image-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .service-image-delete-link {
+    align-items: center;
+    background: #fff1f2;
+    border: 1px solid #fecdd3;
+    border-radius: 999px;
+    color: #e11d48;
+    display: inline-flex;
+    font-size: 14px;
+    font-weight: 700;
+    height: 44px;
+    justify-content: center;
+    padding: 0 18px;
+    text-decoration: none;
+  }
+
+  .service-image-delete-link:hover {
+    background: #ffe4e6;
+    border-color: #fda4af;
+  }
+
+  @keyframes service-image-modal-in {
+    from {
+      opacity: 0;
+      transform: translate(-50%, calc(-50% + 10px)) scale(.985);
+    }
+    to {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+  }
+
+  .service-empty-panel {
+    background: #fff;
+    border: 1px dashed #d4d4d8;
+    border-radius: 18px;
+    color: #71717a;
+    font-size: 14px;
+    font-weight: 650;
+    line-height: 1.5;
+    margin-top: 24px;
+    padding: 22px;
+  }
+
+  .service-team-list .service-empty-panel {
+    border: 0;
+    border-radius: 0;
+    margin-top: 0;
+  }
+
+  .service-error-message {
+    background: #fff1f2;
+    border: 1px solid #fecdd3;
+    border-radius: 18px;
+    color: #9f1239;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.55;
+    margin-bottom: 24px;
+    padding: 16px 18px;
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  @media (max-width: 1023px) {
+    .service-editor-container {
+      width: calc(100% - 40px);
+      padding: 28px 0 110px;
+    }
+
+    .service-editor-header,
+    .service-content-header-row,
+    .service-team-toolbar {
+      display: block;
+    }
+
+    .service-editor-topbar {
+      display: none;
+    }
+
+    .service-editor-title {
+      font-size: 34px;
+      margin-top: 10px;
+    }
+
+    .service-editor-layout,
+    .service-form-row,
+    .service-availability-dates,
+    .service-availability-day {
+      grid-template-columns: 1fr;
+    }
+
+    .service-availability-dates {
+      margin-left: 0;
+    }
+
+    .service-availability-interval {
+      grid-template-columns: 1fr auto 1fr auto auto;
+    }
+
+    .service-editor-sidebar {
+      position: static;
+    }
+
+    .service-content-card {
+      border-radius: 22px;
+    }
+
+    .service-content-header,
+    .service-content-body {
+      padding: 22px;
+    }
+
+    .service-selected-pill,
+    .service-team-actions {
+      margin-top: 16px;
+    }
+
+    .service-team-search {
+      max-width: none;
+    }
+
+    .service-team-row {
+      align-items: flex-start;
+      gap: 12px;
+      padding: 18px;
+    }
+
+    .service-avatar {
+      height: 48px;
+      width: 48px;
+    }
+
+    .service-team-status {
+      display: none;
+    }
+  }
+
+  .service-editor-shell {
+    background:
+      radial-gradient(circle at 86% -12%, rgba(255, 222, 212, .07), transparent 34rem),
+      #f7f7f9;
+  }
+
+  .service-editor-container {
+    width: min(var(--admin-content-max-width, 1600px), calc(100% - var(--admin-content-horizontal-space, 48px)));
+    padding: 28px 0 64px;
+  }
+
+  .service-editor-header {
+    align-items: flex-end;
+    gap: 24px;
+    margin-bottom: 24px;
+  }
+
+  .service-editor-back {
+    border-radius: 12px;
+    padding: 4px 0;
+  }
+
+  .service-editor-back span {
+    font-size: 18px;
+  }
+
+  .service-editor-eyebrow,
+  .service-content-eyebrow {
+    letter-spacing: .16em;
+  }
+
+  .service-editor-title {
+    font-size: clamp(34px, 4vw, 44px);
+    letter-spacing: -.04em;
+  }
+
+  .service-editor-header-copy {
+    max-width: 760px;
+  }
+
+  @media (min-width: 1024px) {
+    .service-editor-header-main {
+      flex: 1 1 auto;
+      max-width: none;
+      min-width: 0;
+    }
+
+    .service-editor-public-url-group {
+      flex: 0 1 auto;
+      width: auto;
+    }
+
+    .service-editor-public-url {
+      flex: 0 1 auto;
+      max-width: none;
+      min-width: 0;
+    }
+
+    .service-editor-header-copy {
+      max-width: none;
+      white-space: nowrap;
+    }
+  }
+
+  .service-editor-button {
+    border-radius: 16px;
+    font-size: 14px;
+    height: 46px;
+    transition: background-color .18s ease, border-color .18s ease, color .18s ease, transform .18s ease;
+  }
+
+  .service-editor-button-primary:hover {
+    background: #ffded4;
+    transform: translateY(-1px);
+  }
+
+  .service-editor-layout {
+    gap: 20px;
+    grid-template-columns: 290px minmax(0, 1fr);
+  }
+
+  .service-editor-sidebar {
+    border-color: rgba(226, 232, 240, .8);
+    border-radius: 24px;
+    box-shadow: 0 10px 34px rgba(255, 222, 212, .055);
+    padding: 12px;
+    top: 96px;
+  }
+
+  .service-editor-nav {
+    gap: 4px;
+  }
+
+  .service-editor-tab {
+    border-radius: 16px;
+    gap: 12px;
+    justify-content: flex-start;
+    min-height: 72px;
+    padding: 14px 16px;
+    transition: background-color .18s ease, box-shadow .18s ease, color .18s ease, transform .18s ease;
+  }
+
+  .service-editor-tab:hover {
+    background: #f8fafc;
+    transform: translateX(2px);
+  }
+
+  .service-editor-tab.is-active {
+    background: linear-gradient(135deg, #ffded4 0%, #ffded4 100%);
+    box-shadow: inset 0 0 0 1px rgba(255, 222, 212, .08);
+    color: #A63826;
+  }
+
+  .service-editor-tab-icon {
+    align-items: center;
+    background: #f8fafc;
+    border-radius: 12px;
+    color: #64748b;
+    display: inline-flex;
+    flex-shrink: 0;
+    height: 40px;
+    justify-content: center;
+    width: 40px;
+  }
+
+  .service-editor-tab.is-active .service-editor-tab-icon {
+    background: rgba(255, 255, 255, .86);
+    color: #A63826;
+    box-shadow: 0 1px 8px rgba(15, 23, 42, .06);
+  }
+
+  .service-editor-tab-main {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .service-editor-tab-title {
+    display: block;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .service-editor-tab-subtitle {
+    color: #94a3b8;
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.25;
+    margin-top: 5px;
+  }
+
+  .service-editor-sidebar-tip {
+    align-items: flex-start;
+    background: #f8fafc;
+    border-radius: 16px;
+    color: #64748b;
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+    padding: 14px;
+  }
+
+  .service-editor-sidebar-tip svg {
+    flex: 0 0 auto;
+    margin-top: 2px;
+  }
+
+  .service-editor-sidebar-tip p {
+    font-size: 12px;
+    font-weight: 650;
+    line-height: 1.55;
+    margin: 0;
+  }
+
+  .service-editor-mobile-tabs {
+    display: none;
+  }
+
+  .service-editor-mobile-tab {
+    background: transparent;
+    border: 0;
+    border-radius: 12px;
+    color: #64748b;
+    cursor: pointer;
+    flex: 1;
+    font-size: 12px;
+    font-weight: 700;
+    min-width: max-content;
+    padding: 10px 16px;
+  }
+
+  .service-editor-mobile-tab.is-active {
+    background: #ffded4;
+    color: #A63826;
+  }
+
+  .service-editor-sr {
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    position: absolute;
+    width: 1px;
+    clip: rect(0, 0, 0, 0);
+  }
+
+  .service-content-card {
+    border-color: rgba(226, 232, 240, .8);
+    box-shadow: 0 18px 50px rgba(255, 222, 212, .06);
+    overflow: visible;
+  }
+
+  .service-content-header {
+    background: linear-gradient(135deg, #fff 0%, rgba(255, 222, 212, .75) 100%);
+    border-radius: 28px 28px 0 0;
+    padding: 24px 28px;
+  }
+
+  .service-content-header-row {
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
+  .service-content-intro {
+    align-items: flex-start;
+    display: flex;
+    gap: 16px;
+  }
+
+  .service-content-icon {
+    align-items: center;
+    border-radius: 18px;
+    display: inline-flex;
+    flex: 0 0 auto;
+    height: 46px;
+    justify-content: center;
+    width: 46px;
+  }
+
+  .service-content-icon-basic {
+    background: #ffded4;
+    color: #A63826;
+  }
+
+  .service-content-icon-team {
+    background: #ffded4;
+    color: #A63826;
+  }
+
+  .service-content-icon-images {
+    background: #fdf2f8;
+    color: #be185d;
+  }
+
+  .service-content-icon-availability {
+    background: #eff6ff;
+    color: #1d4ed8;
+  }
+
+  .service-panel-title,
+  .service-content-heading {
+    font-size: 24px;
+    letter-spacing: -.03em;
+    margin-top: 4px;
+  }
+
+  .service-content-copy {
+    color: #64748b;
+  }
+
+  .service-content-body {
+    padding: 28px;
+  }
+
+  .service-form-grid {
+    gap: 28px 20px;
+  }
+
+  .service-form-row {
+    gap: 20px;
+  }
+
+  .service-field-label {
+    color: #1e293b;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .service-field-label-row {
+    margin-bottom: 8px;
+  }
+
+  .service-field-hint,
+  .service-counter {
+    color: #94a3b8;
+    font-size: 12px;
+  }
+
+  .service-field-shell,
+  .service-textarea {
+    background: rgba(248, 250, 252, .72);
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    transition: background-color .18s ease, border-color .18s ease, box-shadow .18s ease;
+  }
+
+  .service-field-shell {
+    align-items: center;
+    display: flex;
+    height: 52px;
+    margin-top: 8px;
+    overflow: hidden;
+    padding: 0 16px;
+  }
+
+  .service-field-shell:focus-within,
+  .service-textarea:focus {
+    background: #fff;
+    border-color: #A63826;
+    box-shadow: 0 0 0 4px rgba(255, 222, 212, .62);
+  }
+
+  .service-input-icon {
+    color: #A63826;
+    flex: 0 0 auto;
+    margin-right: 12px;
+  }
+
+  .service-field-shell .service-input,
+  .service-field-shell .service-select {
+    background-color: transparent;
+    background-image: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    flex: 1;
+    height: 100%;
+    min-width: 0;
+    padding: 0;
+  }
+
+  .service-field-shell .service-input:focus,
+  .service-field-shell .service-select:focus {
+    box-shadow: none;
+  }
+
+  .service-input,
+  .service-select {
+    background-color: rgba(248, 250, 252, .72);
+    border-color: #e2e8f0;
+    border-radius: 16px;
+    height: 52px;
+  }
+
+  .service-textarea {
+    border-radius: 18px;
+    min-height: 148px;
+  }
+
+  .service-custom-select {
+    position: relative;
+    width: 100%;
+  }
+
+  .service-custom-select-input {
+    height: 1px;
+    opacity: 0;
+    overflow: hidden;
+    pointer-events: none;
+    position: absolute;
+    width: 1px;
+  }
+
+  .service-custom-select-trigger {
+    color: #334155;
+    cursor: pointer;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    justify-content: space-between;
+    text-align: left;
+    width: 100%;
+  }
+
+  .service-custom-select-trigger:hover,
+  .service-custom-select-trigger:focus-visible,
+  .service-custom-select-trigger[aria-expanded="true"] {
+    background: #fff;
+    border-color: #A63826;
+    box-shadow: 0 0 0 4px rgba(255, 222, 212, .62);
+    outline: none;
+  }
+
+  .service-custom-select-trigger-plain {
+    align-items: center;
+    background: rgba(248, 250, 252, .72);
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    display: flex;
+    height: 52px;
+    padding: 0 14px;
+  }
+
+  .service-custom-select-trigger.is-compact {
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .service-custom-select-label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .service-custom-select-chevron {
+    color: #64748b;
+    flex: 0 0 auto;
+    height: 18px;
+    margin-left: 12px;
+    transition: transform .16s ease;
+    width: 18px;
+  }
+
+  .service-custom-select-trigger[aria-expanded="true"] .service-custom-select-chevron {
+    transform: rotate(180deg);
+  }
+
+  .service-custom-select-options {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    box-shadow: 0 14px 30px rgba(15, 23, 42, .14);
+    display: grid;
+    gap: 3px;
+    left: 0;
+    max-height: 260px;
+    overflow-y: auto;
+    padding: 6px;
+    position: absolute;
+    right: 0;
+    top: calc(100% + 8px);
+    z-index: 40;
+  }
+
+  .service-custom-select-options[hidden] {
+    display: none;
+  }
+
+  .service-custom-select-option {
+    background: transparent;
+    border: 0;
+    border-radius: 9px;
+    color: #334155;
+    cursor: pointer;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    min-height: 38px;
+    padding: 0 12px;
+    text-align: left;
+    width: 100%;
+  }
+
+  .service-custom-select-option:hover,
+  .service-custom-select-option:focus-visible {
+    background: #ffded4;
+    color: var(--admin-brand-700);
+    outline: none;
+  }
+
+  .service-custom-select-option.is-selected {
+    background: #ffded4;
+    color: var(--admin-brand-700);
+  }
+
+  .service-money-input {
+    background: rgba(248, 250, 252, .72);
+    border-color: #e2e8f0;
+    border-radius: 16px;
+  }
+
+  .service-money-input:focus-within {
+    border-color: #A63826;
+    box-shadow: 0 0 0 4px rgba(255, 222, 212, .14);
+  }
+
+  .service-money-input span {
+    background: rgba(241, 245, 249, .78);
+    border-color: #e2e8f0;
+    width: 52px;
+  }
+
+  .service-money-input .service-money-value,
+  .service-money-input .service-money-value:focus {
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    height: 100%;
+  }
+
+  .service-ai-button {
+    border: 1px solid #090814;
+    border-radius: 12px;
+    font-size: 12px;
+    height: 36px;
+    padding: 0 14px;
+  }
+
+  .service-ai-button:hover:not(:disabled) {
+    background: #090814;
+    color: #fff;
+  }
+
+  .service-section-title-row {
+    align-items: center;
+    display: flex;
+    gap: 12px;
+    margin: 8px 0 -10px;
+  }
+
+  .service-section-title-icon {
+    align-items: center;
+    background: #eff6ff;
+    border-radius: 14px;
+    color: #1d4ed8;
+    display: inline-flex;
+    flex: 0 0 auto;
+    height: 42px;
+    justify-content: center;
+    width: 42px;
+  }
+
+  .service-section-title {
+    font-size: 18px;
+    letter-spacing: -.02em;
+    margin: 0;
+  }
+
+  .service-section-copy {
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 650;
+    margin: 2px 0 0;
+  }
+
+  .service-switch-card,
+  .service-visibility-card {
+    background: rgba(248, 250, 252, .72);
+    border-color: #e2e8f0;
+    border-radius: 22px;
+    min-width: 0;
+    padding: 20px;
+  }
+
+  .service-switch-label {
+    align-items: flex-start;
+    cursor: pointer;
+    display: flex;
+    gap: 16px;
+  }
+
+  .service-switch-text {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .service-switch-title {
+    color: #0f172a;
+    display: block;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.25;
+  }
+
+  .service-switch-copy {
+    color: #64748b;
+    display: block;
+    font-size: 12px;
+    font-weight: 650;
+    line-height: 1.55;
+    margin-top: 6px;
+  }
+
+  .service-switch-copy a {
+    overflow-wrap: anywhere;
+  }
+
+  .service-switch-copy-below {
+    margin: 10px 48px 0 0;
+  }
+
+  .service-deposit-card {
+    grid-column: 1 / -1;
+  }
+
+  .service-toggle-checkbox {
+    cursor: pointer;
+    height: 1px;
+    inset: 0;
+    opacity: 0;
+    position: absolute;
+    width: 1px;
+    z-index: 2;
+  }
+
+  .service-toggle-control {
+    display: inline-flex;
+    flex: 0 0 auto;
+    height: 26px;
+    margin-left: auto;
+    position: relative;
+    width: 46px;
+  }
+
+  .service-toggle-control .service-toggle-checkbox {
+    height: 100%;
+    width: 100%;
+  }
+
+  .service-toggle {
+    background: #d8dce5;
+    border-radius: 999px;
+    display: inline-flex;
+    inset: 0;
+    height: 26px;
+    position: relative;
+    transition: background-color .18s ease;
+    width: 46px;
+  }
+
+  .service-toggle::after {
+    background: #fff;
+    border-radius: 999px;
+    box-shadow: 0 2px 7px rgba(15, 23, 42, .18);
+    content: "";
+    height: 20px;
+    left: 3px;
+    position: absolute;
+    top: 3px;
+    transition: transform .18s ease;
+    width: 20px;
+  }
+
+  .service-toggle-checkbox:checked + .service-toggle {
+    background: #ffded4;
+  }
+
+  .service-toggle-checkbox:checked + .service-toggle::after {
+    transform: translateX(20px);
+  }
+
+  .service-visibility-card {
+    background: #fff;
+    grid-column: 1 / -1;
+  }
+
+  .service-visibility-icon {
+    align-items: center;
+    background: #ecfdf5;
+    border-radius: 14px;
+    color: #047857;
+    display: inline-flex;
+    flex: 0 0 auto;
+    height: 42px;
+    justify-content: center;
+    width: 42px;
+  }
+
+  .service-team-toolbar {
+    gap: 16px;
+    margin-bottom: 22px;
+  }
+
+  .service-team-search input {
+    background: rgba(248, 250, 252, .72);
+    border-color: #e2e8f0;
+    border-radius: 16px;
+  }
+
+  .service-team-list {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    display: grid;
+    gap: 12px;
+  }
+
+  .service-team-row {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 22px;
+    box-shadow: none;
+    min-height: 84px;
+    padding: 16px;
+    transition: background-color .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+  }
+
+  .service-team-row:hover {
+    background: #fff;
+    border-color: #A63826;
+    transform: translateY(-1px);
+  }
+
+  .service-team-row:has(input:checked) {
+    background: #ffded4;
+    border-color: #A63826;
+    box-shadow: 0 0 0 3px rgba(255, 222, 212, .38);
+  }
+
+  .service-team-row-all {
+    background: rgba(248, 250, 252, .72);
+  }
+
+  .service-team-row:last-child {
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .service-upload-zone {
+    align-items: center;
+    background: rgba(248, 250, 252, .6);
+    border: 2px dashed #e2e8f0;
+    border-radius: 24px;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 250px;
+    padding: 28px;
+    text-align: center;
+  }
+
+  .service-upload-zone:hover {
+    background: rgba(255, 222, 212, .55);
+    border-color: #A63826;
+  }
+
+  .service-upload-icon {
+    align-items: center;
+    background: #fff;
+    border-radius: 18px;
+    color: #A63826;
+    display: inline-flex;
+    height: 56px;
+    justify-content: center;
+    margin-bottom: 16px;
+    width: 56px;
+    box-shadow: 0 1px 8px rgba(15, 23, 42, .06);
+  }
+
+  .service-upload-title {
+    display: block;
+    font-size: 15px;
+  }
+
+  .service-upload-copy {
+    display: block;
+    font-size: 12px;
+    line-height: 1.55;
+    margin-top: 8px;
+  }
+
+  .service-upload-button {
+    background: #fff;
+    color: #64748b;
+    font-size: 10px;
+    height: 30px;
+    margin-top: 16px;
+    text-transform: uppercase;
+  }
+
+  .service-image-grid {
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  }
+
+  .service-availability-stack {
+    gap: 24px;
+  }
+
+  .service-availability-option {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 22px;
+    grid-template-columns: 24px minmax(0, 1fr);
+    padding: 18px;
+  }
+
+  .service-availability-dates {
+    margin-left: 0;
+    margin-top: -10px;
+  }
+
+  .service-availability-weekly {
+    gap: 12px;
+    margin-top: -10px;
+  }
+
+  .service-availability-day {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    gap: 18px;
+    grid-template-columns: 170px minmax(0, 1fr);
+    padding: 16px;
+  }
+
+  .service-availability-day:has(input[type="checkbox"]:checked) {
+    background: #fbfaff;
+    border-color: #A63826;
+  }
+
+  .service-editor-bottom-actions {
+    align-items: center;
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 24px;
+    padding-bottom: 4px;
+  }
+
+  @media (max-width: 1023px) {
+    .service-editor-container {
+      width: calc(100% - 28px);
+      padding: 24px 0 110px;
+    }
+
+    .service-editor-header {
+      display: block;
+    }
+
+    .service-editor-layout,
+    .service-form-row,
+    .service-availability-dates,
+    .service-availability-day {
+      grid-template-columns: 1fr;
+    }
+
+    .service-editor-sidebar {
+      display: none;
+    }
+
+    .service-editor-mobile-tabs {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      box-shadow: 0 1px 8px rgba(15, 23, 42, .04);
+      display: flex;
+      gap: 4px;
+      margin-bottom: 16px;
+      overflow-x: auto;
+      padding: 4px;
+    }
+
+    .service-content-header,
+    .service-content-body {
+      padding-left: 20px;
+      padding-right: 20px;
+    }
+
+    .service-content-intro {
+      gap: 12px;
+    }
+
+    .service-editor-bottom-actions {
+      display: none;
+    }
+
+    .service-availability-interval {
+      grid-template-columns: 1fr auto 1fr auto auto;
+    }
+  }
+</style>
+
+<div class="service-editor-shell" data-controller="service-form-tabs" data-service-form-tabs-active-value="<%= active_service_tab %>">
+  <div class="service-editor-container">
+    <%= form_with model: [ :admin, service ], class: "service-editor-form", multipart: true do |form| %>
+      <%= hidden_field_tag :minimal, "1" if local_assigns.fetch(:minimal, false) %>
+      <%= hidden_field_tag :return_tab, active_service_tab, data: { service_form_tabs_target: "input" } %>
+
+      <section class="service-editor-header">
+        <div class="service-editor-header-main">
+          <%= link_to back_path, class: "service-editor-back" do %>
+            <span>‹</span>
+            Volver al listado
+          <% end %>
+          <p class="service-editor-eyebrow"><%= page_mode %></p>
+          <div class="service-editor-title-row">
+            <h1 class="service-editor-title"><%= page_title %></h1>
+            <% if public_service_url.present? %>
+              <span class="service-editor-public-url-group" data-controller="copy-text" data-copy-text-preserve-content-value="true">
+                <%= link_to public_service_url,
+                  public_service_url,
+                  class: "service-editor-public-url",
+                  target: "_blank",
+                  rel: "noopener",
+                  data: { copy_text_target: "source" } %>
+                <button type="button" class="service-editor-public-url-copy" data-copy-text-target="button" data-action="copy-text#copy" title="Copiar" aria-label="Copiar">
+                  <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path d="M8 8V5.8C8 4.8 8.8 4 9.8 4h8.4c1 0 1.8.8 1.8 1.8v8.4c0 1-.8 1.8-1.8 1.8H16" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                    <path d="M4 9.8C4 8.8 4.8 8 5.8 8h8.4c1 0 1.8.8 1.8 1.8v8.4c0 1-.8 1.8-1.8 1.8H5.8C4.8 20 4 19.2 4 18.2V9.8Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+              </span>
+            <% end %>
+          </div>
+          <p class="service-editor-header-copy"><%= copy %></p>
+        </div>
+
+        <div class="service-editor-topbar">
+          <%= link_to "Cerrar", cancel_path, class: "service-editor-button service-editor-button-secondary" %>
+          <button type="submit" class="service-editor-button service-editor-button-primary">
+            Guardar
+          </button>
+        </div>
+      </section>
+
+      <% if service.errors.any? %>
+        <div class="service-error-message">
+          <%= service.errors.full_messages.to_sentence %>
+        </div>
+      <% end %>
+
+      <div class="service-editor-mobile-tabs" aria-label="Secciones del servicio">
+        <button type="button" class="service-editor-mobile-tab <%= "is-active" if active_service_tab == "basic" %>" data-service-form-tabs-target="tab" data-service-form-tabs-tab-value="basic" data-action="service-form-tabs#select" aria-selected="<%= active_service_tab == "basic" ? "true" : "false" %>">Información</button>
+        <button type="button" class="service-editor-mobile-tab <%= "is-active" if active_service_tab == "team" %>" data-service-form-tabs-target="tab" data-service-form-tabs-tab-value="team" data-action="service-form-tabs#select" aria-selected="<%= active_service_tab == "team" ? "true" : "false" %>">Equipo</button>
+        <button type="button" class="service-editor-mobile-tab <%= "is-active" if active_service_tab == "images" %>" data-service-form-tabs-target="tab" data-service-form-tabs-tab-value="images" data-action="service-form-tabs#select" aria-selected="<%= active_service_tab == "images" ? "true" : "false" %>">Imágenes</button>
+        <button type="button" class="service-editor-mobile-tab <%= "is-active" if active_service_tab == "availability" %>" data-service-form-tabs-target="tab" data-service-form-tabs-tab-value="availability" data-action="service-form-tabs#select" aria-selected="<%= active_service_tab == "availability" ? "true" : "false" %>">Horarios</button>
+      </div>
+
+      <div class="service-editor-layout">
+        <aside class="service-editor-sidebar">
+          <nav class="service-editor-nav" aria-label="Secciones del servicio">
+            <button type="button" class="service-editor-tab <%= "is-active" if active_service_tab == "basic" %>" data-service-form-tabs-target="tab" data-service-form-tabs-tab-value="basic" data-action="service-form-tabs#select" aria-selected="<%= active_service_tab == "basic" ? "true" : "false" %>">
+              <span class="service-editor-tab-icon">
+                <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                  <path d="M14 2v6h6M8 13h8M8 17h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+              <span class="service-editor-tab-main">
+                <span class="service-editor-tab-title">Información básica</span>
+                <span class="service-editor-tab-subtitle">Nombre, precio y seña</span>
+              </span>
+            </button>
+            <button type="button" class="service-editor-tab <%= "is-active" if active_service_tab == "team" %>" data-service-form-tabs-target="tab" data-service-form-tabs-tab-value="team" data-action="service-form-tabs#select" aria-selected="<%= active_service_tab == "team" ? "true" : "false" %>">
+              <span class="service-editor-tab-icon">
+                <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+              <span class="service-editor-tab-main">
+                <span class="service-editor-tab-title">Equipo asignado</span>
+                <span class="service-editor-sr">Miembros del equipo asignados</span>
+                <span class="service-editor-tab-subtitle">Quién puede realizarlo</span>
+              </span>
+              <span class="service-editor-badge"><%= selected_team_count %></span>
+            </button>
+            <button type="button" class="service-editor-tab <%= "is-active" if active_service_tab == "images" %>" data-service-form-tabs-target="tab" data-service-form-tabs-tab-value="images" data-action="service-form-tabs#select" aria-selected="<%= active_service_tab == "images" ? "true" : "false" %>">
+              <span class="service-editor-tab-icon">
+                <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path d="M15 8h.01M3 6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V6Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="m3 16 4.5-4.5a2 2 0 0 1 2.8 0L15 16m-1-1 1.5-1.5a2 2 0 0 1 2.8 0L21 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+              <span class="service-editor-tab-main">
+                <span class="service-editor-tab-title">Imágenes</span>
+                <span class="service-editor-tab-subtitle">Galería del servicio</span>
+              </span>
+              <% if service.service_images.attached? %>
+                <span class="service-editor-badge"><%= service.service_images.size %></span>
+              <% end %>
+            </button>
+            <button type="button" class="service-editor-tab <%= "is-active" if active_service_tab == "availability" %>" data-service-form-tabs-target="tab" data-service-form-tabs-tab-value="availability" data-action="service-form-tabs#select" aria-selected="<%= active_service_tab == "availability" ? "true" : "false" %>">
+              <span class="service-editor-tab-icon">
+                <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 6v6l4 2M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+              <span class="service-editor-tab-main">
+                <span class="service-editor-tab-title">Horarios</span>
+                <span class="service-editor-tab-subtitle">Disponibilidad específica</span>
+              </span>
+            </button>
+          </nav>
+          <div class="service-editor-sidebar-tip">
+            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M12 16v-4M12 8h.01M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <p>Podés guardar cuando quieras. Los campos opcionales se completan más adelante.</p>
+          </div>
+        </aside>
+
+        <main class="service-editor-content">
+          <section class="service-panel service-content-card" data-service-form-tabs-target="panel" data-service-form-tabs-panel-value="basic" <%= "hidden" unless active_service_tab == "basic" %>>
+            <div class="service-content-header">
+              <div class="service-content-intro">
+                <span class="service-content-icon service-content-icon-basic">
+                  <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none">
+                    <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                    <path d="M14 2v6h6M8 13h8M8 17h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+                <div>
+                  <p class="service-content-eyebrow">Información</p>
+                  <h2 class="service-content-heading">Información básica</h2>
+                  <p class="service-content-copy">Definí cómo se muestra el servicio, cuánto dura y si requiere seña.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="service-content-body">
+              <div class="service-form-grid" data-controller="service-description-ai" data-service-description-ai-url-value="<%= generate_description_admin_services_path %>">
+                <%= form.hidden_field :active, value: service.new_record? ? "1" : (service.active? ? "1" : "0") %>
+                <%= form.hidden_field :visibility_mode, value: service.new_record? ? "public" : service.visibility_mode %>
+
+                <div class="service-field-full">
+                  <div class="service-field-label-row">
+                    <%= form.label :name, "Nombre del servicio", class: "service-field-label" %>
+                    <span class="service-counter"><%= service.name.to_s.length %>/255</span>
+                  </div>
+                  <div class="service-field-shell">
+                    <span class="service-input-icon">
+                      <svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none">
+                        <path d="M10.7 3.4c.2-.7 1.2-.7 1.4 0l1.1 3.4c.1.3.3.5.6.6l3.4 1.1c.7.2.7 1.2 0 1.4L13.8 11c-.3.1-.5.3-.6.6L12.1 15c-.2.7-1.2.7-1.4 0l-1.1-3.4c-.1-.3-.3-.5-.6-.6L5.6 9.9c-.7-.2-.7-1.2 0-1.4L9 7.4c.3-.1.5-.3.6-.6l1.1-3.4Z" fill="currentColor"/>
+                      </svg>
+                    </span>
+                    <%= form.text_field :name,
+                      required: true,
+                      maxlength: 255,
+                      autocomplete: "off",
+                      placeholder: "Ej. Esmaltado semipermanente",
+                      class: "service-input",
+                      data: { service_description_ai_target: "name" } %>
+                  </div>
+                </div>
+
+                <div class="service-form-row">
+                  <div>
+                    <%= form.label :service_category_id, "Categoría", class: "service-field-label" %>
+                    <%= render "admin/services/custom_select",
+                      choices: service_categories.map { |category| [ category.name, category.id ] },
+                      selected_value: service.service_category_id,
+                      aria_label: "Categoría",
+                      icon_html: '<svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M3 7.8A2.8 2.8 0 0 1 5.8 5h4.3l2 2H18.2A2.8 2.8 0 0 1 21 9.8v6.4a2.8 2.8 0 0 1-2.8 2.8H5.8A2.8 2.8 0 0 1 3 16.2V7.8Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>',
+                      select_html: form.collection_select(
+                        :service_category_id,
+                        service_categories,
+                        :id,
+                        :name,
+                        { selected: service.service_category_id },
+                        class: "service-custom-select-input",
+                        tabindex: -1,
+                        aria: { hidden: true },
+                        data: { custom_select_target: "input", service_description_ai_target: "category" }
+                      ) %>
+                    <p class="service-field-hint">La categoría que ves vos y que ven los clientes online.</p>
+                  </div>
+
+                  <div>
+                    <%= form.label :price, "Precio", class: "service-field-label" %>
+                    <div class="service-money-input service-input mt-2 p-0">
+                      <span>$</span>
+                      <%= form.text_field :price,
+                        value: (service.price.positive? ? service.price.to_i : nil),
+                        inputmode: "numeric",
+                        pattern: "[0-9]*",
+                        autocomplete: "off",
+                        placeholder: "Ej. 30000",
+                        class: "service-input service-money-value" %>
+                    </div>
+                    <p class="service-field-hint">Dejalo vacío si todavía no querés mostrar un precio.</p>
+                  </div>
+                </div>
+
+                <div>
+                  <div class="service-field-label-row">
+                    <%= form.label :description, class: "service-field-label" do %>
+                      Descripción <span class="font-semibold text-zinc-400">(Opcional)</span>
+                    <% end %>
+                    <span class="service-description-label-actions">
+                      <button type="button" class="service-ai-button" data-service-description-ai-target="button" data-action="service-description-ai#generate">
+                        <span>Generar</span>
+                        <svg aria-hidden="true" width="21" height="21" viewBox="0 0 24 24" fill="none">
+                          <path d="M10.7 3.4c.2-.7 1.2-.7 1.4 0l1.1 3.4c.1.3.3.5.6.6l3.4 1.1c.7.2.7 1.2 0 1.4L13.8 11c-.3.1-.5.3-.6.6L12.1 15c-.2.7-1.2.7-1.4 0l-1.1-3.4c-.1-.3-.3-.5-.6-.6L5.6 9.9c-.7-.2-.7-1.2 0-1.4L9 7.4c.3-.1.5-.3.6-.6l1.1-3.4Z" fill="currentColor"/>
+                          <path d="M17.7 14.4c.2-.5.9-.5 1.1 0l.5 1.5c.1.2.2.4.4.4l1.5.5c.5.2.5.9 0 1.1l-1.5.5c-.2.1-.4.2-.4.4l-.5 1.5c-.2.5-.9.5-1.1 0l-.5-1.5c-.1-.2-.2-.4-.4-.4l-1.5-.5c-.5-.2-.5-.9 0-1.1l1.5-.5c.2-.1.4-.2.4-.4l.5-1.5Z" fill="currentColor"/>
+                        </svg>
+                      </button>
+                      <span class="service-counter"><%= service.description.to_s.length %>/1000</span>
+                    </span>
+                  </div>
+                  <%= form.text_area :description,
+                    rows: 5,
+                    maxlength: 1000,
+                    placeholder: "Añade una breve descripción del servicio",
+                    class: "service-textarea",
+                    data: { service_description_ai_target: "description" } %>
+                  <p class="service-ai-status" data-service-description-ai-target="status" hidden></p>
+                </div>
+
+                <div class="service-section-title-row">
+                  <span class="service-section-title-icon">
+                    <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <path d="M10 2h4M12 14l3-3M12 22a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </span>
+                  <span>
+                    <h3 class="service-section-title">Precios y duración</h3>
+                    <p class="service-section-copy">Configuración utilizada para calcular disponibilidad.</p>
+                  </span>
+                </div>
+
+                <div class="service-form-row">
+                  <div>
+                    <%= form.label :duration_minutes, "Duración", class: "service-field-label" %>
+                    <%= render "admin/services/custom_select",
+                      choices: Service::DURATIONS.map { |duration| [ "#{duration} minutos", duration ] },
+                      selected_value: service.duration_minutes,
+                      aria_label: "Duración",
+                      icon_html: '<svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 6v6l4 2M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+                      select_html: form.select(
+                        :duration_minutes,
+                        Service::DURATIONS.map { |duration| [ "#{duration} minutos", duration ] },
+                        {},
+                        class: "service-custom-select-input",
+                        tabindex: -1,
+                        aria: { hidden: true },
+                        data: { custom_select_target: "input" }
+                      ) %>
+                  </div>
+
+                  <section class="service-switch-card service-deposit-card" data-controller="service-deposit">
+                    <label class="service-switch-label">
+                      <span class="service-switch-text">
+                        <span class="service-switch-title">Requiere seña</span>
+                      </span>
+                      <span class="service-toggle-control">
+                        <%= form.check_box :deposit_required,
+                          class: "service-toggle-checkbox",
+                          data: { service_deposit_target: "checkbox", action: "service-deposit#toggle" } %>
+                        <span class="service-toggle"></span>
+                      </span>
+                    </label>
+                    <div class="mt-5" data-service-deposit-target="amount" <%= "hidden" unless service[:deposit_required] %>>
+                      <p class="service-switch-copy">
+                        <% if only_mercado_pago_enabled && service.business.mercado_pago_connected? %>
+                          Se cobrará la seña a través de Mercado Pago y el turno quedará confirmado automáticamente. Puedes cambiarlo en
+                        <% elsif !mercado_pago_enabled && manual_transfer_enabled && payment_accounts.any? %>
+                          El cliente deberá subir una foto del comprobante de transferencia a la cuenta elegida en
+                        <% else %>
+                          Podés pedir una seña. El cliente elegirá entre los métodos de pago habilitados en
+                        <% end %>
+                        <%= link_to "Configuración", admin_settings_path(anchor: "cuentas-de-cobro"), class: "font-bold text-brand-700 underline decoration-brand-200 underline-offset-4" %>.
+                      </p>
+
+                      <div class="mt-5" data-service-deposit-target="depositAmount">
+                        <%= form.label :deposit_amount, "Valor de seña", class: "service-field-label" %>
+                        <div class="service-money-input service-input mt-2 p-0">
+                          <span>$</span>
+                          <%= form.text_field :deposit_amount,
+                            value: (service.deposit_amount.positive? ? service.deposit_amount.to_i : nil),
+                            inputmode: "numeric",
+                            pattern: "[0-9]*",
+                            autocomplete: "off",
+                            placeholder: "Ej. 5000",
+                            class: "service-input service-money-value" %>
+                        </div>
+                      </div>
+
+                      <% if show_manual_payment_account_selector %>
+                        <div class="mt-5" data-service-deposit-target="manualAccount">
+                          <%= form.label :payment_account_id, "Cuenta para comprobante manual", class: "service-field-label" %>
+                          <%= render "admin/services/custom_select",
+                            choices: payment_account_options,
+                            selected_value: service.payment_account_id,
+                            aria_label: "Cuenta para comprobante manual",
+                            icon_html: '<svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M3 21h18M4 10h16M6 10v8M10 10v8M14 10v8M18 10v8M12 3l9 5H3l9-5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+                            select_html: form.select(
+                              :payment_account_id,
+                              payment_account_options,
+                              {},
+                              class: "service-custom-select-input",
+                              tabindex: -1,
+                              aria: { hidden: true },
+                              data: { custom_select_target: "input" }
+                            ) %>
+                          <p class="service-field-hint">
+                            Se muestra si el cliente elige transferencia. Si no elegís una cuenta, se usará la principal configurada en
+                            <%= link_to "Configuración", admin_settings_path(anchor: "cuentas-de-cobro"), class: "font-bold text-brand-700 underline decoration-brand-200 underline-offset-4" %>.
+                          </p>
+                        </div>
+                      <% end %>
+                    </div>
+                  </section>
+                </div>
+
+                <section class="service-visibility-card">
+                  <label class="service-switch-label">
+                      <span class="service-visibility-icon">
+                        <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none">
+                          <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                          <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                      </svg>
+                    </span>
+                    <span class="service-switch-text">
+                        <span class="service-switch-title">Visible en la página de reservas</span>
+                        <span class="service-switch-copy">Los clientes podrán encontrar y reservar este servicio.</span>
+                      </span>
+                      <span class="service-toggle-control">
+                        <%= form.check_box :public_visible,
+                          { checked: service.new_record? ? true : service.public_visible?, class: "service-toggle-checkbox" },
+                          "1",
+                          "0" %>
+                        <span class="service-toggle"></span>
+                      </span>
+                  </label>
+                </section>
+              </div>
+            </div>
+          </section>
+
+          <section class="service-panel service-content-card" data-controller="service-team-selection" data-service-form-tabs-target="panel" data-service-form-tabs-panel-value="team" <%= "hidden" unless active_service_tab == "team" %>>
+            <div class="service-content-header">
+              <div class="service-content-header-row">
+                <div class="service-content-intro">
+                  <span class="service-content-icon service-content-icon-team">
+                    <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none">
+                      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </span>
+                  <div>
+                    <p class="service-content-eyebrow">Equipo</p>
+                    <h2 class="service-content-heading">Miembros asignados</h2>
+                    <p class="service-content-copy">Seleccioná quiénes pueden ofrecer este servicio en la agenda.</p>
+                  </div>
+                </div>
+                <div class="service-selected-pill">
+                  <span data-service-team-selection-target="countNumber"><%= selected_team_count %></span>
+                  <span data-service-team-selection-target="countLabel"><%= selected_team_count == 1 ? "seleccionado" : "seleccionados" %></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="service-content-body">
+              <%= hidden_field_tag "service[employee_membership_ids][]", "" %>
+              <%= hidden_field_tag "service[all_employee_memberships]", all_team_selected ? "1" : "0", data: { service_team_selection_target: "allFlag" } %>
+
+              <div class="service-team-toolbar">
+                <label class="service-team-search">
+                  <input type="search" placeholder="Buscar profesional..." data-service-team-selection-target="search" data-action="input->service-team-selection#filter">
+                </label>
+                <div class="service-team-actions">
+                  <button type="button" class="service-team-button service-team-button-primary" data-action="service-team-selection#selectAll">Seleccionar todos</button>
+                  <button type="button" class="service-team-button service-team-button-secondary" data-action="service-team-selection#clearSearch">Limpiar</button>
+                </div>
+              </div>
+
+              <div class="service-team-list">
+                <label class="service-team-row service-team-row-all">
+                  <%= check_box_tag "service_all_employee_memberships_checkbox",
+                    "1",
+                    all_team_selected,
+                    class: "service-check",
+                    data: { service_team_selection_target: "all", action: "service-team-selection#toggleAll" } %>
+                  <span class="service-team-main">
+                    <span class="service-team-name">Todos los miembros del equipo</span>
+                    <span class="service-team-copy">Usar cualquier profesional disponible para este servicio.</span>
+                  </span>
+                  <span class="service-team-count-badge"><%= pluralize(employee_memberships.size, "profesional", "profesionales") %></span>
+                </label>
+
+                <% if employee_memberships.any? %>
+                  <% employee_memberships.each do |employee| %>
+                    <% checked = all_team_selected || selected_employee_ids.include?(employee.id) %>
+                    <% profile_photo = employee.effective_profile_photo %>
+                    <label class="service-team-row" data-service-team-selection-target="row" data-service-team-selection-search-value="<%= [employee.name, employee.specialty_label].compact.join(" ") %>">
+                      <%= check_box_tag "service[employee_membership_ids][]",
+                        employee.id,
+                        checked,
+                        id: "service_employee_membership_#{employee.id}",
+                        class: "service-check",
+                        data: { service_team_selection_target: "member", action: "service-team-selection#toggleMember" } %>
+                      <span class="service-avatar" style="border-color: <%= employee.calendar_color.presence || "#38bdf8" %>; color: <%= employee.calendar_color.presence || "#67e8f9" %>;">
+                        <% if profile_photo.attached? %>
+                          <%= image_tag url_for(profile_photo), alt: "" %>
+                        <% else %>
+                          <%= employee.initials %>
+                        <% end %>
+                      </span>
+                      <span class="service-team-main">
+                        <span class="service-team-name-row">
+                          <span class="service-team-name"><%= employee.name %></span>
+                          <% if employee.specialty_label.present? %>
+                            <span class="service-team-tag"><%= employee.specialty_label %></span>
+                          <% end %>
+                        </span>
+                        <span class="service-team-copy">Puede recibir reservas públicas para este servicio.</span>
+                      </span>
+                      <span class="service-team-status">Activo</span>
+                    </label>
+                  <% end %>
+                <% else %>
+                  <div class="service-empty-panel">
+                    Todavía no hay miembros activos del equipo. Cuando agregues profesionales, vas a poder asignarlos a este servicio.
+                  </div>
+                <% end %>
+              </div>
+
+              <div class="service-team-recommendation">
+                <p class="service-team-recommendation-title">Recomendación</p>
+                <p class="service-team-recommendation-copy">Si este servicio requiere una técnica específica, seleccioná solo a los profesionales que realmente lo realizan. Eso evita turnos mal asignados.</p>
+              </div>
+            </div>
+          </section>
+
+          <section class="service-panel service-content-card" data-service-form-tabs-target="panel" data-service-form-tabs-panel-value="images" <%= "hidden" unless active_service_tab == "images" %>>
+            <div class="service-content-header">
+              <div class="service-content-intro">
+                <span class="service-content-icon service-content-icon-images">
+                  <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none">
+                    <path d="M15 8h.01M3 6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V6Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="m3 16 4.5-4.5a2 2 0 0 1 2.8 0L15 16m-1-1 1.5-1.5a2 2 0 0 1 2.8 0L21 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+                <div>
+                  <p class="service-content-eyebrow">Contenido visual</p>
+                  <h2 class="service-content-heading">Imágenes</h2>
+                  <p class="service-content-copy">Mostrá el resultado, el espacio o una referencia del servicio.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="service-content-body" data-controller="service-image-upload">
+              <label class="service-upload-zone" data-action="dragover->service-image-upload#dragOver dragleave->service-image-upload#dragLeave drop->service-image-upload#drop">
+                <span class="service-upload-icon">
+                  <svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 16V4M8 8l4-4 4 4M20 16.5V19a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M6 14.5 8.7 12a2 2 0 0 1 2.7 0l1.1 1 1.1-1a2 2 0 0 1 2.7 0L18 13.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+                <span>
+                  <span class="service-upload-title">Arrastrá imágenes acá</span>
+                  <span class="service-editor-sr">Arrastra y suelta tus imágenes aquí</span>
+                  <span class="service-upload-copy" data-service-image-upload-target="summary">o hacé click para elegir archivos JPG, PNG o WEBP.</span>
+                </span>
+                <span class="service-upload-button">Hasta 6 imágenes · Máx. 10 MB</span>
+                <%= form.file_field :service_images,
+                  multiple: true,
+                  accept: "image/png,image/jpeg,image/jpg,image/webp",
+                  data: {
+                    service_image_upload_target: "input",
+                    action: "change->service-image-upload#sync"
+                  },
+                  class: "service-file-input" %>
+              </label>
+
+              <div class="service-image-grid service-image-pending-grid" data-service-image-upload-target="preview" hidden></div>
+
+              <% if service.service_images.attached? %>
+                <div class="service-image-grid">
+                  <% service.service_images.each do |image| %>
+                    <button type="button"
+                      class="service-image-card service-image-saved-card"
+                      data-action="service-image-upload#openSavedImage"
+                      data-service-image-url="<%= url_for(image) %>"
+                      data-service-image-name="<%= image.filename %>"
+                      data-service-image-delete-url="<%= destroy_image_admin_service_path(service, attachment_id: image.id) %>">
+                      <%= image_tag url_for(image), alt: image.filename.to_s %>
+                      <span class="service-image-filename"><%= image.filename %></span>
+                    </button>
+                  <% end %>
+                </div>
+              <% else %>
+                <div class="service-empty-panel">
+                  Este servicio todavía no tiene imágenes cargadas.
+                </div>
+              <% end %>
+
+              <dialog class="service-image-modal" data-service-image-upload-target="modal" data-action="click->service-image-upload#closeSavedImageOnBackdrop">
+                <div class="service-image-modal-inner">
+                  <div class="service-image-modal-header">
+                    <h3 class="service-image-modal-title" data-service-image-upload-target="modalTitle">Imagen del servicio</h3>
+                    <button type="button" class="service-image-modal-close" data-action="service-image-upload#closeSavedImage" aria-label="Cerrar">×</button>
+                  </div>
+
+                  <div class="service-image-modal-preview">
+                    <img src="" alt="Imagen del servicio" data-service-image-upload-target="modalImage">
+                  </div>
+
+                  <div class="service-image-modal-actions">
+                    <%= link_to "Eliminar",
+                      "#",
+                      class: "service-image-delete-link",
+                      data: {
+                        service_image_upload_target: "deleteLink",
+                        turbo_method: :delete,
+                        turbo_confirm: "¿Eliminar esta imagen del servicio? Esta acción no se puede deshacer."
+                      } %>
+                  </div>
+                </div>
+              </dialog>
+
+              <div class="service-images-actions" data-service-image-upload-target="actions" hidden>
+                <%= form.submit "Guardar imágenes", class: "service-editor-button service-editor-button-primary" %>
+              </div>
+            </div>
+          </section>
+
+          <section class="service-panel service-content-card" data-controller="service-availability" data-service-form-tabs-target="panel" data-service-form-tabs-panel-value="availability" <%= "hidden" unless active_service_tab == "availability" %>>
+            <div class="service-content-header">
+              <div class="service-content-intro">
+                <span class="service-content-icon service-content-icon-availability">
+                  <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 6v6l4 2M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+                <div>
+                  <p class="service-content-eyebrow">Disponibilidad</p>
+                  <h2 class="service-content-heading">Horarios</h2>
+                  <span class="service-editor-sr">Limitar la disponibilidad del servicio</span>
+                  <p class="service-content-copy">Usá el horario general del negocio o definí una disponibilidad específica para este servicio.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="service-content-body">
+              <div class="service-availability-stack">
+                <label class="service-availability-option">
+                  <%= form.check_box :limit_availability_by_date,
+                    class: "service-check",
+                    data: { service_availability_target: "dateToggle", action: "service-availability#toggleDates" } %>
+                  <span>
+                    <span class="service-availability-option-title">Limitar la disponibilidad entre fechas específicas</span>
+                    <span class="service-availability-option-copy">Establecé una fecha de inicio y de finalización para controlar cuándo se puede reservar este servicio.</span>
+                  </span>
+                </label>
+
+                <div class="service-availability-dates" data-service-availability-target="dateFields" <%= "hidden" unless service.limit_availability_by_date? %>>
+                  <div>
+                    <%= form.label :availability_starts_on, "Disponible para reservar desde", class: "service-field-label" %>
+                    <%= form.text_field :availability_starts_on,
+                      value: service.availability_starts_on&.strftime("%d/%m/%Y"),
+                      inputmode: "numeric",
+                      pattern: "[0-9]{2}/[0-9]{2}/[0-9]{4}",
+                      placeholder: "dd/mm/aaaa",
+                      class: "service-input mt-2" %>
+                  </div>
+                  <div>
+                    <%= form.label :availability_ends_on, "Disponible para reservar hasta", class: "service-field-label" %>
+                    <%= form.text_field :availability_ends_on,
+                      value: service.availability_ends_on&.strftime("%d/%m/%Y"),
+                      inputmode: "numeric",
+                      pattern: "[0-9]{2}/[0-9]{2}/[0-9]{4}",
+                      placeholder: "dd/mm/aaaa",
+                      class: "service-input mt-2" %>
+                  </div>
+                </div>
+
+                <label class="service-availability-option">
+                  <%= form.check_box :use_advanced_availability,
+                    class: "service-check",
+                    data: { service_availability_target: "weeklyToggle", action: "service-availability#toggleWeekly" } %>
+                  <span>
+                    <span class="service-availability-option-title">Limitar la disponibilidad a días de la semana y horarios del día específicos</span>
+                    <span class="service-availability-option-copy">La disponibilidad del servicio depende de la disponibilidad de los empleados y de los turnos programados.</span>
+                  </span>
+                </label>
+
+                <div class="service-availability-weekly" data-service-availability-target="weeklyFields" <%= "hidden" unless service.use_advanced_availability? %>>
+                  <% service_availability_weekdays.each do |weekday, weekday_name| %>
+                    <% weekday_rules = service_availability_rules_by_weekday.fetch(weekday, []) %>
+                    <% weekday_active = weekday_rules.any? %>
+                    <% display_rules = weekday_active ? weekday_rules : [ nil ] %>
+                    <div class="service-availability-day" data-service-availability-target="day" data-weekday="<%= weekday %>" data-next-index="<%= display_rules.size %>">
+                      <label class="service-availability-day-toggle">
+                        <%= hidden_field_tag "service_availability_rules[#{weekday}][active]", "0" %>
+                        <%= check_box_tag "service_availability_rules[#{weekday}][active]",
+                          "1",
+                          weekday_active,
+                          class: "service-check",
+                          data: { service_availability_day_checkbox: true, action: "service-availability#toggleDay" } %>
+                        <span class="service-availability-day-name"><%= weekday_name %></span>
+                      </label>
+
+                      <div>
+                        <span class="service-availability-unavailable" data-service-availability-unavailable <%= "hidden" if weekday_active %>>No disponible</span>
+
+                        <div class="service-availability-day-fields" data-service-availability-day-fields <%= "hidden" unless weekday_active %>>
+                          <div class="service-availability-intervals" data-service-availability-intervals>
+                            <% display_rules.each_with_index do |rule, index| %>
+                              <% start_value = service_availability_time_value.call(rule&.start_time) || "09:00" %>
+                              <% end_value = service_availability_time_value.call(rule&.end_time) || "18:00" %>
+                              <div class="service-availability-interval" data-service-availability-interval>
+                                <%= render "admin/services/custom_select",
+                                  choices: service_availability_time_options,
+                                  selected_value: start_value,
+                                  aria_label: "Hora de inicio",
+                                  compact: true,
+                                  select_html: select_tag(
+                                    "service_availability_rules[#{weekday}][intervals][#{index}][start_time]",
+                                    options_for_select(service_availability_time_options, start_value),
+                                    class: "service-custom-select-input",
+                                    tabindex: -1,
+                                    aria: { hidden: true },
+                                    data: { custom_select_target: "input" }
+                                  ) %>
+                                <span class="service-availability-to">a</span>
+                                <%= render "admin/services/custom_select",
+                                  choices: service_availability_time_options,
+                                  selected_value: end_value,
+                                  aria_label: "Hora de finalización",
+                                  compact: true,
+                                  select_html: select_tag(
+                                    "service_availability_rules[#{weekday}][intervals][#{index}][end_time]",
+                                    options_for_select(service_availability_time_options, end_value),
+                                    class: "service-custom-select-input",
+                                    tabindex: -1,
+                                    aria: { hidden: true },
+                                    data: { custom_select_target: "input" }
+                                  ) %>
+                                <button type="button" class="service-availability-icon-button" data-action="service-availability#addInterval" aria-label="Agregar horario">+</button>
+                                <button type="button" class="service-availability-icon-button service-availability-remove" data-action="service-availability#removeInterval" aria-label="Quitar horario" <%= "hidden" if display_rules.size == 1 %>>×</button>
+                              </div>
+                            <% end %>
+                          </div>
+
+                          <template data-service-availability-template>
+                            <div class="service-availability-interval" data-service-availability-interval>
+                              <%= render "admin/services/custom_select",
+                                choices: service_availability_time_options,
+                                selected_value: "09:00",
+                                aria_label: "Hora de inicio",
+                                compact: true,
+                                select_html: select_tag(
+                                  "service_availability_rules[#{weekday}][intervals][__INDEX__][start_time]",
+                                  options_for_select(service_availability_time_options, "09:00"),
+                                  class: "service-custom-select-input",
+                                  tabindex: -1,
+                                  aria: { hidden: true },
+                                  data: { custom_select_target: "input" }
+                                ) %>
+                              <span class="service-availability-to">a</span>
+                              <%= render "admin/services/custom_select",
+                                choices: service_availability_time_options,
+                                selected_value: "18:00",
+                                aria_label: "Hora de finalización",
+                                compact: true,
+                                select_html: select_tag(
+                                  "service_availability_rules[#{weekday}][intervals][__INDEX__][end_time]",
+                                  options_for_select(service_availability_time_options, "18:00"),
+                                  class: "service-custom-select-input",
+                                  tabindex: -1,
+                                  aria: { hidden: true },
+                                  data: { custom_select_target: "input" }
+                                ) %>
+                              <button type="button" class="service-availability-icon-button" data-action="service-availability#addInterval" aria-label="Agregar horario">+</button>
+                              <button type="button" class="service-availability-icon-button service-availability-remove" data-action="service-availability#removeInterval" aria-label="Quitar horario">×</button>
+                            </div>
+                          </template>
+                        </div>
+                      </div>
+                    </div>
+                  <% end %>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <div class="service-editor-bottom-actions">
+            <button type="submit" class="service-editor-button service-editor-button-primary">
+              Guardar
+            </button>
+          </div>
+        </main>
+      </div>
+
+      <div class="safe-bottom fixed inset-x-0 bottom-0 z-40 border-t border-zinc-200 bg-white/95 p-3 backdrop-blur lg:hidden">
+        <div class="mx-auto grid max-w-lg grid-cols-2 gap-2">
+          <%= link_to "Cerrar", cancel_path, class: "service-editor-button service-editor-button-secondary h-12 text-base" %>
+          <%= form.submit "Guardar", class: "service-editor-button service-editor-button-primary h-12 text-base" %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>

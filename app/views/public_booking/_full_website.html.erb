@@ -1,0 +1,48 @@
+<% landing = local_assigns.fetch(:landing) %>
+<% business = local_assigns.fetch(:business) %>
+<% professionals = landing.professionals %>
+
+<%= public_full_website_base_styles_tag %>
+
+<main class="ht-full-website" data-full-website>
+  <% if landing.custom_html.present? %>
+    <% custom_section_parts = public_custom_sections_parts(landing) %>
+    <% categories_inserted = custom_section_parts.size > 1 %>
+    <% custom_section_parts.each_with_index do |part, index| %>
+      <%= tag.div(part.html_safe, class: "ht-custom-sections", data: { public_custom_sections: true }) if part.present? %>
+      <%= render "public_booking/category_section", landing: landing if categories_inserted && index.zero? %>
+    <% end %>
+  <% else %>
+    <section class="ht-section">
+      <div class="ht-section__inner">
+        <p class="ht-section__eyebrow">Web completa</p>
+        <h1><%= business.name %></h1>
+        <p>Configurá el HTML completo de esta portada desde Administración → Configuración → Diseño web.</p>
+      </div>
+    </section>
+  <% end %>
+
+  <%= render "public_booking/category_section", landing: landing unless landing.custom_html.present? && categories_inserted %>
+
+  <% if professionals.any? %>
+    <section class="ht-professionals" data-dog-grooming-professionals>
+      <div class="ht-professionals__inner">
+        <p class="ht-professionals__eyebrow">Profesionales</p>
+        <h2 class="ht-professionals__heading">Quién te atiende</h2>
+        <div class="ht-professional-grid">
+          <% professionals.each do |professional| %>
+            <article class="ht-professional-card">
+              <% if professional.profile_photo.attached? %>
+                <%= image_tag professional.profile_photo.variant(resize_to_fill: [ 160, 160 ]), class: "ht-professional-card__photo", alt: professional.name %>
+              <% else %>
+                <span class="ht-professional-card__initials"><%= professional.initials %></span>
+              <% end %>
+              <h3><%= professional.name %></h3>
+              <% if professional.specialty.present? %><p><%= professional.specialty %></p><% end %>
+            </article>
+          <% end %>
+        </div>
+      </div>
+    </section>
+  <% end %>
+</main>

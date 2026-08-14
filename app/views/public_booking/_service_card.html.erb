@@ -1,0 +1,38 @@
+<% detail_path = local_assigns.fetch(:detail_path) { short_public_service_path(business.slug, service.slug) } %>
+<% action_path = local_assigns.fetch(:action_path) { local_assigns.fetch(:reserve_path, short_public_service_path(business.slug, service.slug)) } %>
+<% action_label = local_assigns.fetch(:action_label, "Reservar") %>
+<% selected = local_assigns.fetch(:selected, false) %>
+
+<% cache [ :public_service_card, business, service, detail_path, action_path, action_label, selected ] do %>
+  <article
+    id="service-<%= service.id %>"
+    data-public-services-target="item"
+    data-category="<%= service.category_label %>"
+    data-search="<%= [ service.name, service.description, service.category_label, service.service_tags.map(&:name).join(" ") ].join(" ").downcase %>"
+    class="relative rounded-2xl border bg-white p-4 text-left shadow-sm transition sm:p-5 <%= selected ? "border-brand-600 ring-1 ring-brand-600" : "border-zinc-200 hover:border-zinc-400" %>">
+    <%= link_to detail_path, aria: { label: "Ver detalle de #{service.name}" }, class: "absolute inset-0 z-0 rounded-2xl border-transparent #{selected ? "border-brand-600" : ""}" do %>
+      <span class="sr-only">Ver detalle de <%= service.name %></span>
+    <% end %>
+
+    <div class="pointer-events-none relative z-10 flex items-center gap-3 sm:gap-5">
+      <div class="pointer-events-none min-w-0 flex-1">
+        <h3 class="text-base font-bold leading-6"><%= service.name %></h3>
+        <p class="mt-1 text-sm font-semibold text-zinc-500"><%= public_service_duration_label(service.duration_minutes) %></p>
+        <% if service.description.present? %>
+          <p class="mt-2 line-clamp-2 text-sm leading-5 text-zinc-500 sm:mt-3 sm:leading-6"><%= service.description %></p>
+        <% end %>
+        <p class="mt-4 text-sm font-bold sm:mt-5"><%= public_service_price_ars(service) %></p>
+      </div>
+
+      <div class="pointer-events-auto shrink-0">
+        <% if selected %>
+          <span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand-600 text-sm font-bold text-white" aria-label="Servicio seleccionado">
+            <%= public_icon("check", css: "h-5 w-5") %>
+          </span>
+        <% else %>
+          <%= link_to action_label, action_path, class: "inline-flex h-10 items-center justify-center rounded-full border border-zinc-200 bg-white px-5 text-sm font-bold text-zinc-950 shadow-sm", aria: { label: "#{action_label} #{service.name}" } %>
+        <% end %>
+      </div>
+    </div>
+  </article>
+<% end %>

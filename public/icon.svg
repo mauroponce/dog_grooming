@@ -1,0 +1,9 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Dog Grooming">
+  <rect width="512" height="512" rx="112" fill="#FFDED4"/>
+  <g fill="none" stroke="#18181B" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="142" y="158" width="228" height="214" rx="34" stroke-width="34"/>
+    <path d="M168 222h176" stroke-width="30"/>
+    <path d="M204 122v64M308 122v64" stroke-width="32"/>
+    <path d="m210 300 34 34 64-72" stroke-width="34"/>
+  </g>
+</svg>

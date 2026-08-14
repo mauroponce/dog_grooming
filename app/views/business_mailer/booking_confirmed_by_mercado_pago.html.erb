@@ -1,0 +1,35 @@
+<% content_for :email_preheader, "Mercado Pago confirmó el pago y el turno de #{@appointment.customer_name} quedó confirmado." %>
+<% content_for :email_badge, "Pago confirmado" %>
+<% content_for :email_status, "Mercado Pago" %>
+<% content_for :email_footer_note, "Este email se envió porque Mercado Pago acreditó automáticamente el pago de la seña." %>
+
+<h1>Turno confirmado por Mercado Pago</h1>
+
+<p>Mercado Pago acreditó el pago de <strong><%= @appointment.customer_name %></strong> y el turno quedó confirmado automáticamente.</p>
+
+<div class="email-card" style="margin-top:24px;">
+  <div class="email-card-inner">
+    <div class="email-card-title">Detalle del turno</div>
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top:10px;">
+      <tr class="email-detail-row">
+        <td class="email-detail-label">Cliente</td>
+        <td class="email-detail-value"><%= @appointment.customer_name %></td>
+      </tr>
+      <tr class="email-detail-row">
+        <td class="email-detail-label">Servicio</td>
+        <td class="email-detail-value"><%= @appointment.service.name %></td>
+      </tr>
+      <tr class="email-detail-row">
+        <td class="email-detail-label">Turno</td>
+        <td class="email-detail-value"><%= CustomerDateFormatter.datetime_label(@appointment.starts_at) %></td>
+      </tr>
+      <tr>
+        <td class="email-detail-label">Seña acreditada</td>
+        <td class="email-detail-value"><%= @appointment.formatted_deposit_amount %></td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<p style="margin-top:24px;"><%= link_to "Agregar a Google Calendar", @google_calendar_url, class: "email-button button" %></p>
+<p><%= link_to "Ver turno en Dog Grooming", @url, class: "email-button button" %></p>

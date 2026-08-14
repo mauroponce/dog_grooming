@@ -1,0 +1,9 @@
+<%= @inviter_name %> te invitó a unirte a <%= @business.name %> en Dog Grooming.
+
+Hola <%= @membership.name %>, creá tu usuario desde este enlace:
+
+<%= @invitation_url %>
+
+Vas a poder operar las herramientas habilitadas para tu rol dentro del negocio.
+
+Este enlace vence el <%= CustomerDateFormatter.datetime_label(@membership.invitation_expires_at) %>.

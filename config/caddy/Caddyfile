@@ -1,0 +1,34 @@
+{
+	# Caddy only emits certificates for customer domains that Rails has explicitly
+	# enabled. The permission endpoint is reachable only on the Docker network.
+	on_demand_tls {
+		ask http://web:80/internal/caddy/tls-permission
+	}
+}
+
+(app_proxy) {
+	encode zstd gzip
+	reverse_proxy web:80
+}
+
+{$APP_HOST:dog-grooming.example.com} {
+	import app_proxy
+}
+
+{$APP_WWW_HOST:www.dog-grooming.example.com} {
+	redir https://{$APP_HOST:dog-grooming.example.com}{uri} permanent
+}
+
+# Customer domains resolve to the same server (typically through a CNAME to
+# custom.dog-grooming.example.com). Caddy obtains their certificate on the first TLS
+# handshake only after Rails authorizes the domain in the database.
+https:// {
+	tls {
+		on_demand
+	}
+	import app_proxy
+}
+
+http:// {
+	redir https://{host}{uri} permanent
+}

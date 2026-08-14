@@ -1,0 +1,19 @@
+<% category = local_assigns.fetch(:category) %>
+<% fallback_icon = local_assigns.fetch(:fallback_icon) %>
+<% css_class = local_assigns.fetch(:css_class) %>
+
+<span class="<%= css_class %>">
+  <% if category.cover_image.attached? %>
+    <span class="services-category-image-preview-trigger"
+          role="button"
+          tabindex="0"
+          aria-label="Ver imagen grande de <%= category.name %>"
+          data-category-image-preview
+          data-category-image-preview-name="<%= category.name %>"
+          data-category-image-preview-url="<%= url_for(category.cover_image.variant(resize_to_limit: [ 1600, 1600 ])) %>">
+      <%= image_tag category.cover_image.variant(resize_to_fill: [ 96, 96 ]), alt: "", class: "services-category-thumbnail", loading: "lazy" %>
+    </span>
+  <% else %>
+    <%= fallback_icon.html_safe %>
+  <% end %>
+</span>

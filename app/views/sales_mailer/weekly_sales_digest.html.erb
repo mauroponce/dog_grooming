@@ -1,0 +1,39 @@
+<% content_for :email_preheader, "Resumen semanal de ventas en Dog Grooming." %>
+<% content_for :email_badge, "Ventas" %>
+<% content_for :email_status, "Resumen semanal" %>
+<% content_for :email_footer_note, "Este email fue enviado por el módulo de ventas de Dog Grooming." %>
+
+<h1>Resumen semanal de ventas</h1>
+
+<p>Resumen semanal de ventas en Dog Grooming.</p>
+
+<div class="email-card" style="margin-top:24px;">
+  <div class="email-card-inner">
+    <div class="email-card-title">Indicadores de la semana</div>
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top:10px;">
+      <tr class="email-detail-row">
+        <td class="email-detail-label">Campañas creadas</td>
+        <td class="email-detail-value"><%= @campaigns_count %></td>
+      </tr>
+      <tr class="email-detail-row">
+        <td class="email-detail-label">Oportunidades contactadas</td>
+        <td class="email-detail-value"><%= @contacted_count %></td>
+      </tr>
+      <tr>
+        <td class="email-detail-label">Reservas atribuidas</td>
+        <td class="email-detail-value"><%= @attributed_bookings_count %></td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<% if @top_links.any? %>
+  <h2>Links recientes</h2>
+  <ul>
+    <% @top_links.each do |link| %>
+      <li><%= link.name %>: <%= link.visit_count %> visitas, <%= link.conversion_count %> reservas.</li>
+    <% end %>
+  </ul>
+<% end %>
+
+<p><%= link_to "Abrir Ventas", @url, class: "email-button button" %></p>

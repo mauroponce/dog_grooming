@@ -1,0 +1,94 @@
+<div class="mx-auto max-w-5xl">
+  <%= render "progress", step: 3 %>
+
+  <div class="mb-6">
+    <p class="text-xs font-bold uppercase tracking-[.16em] text-brand-700">Servicios iniciales</p>
+    <h1 class="mt-2 text-3xl font-bold tracking-tight text-zinc-950">Activá tus primeros servicios</h1>
+    <p class="mt-2 text-sm leading-6 text-zinc-500">
+      Sugerencias para <span class="font-bold text-zinc-800"><%= @business.industry_label %></span>.
+      Podés editarlos después desde el panel.
+    </p>
+  </div>
+
+  <%= form_with url: onboarding_service_path, class: "rounded-lg border border-zinc-200 bg-white p-5 shadow-sm sm:p-6", data: { controller: "service-preview" } do %>
+    <section>
+      <div class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h2 class="text-lg font-bold text-zinc-950">Servicios precargados</h2>
+          <p class="mt-1 text-sm leading-6 text-zinc-500">Seleccioná los que ya ofrecés. Estos nombres se usan como referencia en tu página pública.</p>
+        </div>
+        <span class="inline-flex w-fit rounded-full bg-brand-50 px-3 py-1 text-xs font-bold text-brand-700"><%= @business.business_kind_label %></span>
+      </div>
+
+      <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <% @templates.each_with_index do |template, index| %>
+          <label class="flex min-h-36 cursor-pointer flex-col rounded-lg border border-zinc-200 bg-zinc-50 p-4 transition has-[:checked]:border-brand-400 has-[:checked]:bg-brand-50">
+            <div class="flex items-start gap-3">
+              <%= check_box_tag "service_template_indexes[]", index, index < 3, class: "mt-1 h-4 w-4 rounded border-zinc-300 text-brand-600 focus:ring-brand-500" %>
+              <span class="min-w-0 flex-1">
+                <span class="block text-sm font-bold text-zinc-950"><%= template.fetch(:name) %></span>
+                <span class="mt-1 inline-flex rounded-full bg-white px-2 py-1 text-[10px] font-bold uppercase tracking-[.08em] text-zinc-500"><%= template.fetch(:category) %></span>
+              </span>
+            </div>
+            <p class="mt-3 text-xs font-semibold leading-5 text-zinc-500"><%= template.fetch(:description) %></p>
+            <div class="mt-auto flex items-center justify-between border-t border-zinc-200 pt-3 text-xs font-bold text-zinc-500">
+              <span><%= template.fetch(:duration_minutes) %> min</span>
+              <span><%= template.fetch(:price).to_i.positive? ? number_to_currency(template.fetch(:price), unit: "$", precision: 0, delimiter: ".") : "Consultar" %></span>
+            </div>
+          </label>
+        <% end %>
+      </div>
+    </section>
+
+    <section class="mt-6 rounded-lg border border-zinc-200 bg-zinc-50 p-4 sm:p-5">
+      <div class="mb-4">
+        <h2 class="text-lg font-bold text-zinc-950">Agregar otro servicio</h2>
+        <p class="mt-1 text-sm leading-6 text-zinc-500">Opcional. Usalo si tu servicio principal no aparece en la lista.</p>
+      </div>
+
+      <div class="grid gap-5 md:grid-cols-[1fr_260px]">
+        <div class="space-y-4">
+          <div>
+            <%= label_tag "service[name]", "Nombre", class: "mb-2 block text-sm font-bold text-zinc-800" %>
+            <%= text_field_tag "service[name]", @service.name, class: "h-12 w-full rounded-lg border border-zinc-200 bg-white px-4 text-sm font-semibold outline-none transition placeholder:text-zinc-400 focus:border-brand-400 focus:ring-4 focus:ring-brand-100", data: { service_preview_target: "name", action: "input->service-preview#update" }, placeholder: "Ej. Sesión virtual, Esculpidas, Control mensual" %>
+          </div>
+          <div>
+            <%= label_tag "service[category]", "Categoría", class: "mb-2 block text-sm font-bold text-zinc-800" %>
+            <%= select_tag "service[category]", options_for_select((Service::CATEGORIES | [ @business.industry_category ]).compact, @service.category), class: "h-12 w-full rounded-lg border border-zinc-200 bg-white px-4 text-sm font-semibold outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100" %>
+          </div>
+          <div>
+            <%= label_tag "service[description]", "Descripción opcional", class: "mb-2 block text-sm font-bold text-zinc-800" %>
+            <%= text_area_tag "service[description]", @service.description, rows: 3, class: "w-full resize-none rounded-lg border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold outline-none transition placeholder:text-zinc-400 focus:border-brand-400 focus:ring-4 focus:ring-brand-100" %>
+          </div>
+          <div class="grid gap-4 sm:grid-cols-2">
+            <div>
+              <%= label_tag "service[duration_minutes]", "Duración", class: "mb-2 block text-sm font-bold text-zinc-800" %>
+              <%= select_tag "service[duration_minutes]", options_for_select(Service::DURATIONS.map { |duration| [ "#{duration} min", duration ] }, @service.duration_minutes), class: "h-12 w-full rounded-lg border border-zinc-200 bg-white px-4 text-sm font-semibold outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100", data: { service_preview_target: "duration", action: "change->service-preview#update" } %>
+            </div>
+            <div>
+              <%= label_tag "service[price]", "Precio opcional", class: "mb-2 block text-sm font-bold text-zinc-800" %>
+              <%= text_field_tag "service[price]", @service.price, inputmode: "numeric", pattern: "[0-9]*", autocomplete: "off", class: "h-12 w-full rounded-lg border border-zinc-200 bg-white px-4 text-sm font-semibold outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100", data: { service_preview_target: "price", action: "input->service-preview#update" } %>
+            </div>
+          </div>
+        </div>
+
+        <div class="rounded-lg border border-zinc-200 bg-white p-4">
+          <p class="text-xs font-bold uppercase tracking-[.14em] text-zinc-400">Vista previa</p>
+          <div class="mt-4 rounded-lg border border-zinc-200 bg-zinc-50 p-4">
+            <h3 class="font-bold text-zinc-950" data-service-preview-target="previewName">Tu servicio propio</h3>
+            <p class="mt-2 text-sm font-semibold text-zinc-500">
+              <span data-service-preview-target="previewDuration"><%= @service.duration_minutes %> min</span>
+              ·
+              <span data-service-preview-target="previewPrice">Consultar</span>
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="mt-6 flex justify-between">
+      <%= link_to "Volver", onboarding_schedule_path, class: "inline-flex h-11 items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-bold text-zinc-700 transition hover:bg-zinc-50" %>
+      <%= submit_tag "Finalizar", class: "inline-flex h-11 cursor-pointer items-center justify-center rounded-lg bg-zinc-950 px-4 text-sm font-bold text-white shadow-lg shadow-zinc-900/15 transition hover:-translate-y-0.5 hover:bg-zinc-800" %>
+    </div>
+  <% end %>
+</div>

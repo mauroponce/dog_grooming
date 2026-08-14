@@ -1,0 +1,1015 @@
+<% persisted = employee.persisted? %>
+<% selected_calendar_color = employee.calendar_color.presence || EmployeeMembership::CALENDAR_COLORS.keys.first %>
+<% selected_service_ids = persisted ? employee.service_ids.map(&:to_s) : @services.map { |service| service.id.to_s } %>
+<% selected_permissions = employee.permission_keys.presence || EmployeeMembership::DEFAULT_PERMISSIONS %>
+<% form_title = persisted ? "Editar miembro del equipo" : "Añadir miembro del equipo" %>
+<% form_copy = persisted ? "Actualizá sus datos, servicios y permisos. Los cambios se aplican al calendario y a la reserva pública." : "Completá sus datos y elegí qué servicios podrá prestar. Quedará agregado al equipo de inmediato y podrá iniciar sesión cuando quiera." %>
+<% form_id = dom_id(employee, persisted ? :team_editor : :new_team_editor) %>
+<% editor_sections = persisted ? %w[personal appointments services permissions] : %w[personal services permissions] %>
+<% active_section = params[:section].presence_in(editor_sections) || "personal" %>
+<% appointment_date_label = ->(time) { local_time = time.in_time_zone; "#{CustomerDateFormatter.date_label(local_time)} · #{local_time.strftime("%H:%M")}" } %>
+<% cancellation_timestamp_label = ->(time) { local_time = time.in_time_zone; "#{CustomerDateFormatter.date_label(local_time)} · #{local_time.strftime("%H:%M")}" } %>
+<% icons = {
+  arrow_left: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>',
+  arrow_right: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>',
+  camera: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/><circle cx="12" cy="13" r="3"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+  calendar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="3"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>',
+  clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>',
+  permissions: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.4 8.8a2 2 0 0 1-1.2 0C7.5 20.5 4 18 4 13V6a2 2 0 0 1 2-2c2 0 4.5-1.2 5.7-2a1 1 0 0 1 .6 0C13.5 2.8 16 4 18 4a2 2 0 0 1 2 2Z"/><path d="m9 12 2 2 4-4"/></svg>',
+  search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>',
+  services: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14.5"/><path d="M8 7h8"/><path d="M8 11h8"/><path d="M8 15h5"/><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/></svg>',
+  sparkles: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2 9.2 7.2 4 9l5.2 1.8L11 16l1.8-5.2L18 9l-5.2-1.8Z"/><path d="M19 14 18 17l-3 1 3 1 1 3 1-3 3-1-3-1Z"/></svg>',
+  user: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>'
+} %>
+<% icon = ->(name, css_class = "team-icon") { tag.span(icons.fetch(name).html_safe, class: css_class, aria: { hidden: true }) } %>
+
+<style>
+  .team-editor {
+    --team-brand: #ffded4;
+    --team-brand-dark: #ffded4;
+    --team-brand-soft: #ffded4;
+    --team-border: #e4e4e7;
+    --team-muted: #667085;
+    height: 100%;
+    min-height: 0;
+    overflow-y: auto;
+    background:
+      radial-gradient(circle at 82% 0%, rgba(255, 222, 212, .12), transparent 34%),
+      radial-gradient(circle at 9% 24%, rgba(236, 72, 153, .08), transparent 27%),
+      #f7f7f9;
+    color: #0b0b0f;
+  }
+
+  .team-editor-container {
+    width: min(var(--admin-content-max-width, 1600px), calc(100% - var(--admin-content-horizontal-space, 48px)));
+    margin: 0 auto;
+    padding: 34px 0 64px;
+  }
+
+  .team-editor-topbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 24px;
+    align-items: start;
+    margin-bottom: 24px;
+  }
+
+  .team-editor-eyebrow {
+    margin: 0 0 10px;
+    color: var(--team-brand);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+  }
+
+  .team-editor-title {
+    margin: 0;
+    color: #050509;
+    font-size: clamp(38px, 5vw, 64px);
+    font-weight: 700;
+    line-height: .98;
+    letter-spacing: -.055em;
+  }
+
+  .team-editor-copy {
+    max-width: 780px;
+    margin: 14px 0 0;
+    color: #667085;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.55;
+  }
+
+  .team-editor-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .team-editor-button {
+    display: inline-flex;
+    min-height: 52px;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    border-radius: 18px;
+    padding: 0 22px;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
+  }
+
+  .team-editor-button:hover { transform: translateY(-1px); }
+  .team-editor-button.secondary { border: 1px solid var(--team-border); background: rgba(255, 255, 255, .9); color: #111827; box-shadow: 0 10px 25px rgba(15, 23, 42, .05); }
+  .team-editor-button.primary { border: 0; background: #08090c; color: #fff; cursor: pointer; box-shadow: 0 18px 40px rgba(8, 9, 12, .18); }
+  .team-editor-button .team-icon { width: 17px; height: 17px; }
+
+  .team-mobile-steps {
+    display: none;
+    margin-bottom: 18px;
+    border: 1px solid var(--team-border);
+    border-radius: 22px;
+    background: rgba(255, 255, 255, .82);
+    padding: 6px;
+    box-shadow: 0 18px 40px rgba(17, 17, 20, .06);
+  }
+
+  .team-mobile-step {
+    flex: 1;
+    border: 0;
+    border-radius: 16px;
+    background: transparent;
+    color: #667085;
+    padding: 12px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .team-mobile-step.active { background: var(--team-brand-soft); color: var(--team-brand-dark); }
+
+  .team-editor-layout {
+    display: grid;
+    grid-template-columns: 280px minmax(0, 1fr);
+    align-items: start;
+    gap: 24px;
+  }
+
+  .team-editor-sidebar {
+    position: sticky;
+    top: 24px;
+    border: 1px solid rgba(228, 228, 231, .85);
+    border-radius: 28px;
+    background: rgba(255, 255, 255, .92);
+    padding: 14px;
+    box-shadow: 0 26px 70px rgba(17, 17, 20, .08);
+    backdrop-filter: blur(16px);
+  }
+
+  .team-editor-sidebar-title {
+    padding: 12px 12px 16px;
+    border-bottom: 1px solid #f1f1f4;
+  }
+
+  .team-editor-sidebar-title strong {
+    display: block;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .team-editor-sidebar-title span {
+    display: block;
+    margin-top: 5px;
+    color: #667085;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.45;
+  }
+
+  .team-editor-nav {
+    display: grid;
+    gap: 6px;
+    margin-top: 12px;
+  }
+
+  .team-editor-tab {
+    display: flex;
+    width: 100%;
+    min-height: 72px;
+    align-items: center;
+    gap: 12px;
+    border: 0;
+    border-radius: 20px;
+    background: transparent;
+    padding: 12px;
+    color: #344054;
+    font-size: 14px;
+    font-weight: 700;
+    text-align: left;
+    cursor: pointer;
+    transition: background .18s ease, color .18s ease, box-shadow .18s ease;
+  }
+
+  .team-editor-tab:hover { background: #f8fafc; }
+  .team-editor-tab.active { background: var(--team-brand-soft); color: var(--team-brand-dark); box-shadow: inset 0 0 0 1px #ffded4; }
+
+  .team-tab-icon {
+    display: grid;
+    width: 42px;
+    height: 42px;
+    flex: 0 0 auto;
+    place-items: center;
+    border-radius: 15px;
+    background: #f8fafc;
+    color: #667085;
+  }
+
+  .team-editor-tab.active .team-tab-icon {
+    background: #fff;
+    color: var(--team-brand);
+    box-shadow: 0 8px 22px rgba(255, 222, 212, .1);
+  }
+
+  .team-tab-icon svg,
+  .team-panel-icon svg,
+  .team-icon svg,
+  .team-avatar-placeholder svg,
+  .team-service-icon svg,
+  .team-permission-icon svg,
+  .team-search-icon svg { width: 100%; height: 100%; }
+
+  .team-tab-text { min-width: 0; flex: 1; }
+  .team-tab-text span { display: block; }
+  .team-tab-text small { display: block; margin-top: 4px; color: #98a2b3; font-size: 11px; font-weight: 700; }
+  .team-editor-badge { display: inline-flex; min-width: 28px; height: 28px; align-items: center; justify-content: center; border: 1px solid var(--team-border); border-radius: 999px; background: #fff; padding: 0 8px; color: #52525b; font-size: 12px; font-weight: 700; }
+
+  .team-editor-tip {
+    margin-top: 12px;
+    border-radius: 20px;
+    background: #f8fafc;
+    padding: 14px;
+    color: #667085;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.55;
+  }
+
+  .team-editor-tip .team-icon {
+    width: 15px;
+    height: 15px;
+    margin: 1px 8px 0 0;
+    float: left;
+    color: #98a2b3;
+  }
+
+  .team-editor-panel[hidden] { display: none; }
+
+  .team-editor-card {
+    overflow: hidden;
+    border: 1px solid rgba(228, 228, 231, .85);
+    border-radius: 30px;
+    background: rgba(255, 255, 255, .96);
+    box-shadow: 0 30px 80px rgba(17, 17, 20, .08);
+  }
+
+  .team-editor-card-header {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    border-bottom: 1px solid #f1f1f4;
+    padding: 28px 30px;
+  }
+
+  .team-panel-icon {
+    display: grid;
+    width: 46px;
+    height: 46px;
+    flex: 0 0 auto;
+    place-items: center;
+    border-radius: 17px;
+  }
+
+  .team-panel-icon.personal { background: #ffded4; color: var(--team-brand); box-shadow: inset 0 0 0 1px #ffded4; }
+  .team-panel-icon.appointments { background: #ecfdf5; color: #059669; box-shadow: inset 0 0 0 1px #a7f3d0; }
+  .team-panel-icon.services { background: #fdf2f8; color: #db2777; box-shadow: inset 0 0 0 1px #fbcfe8; }
+  .team-panel-icon.permissions { background: #eff6ff; color: #2563eb; box-shadow: inset 0 0 0 1px #bfdbfe; }
+
+  .team-editor-heading {
+    margin: 0;
+    color: #050509;
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -.035em;
+  }
+
+  .team-editor-description {
+    margin: 8px 0 0;
+    color: #667085;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.55;
+  }
+
+  .team-editor-card-body { padding: 30px; }
+
+  .team-appointments { display: grid; gap: 10px; }
+  .team-appointment { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 16px; border: 1px solid #ececf0; border-radius: 18px; background: #fff; padding: 16px; color: inherit; text-decoration: none; transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease; }
+  .team-appointment:not(.team-appointment--canceled):hover { border-color: #A63826; box-shadow: 0 12px 26px rgba(255, 222, 212, .08); transform: translateY(-1px); }
+  .team-appointment--canceled { cursor: default; }
+  .team-appointment-main { min-width: 0; }
+  .team-appointment-main strong { display: block; overflow: hidden; color: #18181b; font-size: 14px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+  .team-appointment-main span { display: block; margin-top: 5px; color: var(--team-muted); font-size: 12px; font-weight: 700; }
+  .team-appointment-cancellation { color: #be123c !important; }
+  .team-appointment-cancellation-note { color: #9f1239 !important; font-weight: 700 !important; }
+  .team-appointment-status { display: inline-flex; align-items: center; border-radius: 999px; background: #f4f4f5; padding: 7px 10px; color: #52525b; font-size: 11px; font-weight: 700; white-space: nowrap; }
+  .team-appointment-status--emerald { background: #ecfdf5; color: #047857; }
+  .team-appointment-status--amber { background: #fffbeb; color: #b45309; }
+  .team-appointment-status--rose { background: #fff1f2; color: #be123c; }
+  .team-appointment-status--violet { background: #ffded4; color: #A63826; }
+  .team-appointments-empty { display: grid; min-height: 250px; place-items: center; border: 1px dashed #d6d3d1; border-radius: 22px; background: #fafafa; padding: 28px; text-align: center; }
+  .team-appointments-empty strong { display: block; font-size: 16px; font-weight: 700; }
+  .team-appointments-empty p { margin: 8px 0 0; color: var(--team-muted); font-size: 13px; font-weight: 650; }
+
+  .team-editor-errors {
+    margin-bottom: 20px;
+    border: 1px solid #fecdd3;
+    border-radius: 18px;
+    background: #fff1f2;
+    padding: 16px 18px;
+    color: #be123c;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .team-avatar-card {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+    margin-bottom: 30px;
+    border: 1px solid #ffded4;
+    border-radius: 28px;
+    background: linear-gradient(135deg, rgba(255, 222, 212, .95), rgba(255, 255, 255, .95));
+    padding: 22px;
+  }
+
+  .team-avatar {
+    position: relative;
+    width: 128px;
+    height: 128px;
+    flex: 0 0 auto;
+  }
+
+  .team-avatar-preview {
+    position: relative;
+    display: grid;
+    width: 128px;
+    height: 128px;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 32px;
+    background: linear-gradient(135deg, #ffded4, #fff);
+    color: var(--team-brand);
+    cursor: pointer;
+    box-shadow: inset 0 0 0 1px #ffded4;
+  }
+
+  .team-avatar-preview img {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background: #fff;
+  }
+
+  .team-avatar-preview img[hidden] { display: none !important; }
+  .team-avatar-preview:has(img:not([hidden])) .team-avatar-placeholder { display: none !important; }
+  .team-avatar-placeholder { width: 56px; height: 56px; }
+
+  .team-avatar-edit {
+    position: absolute;
+    right: -10px;
+    bottom: -8px;
+    display: grid;
+    width: 44px;
+    height: 44px;
+    place-items: center;
+    border-radius: 16px;
+    background: #fff;
+    color: #475467;
+    box-shadow: 0 0 0 5px #fff, 0 16px 28px rgba(17, 17, 20, .14);
+    cursor: pointer;
+  }
+
+  .team-avatar-edit .team-icon { width: 18px; height: 18px; }
+  .team-avatar-file { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+  .team-avatar-title { margin: 0; font-size: 15px; font-weight: 700; }
+  .team-avatar-copy { max-width: 520px; margin: 7px 0 0; color: #667085; font-size: 14px; font-weight: 700; line-height: 1.55; }
+  .team-avatar-upload { display: inline-flex; margin-top: 13px; border: 1px solid #ffded4; border-radius: 14px; background: #fff; padding: 9px 13px; color: var(--team-brand-dark); font-size: 12px; font-weight: 700; cursor: pointer; }
+
+  .team-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px 20px;
+  }
+
+  .team-field.full { grid-column: 1 / -1; }
+  .team-label { display: block; margin-bottom: 9px; color: #09090b; font-size: 13px; font-weight: 700; }
+  .team-required { color: #e11d48; }
+  .team-input {
+    width: 100%;
+    height: 54px;
+    border: 1px solid #d9dce3;
+    border-radius: 18px;
+    background: #fff;
+    padding: 0 17px;
+    color: #0b0b0f;
+    font-size: 15px;
+    font-weight: 700;
+    outline: none;
+    transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+  }
+
+  .team-input:focus { border-color: #A63826; box-shadow: 0 0 0 4px rgba(255, 222, 212, .14); }
+  .team-input:disabled { background: #f4f4f5; color: #71717a; cursor: not-allowed; }
+  .team-field-hint { margin: 8px 0 0; color: #98a2b3; font-size: 12px; font-weight: 700; }
+
+  .team-reservable-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-top: 22px;
+    border: 1px solid #ffded4;
+    border-radius: 22px;
+    background:
+      radial-gradient(circle at 100% 0, rgba(255, 222, 212, .08), transparent 12rem),
+      #fbfaff;
+    padding: 17px;
+    color: #111827;
+    cursor: pointer;
+    transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+  }
+
+  .team-reservable-card:hover {
+    border-color: #A63826;
+    box-shadow: 0 16px 32px rgba(17, 17, 20, .05);
+    transform: translateY(-1px);
+  }
+
+  .team-reservable-card .team-checkbox {
+    margin-top: 2px;
+  }
+
+  .team-reservable-title {
+    display: block;
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  .team-reservable-copy {
+    display: block;
+    margin-top: 5px;
+    color: #667085;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.45;
+  }
+
+  .team-colors {
+    margin-top: 30px;
+    border: 0;
+    padding: 0;
+  }
+
+  .team-colors-head {
+    display: flex;
+    gap: 14px;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+
+  .team-color-name { margin: 0; color: var(--team-brand-dark); font-size: 12px; font-weight: 700; }
+  .team-color-options { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+  .team-color-option { position: relative; display: grid; width: 42px; height: 42px; place-items: center; border-radius: 999px; cursor: pointer; }
+  .team-color-option input { position: absolute; opacity: 0; }
+  .team-color-swatch { width: 34px; height: 34px; border-radius: 999px; box-shadow: 0 0 0 4px #fff, 0 0 0 5px #d4d4d8; transition: box-shadow .18s ease, transform .18s ease; }
+  .team-color-option:hover .team-color-swatch { transform: scale(1.05); }
+  .team-color-option input:checked + .team-color-swatch { box-shadow: 0 0 0 4px #fff, 0 0 0 7px var(--team-brand); }
+
+  .team-service-search {
+    position: relative;
+    display: block;
+    margin-bottom: 18px;
+  }
+
+  .team-search-icon {
+    position: absolute;
+    left: 17px;
+    top: 50%;
+    width: 17px;
+    height: 17px;
+    transform: translateY(-50%);
+    color: #98a2b3;
+    pointer-events: none;
+  }
+
+  .team-service-search .team-input { padding-left: 48px; background: #f8fafc; }
+  .team-service-all {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    border: 1px solid #eef0f4;
+    border-radius: 20px;
+    background: #f8fafc;
+    padding: 16px 18px;
+    color: #111827;
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  .team-checkbox {
+    width: 20px;
+    height: 20px;
+    accent-color: var(--team-brand);
+    cursor: pointer;
+  }
+
+  .team-service-list { display: grid; gap: 18px; margin-top: 22px; }
+  .team-service-category { border: 1px solid #eaecf0; border-radius: 24px; background: #fff; overflow: hidden; }
+  .team-service-category-head { display: flex; justify-content: space-between; align-items: center; gap: 14px; border-bottom: 1px solid #f1f1f4; background: #fbfbfc; padding: 16px 18px; }
+  .team-service-category-title { margin: 0; font-size: 17px; font-weight: 700; letter-spacing: -.02em; }
+  .team-service-category-count { color: #667085; font-size: 12px; font-weight: 700; }
+  .team-service-rows { display: grid; gap: 10px; padding: 14px; }
+  .team-service-row {
+    display: grid;
+    grid-template-columns: auto auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 14px;
+    min-height: 76px;
+    border: 1px solid #eaecf0;
+    border-radius: 20px;
+    background: #fff;
+    padding: 14px;
+    cursor: pointer;
+    transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+  }
+
+  .team-service-row:hover { transform: translateY(-1px); border-color: #A63826; box-shadow: 0 16px 32px rgba(17, 17, 20, .06); }
+  .team-service-row:has(input:checked) { border-color: #A63826; box-shadow: 0 0 0 3px rgba(255, 222, 212, .12); }
+  .team-service-icon { display: grid; width: 44px; height: 44px; place-items: center; border-radius: 16px; background: linear-gradient(135deg, #fdf2f8, #ffded4); color: var(--team-brand); }
+  .team-service-icon svg { width: 20px; height: 20px; }
+  .team-service-name { display: block; color: #09090b; font-size: 15px; font-weight: 700; }
+  .team-service-meta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; color: #667085; font-size: 12px; font-weight: 700; }
+  .team-service-price { color: #09090b; font-size: 14px; font-weight: 700; white-space: nowrap; }
+  .team-empty-services { display: none; border: 1px dashed #d0d5dd; border-radius: 22px; padding: 36px 20px; text-align: center; color: #667085; font-weight: 700; }
+  .team-empty-services.visible { display: block; }
+
+  .team-permission-intro {
+    margin-bottom: 18px;
+    border: 1px solid #ffded4;
+    border-radius: 20px;
+    background: #ffded4;
+    padding: 15px 17px;
+    color: #A63826;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.55;
+  }
+
+  .team-permissions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .team-permission {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    border: 1px solid #eaecf0;
+    border-radius: 22px;
+    background: #fff;
+    padding: 15px;
+    color: #344054;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+  }
+
+  .team-permission:hover { transform: translateY(-1px); border-color: #A63826; box-shadow: 0 16px 32px rgba(17, 17, 20, .05); }
+  .team-permission input { position: absolute; opacity: 0; }
+  .team-permission-icon { display: grid; width: 42px; height: 42px; flex: 0 0 auto; place-items: center; border-radius: 15px; background: #f8fafc; color: #667085; }
+  .team-permission-text { min-width: 0; flex: 1; }
+  .team-permission-name { display: block; color: #111827; }
+  .team-permission-help { display: block; margin-top: 4px; color: #98a2b3; font-size: 11px; font-weight: 700; line-height: 1.4; }
+  .team-toggle { position: relative; width: 42px; height: 26px; flex: 0 0 auto; border-radius: 999px; background: #eaecf0; transition: background .18s ease; }
+  .team-toggle::after { content: ""; position: absolute; top: 4px; left: 4px; width: 18px; height: 18px; border-radius: 999px; background: #fff; box-shadow: 0 2px 8px rgba(17, 17, 20, .18); transition: transform .18s ease; }
+  .team-permission input:checked ~ .team-toggle { background: var(--team-brand); }
+  .team-permission input:checked ~ .team-toggle::after { transform: translateX(16px); }
+  .team-permission:has(input:checked) { border-color: #A63826; background: #fbfaff; }
+  .team-permission:has(input:checked) .team-permission-icon { background: #ffded4; color: var(--team-brand); }
+
+  @media (max-width: 1080px) {
+    .team-editor-container { width: min(100% - 32px, 900px); }
+    .team-editor-layout { grid-template-columns: 1fr; }
+    .team-editor-sidebar { display: none; }
+    .team-mobile-steps { display: flex; }
+  }
+
+  @media (max-width: 720px) {
+    .team-editor-container { width: calc(100% - 24px); padding-top: 22px; }
+    .team-editor-topbar { grid-template-columns: 1fr; }
+    .team-editor-actions { width: 100%; }
+    .team-editor-button { flex: 1; }
+    .team-editor-copy { font-size: 14px; }
+    .team-editor-card-header, .team-editor-card-body { padding: 22px; }
+    .team-avatar-card { align-items: flex-start; flex-direction: column; }
+    .team-form-grid, .team-permissions { grid-template-columns: 1fr; }
+    .team-service-row { grid-template-columns: auto minmax(0, 1fr) auto; }
+    .team-service-icon { display: none; }
+    .team-service-price { grid-column: 2 / -1; justify-self: start; }
+    .team-appointment { grid-template-columns: 1fr; }
+    .team-appointment-status { justify-self: start; }
+  }
+</style>
+
+<div class="team-editor">
+  <%= form_with model: [ :admin, employee ], id: form_id, multipart: true, data: { team_editor_form: true } do |form| %>
+    <div class="team-editor-container">
+      <header class="team-editor-topbar">
+        <div>
+          <p class="team-editor-eyebrow"><%= persisted ? "Editar miembro" : "Nuevo miembro" %></p>
+          <h1 class="team-editor-title"><%= form_title %></h1>
+          <p class="team-editor-copy"><%= form_copy %></p>
+        </div>
+
+        <div class="team-editor-actions">
+          <%= link_to "Cerrar", admin_employee_memberships_path, class: "team-editor-button secondary" %>
+          <%= button_tag type: "submit", value: "Guardar", class: "team-editor-button primary" do %>
+            Guardar
+          <% end %>
+        </div>
+      </header>
+
+      <% if employee.errors.any? %>
+        <div class="team-editor-errors"><%= employee.errors.full_messages.to_sentence %></div>
+      <% end %>
+
+      <nav class="team-mobile-steps" aria-label="Secciones del miembro">
+        <button type="button" class="team-mobile-step <%= "active" if active_section == "personal" %>" data-team-tab="personal">Datos</button>
+        <% if persisted %>
+          <button type="button" class="team-mobile-step <%= "active" if active_section == "appointments" %>" data-team-tab="appointments">Turnos</button>
+        <% end %>
+        <button type="button" class="team-mobile-step <%= "active" if active_section == "services" %>" data-team-tab="services">Servicios</button>
+        <button type="button" class="team-mobile-step <%= "active" if active_section == "permissions" %>" data-team-tab="permissions">Permisos</button>
+      </nav>
+
+      <div class="team-editor-layout">
+        <aside class="team-editor-sidebar">
+          <div class="team-editor-sidebar-title">
+            <strong>Alta del equipo</strong>
+            <span>Dejá listo el perfil, sus servicios y el nivel de acceso.</span>
+          </div>
+
+          <nav class="team-editor-nav" aria-label="Secciones del miembro">
+            <button type="button" class="team-editor-tab <%= "active" if active_section == "personal" %>" data-team-tab="personal">
+              <%= icon.call(:user, "team-tab-icon") %>
+              <span class="team-tab-text">
+                <span>Datos personales</span>
+                <small>Información básica</small>
+              </span>
+            </button>
+
+            <% if persisted %>
+              <button type="button" class="team-editor-tab <%= "active" if active_section == "appointments" %>" data-team-tab="appointments">
+                <%= icon.call(:calendar, "team-tab-icon") %>
+                <span class="team-tab-text">
+                  <span>Turnos</span>
+                  <small>Historial de reservas</small>
+                </span>
+              </button>
+            <% end %>
+
+            <button type="button" class="team-editor-tab <%= "active" if active_section == "services" %>" data-team-tab="services">
+              <%= icon.call(:services, "team-tab-icon") %>
+              <span class="team-tab-text">
+                <span>Servicios</span>
+                <small>Qué puede realizar</small>
+              </span>
+              <span class="team-editor-badge" data-selected-service-count><%= selected_service_ids.size %></span>
+            </button>
+
+            <button type="button" class="team-editor-tab <%= "active" if active_section == "permissions" %>" data-team-tab="permissions">
+              <%= icon.call(:permissions, "team-tab-icon") %>
+              <span class="team-tab-text">
+                <span>Permisos</span>
+                <small>Acceso al sistema</small>
+              </span>
+              <span class="team-editor-badge"><%= selected_permissions.size %></span>
+            </button>
+          </nav>
+
+          <div class="team-editor-tip">
+            <%= icon.call(:info) %>
+            Podés volver a cualquier sección antes de guardar los cambios.
+          </div>
+        </aside>
+
+        <main>
+          <section class="team-editor-panel" data-team-panel="personal" <%= "hidden" unless active_section == "personal" %>>
+            <div class="team-editor-card">
+              <header class="team-editor-card-header">
+                <%= icon.call(:user, "team-panel-icon personal") %>
+                <div>
+                  <h2 class="team-editor-heading">Datos personales</h2>
+                  <p class="team-editor-description">Información de contacto y apariencia dentro del calendario.</p>
+                </div>
+              </header>
+
+              <div class="team-editor-card-body">
+                <div class="team-avatar-card">
+                  <% profile_photo = employee.effective_profile_photo %>
+                  <div class="team-avatar">
+                    <%= form.file_field :profile_photo, id: "employee-profile-photo-input", accept: "image/png,image/jpeg,image/jpg,image/webp", class: "team-avatar-file", data: { team_profile_photo_input: true } %>
+                    <label class="team-avatar-preview" for="employee-profile-photo-input">
+                      <% if profile_photo.attached? %>
+                        <%= image_tag profile_photo, data: { team_profile_photo_preview: true }, alt: "Foto de perfil" %>
+                      <% else %>
+                        <img data-team-profile-photo-preview hidden alt="Foto de perfil">
+                        <%= icon.call(:user, "team-avatar-placeholder") %>
+                      <% end %>
+                    </label>
+                    <label class="team-avatar-edit" for="employee-profile-photo-input" aria-label="Subir foto">
+                      <%= icon.call(:camera) %>
+                    </label>
+                  </div>
+
+                  <div>
+                    <p class="team-avatar-title">Foto de perfil</p>
+                    <p class="team-avatar-copy">Se mostrará en la agenda y en la página pública para identificar rápidamente al profesional.</p>
+                    <label for="employee-profile-photo-input" class="team-avatar-upload">Subir imagen</label>
+                  </div>
+                </div>
+
+                <div class="team-form-grid">
+                  <div>
+                    <%= form.label :first_name, class: "team-label" do %>
+                      Nombre <span class="team-required">*</span>
+                    <% end %>
+                    <%= form.text_field :first_name, required: true, autocomplete: "given-name", class: "team-input" %>
+                  </div>
+
+                  <div>
+                    <%= form.label :last_name, class: "team-label" do %>
+                      Apellido <span class="team-required">*</span>
+                    <% end %>
+                    <%= form.text_field :last_name, required: true, autocomplete: "family-name", class: "team-input" %>
+                  </div>
+
+                  <div>
+                    <%= form.label :email_address, class: "team-label" do %>
+                      Email <span class="team-required">*</span>
+                    <% end %>
+                    <%= form.email_field :email_address, required: true, autocomplete: "email", class: "team-input" %>
+                    <p class="team-field-hint">Este email se usa para el acceso del miembro al panel.</p>
+                  </div>
+
+                  <div>
+                    <%= form.label :phone, "Número de teléfono", class: "team-label" %>
+                    <%= form.telephone_field :phone, autocomplete: "tel", placeholder: "Ej. 11 2233 4466", class: "team-input" %>
+                  </div>
+
+                  <div class="team-field full">
+                    <%= form.label :specialty, "Profesión", class: "team-label" %>
+                    <%= form.text_field :specialty, autocomplete: "organization-title", placeholder: "Ej: Peluquera", class: "team-input" %>
+                  </div>
+                </div>
+
+                <label class="team-reservable-card">
+                  <%= form.check_box :can_receive_appointments, { checked: employee.can_receive_appointments.nil? ? true : employee.can_receive_appointments, class: "team-checkbox" }, "1", "0" %>
+                  <span>
+                    <span class="team-reservable-title">Permite asignarle turnos a este profesional</span>
+                    <span class="team-reservable-copy">Si está desactivado, no aparece como opción en el calendario ni recibe turnos online.</span>
+                  </span>
+                </label>
+
+                <fieldset class="team-colors">
+                  <div class="team-colors-head">
+                    <div>
+                      <legend class="team-label">Color del calendario</legend>
+                      <p class="team-field-hint">Se usará para identificar sus turnos dentro de la agenda.</p>
+                    </div>
+                    <p class="team-color-name" data-selected-color-name><%= EmployeeMembership::CALENDAR_COLORS[selected_calendar_color] %></p>
+                  </div>
+
+                  <div class="team-color-options">
+                    <% EmployeeMembership::CALENDAR_COLORS.each do |color, label| %>
+                      <label class="team-color-option" title="<%= label %>" data-color-name="<%= label %>">
+                        <%= form.radio_button :calendar_color, color, checked: selected_calendar_color == color, data: { calendar_color_option: true } %>
+                        <span class="team-color-swatch" style="background-color:<%= color %>"></span>
+                      </label>
+                    <% end %>
+                  </div>
+                </fieldset>
+              </div>
+            </div>
+          </section>
+
+          <% if persisted %>
+            <section class="team-editor-panel" data-team-panel="appointments" <%= "hidden" unless active_section == "appointments" %>>
+              <div class="team-editor-card">
+                <header class="team-editor-card-header">
+                  <%= icon.call(:calendar, "team-panel-icon appointments") %>
+                  <div>
+                    <h2 class="team-editor-heading">Turnos</h2>
+                    <p class="team-editor-description">Historial de turnos asignados a <%= employee.display_name %>, incluidos los cancelados.</p>
+                  </div>
+                </header>
+
+                <div class="team-editor-card-body">
+                  <div
+                    data-controller="customers-results-loader"
+                    data-customers-results-loader-frame-id-value="employee_appointment_history"
+                    data-action="turbo:before-fetch-request->customers-results-loader#start turbo:frame-load->customers-results-loader#stop turbo:fetch-request-error->customers-results-loader#stop">
+                    <%= turbo_frame_tag "employee_appointment_history" do %>
+                      <%= render "appointment_history",
+                        appointments: @employee_appointments,
+                        pagy: @employee_appointments_pagy,
+                        appointment_date_label: appointment_date_label,
+                        cancellation_timestamp_label: cancellation_timestamp_label %>
+                    <% end %>
+
+                    <span class="admin-results-loader" data-customers-results-loader-target="indicator" aria-hidden="true">
+                      <span class="admin-results-loader-ring"></span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </section>
+          <% end %>
+
+          <section class="team-editor-panel" data-team-panel="services" <%= "hidden" unless active_section == "services" %>>
+            <div class="team-editor-card">
+              <header class="team-editor-card-header">
+                <%= icon.call(:services, "team-panel-icon services") %>
+                <div>
+                  <h2 class="team-editor-heading">Servicios</h2>
+                  <p class="team-editor-description">Elegí qué servicios puede realizar este miembro del equipo.</p>
+                </div>
+              </header>
+
+              <div class="team-editor-card-body">
+                <label class="team-service-search">
+                  <%= icon.call(:search, "team-search-icon") %>
+                  <input type="search" class="team-input" placeholder="Buscar servicios" data-service-search>
+                </label>
+
+                <label class="team-service-all">
+                  <input type="checkbox" class="team-checkbox" data-select-all-services>
+                  <span>Todos los servicios</span>
+                  <span class="team-editor-badge"><%= @services.size %></span>
+                </label>
+
+                <div class="team-service-list" data-service-list>
+                  <% @services.group_by(&:category_label).sort_by { |category, _| category.to_s.downcase }.each do |category, services| %>
+                    <section class="team-service-category" data-service-category>
+                      <div class="team-service-category-head">
+                        <div>
+                          <h3 class="team-service-category-title"><%= category %></h3>
+                          <p class="team-service-category-count"><%= pluralize(services.size, "servicio", "servicios") %> disponible<%= "s" unless services.size == 1 %></p>
+                        </div>
+                        <span class="team-editor-badge"><%= services.size %></span>
+                      </div>
+
+                      <div class="team-service-rows">
+                        <% services.sort_by { |service| service.name.downcase }.each do |service| %>
+                          <label class="team-service-row" data-service-row data-search-value="<%= "#{category} #{service.name}".downcase %>">
+                            <%= check_box_tag "employee_membership[service_ids][]", service.id, selected_service_ids.include?(service.id.to_s), class: "team-checkbox", data: { service_checkbox: true } %>
+                            <%= icon.call(:sparkles, "team-service-icon") %>
+                            <span>
+                              <span class="team-service-name"><%= service.name %></span>
+                              <span class="team-service-meta">
+                                <span><%= service.duration_minutes %> min</span>
+                                <span><%= service.public_visible? ? "Visible" : "Oculto" %></span>
+                              </span>
+                            </span>
+                            <span class="team-service-price"><%= number_to_currency(service.price_cents / 100.0, unit: "$", precision: 0, delimiter: ".") %></span>
+                          </label>
+                        <% end %>
+                      </div>
+                    </section>
+                  <% end %>
+                </div>
+
+                <div class="team-empty-services" data-empty-services>
+                  No encontramos servicios con esa búsqueda.
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="team-editor-panel" data-team-panel="permissions" <%= "hidden" unless active_section == "permissions" %>>
+            <div class="team-editor-card">
+              <header class="team-editor-card-header">
+                <%= icon.call(:permissions, "team-panel-icon permissions") %>
+                <div>
+                  <h2 class="team-editor-heading">Permisos</h2>
+                  <p class="team-editor-description">Definí qué secciones y acciones puede usar dentro de Dog Grooming.</p>
+                </div>
+              </header>
+
+              <div class="team-editor-card-body">
+                <div class="team-permission-intro">
+                  Los permisos pueden modificarse más adelante desde la ficha del miembro.
+                </div>
+
+                <div class="team-permissions">
+                  <% EmployeeMembership::PERMISSIONS.each_with_index do |(key, label), index| %>
+                    <label class="team-permission">
+                      <span class="team-permission-icon">
+                        <%= icon.call(index.even? ? :permissions : :check) %>
+                      </span>
+                      <span class="team-permission-text">
+                        <span class="team-permission-name"><%= label %></span>
+                        <span class="team-permission-help">Controla el acceso operativo de este perfil.</span>
+                      </span>
+                      <%= check_box_tag "employee_membership[permission_keys][]", key, selected_permissions.include?(key) %>
+                      <span class="team-toggle"></span>
+                    </label>
+                  <% end %>
+                </div>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+  <% end %>
+</div>
+
+<script>
+  (() => {
+    const root = document.querySelector("[data-team-editor-form]");
+    if (!root) return;
+
+    const tabs = [...root.querySelectorAll("[data-team-tab]")];
+    const panels = [...root.querySelectorAll("[data-team-panel]")];
+
+    const setActiveTab = (tabName) => {
+      tabs.forEach(item => item.classList.toggle("active", item.dataset.teamTab === tabName));
+      panels.forEach(panel => panel.hidden = panel.dataset.teamPanel !== tabName);
+      if (window.matchMedia("(max-width: 1080px)").matches) {
+        root.closest(".team-editor")?.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    };
+
+    tabs.forEach(tab => tab.addEventListener("click", () => setActiveTab(tab.dataset.teamTab)));
+
+    const boxes = [...root.querySelectorAll("[data-service-checkbox]")];
+    const selectAll = root.querySelector("[data-select-all-services]");
+    const countBadges = [...root.querySelectorAll("[data-selected-service-count]")];
+
+    const syncServices = () => {
+      const checked = boxes.filter(box => box.checked).length;
+      countBadges.forEach(count => count.textContent = checked);
+      if (!selectAll) return;
+      selectAll.checked = boxes.length > 0 && checked === boxes.length;
+      selectAll.indeterminate = checked > 0 && checked < boxes.length;
+    };
+
+    boxes.forEach(box => box.addEventListener("change", syncServices));
+    selectAll?.addEventListener("change", () => {
+      boxes.forEach(box => box.checked = selectAll.checked);
+      syncServices();
+    });
+    syncServices();
+
+    const emptyServices = root.querySelector("[data-empty-services]");
+    root.querySelector("[data-service-search]")?.addEventListener("input", event => {
+      const query = event.target.value.trim().toLocaleLowerCase("es");
+      let visibleRows = 0;
+
+      root.querySelectorAll("[data-service-category]").forEach(category => {
+        const rows = [...category.querySelectorAll("[data-service-row]")];
+        rows.forEach(row => {
+          const hidden = Boolean(query) && !row.dataset.searchValue.includes(query);
+          row.hidden = hidden;
+          if (!hidden) visibleRows += 1;
+        });
+        category.hidden = rows.every(row => row.hidden);
+      });
+
+      emptyServices?.classList.toggle("visible", visibleRows === 0);
+    });
+
+    const colorName = root.querySelector("[data-selected-color-name]");
+    root.querySelectorAll("[data-calendar-color-option]").forEach(input => {
+      input.addEventListener("change", () => {
+        const label = input.closest("[data-color-name]")?.dataset.colorName;
+        if (label && colorName) colorName.textContent = label;
+      });
+    });
+
+    const photoInput = root.querySelector("[data-team-profile-photo-input]");
+    photoInput?.addEventListener("change", () => {
+      const file = photoInput.files?.[0];
+      if (!file?.type.startsWith("image/")) return;
+
+      const preview = root.querySelector("[data-team-profile-photo-preview]");
+      const placeholder = root.querySelector(".team-avatar-placeholder");
+      if (!preview) return;
+
+      preview.src = URL.createObjectURL(file);
+      preview.hidden = false;
+      placeholder?.remove();
+    });
+  })();
+</script>
