@@ -679,6 +679,7 @@ RSpec.describe "Admin shell", type: :request do
     expect(response.body).to include(%(data-schedule-day-pill="1"))
     expect(response.body).to include("Guardar cambios")
     expect(document.at_css("#settings-active-tab")["value"]).to eq("datos-generales")
+    expect(document.at_css("form#admin-settings-form")["data-turbo"]).to eq("false")
 
     save_buttons = document.css("form#admin-settings-form button[type='submit']").select do |button|
       button.text.strip == "Guardar cambios"
@@ -777,7 +778,7 @@ RSpec.describe "Admin shell", type: :request do
       end
     }, headers: browser_headers
 
-    expect(response).to redirect_to(admin_settings_path(anchor: "cuentas-de-cobro"))
+    expect(response).to redirect_to(admin_settings_path(settings_tab: "cuentas-de-cobro", anchor: "cuentas-de-cobro"))
     business.reload
     user.reload
     expect(business.name).to eq("Casa Tony")
@@ -806,6 +807,30 @@ RSpec.describe "Admin shell", type: :request do
     expect(monday.end_time.strftime("%H:%M")).to eq("18:00")
     expect(business.availability_rules.find_by!(weekday: 2)).to be_active
     expect(business.availability_rules.find_by!(weekday: 3)).not_to be_active
+  end
+
+  it "redirects to the submitted settings tab after saving" do
+    user, = create_admin_with_business
+
+    sign_in(user)
+
+    Admin::SettingsController::SETTINGS_TABS.each do |tab|
+      patch admin_settings_path(settings_tab: tab), headers: browser_headers
+
+      expect(response).to redirect_to(admin_settings_path(settings_tab: tab, anchor: tab))
+    end
+  end
+
+  it "renders the tab selected by the settings redirect before JavaScript runs" do
+    user, = create_admin_with_business
+
+    sign_in(user)
+    get admin_settings_path(settings_tab: "cuentas-de-cobro"), headers: browser_headers
+
+    document = Nokogiri::HTML(response.body)
+    expect(document.at_css("#settings-active-tab")["value"]).to eq("cuentas-de-cobro")
+    expect(document.at_css("#cuentas-de-cobro")["hidden"]).to be_nil
+    expect(document.at_css("#datos-generales")["hidden"]).to eq("")
   end
 
   it "shows one Mercado Pago connection action for each connection state" do
@@ -886,7 +911,7 @@ RSpec.describe "Admin shell", type: :request do
 
     period = business.availability_blocks.non_working_periods.last
 
-    expect(response).to redirect_to(admin_settings_path(anchor: "fechas-no-laborables"))
+    expect(response).to redirect_to(admin_settings_path(settings_tab: "fechas-no-laborables", anchor: "fechas-no-laborables"))
     expect(period.starts_at).to eq(Time.zone.local(2026, 8, 10))
     expect(period.ends_at).to eq(Time.zone.local(2026, 8, 13))
     expect(period.reason).to eq("Fecha no laborable")
@@ -898,7 +923,7 @@ RSpec.describe "Admin shell", type: :request do
 
     delete admin_non_working_period_path(period), headers: browser_headers
 
-    expect(response).to redirect_to(admin_settings_path(anchor: "fechas-no-laborables"))
+    expect(response).to redirect_to(admin_settings_path(settings_tab: "fechas-no-laborables", anchor: "fechas-no-laborables"))
     expect(period.reload).to be_cancelled
   end
 
@@ -916,7 +941,7 @@ RSpec.describe "Admin shell", type: :request do
       }, headers: browser_headers
     }.not_to change { business.availability_blocks.non_working_periods.count }
 
-    expect(response).to redirect_to(admin_settings_path(anchor: "fechas-no-laborables"))
+    expect(response).to redirect_to(admin_settings_path(settings_tab: "fechas-no-laborables", anchor: "fechas-no-laborables"))
     expect(flash[:alert]).to eq("La fecha hasta debe ser posterior a la fecha desde.")
   end
 
@@ -1342,6 +1367,7 @@ RSpec.describe "Admin shell", type: :request do
     sign_in(user)
 
     patch admin_settings_path, params: {
+      settings_tab: "diseno-web",
       business_account: {
         business_name: business.name,
         owner_name: user.name.presence || business.name,
@@ -1354,7 +1380,7 @@ RSpec.describe "Admin shell", type: :request do
       }
     }, headers: browser_headers
 
-    expect(response).to redirect_to(admin_settings_path)
+    expect(response).to redirect_to(admin_settings_path(settings_tab: "diseno-web", anchor: "diseno-web"))
     expect(business.reload).to have_attributes(
       public_site_mode: "full_website",
       public_custom_html: '<section class="ht-section ht-about"><h2>Quiénes somos</h2></section>',

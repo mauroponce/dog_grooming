@@ -21,7 +21,8 @@ module Admin
         Admin::SyncPaymentAccounts.call(@business, payment_accounts_params) if params[:payment_accounts].present?
         SuperAdmin::SyncBusinessAvailability.call(@business, availability_rules_params)
       end
-      redirect_to admin_settings_path(anchor: settings_tab), notice: "Configuración actualizada."
+      active_tab = settings_tab || SETTINGS_TABS.first
+      redirect_to admin_settings_path(settings_tab: active_tab, anchor: active_tab), notice: "Configuración actualizada."
     rescue ActiveRecord::RecordInvalid, ArgumentError => error
       prepare_settings
       flash.now[:alert] = error.message

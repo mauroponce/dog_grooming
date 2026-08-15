@@ -2,7 +2,7 @@ module Admin
   class MercadoPagoConnectionsController < BaseController
     def connect
       unless MercadoPago::OAuthClient.configured?
-        redirect_to admin_settings_path(anchor: "cuentas-de-cobro"), alert: "Configurá las credenciales OAuth de Mercado Pago para #{MercadoPago::Credentials.environment_label}."
+        redirect_to payment_settings_path, alert: "Configurá las credenciales OAuth de Mercado Pago para #{MercadoPago::Credentials.environment_label}."
         return
       end
 
@@ -15,7 +15,7 @@ module Admin
 
     def callback
       unless valid_state?
-        redirect_to admin_settings_path(anchor: "cuentas-de-cobro"), alert: "No pudimos validar la conexión con Mercado Pago."
+        redirect_to payment_settings_path, alert: "No pudimos validar la conexión con Mercado Pago."
         return
       end
 
@@ -29,9 +29,9 @@ module Admin
       connection.save!
 
       session.delete(:mercado_pago_oauth_state)
-      redirect_to admin_settings_path(anchor: "cuentas-de-cobro"), notice: "Mercado Pago quedó conectado."
+      redirect_to payment_settings_path, notice: "Mercado Pago quedó conectado."
     rescue MercadoPago::OAuthClient::Error, KeyError => error
-      redirect_to admin_settings_path(anchor: "cuentas-de-cobro"), alert: error.message
+      redirect_to payment_settings_path, alert: error.message
     end
 
     def destroy
@@ -39,10 +39,14 @@ module Admin
       enabled_payment_methods = @business.enabled_payment_methods - [ "mercado_pago" ]
       @business.update!(preferences: @business.preferences.to_h.merge("enabled_payment_methods" => enabled_payment_methods.presence || [ "manual_transfer" ]))
 
-      redirect_to admin_settings_path(anchor: "cuentas-de-cobro"), notice: "Mercado Pago fue desconectado."
+      redirect_to payment_settings_path, notice: "Mercado Pago fue desconectado."
     end
 
     private
+      def payment_settings_path
+        admin_settings_path(settings_tab: "cuentas-de-cobro", anchor: "cuentas-de-cobro")
+      end
+
       def state
         @state ||= SecureRandom.urlsafe_base64(32)
       end

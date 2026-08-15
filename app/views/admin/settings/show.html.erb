@@ -1606,8 +1606,8 @@
 <% end %>
 
 <section class="settings-shell">
-  <%= form_with url: admin_settings_path, method: :patch, multipart: true, id: "admin-settings-form", data: { settings_schedule_form: true } do |_form| %>
-    <%= hidden_field_tag :settings_tab, @settings_active_tab, id: "settings-active-tab", data: { settings_active_tab: true } %>
+  <%= form_with url: admin_settings_path, method: :patch, multipart: true, id: "admin-settings-form", data: { turbo: false, settings_schedule_form: true } do |_form| %>
+    <%= tag.input type: "hidden", value: @settings_active_tab, id: "settings-active-tab", data: { settings_active_tab: true } %>
     <div class="settings-container">
       <header class="settings-header">
         <div>
@@ -1698,6 +1698,7 @@
             data-settings-general
             data-controller="branch-location"
             data-branch-location-photon-url-value="https://photon.komoot.io/api/"
+            <%= "hidden" unless @settings_active_tab == "datos-generales" %>
           >
             <div class="settings-panel-header">
               <span class="settings-panel-header-icon is-purple"><%= settings_icons.fetch(:building).html_safe %></span>
@@ -1865,7 +1866,7 @@
             </div>
           </section>
 
-          <section class="settings-card settings-section-panel" id="pagina-de-reservas" data-settings-panel="pagina-de-reservas" hidden>
+          <section class="settings-card settings-section-panel" id="pagina-de-reservas" data-settings-panel="pagina-de-reservas" <%= "hidden" unless @settings_active_tab == "pagina-de-reservas" %>>
             <div class="settings-panel-header">
               <span class="settings-panel-header-icon is-purple"><%= settings_icons.fetch(:globe).html_safe %></span>
               <div>
@@ -1997,7 +1998,7 @@
             </div>
           </section>
 
-          <section class="settings-card settings-section-panel" id="diseno-web" data-settings-panel="diseno-web" data-web-design-panel hidden>
+          <section class="settings-card settings-section-panel" id="diseno-web" data-settings-panel="diseno-web" data-web-design-panel <%= "hidden" unless @settings_active_tab == "diseno-web" %>>
             <div class="settings-panel-header">
               <span class="settings-panel-header-icon is-purple"><%= settings_icons.fetch(:image).html_safe %></span>
               <div>
@@ -2088,7 +2089,7 @@
             </div>
           </section>
 
-          <section class="settings-card settings-section-panel" id="cuentas-de-cobro" data-settings-panel="cuentas-de-cobro" data-payment-accounts hidden>
+          <section class="settings-card settings-section-panel" id="cuentas-de-cobro" data-settings-panel="cuentas-de-cobro" data-payment-accounts <%= "hidden" unless @settings_active_tab == "cuentas-de-cobro" %>>
             <div class="settings-panel-header">
               <span class="settings-panel-header-icon is-green"><%= settings_icons.fetch(:landmark).html_safe %></span>
               <div>
@@ -2283,7 +2284,7 @@
             </div>
           </section>
 
-          <section class="settings-card settings-section-panel" id="horarios-de-atencion" data-settings-panel="horarios-de-atencion" data-settings-schedule hidden>
+          <section class="settings-card settings-section-panel" id="horarios-de-atencion" data-settings-panel="horarios-de-atencion" data-settings-schedule <%= "hidden" unless @settings_active_tab == "horarios-de-atencion" %>>
             <div class="settings-card-body">
             <p class="settings-content-eyebrow">Horarios</p>
             <h2 class="settings-schedule-heading">Horarios de atención</h2>
@@ -2354,7 +2355,7 @@
             </div>
           </section>
 
-          <section class="settings-card settings-section-panel" id="fechas-no-laborables" data-settings-panel="fechas-no-laborables" hidden>
+          <section class="settings-card settings-section-panel" id="fechas-no-laborables" data-settings-panel="fechas-no-laborables" <%= "hidden" unless @settings_active_tab == "fechas-no-laborables" %>>
             <div class="settings-card-body">
               <p class="settings-content-eyebrow">Disponibilidad</p>
               <h2 class="settings-schedule-heading">Fechas no laborables</h2>
@@ -2605,6 +2606,12 @@
         link.classList.toggle("is-active", panelIdForLink(link) === panelId);
       });
 
+      if (form) {
+        const formUrl = new URL(form.action, window.location.origin);
+        formUrl.searchParams.set("settings_tab", panelId);
+        form.action = `${formUrl.pathname}${formUrl.search}`;
+      }
+
       if (updateHash && window.history?.replaceState) {
         window.history.replaceState(null, "", `#${panelId}`);
       }
@@ -2615,6 +2622,12 @@
         event.preventDefault();
         showSettingsPanel(panelIdForLink(link), true);
       });
+    });
+
+    const settingsPanelFromHash = () => window.location.hash.replace(/^#/, "");
+
+    window.addEventListener("hashchange", () => {
+      showSettingsPanel(settingsPanelFromHash());
     });
 
     const fullWebsiteSelected = () => publicSiteModeInputs.some((input) => input.checked && input.value === "full_website");
@@ -2652,6 +2665,14 @@
 
     const requestedSettingsPanel = window.location.hash.replace(/^#/, "") || activeSettingsTabInput?.value || "datos-generales";
     showSettingsPanel(requestedSettingsPanel === "diseno-web" && !fullWebsiteSelected() ? "pagina-de-reservas" : requestedSettingsPanel);
+
+    const settingsUrl = new URL(window.location.href);
+    const activeSettingsPanel = activeSettingsTabInput?.value;
+    if (settingsUrl.searchParams.has("settings_tab") && activeSettingsPanel && window.history?.replaceState) {
+      settingsUrl.searchParams.delete("settings_tab");
+      settingsUrl.hash = activeSettingsPanel;
+      window.history.replaceState(null, "", `${settingsUrl.pathname}${settingsUrl.search}${settingsUrl.hash}`);
+    }
 
     const nonWorkingPeriodForm = document.getElementById("non-working-period-form");
     const nonWorkingPeriodStartsOn = document.getElementById("non_working_period_starts_on");
