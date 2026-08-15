@@ -11,6 +11,7 @@ module Services
         copy.name = "Copia de #{service.name}"
         copy.active = false
         copy.visibility_mode = "hidden"
+        copy.public_visible = false
         copy.popular = false
         copy.sort_order = service.sort_order.to_i + 1
         copy.save!

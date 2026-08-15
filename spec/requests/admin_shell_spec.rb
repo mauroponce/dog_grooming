@@ -806,6 +806,35 @@ RSpec.describe "Admin shell", type: :request do
     expect(business.availability_rules.find_by!(weekday: 3)).not_to be_active
   end
 
+  it "shows one Mercado Pago connection action for each connection state" do
+    user, business = create_admin_with_business
+    allow(MercadoPago::OAuthClient).to receive(:configured?).and_return(true)
+
+    sign_in(user)
+    get admin_settings_path, headers: browser_headers
+
+    document = Nokogiri::HTML(response.body)
+    actions = document.at_css("[data-mercado-pago-connection-actions]")
+
+    expect(response).to have_http_status(:ok)
+    expect(actions.css("a").map { |link| link.text.squish }).to eq([ "Conectar" ])
+    expect(actions.at_css("a")["href"]).to eq(connect_admin_mercado_pago_connection_path)
+
+    business.create_mercado_pago_connection!(access_token: "mp-token", connected_at: Time.current)
+
+    get admin_settings_path, headers: browser_headers
+
+    document = Nokogiri::HTML(response.body)
+    actions = document.at_css("[data-mercado-pago-connection-actions]")
+    disconnect_link = actions.at_css("a")
+
+    expect(response).to have_http_status(:ok)
+    expect(actions.css("a").map { |link| link.text.squish }).to eq([ "Desconectar" ])
+    expect(disconnect_link["href"]).to eq(admin_mercado_pago_connection_path)
+    expect(disconnect_link["data-turbo-method"]).to eq("delete")
+    expect(disconnect_link["data-turbo-confirm"]).to eq("¿Desconectar Mercado Pago?")
+  end
+
   it "does not allow an admin to clear the business WhatsApp or owner email" do
     user, business = create_admin_with_business
 

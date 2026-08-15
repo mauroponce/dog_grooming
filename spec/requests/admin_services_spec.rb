@@ -304,6 +304,55 @@ RSpec.describe "Admin services", type: :request do
     expect(response.body).to include(%(aria-label="Cerrar mensaje"))
   end
 
+  it "publishes an active service when the reservation-page visibility toggle is enabled" do
+    user, business = create_admin_with_business
+    service = create_service(business, name: "Lifting de pestañas")
+    service.update_columns(active: false, visibility_mode: "hidden", public_visible: true)
+
+    sign_in(user)
+    patch admin_service_path(service), params: {
+      service: {
+        name: service.name,
+        service_category_id: service.service_category_id,
+        duration_minutes: service.duration_minutes,
+        price: "12000",
+        description: service.description,
+        active: "0",
+        visibility_mode: "hidden",
+        public_visible: "1"
+      }
+    }, headers: browser_headers
+
+    expect(response).to redirect_to(edit_admin_service_path(service))
+    expect(service.reload).to have_attributes(active: true, visibility_mode: "public", public_visible: true)
+    expect(service).to be_public
+
+    get public_business_path(business.slug), headers: browser_headers
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Lifting de pestañas")
+
+    get new_public_booking_path(business.slug, step: "services"), headers: browser_headers
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Lifting de pestañas")
+  end
+
+  it "keeps a duplicated service private until it is explicitly made visible" do
+    user, business = create_admin_with_business
+    service = create_service(business, name: "Lifting de pestañas")
+
+    sign_in(user)
+    expect {
+      post duplicate_admin_service_path(service), headers: browser_headers
+    }.to change(Service, :count).by(1)
+
+    copy = business.services.order(:created_at).last
+
+    expect(response).to redirect_to(admin_services_path(service_id: copy.id))
+    expect(copy).to have_attributes(active: false, visibility_mode: "hidden", public_visible: false)
+  end
+
   it "shows a clear error when payment is enabled without a deposit value" do
     user, business = create_admin_with_business
     category = ServiceCategory.find_or_create_for!(business: business, name: "Barbería", primary_category: true)

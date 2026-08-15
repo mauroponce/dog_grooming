@@ -39,7 +39,7 @@ module Admin
       enabled_payment_methods = @business.enabled_payment_methods - [ "mercado_pago" ]
       @business.update!(preferences: @business.preferences.to_h.merge("enabled_payment_methods" => enabled_payment_methods.presence || [ "manual_transfer" ]))
 
-      redirect_to admin_settings_path(anchor: "cuentas-de-cobro"), notice: "Mercado Pago fue desvinculado."
+      redirect_to admin_settings_path(anchor: "cuentas-de-cobro"), notice: "Mercado Pago fue desconectado."
     end
 
     private

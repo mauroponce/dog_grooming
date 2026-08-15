@@ -68,6 +68,7 @@ module Admin
 
     def create
       attributes = service_params
+      sync_public_listing_state!(attributes)
       cover_image = attributes.delete(:cover_image)
       service_images = attributes.delete(:service_images)
       @service = @business.services.new(attributes)
@@ -106,6 +107,7 @@ module Admin
     def update
       @service = service
       attributes = service_params
+      sync_public_listing_state!(attributes)
       cover_image = attributes.delete(:cover_image)
       service_images = attributes.delete(:service_images)
       if @service.update(attributes)
@@ -226,6 +228,18 @@ module Admin
           permitted[:employee_membership_ids] = []
         end
         permitted
+      end
+
+      def sync_public_listing_state!(attributes)
+        return unless attributes.key?(:public_visible)
+        return if @service&.archived?
+
+        if ActiveModel::Type::Boolean.new.cast(attributes[:public_visible])
+          attributes[:active] = true
+          attributes[:visibility_mode] = "public" unless attributes[:visibility_mode] == "link_only"
+        else
+          attributes[:visibility_mode] = "hidden"
+        end
       end
 
       def service_description_params
