@@ -77,6 +77,7 @@ Rails.application.routes.draw do
       get "mercado-pago/callback" => "mercado_pago_connections#callback"
       delete "mercado-pago/desvincular" => "mercado_pago_connections#destroy"
       resource :profile, only: %i[edit update], path: "perfil", controller: "profiles"
+      delete "perfil/foto" => "profiles#destroy_photo", as: :profile_photo
       resource :settings, only: %i[show update], path: "configuracion", controller: "settings"
       get "tutoriales" => "tutorials#show", as: :tutorials
       resources :non_working_periods, only: %i[create destroy], path: "configuracion/fechas-no-laborables"

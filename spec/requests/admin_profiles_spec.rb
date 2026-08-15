@@ -47,6 +47,42 @@ RSpec.describe "Admin profiles", type: :request do
     expect(owner_membership.profile_photo.blob.id).to eq(user.profile_photo.blob.id)
   end
 
+  it "permanently deletes the profile photo and its linked team member copy" do
+    user, business = create_admin_with_business
+    owner_membership = business.employee_memberships.find_by!(user: user)
+
+    sign_in(user)
+    patch admin_profile_path, params: {
+      user: {
+        profile_photo: profile_photo_upload
+      }
+    }, headers: browser_headers
+
+    blob = user.reload.profile_photo.blob
+    blob_key = blob.key
+    storage_service = blob.service
+
+    get edit_admin_profile_path, headers: browser_headers
+
+    document = Nokogiri::HTML(response.body)
+    remove_button = document.at_css("button[data-action='profile-photo-removal#open']")
+    confirmation_dialog = document.at_css("dialog[data-profile-photo-removal-target='dialog']")
+
+    expect(remove_button).to be_present
+    expect(confirmation_dialog.text).to include("¿Deseas eliminar tu foto de perfil?")
+    expect(confirmation_dialog.css("button").map { |button| button.text.strip }).to include("Cancelar", "Confirmar")
+    expect(confirmation_dialog.at_css("form")["action"]).to eq(admin_profile_photo_path)
+
+    delete admin_profile_photo_path, headers: browser_headers
+
+    expect(response).to redirect_to(edit_admin_profile_path)
+    expect(user.reload.profile_photo).not_to be_attached
+    expect(owner_membership.reload.profile_photo).not_to be_attached
+    expect(ActiveStorage::Attachment.where(blob_id: blob.id)).not_to exist
+    expect(ActiveStorage::Blob.where(id: blob.id)).not_to exist
+    expect(storage_service.exist?(blob_key)).to eq(false)
+  end
+
   it "renders client-side password confirmation validation hooks" do
     user, = create_admin_with_business
 
@@ -59,8 +95,23 @@ RSpec.describe "Admin profiles", type: :request do
     expect(response).to have_http_status(:ok)
     expect(form).to be_present
     expect(form["data-action"]).to include("submit->password-confirmation#submit")
-    expect(document.at_css("input[name='user[password]']")["data-password-confirmation-target"]).to eq("password")
-    expect(document.at_css("input[name='user[password_confirmation]']")["data-password-confirmation-target"]).to eq("confirmation")
+    password_input = document.at_css("input[name='user[password]']")
+    confirmation_input = document.at_css("input[name='user[password_confirmation]']")
+    password_toggle = password_input.parent.at_css("button[data-password-visibility-target='button']")
+    confirmation_toggle = confirmation_input.parent.at_css("button[data-password-visibility-target='button']")
+
+    expect(password_input["data-password-confirmation-target"]).to eq("password")
+    expect(confirmation_input["data-password-confirmation-target"]).to eq("confirmation")
+    expect(password_input["type"]).to eq("password")
+    expect(confirmation_input["type"]).to eq("password")
+    expect(password_toggle["data-action"]).to include("password-visibility#toggle")
+    expect(confirmation_toggle["data-action"]).to include("password-visibility#toggle")
+    expect(password_toggle["aria-pressed"]).to eq("false")
+    expect(confirmation_toggle["aria-pressed"]).to eq("false")
+    expect(password_toggle.at_css("svg[data-password-visibility-target='icon']")).to be_present
+    expect(confirmation_toggle.at_css("svg[data-password-visibility-target='icon']")).to be_present
+    expect(password_toggle["class"]).not_to include("focus:ring-brand-300")
+    expect(confirmation_toggle["class"]).not_to include("focus:ring-brand-300")
   end
 
   it "shows translated password confirmation errors from the server" do

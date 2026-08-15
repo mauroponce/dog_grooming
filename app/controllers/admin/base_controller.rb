@@ -191,7 +191,7 @@ module Admin
           "customer_reminders" => %w[create resolve],
           "employee_memberships" => %w[index show],
           "notifications" => %w[mark_all_read mark_read destroy],
-          "profiles" => %w[edit update],
+          "profiles" => %w[edit update destroy_photo],
           "billing" => :all
         }
         actions = allowed[controller_name]

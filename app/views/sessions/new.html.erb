@@ -132,11 +132,17 @@
 
             <div>
               <%= form.label :password, "Contraseña", class: "mb-2 block text-sm font-bold text-slate-800" %>
-              <%= form.password_field :password,
-                required: true,
-                autocomplete: "current-password",
-                placeholder: "Tu contraseña",
-                class: "w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm font-semibold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-400 focus:ring-4 focus:ring-brand-100" %>
+              <div class="relative" data-controller="password-visibility" data-password-visibility-show-label-value="Mostrar contraseña" data-password-visibility-hide-label-value="Ocultar contraseña">
+                <%= form.password_field :password,
+                  required: true,
+                  autocomplete: "off",
+                  placeholder: "Tu contraseña",
+                  class: "w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 pr-12 text-sm font-semibold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-400 focus:ring-4 focus:ring-brand-100",
+                  data: { password_visibility_target: "input" } %>
+                <button type="button" class="absolute inset-y-0 right-0 grid w-12 place-items-center rounded-r-2xl text-slate-400 transition hover:text-slate-700 focus:outline-none" data-password-visibility-target="button" data-action="password-visibility#toggle" aria-label="Mostrar contraseña" aria-controls="password" aria-pressed="false" title="Mostrar contraseña">
+                  <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" data-password-visibility-target="icon"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" /><circle cx="12" cy="12" r="2.75" /></svg>
+                </button>
+              </div>
             </div>
 
             <%= form.submit "Ingresar",
