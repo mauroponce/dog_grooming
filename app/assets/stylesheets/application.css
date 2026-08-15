@@ -32,10 +32,21 @@ body {
   --public-booking-footer-height: 0px;
 }
 
-.public-service-detail-overlay,
 .public-service-gallery-overlay {
   bottom: var(--public-booking-footer-height);
   top: var(--public-booking-header-height);
+}
+
+@media (max-width: 639px) {
+  .public-profile-service-gallery.public-service-gallery-mobile-frame {
+    bottom: max(16px, env(safe-area-inset-bottom));
+    padding: 8px;
+    top: var(--public-service-gallery-top-inset, calc(env(safe-area-inset-top) + 16px));
+  }
+
+  .public-booking-service-gallery.public-service-gallery-mobile-frame {
+    padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+  }
 }
 
 .glass {

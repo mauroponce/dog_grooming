@@ -140,6 +140,9 @@ RSpec.describe "Public businesses", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(services_section["data-public-services-initial-category-value"]).to eq("Pestañas")
+    expect(modal["class"]).to include("fixed", "inset-0", "z-[2147483646]")
+    expect(modal.parent["class"]).to include("public-page-shell")
+    expect(modal.parent["class"]).not_to include("z-10")
     expect(close_query["category"]).to eq("Pestañas")
 
     get close_link["href"], headers: browser_headers

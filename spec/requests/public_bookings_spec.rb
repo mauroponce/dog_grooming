@@ -144,7 +144,8 @@ RSpec.describe "Public bookings", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(booking_header["class"]).to include("fixed", "inset-x-0", "top-0")
-    expect(modal["class"]).to include("public-service-detail-overlay", "overscroll-contain")
+    expect(modal["class"]).to include("public-service-detail-overlay", "fixed", "inset-0", "z-[2147483646]", "overscroll-contain")
+    expect(modal.parent["class"]).not_to include("z-10")
     expect(modal_dialog["class"]).to include("h-[560px]", "max-h-full", "overflow-hidden")
     expect(modal_content["class"]).to include("min-h-0", "flex-1", "overflow-y-auto", "overscroll-contain")
     expect(modal_description).to be_present

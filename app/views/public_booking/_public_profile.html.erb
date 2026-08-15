@@ -128,14 +128,6 @@ end %>
           </div>
         </section>
 
-        <% if service_detail.present? %>
-          <%= render "public_booking/service_detail_modal",
-            business: business,
-            service: service_detail,
-            close_path: public_business_path(business.slug, category: selected_service_category, anchor: "services-section"),
-            reserve_path: short_public_service_path(business.slug, service_detail.slug) %>
-        <% end %>
-
         <% if show_team_members %>
           <section id="team-section" class="mt-12 scroll-mt-24">
             <div class="flex items-center justify-between gap-4">
@@ -229,6 +221,14 @@ end %>
       <% end %>
     </div>
   </footer>
+
+  <% if service_detail.present? %>
+    <%= render "public_booking/service_detail_modal",
+      business: business,
+      service: service_detail,
+      close_path: public_business_path(business.slug, category: selected_service_category, anchor: "services-section"),
+      reserve_path: short_public_service_path(business.slug, service_detail.slug) %>
+  <% end %>
 
   <% if selected_professional.present? %>
     <div class="fixed inset-0 z-50 overflow-y-auto bg-zinc-950/45 px-4 py-6 backdrop-blur-sm" data-public-professional-modal>
