@@ -42,6 +42,17 @@ RSpec.describe "Super admin businesses", type: :request do
       score: 60,
       status: "open"
     )
+    usage_event = AiApiUsageEvent.create!(
+      business: business,
+      provider: "gemini",
+      feature: "service_description",
+      request_started_at: Time.current,
+      status: "success",
+      prompt_tokens: 120,
+      completion_tokens: 80,
+      total_tokens: 200,
+      estimated_cost_usd: 0.0001
+    )
 
     sign_in(super_admin)
 
@@ -51,6 +62,7 @@ RSpec.describe "Super admin businesses", type: :request do
 
     expect(response).to redirect_to(super_admin_businesses_path)
     expect(SalesOpportunity.where(id: opportunity.id)).not_to exist
+    expect(AiApiUsageEvent.find(usage_event.id).business_id).to be_nil
   end
 
   it "renders compact business rows with public slug links and an actions menu" do

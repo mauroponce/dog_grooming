@@ -330,6 +330,7 @@ class Business < ApplicationRecord
   has_many :customer_portal_access_tokens, dependent: :destroy
   has_many :provider_events, dependent: :destroy
   has_many :incoming_whatsapp_events, dependent: :nullify
+  has_many :ai_api_usage_events, dependent: :nullify
   has_many :ai_chat_conversations, dependent: :destroy
   has_many :ai_context_imports, dependent: :destroy
   has_many :whatsapp_templates, class_name: "WhatsAppTemplate", dependent: :destroy
