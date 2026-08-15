@@ -1,5 +1,13 @@
 <% content_for :full_width, true %>
 
+<style>
+  [data-tutorial-sort-handle] { cursor: grab; touch-action: none; }
+  [data-tutorial-sort-handle]:active { cursor: grabbing; }
+  [data-tutorial-sort-target="item"].is-dragging { opacity: .45; }
+  [data-tutorial-sort-target="item"].is-drop-target { box-shadow: inset 0 3px 0 #7c3aed; }
+  [data-tutorial-sort-target="status"][data-state="error"] { color: #be123c; }
+</style>
+
 <div class="min-h-screen bg-[#F7F7FA] font-sans text-zinc-950 antialiased">
   <header class="sticky top-0 z-50 border-b border-zinc-200 bg-white/95 px-4 py-3 backdrop-blur xl:hidden">
     <div class="flex items-center justify-between gap-3">
@@ -29,11 +37,13 @@
           <%= link_to super_admin_whatsapp_path, class: "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold text-zinc-600 hover:bg-zinc-50" do %>
             <span class="grid h-7 w-7 place-items-center rounded-xl bg-zinc-100">◌</span> WhatsApp API
           <% end %>
+          <%= link_to super_admin_tutorials_path, class: "flex items-center gap-3 rounded-2xl bg-ink px-4 py-3 text-sm font-bold text-white" do %>
+            <span class="grid h-7 w-7 place-items-center rounded-xl bg-white/10">
+              <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3" /><path d="m10 9 5 3-5 3V9Z" /></svg>
+            </span> Tutoriales
+          <% end %>
           <%= link_to super_admin_usage_path, class: "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold text-zinc-600 hover:bg-zinc-50" do %>
             <span class="grid h-7 w-7 place-items-center rounded-xl bg-zinc-100">↗</span> Uso
-          <% end %>
-          <%= link_to super_admin_tutorials_path, class: "flex items-center gap-3 rounded-2xl bg-ink px-4 py-3 text-sm font-bold text-white" do %>
-            <span class="grid h-7 w-7 place-items-center rounded-xl bg-white/10">▶</span> Tutoriales
           <% end %>
         </nav>
 
@@ -51,17 +61,25 @@
         <%= link_to "Nuevo tutorial", new_super_admin_tutorial_path, class: "inline-flex h-12 items-center justify-center rounded-2xl bg-brand-600 px-5 text-sm font-bold text-white shadow-glow hover:bg-brand-700" %>
       </header>
 
-      <section class="mt-6 overflow-hidden rounded-[30px] border border-white bg-white shadow-card">
+      <section class="mt-6 overflow-hidden rounded-[30px] border border-white bg-white shadow-card" data-controller="tutorial-sort" data-tutorial-sort-url-value="<%= reorder_super_admin_tutorials_path %>">
         <div class="border-b border-zinc-100 px-5 py-4 sm:px-6">
-          <p class="text-sm font-bold text-zinc-900"><%= @tutorials.count %> <%= @tutorials.one? ? "tutorial publicado" : "tutoriales publicados" %></p>
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <p class="text-sm font-bold text-zinc-900"><%= @tutorials.count %> <%= @tutorials.one? ? "tutorial publicado" : "tutoriales publicados" %></p>
+            <p class="text-xs font-semibold text-zinc-500" data-tutorial-sort-target="status" aria-live="polite"></p>
+          </div>
         </div>
 
         <div class="divide-y divide-zinc-100">
           <% @tutorials.each do |tutorial| %>
-            <article class="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
-              <div class="min-w-0">
-                <h2 class="truncate text-lg font-bold tracking-tight text-zinc-950"><%= tutorial.title %></h2>
-                <%= link_to tutorial.video_url, tutorial.video_url, target: "_blank", rel: "noopener", class: "mt-2 block truncate text-sm font-semibold text-brand-700 underline decoration-brand-200 underline-offset-2" %>
+            <article class="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6" data-tutorial-sort-target="item" data-tutorial-id="<%= tutorial.id %>" data-action="dragover->tutorial-sort#dragOver drop->tutorial-sort#drop">
+              <div class="flex min-w-0 items-start gap-3">
+                <button type="button" draggable="true" class="mt-0.5 grid h-9 w-8 shrink-0 place-items-center rounded-lg text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 focus:outline-none focus:ring-2 focus:ring-brand-300" data-tutorial-sort-handle data-action="dragstart->tutorial-sort#dragStart dragend->tutorial-sort#dragEnd" aria-label="Arrastrar para reordenar <%= tutorial.title %>" title="Arrastrar para reordenar">
+                  <svg viewBox="0 0 24 24" class="h-5 w-5" fill="currentColor" aria-hidden="true"><circle cx="8" cy="5" r="1.5"/><circle cx="16" cy="5" r="1.5"/><circle cx="8" cy="12" r="1.5"/><circle cx="16" cy="12" r="1.5"/><circle cx="8" cy="19" r="1.5"/><circle cx="16" cy="19" r="1.5"/></svg>
+                </button>
+                <div class="min-w-0">
+                  <h2 class="truncate text-lg font-bold tracking-tight text-zinc-950"><%= tutorial.title %></h2>
+                  <%= link_to tutorial.video_url, tutorial.video_url, target: "_blank", rel: "noopener", class: "mt-2 block truncate text-sm font-semibold text-brand-700 underline decoration-brand-200 underline-offset-2" %>
+                </div>
               </div>
               <div class="flex shrink-0 flex-wrap gap-2">
                 <%= link_to "Editar", edit_super_admin_tutorial_path(tutorial), class: "inline-flex h-10 items-center justify-center rounded-xl border border-zinc-200 bg-white px-4 text-sm font-bold text-zinc-700 hover:bg-zinc-50" %>

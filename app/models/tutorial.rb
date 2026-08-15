@@ -1,10 +1,11 @@
 require "uri"
 
 class Tutorial < ApplicationRecord
-  scope :ordered, -> { order(created_at: :desc, id: :desc) }
+  scope :ordered, -> { order(:sort_order, :id) }
 
   validates :title, presence: true, length: { maximum: 180 }
   validates :video_url, presence: true, length: { maximum: 2_048 }
+  validates :sort_order, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
   validate :video_url_uses_http
 
   def embed_url

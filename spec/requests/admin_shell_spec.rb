@@ -678,6 +678,7 @@ RSpec.describe "Admin shell", type: :request do
     expect(response.body).to include("Añadir nueva")
     expect(response.body).to include(%(data-schedule-day-pill="1"))
     expect(response.body).to include("Guardar cambios")
+    expect(document.at_css("#settings-active-tab")["value"]).to eq("datos-generales")
 
     save_buttons = document.css("form#admin-settings-form button[type='submit']").select do |button|
       button.text.strip == "Guardar cambios"
@@ -726,6 +727,7 @@ RSpec.describe "Admin shell", type: :request do
     expect(response.body).to include("La fecha hasta debe ser posterior a la fecha desde.")
 
     patch admin_settings_path, params: {
+      settings_tab: "cuentas-de-cobro",
       business_account: {
         business_name: "Casa Tony",
         owner_name: "Mauro Ponce",
@@ -775,7 +777,7 @@ RSpec.describe "Admin shell", type: :request do
       end
     }, headers: browser_headers
 
-    expect(response).to redirect_to(admin_settings_path)
+    expect(response).to redirect_to(admin_settings_path(anchor: "cuentas-de-cobro"))
     business.reload
     user.reload
     expect(business.name).to eq("Casa Tony")
@@ -841,6 +843,7 @@ RSpec.describe "Admin shell", type: :request do
     sign_in(user)
 
     patch admin_settings_path, params: {
+      settings_tab: "cuentas-de-cobro",
       business_account: {
         business_name: business.name,
         owner_name: user.name.presence || business.name,
@@ -852,6 +855,7 @@ RSpec.describe "Admin shell", type: :request do
 
     expect(response).to have_http_status(:unprocessable_entity)
     expect(response.body).to include("Completá el WhatsApp del negocio.")
+    expect(Nokogiri::HTML(response.body).at_css("#settings-active-tab")["value"]).to eq("cuentas-de-cobro")
     expect(business.reload.contact_phone).to eq("+54 9 11 4444-4444")
 
     patch admin_settings_path, params: {

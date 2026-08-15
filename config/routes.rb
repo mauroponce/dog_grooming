@@ -187,7 +187,11 @@ Rails.application.routes.draw do
       post :refresh_status
       post :connect
     end
-    resources :tutorials, path: "tutoriales"
+    resources :tutorials, path: "tutoriales" do
+      collection do
+        patch :reorder, path: "ordenar"
+      end
+    end
     resources :businesses, path: "negocios", only: %i[index new create edit update destroy] do
       collection do
         post :create_demo

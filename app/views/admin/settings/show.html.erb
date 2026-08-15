@@ -1607,6 +1607,7 @@
 
 <section class="settings-shell">
   <%= form_with url: admin_settings_path, method: :patch, multipart: true, id: "admin-settings-form", data: { settings_schedule_form: true } do |_form| %>
+    <%= hidden_field_tag :settings_tab, @settings_active_tab, id: "settings-active-tab", data: { settings_active_tab: true } %>
     <div class="settings-container">
       <header class="settings-header">
         <div>
@@ -2442,6 +2443,7 @@
 <script>
   (() => {
     const form = document.getElementById("admin-settings-form");
+    const activeSettingsTabInput = form?.querySelector("[data-settings-active-tab]");
     const navLinks = Array.from(document.querySelectorAll("[data-settings-nav-link]"));
     const settingsPanels = Array.from(document.querySelectorAll("[data-settings-panel]"));
     const businessNameInput = form?.querySelector("[data-business-name-source]");
@@ -2595,6 +2597,7 @@
     const showSettingsPanel = (panelId, updateHash = false) => {
       if (!panelId || !settingsPanels.some((panel) => panel.id === panelId)) return;
 
+      if (activeSettingsTabInput) activeSettingsTabInput.value = panelId;
       settingsPanels.forEach((panel) => {
         panel.hidden = panel.id !== panelId;
       });
@@ -2647,7 +2650,7 @@
     syncHomeCustomHtmlPreview();
     syncCategoryCustomHtmlPreview();
 
-    const requestedSettingsPanel = window.location.hash.replace(/^#/, "") || "datos-generales";
+    const requestedSettingsPanel = window.location.hash.replace(/^#/, "") || activeSettingsTabInput?.value || "datos-generales";
     showSettingsPanel(requestedSettingsPanel === "diseno-web" && !fullWebsiteSelected() ? "pagina-de-reservas" : requestedSettingsPanel);
 
     const nonWorkingPeriodForm = document.getElementById("non-working-period-form");

@@ -1,5 +1,14 @@
 module Admin
   class SettingsController < BaseController
+    SETTINGS_TABS = %w[
+      datos-generales
+      pagina-de-reservas
+      diseno-web
+      cuentas-de-cobro
+      horarios-de-atencion
+      fechas-no-laborables
+    ].freeze
+
     def show
       prepare_settings
     end
@@ -12,7 +21,7 @@ module Admin
         Admin::SyncPaymentAccounts.call(@business, payment_accounts_params) if params[:payment_accounts].present?
         SuperAdmin::SyncBusinessAvailability.call(@business, availability_rules_params)
       end
-      redirect_to admin_settings_path, notice: "Configuración actualizada."
+      redirect_to admin_settings_path(anchor: settings_tab), notice: "Configuración actualizada."
     rescue ActiveRecord::RecordInvalid, ArgumentError => error
       prepare_settings
       flash.now[:alert] = error.message
@@ -21,6 +30,7 @@ module Admin
 
     private
       def prepare_settings
+        @settings_active_tab = settings_tab || SETTINGS_TABS.first
         @settings_business_values = settings_business_values
         @settings_booking_page_preferences = settings_booking_page_preferences
         @settings_payment_accounts = settings_payment_accounts
@@ -191,6 +201,11 @@ module Admin
         return if value.blank?
 
         value.respond_to?(:strftime) ? value.strftime("%H:%M") : value.to_s
+      end
+
+      def settings_tab
+        tab = params[:settings_tab].to_s
+        tab if SETTINGS_TABS.include?(tab)
       end
   end
 end

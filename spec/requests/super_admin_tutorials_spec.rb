@@ -52,6 +52,74 @@ RSpec.describe "Super admin tutorials", type: :request do
     get super_admin_tutorials_path, headers: browser_headers
 
     expect(response).to redirect_to(root_path)
+
+    patch reorder_super_admin_tutorials_path,
+      params: { tutorial_ids: [] },
+      as: :json,
+      headers: browser_headers
+
+    expect(response).to redirect_to(root_path)
+  end
+
+  it "keeps usage below tutorials in the super admin navigation" do
+    super_admin = create_user(role: :super_admin, email_prefix: "tutorials-navigation")
+
+    sign_in(super_admin)
+    get super_admin_tutorials_path, headers: browser_headers
+
+    document = Nokogiri::HTML(response.body)
+    navigation_links = document.css("aside nav a").map { |link| link["href"] }
+    tutorial_link = document.at_css("aside nav a[href='#{super_admin_tutorials_path}']")
+
+    expect(navigation_links).to eq([
+      super_admin_businesses_path,
+      super_admin_billing_path,
+      super_admin_whatsapp_path,
+      super_admin_tutorials_path,
+      super_admin_usage_path
+    ])
+    expect(tutorial_link.at_css("svg")).to be_present
+    expect(tutorial_link.text).not_to include("▶")
+  end
+
+  it "persists the tutorial order selected by a super admin" do
+    super_admin = create_user(role: :super_admin, email_prefix: "tutorials-order")
+    first_tutorial = Tutorial.create!(title: "Primer tutorial", video_url: "https://example.com/first", sort_order: 0)
+    second_tutorial = Tutorial.create!(title: "Segundo tutorial", video_url: "https://example.com/second", sort_order: 1)
+    third_tutorial = Tutorial.create!(title: "Tercer tutorial", video_url: "https://example.com/third", sort_order: 2)
+
+    sign_in(super_admin)
+    patch reorder_super_admin_tutorials_path,
+      params: { tutorial_ids: [ third_tutorial.id, first_tutorial.id, second_tutorial.id ] },
+      as: :json,
+      headers: browser_headers
+
+    expect(response).to have_http_status(:no_content)
+    expect(Tutorial.ordered.pluck(:id)).to eq([ third_tutorial.id, first_tutorial.id, second_tutorial.id ])
+
+    get super_admin_tutorials_path, headers: browser_headers
+
+    document = Nokogiri::HTML(response.body)
+    expect(document.css("[data-tutorial-sort-target='item']").map { |item| item["data-tutorial-id"].to_i }).to eq([ third_tutorial.id, first_tutorial.id, second_tutorial.id ])
+    expect(document.css("[data-tutorial-sort-handle]").size).to eq(3)
+  end
+
+  it "rejects incomplete tutorial orders without changing the current order" do
+    super_admin = create_user(role: :super_admin, email_prefix: "tutorials-invalid-order")
+    first_tutorial = Tutorial.create!(title: "Primer tutorial", video_url: "https://example.com/first", sort_order: 0)
+    second_tutorial = Tutorial.create!(title: "Segundo tutorial", video_url: "https://example.com/second", sort_order: 1)
+    initial_order = Tutorial.ordered.pluck(:id)
+
+    sign_in(super_admin)
+    patch reorder_super_admin_tutorials_path,
+      params: { tutorial_ids: [ first_tutorial.id, first_tutorial.id ] },
+      as: :json,
+      headers: browser_headers
+
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(response.parsed_body.fetch("error")).to eq("El orden de tutoriales no es válido.")
+    expect(Tutorial.ordered.pluck(:id)).to eq(initial_order)
+    expect(second_tutorial.reload.sort_order).to eq(1)
   end
 
   private

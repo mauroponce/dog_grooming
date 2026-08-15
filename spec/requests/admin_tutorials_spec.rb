@@ -6,8 +6,9 @@ RSpec.describe "Admin tutorials", type: :request do
 
   it "shows Super Admin tutorials in the left navigation and embeds the selected video" do
     admin, = create_admin_with_business
-    first_tutorial = Tutorial.create!(title: "Configurar tu página de reservas", video_url: "https://www.loom.com/share/c260f183787c4d5ab493571d4fd1bab3")
-    second_tutorial = Tutorial.create!(title: "Gestionar señas", video_url: "https://vimeo.com/987654")
+    first_tutorial = Tutorial.create!(title: "Configurar tu página de reservas", video_url: "https://www.loom.com/share/c260f183787c4d5ab493571d4fd1bab3", sort_order: 2)
+    second_tutorial = Tutorial.create!(title: "Gestionar señas", video_url: "https://vimeo.com/987654", sort_order: 0)
+    third_tutorial = Tutorial.create!(title: "Organizar la agenda", video_url: "https://vimeo.com/123456", sort_order: 1)
 
     sign_in(admin)
     get admin_tutorials_path(tutorial_id: first_tutorial.id), headers: browser_headers
@@ -21,7 +22,9 @@ RSpec.describe "Admin tutorials", type: :request do
     expect(response.body).not_to include("Encontrá guías en video para configurar y aprovechar las herramientas de tu negocio.")
     expect(response.body).to include(first_tutorial.title)
     expect(response.body).to include(second_tutorial.title)
+    expect(response.body).to include(third_tutorial.title)
     expect(navigation).to be_present
+    expect(navigation.css(".tutorials-navigation-link").map(&:text)).to eq([ second_tutorial.title, third_tutorial.title, first_tutorial.title ])
     expect(document.at_css(".tutorials-layout").element_children.first.name).to eq("aside")
     expect(navigation.at_css("a[href='#{admin_tutorials_path(tutorial_id: first_tutorial.id)}']")["class"]).to include("is-active")
     expect(document.at_css(".tutorials-video-frame")["src"]).to eq("https://www.loom.com/embed/c260f183787c4d5ab493571d4fd1bab3")
