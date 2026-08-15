@@ -329,7 +329,6 @@ class Business < ApplicationRecord
   has_many :customer_profiles, dependent: :destroy
   has_many :customer_portal_access_tokens, dependent: :destroy
   has_many :provider_events, dependent: :destroy
-  has_many :incoming_whatsapp_events, dependent: :nullify
   has_many :ai_api_usage_events, dependent: :nullify
   has_many :ai_chat_conversations, dependent: :destroy
   has_many :ai_context_imports, dependent: :destroy
@@ -374,7 +373,7 @@ class Business < ApplicationRecord
     numericality: { only_integer: true, greater_than_or_equal_to: 0, less_than_or_equal_to: 168 }
   validate :logo_file_is_valid
   validate :preferences_are_valid
-  normalizes :city, :province, :neighborhood, :address, :address_details, :contact_phone, :phone, :whatsapp_phone, :legal_name, :slogan, :public_headline, :public_email, :instagram_url, :website_url, :ai_context, :public_primary_color, :public_secondary_color, :public_accent_color, :public_font_style, :public_custom_css, :public_custom_html, :public_category_custom_html, :whatsapp_notifications_phone, with: ->(value) { value.to_s.strip.presence }
+  normalizes :city, :province, :neighborhood, :address, :address_details, :contact_phone, :phone, :whatsapp_phone, :legal_name, :slogan, :public_headline, :public_email, :instagram_url, :website_url, :ai_context, :public_primary_color, :public_secondary_color, :public_accent_color, :public_font_style, :public_custom_css, :public_custom_html, :public_category_custom_html, with: ->(value) { value.to_s.strip.presence }
   normalizes :custom_domain, with: ->(value) { Business.normalize_custom_domain(value) }
 
   def self.slug_for(name)
@@ -553,17 +552,6 @@ class Business < ApplicationRecord
     return false unless AI_CHAT_PUBLICLY_ENABLED
 
     access_active? && chatbot_enabled? && ai_context.present? && Ai::GeminiClient.available?
-  end
-
-  def owner_whatsapp_notifications_ready?
-    whatsapp_notifications_enabled? &&
-      whatsapp_notifications_phone.present? &&
-      whatsapp_opted_in_at.present? &&
-      whatsapp_opted_out_at.blank?
-  end
-
-  def owner_whatsapp_recipient
-    PhoneNormalizer.normalize(whatsapp_notifications_phone)
   end
 
   def preferences_with_defaults

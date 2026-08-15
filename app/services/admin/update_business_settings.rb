@@ -54,10 +54,6 @@ module Admin
           phone: contact_phone,
           whatsapp_phone: contact_phone,
           instagram_url: instagram_url,
-          whatsapp_notifications_enabled: true,
-          whatsapp_notifications_phone: PhoneNormalizer.normalize(contact_phone),
-          whatsapp_opted_in_at: business.whatsapp_opted_in_at || Time.current,
-          whatsapp_opt_in_source: business.whatsapp_opt_in_source.presence || "admin",
           address: address,
           address_details: address_details,
           latitude: latitude,
@@ -247,7 +243,7 @@ module Admin
         [
           "Cuenta comercial de Dog Grooming actualizada desde admin.",
           instagram_url.present? ? "Instagram del negocio: #{instagram_url}." : nil,
-          "WhatsApp es el canal principal para coordinación comercial y alertas operativas al dueño."
+          "Las alertas operativas se envían por email al dueño."
         ].compact.join("\n")
       end
 

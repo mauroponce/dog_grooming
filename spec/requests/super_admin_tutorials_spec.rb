@@ -74,7 +74,6 @@ RSpec.describe "Super admin tutorials", type: :request do
     expect(navigation_links).to eq([
       super_admin_businesses_path,
       super_admin_billing_path,
-      super_admin_whatsapp_path,
       super_admin_tutorials_path,
       super_admin_usage_path
     ])

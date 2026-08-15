@@ -6,7 +6,6 @@ class SendBusinessDailyDigestJob < ApplicationJob
     scope.find_each do |business|
       FollowUps::GenerateService.call(business: business)
       BusinessMailer.daily_digest(business).deliver_later if business.email_daily_digest?
-      WhatsApp::DailySummaryNotification.new(business).deliver
     end
   end
 
@@ -15,6 +14,5 @@ class SendBusinessDailyDigestJob < ApplicationJob
       Business
         .where(disabled_at: nil)
         .where(email_daily_digest: true)
-        .or(Business.where(disabled_at: nil, whatsapp_notify_daily_summary: true))
     end
 end

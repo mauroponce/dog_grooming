@@ -196,7 +196,7 @@ dog-grooming/
 
 ## Cobros de suscripción
 
-El super admin configura el Alias, CBU/CVU, titular y CUIT/CUIL de la cuenta receptora desde `/super_admin/cobros`. Esos datos se muestran al negocio en `/admin/suscripcion` y se incluyen en los recordatorios de pago por email y WhatsApp. Para configurar un respaldo por entorno usá `DOG_GROOMING_BILLING_*`; la pantalla es la fuente de configuración habitual.
+El super admin configura el Alias, CBU/CVU, titular y CUIT/CUIL de la cuenta receptora desde `/super_admin/cobros`. Esos datos se muestran al negocio en `/admin/suscripcion` y se incluyen en los recordatorios de pago por email. Para configurar un respaldo por entorno usá `DOG_GROOMING_BILLING_*`; la pantalla es la fuente de configuración habitual.
 
 Los nombres `R2_*` siguen soportados como compatibilidad.
 

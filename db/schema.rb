@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_15_100000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_15_180000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -486,15 +486,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_100000) do
     t.datetime "trial_started_at", null: false
     t.datetime "updated_at", null: false
     t.string "website_url"
-    t.boolean "whatsapp_notifications_enabled", default: true, null: false
-    t.string "whatsapp_notifications_phone"
-    t.boolean "whatsapp_notify_cancellations", default: true, null: false
-    t.boolean "whatsapp_notify_daily_summary", default: false, null: false
-    t.boolean "whatsapp_notify_deposit_proofs", default: true, null: false
-    t.boolean "whatsapp_notify_pending_bookings", default: true, null: false
-    t.string "whatsapp_opt_in_source"
-    t.datetime "whatsapp_opted_in_at"
-    t.datetime "whatsapp_opted_out_at"
     t.string "whatsapp_phone"
     t.index "lower((slug)::text)", name: "index_businesses_on_lower_slug", unique: true
     t.index ["billing_enabled"], name: "index_businesses_on_billing_enabled"
@@ -507,8 +498,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_100000) do
     t.index ["public_site_mode"], name: "index_businesses_on_public_site_mode"
     t.index ["public_template"], name: "index_businesses_on_public_template"
     t.index ["service_catalog_category_id"], name: "index_businesses_on_service_catalog_category_id"
-    t.index ["whatsapp_notifications_enabled"], name: "index_businesses_on_whatsapp_notifications_enabled"
-    t.index ["whatsapp_notifications_phone"], name: "index_businesses_on_whatsapp_notifications_phone"
   end
 
   create_table "campaign_links", force: :cascade do |t|
@@ -804,22 +793,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_100000) do
     t.datetime "updated_at", null: false
     t.index ["business_id", "date"], name: "index_holidays_on_business_id_and_date", unique: true
     t.index ["business_id"], name: "index_holidays_on_business_id"
-  end
-
-  create_table "incoming_whatsapp_events", force: :cascade do |t|
-    t.bigint "business_id"
-    t.datetime "created_at", null: false
-    t.string "event_type", null: false
-    t.string "instance_name", null: false
-    t.text "message"
-    t.jsonb "payload", default: {}, null: false
-    t.datetime "received_at", null: false
-    t.string "sender"
-    t.datetime "updated_at", null: false
-    t.index ["business_id"], name: "index_incoming_whatsapp_events_on_business_id"
-    t.index ["created_at"], name: "index_incoming_whatsapp_events_on_created_at"
-    t.index ["instance_name", "event_type"], name: "index_incoming_whatsapp_events_on_instance_name_and_event_type"
-    t.index ["sender"], name: "index_incoming_whatsapp_events_on_sender"
   end
 
   create_table "mercado_pago_connections", force: :cascade do |t|
@@ -1512,7 +1485,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_100000) do
   add_foreign_key "gift_cards", "services"
   add_foreign_key "gift_cards", "users", column: "created_by_id"
   add_foreign_key "holidays", "businesses"
-  add_foreign_key "incoming_whatsapp_events", "businesses"
   add_foreign_key "mercado_pago_connections", "businesses"
   add_foreign_key "notification_deliveries", "appointments"
   add_foreign_key "notification_deliveries", "businesses"

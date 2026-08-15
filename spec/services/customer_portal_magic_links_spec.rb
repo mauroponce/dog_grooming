@@ -60,25 +60,12 @@ RSpec.describe "Customer portal magic links" do
       expect(CustomerPortalAccessToken.count).to eq(1)
     end
 
-    it "does not send a portal link by WhatsApp when a phone is provided" do
+    it "requires an email address to send a portal link" do
       business = create_business
-      customer = create_customer(business, email: "julieta@example.com")
-      whatsapp_client = instance_double(
-        WhatsApp::EvolutionClient,
-        configured?: true,
-        send_text: { success: true, body: { "key" => { "id" => "whatsapp-123" } } }
-      )
-
-      result = described_class.call(
-        business: business,
-        contact: "+54 9 11 1111-1111",
-        whatsapp_client: whatsapp_client
-      )
+      result = described_class.call(business: business, contact: "+54 9 11 1111-1111")
 
       expect(result.sent).to eq(false)
       expect(result.channel).to eq("email")
-      expect(whatsapp_client).not_to have_received(:send_text)
-      expect(NotificationDelivery.where(channel: "whatsapp_evolution")).to be_empty
     end
   end
 

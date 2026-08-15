@@ -13,9 +13,8 @@ module Billing
       new(...).call
     end
 
-    def initialize(today: Time.zone.today, whatsapp_notifier: Billing::WhatsAppNotifier)
+    def initialize(today: Time.zone.today)
       @today = today
-      @whatsapp_notifier = whatsapp_notifier
     end
 
     def call
@@ -104,7 +103,6 @@ module Billing
 
       def send_reminder!(invoice, reminder_type)
         send_email_reminder!(invoice, reminder_type)
-        send_whatsapp_reminder!(invoice, reminder_type)
       end
 
       def send_email_reminder!(invoice, reminder_type)
@@ -112,24 +110,6 @@ module Billing
 
         BillingMailer.reminder(invoice, reminder_type).deliver_later
         create_reminder_record!(invoice, reminder_type, "email", invoice.business.owner.email_address)
-      end
-
-      def send_whatsapp_reminder!(invoice, reminder_type)
-        return unless WhatsApp::AutomatedNotifications.enabled?
-
-        reminder = invoice.billing_reminders.find_or_initialize_by(reminder_type: reminder_type, channel: "whatsapp")
-        return if reminder.persisted? && reminder.sent?
-
-        result = @whatsapp_notifier.call(invoice: invoice, reminder_type: reminder_type)
-        return if result.status == :skipped
-
-        reminder.assign_attributes(
-          business: invoice.business,
-          recipient: result.recipient,
-          sent_at: Time.current,
-          status: result.sent? ? "sent" : "failed"
-        )
-        reminder.save!
       end
 
       def reminder_sent?(invoice, reminder_type, channel)

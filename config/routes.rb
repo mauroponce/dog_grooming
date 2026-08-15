@@ -183,11 +183,6 @@ Rails.application.routes.draw do
       patch "comprobantes/:proof_id/rechazar", to: "billing#reject_payment_proof", as: :reject_payment_proof
     end
     resource :usage, only: :show, path: "uso", controller: "usage"
-    resource :whatsapp, only: :show, controller: "whatsapp" do
-      post :setup_evolution
-      post :refresh_status
-      post :connect
-    end
     resources :tutorials, path: "tutoriales" do
       collection do
         patch :reorder, path: "ordenar"
@@ -216,14 +211,7 @@ Rails.application.routes.draw do
     resource :impersonation, only: :destroy
   end
 
-  get "superadmin/whatsapp" => redirect("/super_admin/whatsapp")
-  post "superadmin/whatsapp/setup_evolution" => "super_admin/whatsapp#setup_evolution"
-  post "superadmin/whatsapp/refresh_status" => "super_admin/whatsapp#refresh_status"
-  post "superadmin/whatsapp/connect" => "super_admin/whatsapp#connect"
-
   namespace :webhooks do
-    post "evolution-whatsapp" => "evolution_whatsapp#create", as: :evolution_whatsapp
-    post "evolution-whatsapp/:event_slug" => "evolution_whatsapp#create", as: :evolution_whatsapp_event
     post "mercado-pago" => "mercado_pago#create", as: :mercado_pago
   end
 

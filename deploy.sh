@@ -109,7 +109,7 @@ wait_for_url() {
 }
 
 "${COMPOSE[@]}" config --quiet
-"${COMPOSE[@]}" up -d db evolution-db evolution-redis evolution-api
+"${COMPOSE[@]}" up -d db
 "${COMPOSE[@]}" build web
 "${COMPOSE[@]}" run --rm web bin/deploy_migrate
 "${COMPOSE[@]}" up -d --remove-orphans

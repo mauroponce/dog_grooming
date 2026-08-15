@@ -1,12 +1,11 @@
 require "rails_helper"
 
 RSpec.describe SendCustomerBookingConfirmationJob do
-  it "sends the confirmed-booking email once and never contacts WhatsApp" do
+  it "sends the confirmed-booking email once" do
     business, customer, appointment = create_confirmed_appointment
     customer_delivery = instance_double(ActionMailer::MessageDelivery, deliver_later: true)
 
     expect(AppointmentMailer).to receive(:customer_booking_confirmed).with(appointment).and_return(customer_delivery)
-    expect(WhatsApp::EvolutionClient).not_to receive(:new)
 
     described_class.perform_now(appointment)
     described_class.perform_now(appointment)
@@ -15,7 +14,6 @@ RSpec.describe SendCustomerBookingConfirmationJob do
     expect(appointment.notification_deliveries.where(template: "customer_booking_confirmed")).to contain_exactly(
       have_attributes(channel: "email", recipient: customer.email, status: "queued")
     )
-    expect(business.notification_deliveries.where(channel: "whatsapp")).to be_empty
   end
 
   it "also notifies the business by email when Mercado Pago confirms the turn" do

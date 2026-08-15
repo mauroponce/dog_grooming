@@ -12,7 +12,7 @@ RSpec.describe "Super admin businesses", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Negocios registrados")
     expect(response.body).to include("Nueva cuenta")
-    expect(response.body).to include("WhatsApp API")
+    expect(response.body).not_to include("WhatsApp API")
     expect(response.body).to include("Tutoriales")
     expect(response.body).not_to include("Panel de control Dog Grooming")
     expect(response.body).not_to include("Tabla compacta para operar cuentas, trials, setup y soporte")
@@ -82,7 +82,7 @@ RSpec.describe "Super admin businesses", type: :request do
     end
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("http://localhost:3000/#{business.slug}")
+    expect(response.body).to include("http://localhost:3003/#{business.slug}")
     expect(response.body).to include("Entrar")
     expect(response.body).to include("Editar")
     expect(response.body).to include("Eliminar")
@@ -162,7 +162,6 @@ RSpec.describe "Super admin businesses", type: :request do
 	    expect(owner_membership.first_name).to eq("Mauro")
 	    expect(owner_membership.last_name).to eq("Ponce")
 	    expect(business.contact_phone).to eq("+54 9 11 5555-1234")
-    expect(business.whatsapp_notifications_enabled).to be(true)
     expect(business.instagram_url).to eq("https://www.instagram.com/aurawelcome")
     expect(business.slogan).to eq("Belleza facial con agenda simple")
     expect(business.address).to eq("Av. Corrientes 1234, CABA")
@@ -337,7 +336,6 @@ RSpec.describe "Super admin businesses", type: :request do
     expect(business.name).to eq("Edited Center")
     expect(business.billing_enabled).to be(false)
     expect(business.contact_phone).to eq("+54 9 11 5555-4321")
-    expect(business.whatsapp_notifications_enabled).to be(true)
     expect(business.instagram_url).to eq("https://www.instagram.com/edited")
     expect(business.slogan).to eq("Turnos claros, belleza real")
     expect(business.address).to eq("Av. Santa Fe 456, CABA")

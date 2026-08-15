@@ -56,10 +56,6 @@ module SuperAdmin
           phone: contact_phone,
           whatsapp_phone: contact_phone,
           instagram_url: instagram_url,
-          whatsapp_notifications_enabled: true,
-          whatsapp_notifications_phone: PhoneNormalizer.normalize(contact_phone),
-          whatsapp_opted_in_at: business.whatsapp_opted_in_at || Time.current,
-          whatsapp_opt_in_source: business.whatsapp_opt_in_source.presence || "superadmin",
           custom_domain: params.key?(:custom_domain) ? params[:custom_domain] : business.custom_domain,
           custom_domain_enabled: params.key?(:custom_domain_enabled) ? custom_domain_enabled? : business.custom_domain_enabled?,
           address: address,
@@ -243,7 +239,7 @@ module SuperAdmin
           "Cuenta comercial de Dog Grooming editada desde superadmin.",
           "El catálogo de servicios se administra desde el workspace del negocio.",
           instagram_url.present? ? "Instagram del negocio: #{instagram_url}." : nil,
-          "WhatsApp es el canal principal para coordinación comercial y alertas operativas al dueño.",
+          "Las alertas operativas se envían por email al dueño.",
           "Los mensajes a clientes se siguen enviando manualmente con enlaces prearmados."
         ].compact.join("\n")
       end

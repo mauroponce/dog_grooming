@@ -18,7 +18,6 @@ class SendCustomerBookingConfirmationJob < ApplicationJob
       ) { BusinessMailer.booking_confirmed_by_mercado_pago(appointment) }
     end
 
-    send_whatsapp_confirmation!(appointment) if WhatsApp::AutomatedNotifications.enabled?
   end
 
   private
@@ -45,56 +44,4 @@ class SendCustomerBookingConfirmationJob < ApplicationJob
       yield.deliver_later if delivery
     end
 
-    def send_whatsapp_confirmation!(appointment)
-      return unless appointment.customer_phone.present?
-      client = WhatsApp::EvolutionClient.new
-      return unless client.configured?
-
-      message = WhatsApp::MessageBuilder.new(
-        business: appointment.business,
-        template_key: "booking_confirmation",
-        booking: appointment,
-        customer: appointment.customer_profile,
-        service: appointment.service,
-        professional: appointment.employee_membership
-      ).message
-      return if message.blank?
-
-      delivery = reserve_whatsapp_delivery!(appointment)
-      return unless delivery
-
-      response = client.send_text(
-        number: appointment.customer_phone,
-        text: message
-      )
-
-      delivery.update!(
-        status: response[:success] ? "sent" : "failed",
-        sent_at: Time.current,
-        payload: response.slice(:status, :sanitized_body, :error)
-      )
-    rescue StandardError => error
-      delivery&.update!(status: "failed", error_message: error.message) if delivery&.persisted?
-      Rails.logger.warn("Customer booking WhatsApp confirmation failed for appointment #{appointment.id}: #{error.class} #{error.message}")
-    end
-
-    def reserve_whatsapp_delivery!(appointment)
-      appointment.with_lock do
-        already_delivered = appointment.notification_deliveries.where(
-          channel: "whatsapp",
-          recipient: appointment.customer_phone,
-          template: "booking_confirmation",
-          status: %w[queued sent]
-        ).exists?
-        next if already_delivered
-
-        appointment.notification_deliveries.create!(
-          business: appointment.business,
-          channel: "whatsapp",
-          recipient: appointment.customer_phone,
-          template: "booking_confirmation",
-          status: "queued"
-        )
-      end
-    end
 end
