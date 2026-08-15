@@ -853,13 +853,26 @@ RSpec.describe "Admin shell", type: :request do
 
     document = Nokogiri::HTML(response.body)
     actions = document.at_css("[data-mercado-pago-connection-actions]")
-    disconnect_link = actions.at_css("a")
+    disconnect_button = actions.at_css("button")
 
     expect(response).to have_http_status(:ok)
-    expect(actions.css("a").map { |link| link.text.squish }).to eq([ "Desconectar" ])
-    expect(disconnect_link["href"]).to eq(admin_mercado_pago_connection_path)
-    expect(disconnect_link["data-turbo-method"]).to eq("delete")
-    expect(disconnect_link["data-turbo-confirm"]).to eq("¿Desconectar Mercado Pago?")
+    expect(actions.css("button").map { |button| button.text.squish }).to eq([ "Desconectar" ])
+    expect(disconnect_button["type"]).to eq("submit")
+    expect(disconnect_button["form"]).to eq("mercado-pago-disconnect-form")
+    expect(document.at_css("#mercado-pago-disconnect-form")["action"]).to eq(admin_mercado_pago_connection_path)
+    expect(document.at_css("#mercado-pago-disconnect-form")["data-turbo"]).to eq("false")
+  end
+
+  it "disconnects Mercado Pago and returns to payment accounts" do
+    user, business = create_admin_with_business
+    connection = business.create_mercado_pago_connection!(access_token: "mp-token", connected_at: Time.current)
+
+    sign_in(user)
+    delete admin_mercado_pago_connection_path, headers: browser_headers
+
+    expect(response).to redirect_to(admin_settings_path(settings_tab: "cuentas-de-cobro", anchor: "cuentas-de-cobro"))
+    expect(connection.reload).not_to be_connected
+    expect(business.reload.enabled_payment_methods).not_to include("mercado_pago")
   end
 
   it "does not allow an admin to clear the business WhatsApp or owner email" do

@@ -1605,6 +1605,9 @@
 <%= form_with url: admin_non_working_periods_path, method: :post, id: "non-working-period-form", class: "hidden" do %>
 <% end %>
 
+<%= form_with url: admin_mercado_pago_connection_path, method: :delete, id: "mercado-pago-disconnect-form", class: "hidden", data: { turbo: false, mercado_pago_disconnect_form: true } do %>
+<% end %>
+
 <section class="settings-shell">
   <%= form_with url: admin_settings_path, method: :patch, multipart: true, id: "admin-settings-form", data: { turbo: false, settings_schedule_form: true } do |_form| %>
     <%= tag.input type: "hidden", value: @settings_active_tab, id: "settings-active-tab", data: { settings_active_tab: true } %>
@@ -2178,7 +2181,7 @@
 
                   <div class="flex shrink-0 flex-col gap-2" data-mercado-pago-connection-actions>
                     <% if mercado_pago_connection&.connected? %>
-                      <%= link_to "Desconectar", admin_mercado_pago_connection_path, data: { turbo_method: :delete, turbo_confirm: "¿Desconectar Mercado Pago?" }, class: "settings-payment-remove text-center" %>
+                      <button type="submit" form="mercado-pago-disconnect-form" class="settings-payment-remove text-center">Desconectar</button>
                     <% elsif mercado_pago_configured %>
                       <%= link_to "Conectar", connect_admin_mercado_pago_connection_path, class: "settings-button settings-button-primary" %>
                     <% else %>
@@ -2444,6 +2447,7 @@
 <script>
   (() => {
     const form = document.getElementById("admin-settings-form");
+    const mercadoPagoDisconnectForm = document.getElementById("mercado-pago-disconnect-form");
     const activeSettingsTabInput = form?.querySelector("[data-settings-active-tab]");
     const navLinks = Array.from(document.querySelectorAll("[data-settings-nav-link]"));
     const settingsPanels = Array.from(document.querySelectorAll("[data-settings-panel]"));
@@ -2941,6 +2945,10 @@
         instagramInput.value = handle ? `https://www.instagram.com/${handle}` : "";
       }
       scheduleRows.forEach(syncScheduleRow);
+    });
+
+    mercadoPagoDisconnectForm?.addEventListener("submit", (event) => {
+      if (!window.confirm("¿Desconectar Mercado Pago?")) event.preventDefault();
     });
   })();
 </script>
