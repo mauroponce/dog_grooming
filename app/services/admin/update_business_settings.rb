@@ -241,7 +241,7 @@ module Admin
 
       def ai_context
         [
-          "Cuenta comercial de Dog Grooming actualizada desde admin.",
+          "Cuenta comercial de Cita.pet actualizada desde admin.",
           instagram_url.present? ? "Instagram del negocio: #{instagram_url}." : nil,
           "Las alertas operativas se envían por email al dueño."
         ].compact.join("\n")

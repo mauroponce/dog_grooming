@@ -1,7 +1,7 @@
 <% content_for :email_preheader, "La campaña #{@campaign.name} ya quedó lista para contactar clientas." %>
 <% content_for :email_badge, "Ventas" %>
 <% content_for :email_status, "Campaña lista" %>
-<% content_for :email_footer_note, "Este email fue enviado porque se generó una campaña comercial en Dog Grooming." %>
+<% content_for :email_footer_note, "Este email fue enviado porque se generó una campaña comercial en Cita.pet." %>
 
 <h1>Campaña lista para contactar</h1>
 
@@ -19,5 +19,5 @@
   </div>
 </div>
 
-<p>Dog Grooming prepara los mensajes, pero vos decidís cuándo enviarlos por WhatsApp.</p>
+<p>Cita.pet prepara los mensajes, pero vos decidís cuándo enviarlos por WhatsApp.</p>
 <p><%= link_to "Abrir campaña", @url, class: "email-button button" %></p>

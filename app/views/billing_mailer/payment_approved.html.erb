@@ -1,10 +1,10 @@
-<% content_for :email_preheader, "Tu pago de Dog Grooming fue aprobado." %>
+<% content_for :email_preheader, "Tu pago de Cita.pet fue aprobado." %>
 <% content_for :email_badge, "Facturación" %>
 <% content_for :email_status, "Pago aprobado" %>
-<% content_for :email_footer_note, "Este email fue enviado por el estado de facturación de tu cuenta Dog Grooming." %>
+<% content_for :email_footer_note, "Este email fue enviado por el estado de facturación de tu cuenta Cita.pet." %>
 
 <h1>Pago aprobado</h1>
 
-<p>Tu pago de Dog Grooming fue aprobado.</p>
+<p>Tu pago de Cita.pet fue aprobado.</p>
 <p>Tu cuenta está activa hasta el <strong><%= CustomerDateFormatter.date_label(@invoice.period_end) %></strong>.</p>
 <p><%= link_to "Ir a facturación", @billing_url, class: "email-button button" %></p>

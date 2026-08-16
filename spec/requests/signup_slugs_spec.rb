@@ -13,7 +13,7 @@ RSpec.describe "Signup slugs", type: :request do
       payload = JSON.parse(response.body)
       expect(payload).to include(
         "available" => false,
-        "message" => "Por ahora creamos las cuentas desde Dog Grooming."
+        "message" => "Por ahora creamos las cuentas desde Cita.pet."
       )
     end
   end
@@ -28,7 +28,7 @@ RSpec.describe "Signup slugs", type: :request do
       payload = JSON.parse(response.body)
       expect(payload).to include(
         "available" => false,
-        "message" => "Por ahora creamos las cuentas desde Dog Grooming."
+        "message" => "Por ahora creamos las cuentas desde Cita.pet."
       )
     end
 
@@ -39,7 +39,7 @@ RSpec.describe "Signup slugs", type: :request do
       payload = JSON.parse(response.body)
       expect(payload).to include(
         "available" => false,
-        "message" => "Por ahora creamos las cuentas desde Dog Grooming."
+        "message" => "Por ahora creamos las cuentas desde Cita.pet."
       )
     end
   end

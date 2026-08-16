@@ -1,12 +1,12 @@
 # Operaciones de producción
 
-Esta guía corresponde exclusivamente a Dog Grooming. Los valores de dominio, servidor y registro son placeholders deliberados: deben definirse antes del primer deploy.
+Esta guía corresponde exclusivamente a Cita.pet. Los valores de dominio, servidor y registro son placeholders deliberados: deben definirse antes del primer deploy.
 
 ## Valores a definir antes del deploy
 
-- `KAMAL_HOST`: IP o hostname del servidor de Dog Grooming.
-- `APP_HOST=dog-grooming.example.com` y `APP_WWW_HOST=www.dog-grooming.example.com` (o los dominios reales).
-- `APP_HOSTS=dog-grooming.example.com,www.dog-grooming.example.com` más la IP de diagnóstico si hiciera falta.
+- `KAMAL_HOST`: IP o hostname del servidor de Cita.pet.
+- `APP_HOST=cita.pet` y `APP_WWW_HOST=www.cita.pet` (o los dominios reales).
+- `APP_HOSTS=cita.pet,www.cita.pet` más la IP de diagnóstico si hiciera falta.
 - `DOG_GROOMING_DATABASE_PASSWORD`: contraseña nueva para PostgreSQL de producción.
 - Credenciales de Mercado Pago y Resend propias.
 - Los dos buckets R2 aislados: `dog-grooming` y `dog-grooming-service-images`.
@@ -21,7 +21,7 @@ No reutilices el servidor, dominio, base de datos, volúmenes ni buckets de otra
 KAMAL_HOST=server.example.com
 KAMAL_IMAGE=ghcr.io/your-org/dog_grooming
 DOG_GROOMING_DATABASE_PASSWORD=una_contrasena_larga_y_unica
-APP_HOST=dog-grooming.example.com
+APP_HOST=cita.pet
 APP_PROTOCOL=https
 ```
 
@@ -56,14 +56,14 @@ Antes de automatizarlo, verificá que el token R2 pueda leer, escribir y listar 
 Para email productivo, verificá tu dominio en Resend y configurá, por ejemplo:
 
 ```sh
-MAIL_FROM="Dog Grooming <notificaciones@tu-dominio.com>"
-RESEND_FROM="Dog Grooming <notificaciones@tu-dominio.com>"
+MAIL_FROM="Cita.pet <notificaciones@tu-dominio.com>"
+RESEND_FROM="Cita.pet <notificaciones@tu-dominio.com>"
 ```
 
 ## Comprobación posterior
 
 ```sh
-curl -I --max-time 20 https://dog-grooming.example.com/up
+curl -I --max-time 20 https://cita.pet/up
 docker compose -f compose.production.yml ps
 docker compose -f compose.production.yml logs --tail=200 web
 ```

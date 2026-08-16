@@ -18,7 +18,7 @@ RSpec.describe "Admin tutorials", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Tutoriales")
-    expect(response.body).not_to include("Aprendé a usar Dog Grooming")
+    expect(response.body).not_to include("Aprendé a usar Cita.pet")
     expect(response.body).not_to include("Encontrá guías en video para configurar y aprovechar las herramientas de tu negocio.")
     expect(response.body).to include(first_tutorial.title)
     expect(response.body).to include(second_tutorial.title)

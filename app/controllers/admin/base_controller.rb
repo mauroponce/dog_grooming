@@ -10,6 +10,7 @@ module Admin
       "assistant_messages" => :dashboard?,
       "billing" => :billing?,
       "services" => :services?,
+      "extras" => :services?,
       "customer_profiles" => :customers?,
       "client_notes" => :customers?,
       "customer_reminders" => :customers?,

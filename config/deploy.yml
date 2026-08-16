@@ -7,7 +7,7 @@ image: <%= ENV.fetch("KAMAL_IMAGE", "mauroponce/dog_grooming") %>
 # Deploy to these servers.
 servers:
   web:
-    - <%= ENV.fetch("KAMAL_HOST", "dog-grooming.example.com") %>
+    - <%= ENV.fetch("KAMAL_HOST", "cita.pet") %>
 
 # Enable SSL auto certification via Let's Encrypt and allow for multiple apps on a single web server.
 # If used with Cloudflare, set encryption mode in SSL/TLS setting to "Full" to enable CF-to-app encryption.
@@ -18,7 +18,7 @@ servers:
 #
 proxy:
   ssl: true
-  host: <%= ENV.fetch("APP_HOST", "dog-grooming.example.com") %>
+  host: <%= ENV.fetch("APP_HOST", "cita.pet") %>
 
 # Where you keep your container images.
 registry:
@@ -58,9 +58,9 @@ env:
     # Run the Solid Queue Supervisor inside the web server's Puma process to do jobs.
     # When you start using multiple servers, you should split out job processing to a dedicated machine.
     SOLID_QUEUE_IN_PUMA: true
-    APP_HOST: "<%= ENV.fetch("APP_HOST", "dog-grooming.example.com") %>"
+    APP_HOST: "<%= ENV.fetch("APP_HOST", "cita.pet") %>"
     APP_PROTOCOL: "<%= ENV.fetch("APP_PROTOCOL", "https") %>"
-    APP_HOSTS: "<%= ENV.fetch("APP_HOSTS", "dog-grooming.example.com,www.dog-grooming.example.com") %>"
+    APP_HOSTS: "<%= ENV.fetch("APP_HOSTS", "cita.pet,www.cita.pet") %>"
     FORCE_SSL: "<%= ENV.fetch("FORCE_SSL", "true") %>"
     # El .env de desarrollo usa test; no debe cambiar el cobro del sitio público.
     MERCADO_PAGO_ENV: production
@@ -71,8 +71,8 @@ env:
     GEMINI_INPUT_USD_PER_1M_TOKENS: "<%= ENV.fetch("GEMINI_INPUT_USD_PER_1M_TOKENS", "0") %>"
     GEMINI_OUTPUT_USD_PER_1M_TOKENS: "<%= ENV.fetch("GEMINI_OUTPUT_USD_PER_1M_TOKENS", "0") %>"
     GEMINI_MONTHLY_BUDGET_USD: "<%= ENV.fetch("GEMINI_MONTHLY_BUDGET_USD", "0") %>"
-    MAIL_FROM: "<%= ENV.fetch("MAIL_FROM", "Dog Grooming <notificaciones@dog-grooming.example.com>") %>"
-    RESEND_FROM: "<%= ENV.fetch("RESEND_FROM", ENV.fetch("MAIL_FROM", "Dog Grooming <notificaciones@dog-grooming.example.com>")) %>"
+    MAIL_FROM: "<%= ENV.fetch("MAIL_FROM", "Cita.pet <notificaciones@cita.pet>") %>"
+    RESEND_FROM: "<%= ENV.fetch("RESEND_FROM", ENV.fetch("MAIL_FROM", "Cita.pet <notificaciones@cita.pet>")) %>"
     RESEND_ENDPOINT: "<%= ENV.fetch("RESEND_ENDPOINT", "https://api.resend.com/emails") %>"
     CLOUDFLARE_ACCOUNT_ID: "<%= ENV.fetch("CLOUDFLARE_ACCOUNT_ID", "3d50f50186c8c9cfd2dbe6157bdb82cf") %>"
     CLOUDFLARE_R2_BUCKET: "<%= ENV.fetch("CLOUDFLARE_R2_BUCKET", ENV.fetch("R2_BUCKET", "dog-grooming")) %>"
@@ -135,7 +135,7 @@ builder:
 accessories:
   db:
     image: postgres:16
-    host: <%= ENV.fetch("KAMAL_HOST", "dog-grooming.example.com") %>
+    host: <%= ENV.fetch("KAMAL_HOST", "cita.pet") %>
     port: "127.0.0.1:5432:5432"
     env:
       clear:

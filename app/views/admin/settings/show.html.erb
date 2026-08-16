@@ -1,5 +1,5 @@
 <% content_for :admin_full_bleed, true %>
-<% content_for :title, "Configuración · Dog Grooming" %>
+<% content_for :title, "Configuración · Cita.pet" %>
 
 <% business_values = @settings_business_values || {} %>
 <% business_search_address = Business.new(address: business_values[:address], neighborhood: business_values[:neighborhood], city: business_values[:city], province: business_values[:province]).location_search_address %>
@@ -1920,7 +1920,7 @@
                   <span class="settings-block-icon is-purple"><%= settings_icons.fetch(:clock).html_safe %></span>
                   <div>
                     <h3 class="settings-block-title">Asignación de turnos</h3>
-                    <p class="settings-block-copy">Elegí si el tutor puede seleccionar profesional o si Dog Grooming asigna automáticamente el mejor disponible.</p>
+                    <p class="settings-block-copy">Elegí si el tutor puede seleccionar profesional o si Cita.pet asigna automáticamente el mejor disponible.</p>
                   </div>
                 </div>
 

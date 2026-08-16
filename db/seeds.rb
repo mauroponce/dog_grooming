@@ -4,14 +4,14 @@ end
 
 class DemoSeeds
   DEFAULT_PASSWORD = ENV.fetch("DEMO_ADMIN_PASSWORD", "password123")
-  SUPER_ADMIN_EMAIL = ENV.fetch("SUPER_ADMIN_EMAIL", "admin@dog-grooming.test")
+  SUPER_ADMIN_EMAIL = ENV.fetch("SUPER_ADMIN_EMAIL", "admin@cita.pet.test")
   SUPER_ADMIN_PASSWORD = ENV.fetch("SUPER_ADMIN_PASSWORD", "12345678")
 
   DEMOS = [
     {
       slug: "patitas-grooming",
-      admin_email: "admin@patitas-grooming.dog-grooming.test",
-      name: "Patitas Dog Grooming",
+      admin_email: "admin@patitas-grooming.cita.pet.test",
+      name: "Patitas Cita.pet",
       business_kind: "business",
       industry: "dog_grooming",
       phone: "+5491123456712",
@@ -26,13 +26,13 @@ class DemoSeeds
         deposit_percentage: 50,
         deposit_alias: "patitas.grooming",
         deposit_account: "0000003100098765432101",
-        deposit_holder: "Patitas Dog Grooming",
+        deposit_holder: "Patitas Cita.pet",
         deposit_tax_id: "30-87654321-4",
         deposit_instructions: "Para reservar, transferí la seña y subí el comprobante. La peluquería canina confirma luego de revisarlo.",
         deposit_payment_link: "https://www.mercadopago.com.ar"
       },
       ai_context: [
-        "Patitas Dog Grooming usa la suscripción Dog Grooming: precio fijo mensual para operar reservas, equipo y pagos.",
+        "Patitas Cita.pet usa la suscripción Cita.pet: precio fijo mensual para operar reservas, equipo y pagos.",
         "La cuenta admin administra el negocio, la facturación, los permisos y la configuración sensible.",
         "La peluquería trabaja con bañeras, mesas de grooming, secadores y caniles que no pueden superponerse.",
         "Las groomers tienen permisos operativos distintos para turnos, comprobantes, tutores, mascotas, servicios y recursos.",
@@ -56,7 +56,7 @@ class DemoSeeds
       employees: [
         {
           name: "Valentina Suárez",
-          email: "valentina@patitas-grooming.dog-grooming.test",
+          email: "valentina@patitas-grooming.cita.pet.test",
           phone: "+5491111111301",
           specialty: "Baño y secado",
           branch_name: "Belgrano",
@@ -74,7 +74,7 @@ class DemoSeeds
         },
         {
           name: "Lucía Fernández",
-          email: "lucia@patitas-grooming.dog-grooming.test",
+          email: "lucia@patitas-grooming.cita.pet.test",
           phone: "+5491111111302",
           specialty: "Cortes de raza y styling",
           branch_name: "Belgrano",
@@ -92,7 +92,7 @@ class DemoSeeds
         },
         {
           name: "Martina Ríos",
-          email: "martina@patitas-grooming.dog-grooming.test",
+          email: "martina@patitas-grooming.cita.pet.test",
           phone: "+5491111111303",
           specialty: "Higiene y bienestar",
           branch_name: "Palermo",
@@ -110,7 +110,7 @@ class DemoSeeds
         },
         {
           name: "Rocío Benítez",
-          email: "rocio@patitas-grooming.dog-grooming.test",
+          email: "rocio@patitas-grooming.cita.pet.test",
           phone: "+5491111111304",
           specialty: "Deslanado y mantención",
           branch_name: "Palermo",
@@ -128,7 +128,7 @@ class DemoSeeds
         },
         {
           name: "Julieta Acosta",
-          email: "julieta@patitas-grooming.dog-grooming.test",
+          email: "julieta@patitas-grooming.cita.pet.test",
           phone: "+5491111111305",
           specialty: "Puppies y adaptación",
           branch_name: "Palermo",

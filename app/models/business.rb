@@ -2,7 +2,7 @@ class Business < ApplicationRecord
   include PurgesReplacedAttachedBlobs
 
   SUBSCRIPTION_DETAILS = {
-    name: "Suscripción Dog Grooming",
+    name: "Suscripción Cita.pet",
     description: "Reservas online para peluquerías caninas, con señas, comprobantes, agenda de mascotas y WhatsApp prearmado.",
     monthly_amount_cents: 2_500_000,
     trial_days: 14,
@@ -30,7 +30,7 @@ class Business < ApplicationRecord
   }.freeze
   PUBLIC_SITE_MODE_DEFAULT = "booking_link"
   CUSTOM_DOMAIN_FORMAT = /\A(?=.{1,253}\z)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}\z/i
-  PLATFORM_HOSTS = %w[dog-grooming.example.com www.dog-grooming.example.com custom.dog-grooming.example.com].freeze
+  PLATFORM_HOSTS = %w[cita.pet www.cita.pet custom.cita.pet].freeze
   PUBLIC_BOOKING_ASSIGNMENT_STRATEGIES = %w[first_available balanced_rotation least_daily_load habitual_professional].freeze
   PUBLIC_BOOKING_ASSIGNMENT_STRATEGY_DEFAULT = "first_available"
   PUBLIC_BOOKING_ASSIGNMENT_STRATEGY_LABELS = {
@@ -58,7 +58,7 @@ class Business < ApplicationRecord
   PAYMENT_METHODS = %w[manual_transfer mercado_pago].freeze
 
   BUSINESS_KINDS = {
-    "business" => "Cuenta Dog Grooming"
+    "business" => "Cuenta Cita.pet"
   }.freeze
 
   SETUP_STATUSES = %w[not_started in_progress completed].freeze
@@ -291,6 +291,7 @@ class Business < ApplicationRecord
   has_many :employees, through: :employee_memberships, source: :user
   has_many :service_categories, dependent: :destroy
   has_many :services, dependent: :destroy
+  has_many :extras, dependent: :destroy
   has_many :payment_accounts, dependent: :destroy
   has_many :appointment_payments, dependent: :destroy
   has_one :mercado_pago_connection, dependent: :destroy

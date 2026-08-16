@@ -1,4 +1,4 @@
-<% content_for :title, "Ingresar a Dog Grooming" %>
+<% content_for :title, "Ingresar a Cita.pet" %>
 <% content_for :full_width, true %>
 <% content_for :head do %>
   <style>
@@ -17,7 +17,7 @@
   </style>
 <% end %>
 
-<% commercial_whatsapp_url = PhoneNumber.whatsapp_link(ENV.fetch("COMMERCIAL_WHATSAPP_PHONE", "5491112345678"), text: "Hola, quiero activar mi cuenta de Dog Grooming.") %>
+<% commercial_whatsapp_url = PhoneNumber.whatsapp_link(ENV.fetch("COMMERCIAL_WHATSAPP_PHONE", "5491112345678"), text: "Hola, quiero activar mi cuenta de Cita.pet.") %>
 
 <div class="relative min-h-screen overflow-hidden bg-white text-slate-900">
   <div class="absolute inset-0 bg-gradient-to-br from-white via-brand-50 to-brand-100"></div>
@@ -26,11 +26,11 @@
   <section class="relative z-10 flex min-h-screen items-center justify-center px-5 py-8 sm:px-6">
     <div class="grid w-full max-w-6xl items-center gap-10 lg:grid-cols-[1fr_460px]">
       <aside class="hidden lg:block">
-        <%= link_to root_path, class: "inline-flex items-center gap-3", aria: { label: "Ir al inicio de Dog Grooming" } do %>
+        <%= link_to root_path, class: "inline-flex items-center gap-3", aria: { label: "Ir al inicio de Cita.pet" } do %>
           <div class="h-12 w-12 overflow-hidden rounded-2xl shadow-lg shadow-brand-300/40">
             <%= image_tag "/icon.png?v=3", alt: "", class: "h-full w-full object-cover" %>
           </div>
-          <span class="text-2xl font-bold tracking-tight text-slate-950">Dog Grooming</span>
+          <span class="text-2xl font-bold tracking-tight text-slate-950">Cita.pet</span>
         <% end %>
 
         <div class="mt-16 max-w-xl">
@@ -47,7 +47,7 @@
           </h1>
 
           <p class="mt-6 text-lg leading-8 text-slate-600">
-            Las cuentas de Dog Grooming son creadas por nuestro equipo. Si tu peluquería canina ya está activada, usá las credenciales que te informamos para entrar al panel.
+            Las cuentas de Cita.pet son creadas por nuestro equipo. Si tu peluquería canina ya está activada, usá las credenciales que te informamos para entrar al panel.
           </p>
 
           <div class="mt-10 grid max-w-lg gap-4">
@@ -74,7 +74,7 @@
               <div>
                 <h2 class="font-bold text-slate-950">Acceso con contraseña</h2>
                 <p class="mt-1 text-sm leading-6 text-slate-600">
-                  Ingresá con el email de tu cuenta y la contraseña que te comunicó el equipo de Dog Grooming.
+                  Ingresá con el email de tu cuenta y la contraseña que te comunicó el equipo de Cita.pet.
                 </p>
               </div>
             </div>
@@ -98,11 +98,11 @@
 
       <section class="mx-auto w-full max-w-md">
         <div class="mb-8 text-center lg:hidden">
-        <%= link_to root_path, class: "inline-flex items-center justify-center gap-3", aria: { label: "Ir al inicio de Dog Grooming" } do %>
+        <%= link_to root_path, class: "inline-flex items-center justify-center gap-3", aria: { label: "Ir al inicio de Cita.pet" } do %>
             <div class="h-12 w-12 overflow-hidden rounded-2xl shadow-lg shadow-brand-300/40">
               <%= image_tag "/icon.png?v=3", alt: "", class: "h-full w-full object-cover" %>
             </div>
-            <span class="text-2xl font-bold tracking-tight text-slate-950">Dog Grooming</span>
+            <span class="text-2xl font-bold tracking-tight text-slate-950">Cita.pet</span>
           <% end %>
         </div>
 
@@ -115,7 +115,7 @@
             <h2 class="text-3xl font-bold tracking-tight text-slate-950">Ingresar</h2>
 
             <p class="mt-3 text-sm leading-6 text-slate-600">
-              Acceso exclusivo para peluquerías caninas ya activadas por Dog Grooming. Usá el email que nos pasaste al crear tu cuenta.
+              Acceso exclusivo para peluquerías caninas ya activadas por Cita.pet. Usá el email que nos pasaste al crear tu cuenta.
             </p>
           </div>
 
@@ -177,7 +177,7 @@
           <%= link_to "Escribinos por WhatsApp", commercial_whatsapp_url, target: "_blank", rel: "noopener", class: "font-bold text-brand-700 hover:text-brand-800" %>
         </p>
 
-        <p class="mt-4 text-center text-xs text-slate-400">© 2026 Dog Grooming</p>
+        <p class="mt-4 text-center text-xs text-slate-400">© 2026 Cita.pet</p>
       </section>
     </div>
   </section>

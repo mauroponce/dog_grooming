@@ -110,7 +110,7 @@ RSpec.describe MercadoPago::CreateBookingPreference do
     allow(MercadoPago::Credentials).to receive(:test?).and_return(false)
 
     expect {
-      described_class.call(appointments: [ appointment ], host: "dog-grooming.example.com", protocol: "https")
+      described_class.call(appointments: [ appointment ], host: "cita.pet", protocol: "https")
     }.to raise_error(ArgumentError, /conectada en modo prueba/)
   end
 

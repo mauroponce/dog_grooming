@@ -50,7 +50,7 @@ class BusinessMailer < ApplicationMailer
     @gaps = Availability::FillableGaps.new(business: business, date: @today).call.first(5)
     @url = admin_root_url(host: app_host, protocol: app_protocol)
 
-    mail subject: "Resumen de hoy en Dog Grooming", to: @business.owner.email_address
+    mail subject: "Resumen de hoy en Cita.pet", to: @business.owner.email_address
   end
 
   def weekly_digest(business)
@@ -64,7 +64,7 @@ class BusinessMailer < ApplicationMailer
     @top_services = @appointments.group_by(&:service).transform_values(&:size).sort_by { |_service, count| -count }.first(5)
     @url = admin_root_url(host: app_host, protocol: app_protocol)
 
-    mail subject: "Resumen semanal de Dog Grooming", to: @business.owner.email_address
+    mail subject: "Resumen semanal de Cita.pet", to: @business.owner.email_address
   end
 
 end

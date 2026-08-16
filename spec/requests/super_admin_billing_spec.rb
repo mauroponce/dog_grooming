@@ -33,7 +33,7 @@ RSpec.describe "Super admin billing", type: :request do
         billing_transfer_account: {
           transfer_alias: "dog.grooming",
           cbu: "0000003100012345678901",
-          account_holder: "Dog Grooming SRL",
+          account_holder: "Cita.pet SRL",
           tax_id: "30-12345678-9"
         }
       },

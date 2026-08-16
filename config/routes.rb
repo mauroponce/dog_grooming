@@ -121,6 +121,8 @@ Rails.application.routes.draw do
           delete :permanently_destroy, path: "eliminar-permanentemente"
         end
       end
+      post "servicios/extras", to: "extras#create", as: :service_extras
+      patch "servicios/extras/:id", to: "extras#update", as: :service_extra
       resources :waitlist_entries, only: %i[create update destroy], path: "calendario/lista-de-espera"
       resources :service_categories, only: %i[create update destroy], path: "categorias-servicios"
       resources :employee_memberships, only: %i[index new create edit update destroy], path: "equipo", path_names: { new: "nuevo-miembro" } do

@@ -1,6 +1,6 @@
-<%= @business.name %>: pago de Dog Grooming
+<%= @business.name %>: pago de Cita.pet
 
-Tu suscripción Dog Grooming tiene un pago de <%= @invoice.amount_label %> con vencimiento el <%= CustomerDateFormatter.date_label(@invoice.due_on) %>.
+Tu suscripción Cita.pet tiene un pago de <%= @invoice.amount_label %> con vencimiento el <%= CustomerDateFormatter.date_label(@invoice.due_on) %>.
 
 <% if @transfer_details_configured %>
 Transferí usando estos datos y subí el comprobante desde el panel:

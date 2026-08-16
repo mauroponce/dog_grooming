@@ -1,6 +1,6 @@
 class AppUrl
   LOCAL_HOST = "localhost:3003"
-  PRODUCTION_HOST = "dog-grooming.example.com"
+  PRODUCTION_HOST = "cita.pet"
 
   def self.host
     ENV.fetch("APP_HOST", Rails.env.production? ? PRODUCTION_HOST : LOCAL_HOST)

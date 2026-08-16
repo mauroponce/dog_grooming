@@ -3,7 +3,7 @@
     <div class="border-b border-zinc-100 p-5 sm:p-7">
       <p class="text-xs font-bold uppercase tracking-[.16em] text-brand-700">Invitación de empleado</p>
       <h1 class="mt-2 text-2xl font-bold tracking-tight text-zinc-950">Crear acceso</h1>
-      <p class="mt-2 text-sm leading-6 text-zinc-500"><%= @membership.business.name %> te invitó a gestionar turnos en Dog Grooming.</p>
+      <p class="mt-2 text-sm leading-6 text-zinc-500"><%= @membership.business.name %> te invitó a gestionar turnos en Cita.pet.</p>
     </div>
 
     <%= form_with model: @user, url: employee_invitation_path(params[:token]), method: :patch, class: "space-y-5 p-5 sm:p-7" do |form| %>

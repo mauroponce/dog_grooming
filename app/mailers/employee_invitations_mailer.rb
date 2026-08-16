@@ -5,7 +5,7 @@ class EmployeeInvitationsMailer < ApplicationMailer
     @inviter_name = inviter_name
     @invitation_url = employee_invitation_url(token: token, host: app_host, protocol: app_protocol)
 
-    mail subject: "#{@inviter_name} te invitó a #{@business.name} en Dog Grooming", to: membership.email_address
+    mail subject: "#{@inviter_name} te invitó a #{@business.name} en Cita.pet", to: membership.email_address
   end
 
   private

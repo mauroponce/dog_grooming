@@ -1,5 +1,5 @@
 <% content_for :admin_full_bleed, true %>
-<% content_for :title, "Equipo · Dog Grooming" %>
+<% content_for :title, "Equipo · Cita.pet" %>
 <% content_for :admin_section_title, "Equipo" %>
 
 <% team_count = @employees.size %>
@@ -885,7 +885,7 @@
           <h1>Miembros del equipo</h1>
           <span class="team-count"><%= team_count %></span>
         </div>
-        <p class="team-page-copy">Administrá las personas que trabajan en el negocio, sus datos de contacto y sus permisos dentro de Dog Grooming.</p>
+        <p class="team-page-copy">Administrá las personas que trabajan en el negocio, sus datos de contacto y sus permisos dentro de Cita.pet.</p>
       </div>
 
       <%= link_to new_admin_employee_membership_path, class: "team-primary-button" do %>
@@ -961,7 +961,7 @@
       <div class="team-modal-header">
         <div>
           <h2>Editar rol de <%= employee.display_name %></h2>
-          <p class="team-modal-subtitle">Elegí qué puede gestionar este miembro dentro de Dog Grooming.</p>
+          <p class="team-modal-subtitle">Elegí qué puede gestionar este miembro dentro de Cita.pet.</p>
         </div>
         <form method="dialog">
           <button class="team-modal-close" aria-label="Cerrar">

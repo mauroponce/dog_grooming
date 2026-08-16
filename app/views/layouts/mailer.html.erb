@@ -162,9 +162,9 @@
   </head>
 
   <% preheader = content_for?(:email_preheader) ? yield(:email_preheader).to_s : message.subject.to_s %>
-  <% badge = content_for?(:email_badge) ? yield(:email_badge).to_s : "Dog Grooming" %>
+  <% badge = content_for?(:email_badge) ? yield(:email_badge).to_s : "Cita.pet" %>
   <% status = content_for?(:email_status) ? yield(:email_status).to_s : "Notificación" %>
-  <% footer_note = content_for?(:email_footer_note) ? yield(:email_footer_note).to_s : "Este email fue enviado por Dog Grooming." %>
+  <% footer_note = content_for?(:email_footer_note) ? yield(:email_footer_note).to_s : "Este email fue enviado por Cita.pet." %>
   <% logo_path = "/icon.png" %>
   <% logo_url = logo_path.start_with?("http") ? logo_path : "#{AppUrl.base_url}#{logo_path}" %>
 
@@ -185,10 +185,10 @@
                       <table role="presentation" cellspacing="0" cellpadding="0" border="0">
                         <tr>
                           <td style="width:44px; height:44px;">
-                            <img src="<%= logo_url %>" width="44" height="44" alt="Dog Grooming" style="display:block; width:44px; height:44px; border:0; border-radius:14px; object-fit:cover; box-shadow:0 10px 26px rgba(255, 222, 212, .32);">
+                            <img src="<%= logo_url %>" width="44" height="44" alt="Cita.pet" style="display:block; width:44px; height:44px; border:0; border-radius:14px; object-fit:cover; box-shadow:0 10px 26px rgba(255, 222, 212, .32);">
                           </td>
                           <td style="padding-left:12px;">
-                            <div style="font-size:18px; line-height:22px; font-weight:700; color:#ffffff;">Dog Grooming</div>
+                            <div style="font-size:18px; line-height:22px; font-weight:700; color:#ffffff;">Cita.pet</div>
                             <div style="font-size:12px; line-height:18px; font-weight:600; color:#a1a1aa;">Reservas, señas y agenda online</div>
                           </td>
                         </tr>
@@ -215,7 +215,7 @@
             <tr>
               <td style="padding:24px 42px 34px 42px; background:#fafafa; border-top:1px solid #eeeeef;">
                 <p style="margin:0; font-size:13px; line-height:21px; font-weight:700; color:#52525b;">
-                  Equipo Dog Grooming
+                  Equipo Cita.pet
                 </p>
                 <p style="margin:6px 0 0 0; font-size:12px; line-height:20px; font-weight:600; color:#71717a;">
                   <%= footer_note %>

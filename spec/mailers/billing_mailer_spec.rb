@@ -7,7 +7,7 @@ RSpec.describe BillingMailer, type: :mailer do
     BillingTransferAccount.create!(
       transfer_alias: "dog.grooming",
       cbu: "0000003100012345678901",
-      account_holder: "Dog Grooming SRL"
+      account_holder: "Cita.pet SRL"
     )
 
     mail = described_class.reminder(invoice, "due_today")

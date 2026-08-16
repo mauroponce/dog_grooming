@@ -1,6 +1,8 @@
 module Admin
   class ServicesController < BaseController
     def index
+      @show_extras = params[:panel] == "extras"
+      @extras = @business.extras.order(:title) if @show_extras
       @service_query = Services::InboxQuery.new(business: @business, params: params)
       @service_categories = business_service_categories
       @selected_service_category = @service_query.selected_service_category

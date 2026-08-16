@@ -1,15 +1,15 @@
-<% content_for :email_preheader, "Tu cuenta de Dog Grooming ya está lista para empezar a gestionar reservas, señas y comprobantes." %>
+<% content_for :email_preheader, "Tu cuenta de Cita.pet ya está lista para empezar a gestionar reservas, señas y comprobantes." %>
 <% content_for :email_badge, "Bienvenida" %>
 <% content_for :email_status, "Cuenta lista" %>
-<% content_for :email_footer_note, "Este email fue enviado porque se creó una cuenta para administrar un negocio en Dog Grooming." %>
+<% content_for :email_footer_note, "Este email fue enviado porque se creó una cuenta para administrar un negocio en Cita.pet." %>
 
 <h1 class="hero-title">Tu cuenta ya está lista</h1>
 
-<p>Hola, ya podés administrar <strong><%= @business.name %></strong> desde Dog Grooming.</p>
+<p>Hola, ya podés administrar <strong><%= @business.name %></strong> desde Cita.pet.</p>
 
-<p>Entrá a tu panel con tu email y la contraseña que te comunicará el equipo de Dog Grooming:</p>
+<p>Entrá a tu panel con tu email y la contraseña que te comunicará el equipo de Cita.pet:</p>
 
-<p><%= link_to "Ingresar a Dog Grooming", @url, class: "email-button button" %></p>
+<p><%= link_to "Ingresar a Cita.pet", @url, class: "email-button button" %></p>
 
 <p style="font-size:12px; line-height:20px; color:#71717a;">
   Si el botón no funciona, copiá y pegá este enlace en tu navegador:<br>

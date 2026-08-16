@@ -8,7 +8,7 @@ module SuperAdmin
         format.html
         format.csv do
           send_data @dashboard.to_csv,
-            filename: "dog-grooming-negocios-#{Time.zone.today.iso8601}.csv",
+            filename: "cita-pet-negocios-#{Time.zone.today.iso8601}.csv",
             type: "text/csv; charset=utf-8"
         end
       end

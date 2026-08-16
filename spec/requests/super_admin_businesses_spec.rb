@@ -14,7 +14,7 @@ RSpec.describe "Super admin businesses", type: :request do
     expect(response.body).to include("Nueva cuenta")
     expect(response.body).not_to include("WhatsApp API")
     expect(response.body).to include("Tutoriales")
-    expect(response.body).not_to include("Panel de control Dog Grooming")
+    expect(response.body).not_to include("Panel de control Cita.pet")
     expect(response.body).not_to include("Tabla compacta para operar cuentas, trials, setup y soporte")
   end
 
@@ -107,7 +107,7 @@ RSpec.describe "Super admin businesses", type: :request do
 	    expect(response.body).not_to include("Categorías y servicios")
     expect(response.body).to include("Nombre del centro")
 	    expect(response.body).to include("Nombre del dueño")
-    expect(response.body).to include("Facturación Dog Grooming activa")
+    expect(response.body).to include("Facturación Cita.pet activa")
 	    expect(response.body).to include("WhatsApp del negocio")
     expect(document.at_css("#business_account_owner_email")["required"]).to eq("required")
     expect(document.at_css("#business_account_contact_phone")["required"]).to eq("required")

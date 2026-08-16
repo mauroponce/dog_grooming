@@ -21,6 +21,8 @@ class PublicBookingController < ApplicationController
     @services = @business.services.publicly_bookable.includes(:service_category, :service_tags, :employee_memberships, :service_availability_rules, service_resources: :bookable_resource, service_images_attachments: :blob).order(:category, :sort_order, :name).to_a
     @categories = @services.map(&:category_label).uniq
     @selected_services = selected_services_from_params
+    @public_extras = @business.extras.publicly_visible.order(:title).to_a
+    @selected_extras = @public_extras.select { |extra| Array(params[:extra_ids]).map(&:to_s).include?(extra.id.to_s) }
     redirect_to public_business_path(@business.slug), alert: "El servicio no está disponible." and return if selected_service_keys.any? && @selected_services.blank?
     @service = @selected_services.first
     ensure_requested_category_matches_service!
@@ -48,7 +50,7 @@ class PublicBookingController < ApplicationController
       redirect_to missing_booking_draft_redirect_path, alert: "Completá tus datos personales antes de reservar." and return
     end
     @total_duration_minutes = @selected_services.sum(&:duration_minutes)
-    @total_price_cents = @selected_services.sum(&:price_cents)
+    @total_price_cents = @selected_services.sum(&:price_cents) + @selected_extras.sum(&:price_cents)
     prepare_sequence_calendar if %w[schedule details reserve waitlist].include?(@booking_step)
     prepare_waitlist_context if @booking_step == "waitlist"
     prepare_reserve_context if @booking_step == "reserve"
@@ -62,6 +64,7 @@ class PublicBookingController < ApplicationController
     @booking_draft = find_booking_draft(@booking_draft_token) if @booking_draft_token.present?
     @booking_submission_params = booking_submission_params_with_draft(@booking_submission_params, @booking_draft)
     @selected_services = selected_services_from_booking_params
+    @selected_extras = @business.extras.publicly_visible.where(id: Array(@booking_submission_params[:extra_ids])).to_a
     raise ActiveRecord::RecordNotFound if @selected_services.blank?
     @service = @selected_services.first
     starts_at = parse_starts_at!(@booking_submission_params[:starts_at])
@@ -152,6 +155,7 @@ class PublicBookingController < ApplicationController
         :deposit_receipt,
         :payment_method,
         service_ids: [],
+        extra_ids: [],
         professionals: {}
       )
     end
@@ -304,11 +308,12 @@ class PublicBookingController < ApplicationController
     end
 
     def booking_step
-      requested = params[:step].presence_in(%w[services professionals schedule waitlist details reserve])
+      requested = params[:step].presence_in(%w[services extras professionals schedule waitlist details reserve])
+      return "extras" if requested == "extras" && @selected_services.any? && @public_extras.any?
       return (@selected_services.any? ? "schedule" : "services") if requested == "professionals" && !professional_step_required?
       return requested if requested.present?
       return "services" if @selected_services.blank?
-      return (professional_step_required? ? "professionals" : "schedule") if direct_service_booking?
+      return (professional_step_required? ? "professionals" : (@public_extras.any? ? "extras" : "schedule")) if direct_service_booking?
 
       "services"
     end
@@ -428,7 +433,8 @@ class PublicBookingController < ApplicationController
             branch: preferred_employee&.branch || selected_branch_for_booking,
             employee_membership: preferred_employee,
             deposit_receipt: receipt,
-            payment_method: payment_method
+            payment_method: payment_method,
+            extra_ids: @selected_extras.map(&:id)
           )
           manual_receipt_attached ||= payment_method == "manual_transfer" && service.deposit_required? && deposit_receipt.present?
           Sales::RecordAttribution.new(appointment: appointment, attribution: session[:sales_attribution]).call
@@ -456,6 +462,7 @@ class PublicBookingController < ApplicationController
 
       draft_attrs = draft.with_indifferent_access
       attrs[:service_ids] = draft_attrs[:service_ids] if attrs[:service_ids].blank?
+      attrs[:extra_ids] = draft_attrs[:extra_ids] if attrs[:extra_ids].blank?
       attrs[:starts_at] = draft_attrs[:starts_at] if attrs[:starts_at].blank?
       attrs[:professional_mode] = draft_attrs[:professional_mode] if attrs[:professional_mode].blank?
       attrs[:employee_membership_id] = draft_attrs[:employee_membership_id] if attrs[:employee_membership_id].blank?
@@ -506,6 +513,7 @@ class PublicBookingController < ApplicationController
       drafts[token] = {
         "business_id" => @business.id,
         "service_ids" => Array(booking_submission_params[:service_ids]).compact_blank.first(1),
+        "extra_ids" => Array(booking_submission_params[:extra_ids]).compact_blank,
         "starts_at" => starts_at.iso8601,
         "professional_mode" => booking_submission_params[:professional_mode].presence || "any",
         "employee_membership_id" => booking_submission_params[:employee_membership_id].presence,
@@ -862,6 +870,7 @@ class PublicBookingController < ApplicationController
     helper_method def booking_calendar_params(date:, month: @month_date, step: @booking_step, date_window_start: @date_window_start)
       {
         service_ids: @selected_services.map(&:slug),
+        extra_ids: @selected_extras.map(&:id),
         date: date,
         month: month,
         step: step,
@@ -962,7 +971,7 @@ class PublicBookingController < ApplicationController
       [
         "BEGIN:VCALENDAR",
         "VERSION:2.0",
-        "PRODID:-//Dog Grooming//Reservas//ES",
+        "PRODID:-//Cita.pet//Reservas//ES",
         "BEGIN:VEVENT",
         "UID:appointment-#{appointment.id}@#{AppUrl.host}",
         "DTSTAMP:#{Time.current.utc.strftime('%Y%m%dT%H%M%SZ')}",

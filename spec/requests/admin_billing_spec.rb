@@ -26,7 +26,7 @@ RSpec.describe "Admin billing", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Tu suscripción")
-    expect(response.body).to include("Suscripción Dog Grooming")
+    expect(response.body).to include("Suscripción Cita.pet")
     expect(response.body).to include("Historial de pagos")
     expect(response.body).to include("Datos para transferir")
     expect(response.body).to include("Subir comprobante")

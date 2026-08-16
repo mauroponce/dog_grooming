@@ -29,7 +29,7 @@ RSpec.describe Business, type: :model do
 
     it "does not allow platform domains or an enabled blank domain" do
       business = build_business(slug: "estetica-aura")
-      business.custom_domain = "dog-grooming.example.com"
+      business.custom_domain = "cita.pet"
 
       expect(business).not_to be_valid
       expect(business.errors[:custom_domain]).to be_present

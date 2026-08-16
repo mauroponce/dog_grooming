@@ -1,6 +1,6 @@
 <% content_for :admin_full_bleed, true %>
 <% content_for :admin_section_title, "Clientes" %>
-<% content_for :title, "Clientes · Dog Grooming" %>
+<% content_for :title, "Clientes · Cita.pet" %>
 
 <% can_edit_customers = current_user.admin? || current_user.super_admin? || current_employee_membership&.can?("can_edit_customers") %>
 <% total_customers = @customer_query.customers_scope.count %>

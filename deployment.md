@@ -1,4 +1,4 @@
-# Deployment de Dog Grooming
+# Deployment de Cita.pet
 
 Esta aplicación es independiente de cualquier instalación anterior. Antes del primer deploy definí servidor, dominio, imagen de contenedor y secretos propios; no reutilices bases de datos, volúmenes ni buckets de otra app.
 

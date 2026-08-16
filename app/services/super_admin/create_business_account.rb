@@ -223,7 +223,7 @@ module SuperAdmin
 
       def ai_context
         [
-          "Cuenta comercial de Dog Grooming creada desde superadmin.",
+          "Cuenta comercial de Cita.pet creada desde superadmin.",
           "El catálogo de servicios se administra desde el workspace del negocio.",
           instagram_url.present? ? "Instagram del negocio: #{instagram_url}." : nil,
           "Las alertas operativas se envían por email al dueño.",

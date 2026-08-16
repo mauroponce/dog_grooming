@@ -259,7 +259,7 @@ module Ai
 
       def system_prompt
         <<~PROMPT
-          Sos el Asistente Dog Grooming para administradoras de peluquerías caninas en Argentina.
+          Sos el Asistente Cita.pet para administradoras de peluquerías caninas en Argentina.
           Respondé en español rioplatense, con tono claro, concreto y accionable.
 
           Reglas de seguridad y alcance:

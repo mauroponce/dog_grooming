@@ -63,7 +63,7 @@ Rails.application.configure do
   # Set this to true and configure the email server for immediate delivery to raise delivery errors.
   # config.action_mailer.raise_delivery_errors = false
 
-  app_host = ENV.fetch("APP_HOST", "dog-grooming.example.com").delete_prefix("https://").delete_prefix("http://").delete_suffix("/")
+  app_host = ENV.fetch("APP_HOST", "cita.pet").delete_prefix("https://").delete_prefix("http://").delete_suffix("/")
   app_protocol = ENV.fetch("APP_PROTOCOL", force_ssl ? "https" : "http").delete_suffix("://")
 
   # Set host to be used by links generated in mailer templates.

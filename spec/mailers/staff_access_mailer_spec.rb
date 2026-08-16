@@ -18,7 +18,7 @@ RSpec.describe StaffAccessMailer, type: :mailer do
     mail = described_class.welcome(user, business)
 
     expect(mail.to).to eq([ user.email_address ])
-    expect(mail.subject).to eq("Tu cuenta de Dog Grooming está lista")
+    expect(mail.subject).to eq("Tu cuenta de Cita.pet está lista")
     expect(mail.text_part.body.decoded).to include("http://localhost:3000/acceder")
     expect(mail.text_part.body.decoded).to include("email y la contraseña")
     expect(mail.text_part.body.decoded).not_to include("/acceso/")

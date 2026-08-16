@@ -36,7 +36,7 @@ RSpec.describe "Admin home", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Buen día")
-      expect(response.body).to include("Resumen de Dog Grooming IA")
+      expect(response.body).to include("Resumen de Cita.pet IA")
       expect(response.body).to include("Oportunidades para hoy")
       expect(response.body).to include("Valor potencial de los espacios")
       expect(response.body).to include("Próximos turnos")

@@ -1,4 +1,4 @@
-<% content_for :title, "Dog Grooming Admin | Suscripción" %>
+<% content_for :title, "Cita.pet Admin | Suscripción" %>
 <% content_for :admin_section_title, "Suscripción" %>
 
 <% money = ->(cents) { number_to_currency(cents.to_i / 100.0, unit: "$", precision: 0, delimiter: ".", separator: ",") } %>
@@ -341,7 +341,7 @@ end %>
         <div class="flex items-center justify-between gap-4">
           <div>
             <h2 class="text-xl font-bold tracking-tight text-slate-900">Datos para transferir</h2>
-            <p class="mt-1 text-sm font-semibold text-slate-500">Usá estos datos al realizar el pago de Dog Grooming.</p>
+            <p class="mt-1 text-sm font-semibold text-slate-500">Usá estos datos al realizar el pago de Cita.pet.</p>
           </div>
           <span class="billing-icon grid h-11 w-11 place-items-center rounded-2xl bg-brand-50 text-brand-700"><%= icons.fetch(:wallet).html_safe %></span>
         </div>

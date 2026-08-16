@@ -3,7 +3,7 @@ class StaffAccessMailer < ApplicationMailer
     @user = user
     @url = magic_link_url(user.magic_login_token, host: app_host, protocol: app_protocol)
 
-    mail subject: "Acceso a Dog Grooming", to: user.email_address
+    mail subject: "Acceso a Cita.pet", to: user.email_address
   end
 
   def welcome(user, business)
@@ -11,6 +11,6 @@ class StaffAccessMailer < ApplicationMailer
     @business = business
     @url = new_session_url(host: app_host, protocol: app_protocol)
 
-    mail subject: "Tu cuenta de Dog Grooming está lista", to: user.email_address
+    mail subject: "Tu cuenta de Cita.pet está lista", to: user.email_address
   end
 end

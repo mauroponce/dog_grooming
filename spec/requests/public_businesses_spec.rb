@@ -51,7 +51,7 @@ RSpec.describe "Public businesses", type: :request do
     expect(response.body).to include("Peluquería")
     expect(response.body).to include("Consulta inicial")
     expect(response.body).to include("Consultar")
-    expect(document.at_css("a[href='https://dog-grooming.example.com']").text).to include("Dog Grooming")
+    expect(document.at_css("a[href='https://cita.pet']").text).to include("Cita.pet")
     expect(response.body).not_to include("Destacados")
     expect(response.body).not_to include("Reseñas")
   end

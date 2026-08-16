@@ -68,6 +68,8 @@ class Appointment < ApplicationRecord
   has_many :notification_deliveries, dependent: :destroy
   has_many :appointment_addons, dependent: :destroy
   has_many :add_on_services, through: :appointment_addons, source: :service
+  has_many :appointment_extras, dependent: :destroy
+  has_many :extras, through: :appointment_extras
   has_one :appointment_payment, dependent: :destroy
   has_many :booking_notes, dependent: :destroy
   has_many :booking_attachments, dependent: :destroy
@@ -359,11 +361,12 @@ class Appointment < ApplicationRecord
   end
 
   def calculated_deposit_amount_cents
-    service.deposit_amount_cents_for(final_price_cents)
+    extras_total = appointment_extras.sum(:price_cents)
+    service.deposit_amount_cents_for([ final_price_cents.to_i - extras_total, 0 ].max)
   end
 
   def current_total_price_cents
-    service&.price_cents.to_i + current_add_ons.sum { |add_on| add_on.service&.price_cents.to_i }
+    service&.price_cents.to_i + current_add_ons.sum { |add_on| add_on.service&.price_cents.to_i } + appointment_extras.sum(:price_cents)
   end
 
   def remaining_balance_cents

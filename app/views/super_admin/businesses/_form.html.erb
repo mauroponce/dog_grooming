@@ -355,7 +355,7 @@
                 <label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
                   <%= form.check_box :billing_enabled, { checked: billing_enabled_value, class: "mt-1 h-5 w-5 rounded border-zinc-300 text-brand-600 focus:ring-brand-500" }, "1", "0" %>
                   <span>
-                    <span class="block text-sm font-bold text-zinc-950">Facturación Dog Grooming activa</span>
+                    <span class="block text-sm font-bold text-zinc-950">Facturación Cita.pet activa</span>
                     <span class="mt-1 block text-xs font-semibold leading-5 text-zinc-500">Si lo desactivás, el negocio queda como cliente gratuito: no ve suscripción ni cobros.</span>
                   </span>
                 </label>
@@ -375,7 +375,7 @@
                 <div>
                   <%= form.label :custom_domain, "Dominio propio", class: "text-sm font-bold text-zinc-950" %>
                   <%= form.text_field :custom_domain, value: business_account_values[:custom_domain], autocomplete: "url", placeholder: "reserva.aura.com.ar", class: "mt-2 h-12 w-full rounded-2xl border border-zinc-200 bg-white px-4 text-sm font-semibold outline-none focus:border-brand-300 focus:ring-4 focus:ring-brand-100" %>
-                  <p class="mt-2 text-xs font-semibold leading-5 text-zinc-500">Debe resolver al servidor de Dog Grooming antes de activarlo.</p>
+                  <p class="mt-2 text-xs font-semibold leading-5 text-zinc-500">Debe resolver al servidor de Cita.pet antes de activarlo.</p>
                 </div>
                 <label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
                   <%= form.check_box :custom_domain_enabled, { checked: ActiveModel::Type::Boolean.new.cast(business_account_values[:custom_domain_enabled]), class: "mt-1 h-5 w-5 rounded border-zinc-300 text-brand-600 focus:ring-brand-500" }, "1", "0" %>

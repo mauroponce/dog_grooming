@@ -119,6 +119,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_180000) do
     t.index ["service_id"], name: "index_appointment_addons_on_service_id"
   end
 
+  create_table "appointment_extras", force: :cascade do |t|
+    t.bigint "appointment_id", null: false
+    t.datetime "created_at", null: false
+    t.bigint "extra_id", null: false
+    t.integer "price_cents", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["appointment_id"], name: "index_appointment_extras_on_appointment_id"
+    t.index ["extra_id"], name: "index_appointment_extras_on_extra_id"
+  end
+
   create_table "appointment_payments", force: :cascade do |t|
     t.integer "amount_cents", default: 0, null: false
     t.bigint "appointment_id", null: false
@@ -754,6 +764,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_180000) do
     t.index ["invitation_token_digest"], name: "index_employee_memberships_on_invitation_token_digest"
     t.index ["invited_by_id"], name: "index_employee_memberships_on_invited_by_id"
     t.index ["user_id"], name: "index_employee_memberships_on_user_id"
+  end
+
+  create_table "extras", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
+    t.bigint "business_id", null: false
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.integer "price_cents", default: 0, null: false
+    t.boolean "public_visible", default: false, null: false
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.index ["business_id"], name: "index_extras_on_business_id"
   end
 
   create_table "gift_cards", force: :cascade do |t|
@@ -1409,6 +1431,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_180000) do
   add_foreign_key "ai_context_imports", "businesses"
   add_foreign_key "appointment_addons", "appointments"
   add_foreign_key "appointment_addons", "services"
+  add_foreign_key "appointment_extras", "appointments"
+  add_foreign_key "appointment_extras", "extras"
   add_foreign_key "appointment_payments", "appointments"
   add_foreign_key "appointment_payments", "businesses"
   add_foreign_key "appointments", "bookable_resources"
@@ -1480,6 +1504,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_180000) do
   add_foreign_key "employee_memberships", "businesses"
   add_foreign_key "employee_memberships", "users"
   add_foreign_key "employee_memberships", "users", column: "invited_by_id"
+  add_foreign_key "extras", "businesses"
   add_foreign_key "gift_cards", "appointments", column: "redeemed_booking_id"
   add_foreign_key "gift_cards", "businesses"
   add_foreign_key "gift_cards", "services"

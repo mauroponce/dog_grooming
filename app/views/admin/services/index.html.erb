@@ -1,6 +1,6 @@
 <% content_for :admin_full_bleed, true %>
 <% content_for :admin_section_title, "Servicios" %>
-<% content_for :title, "Servicios · Dog Grooming" %>
+<% content_for :title, "Servicios · Cita.pet" %>
 
 <% selected_category = @selected_service_category %>
 <% visible_categories = @service_categories %>
@@ -1090,6 +1090,21 @@ end %>
     transform: translate(-50%, -50%);
   }
 
+  .services-extra-modal {
+    width: min(680px, calc(100vw - 32px));
+  }
+
+  .services-extra-modal .services-modal-inner {
+    padding: 34px;
+  }
+
+  .services-extra-modal textarea.services-category-input {
+    height: 180px;
+    padding: 14px 16px;
+    line-height: 1.55;
+    resize: vertical;
+  }
+
   .services-modal::backdrop {
     background: rgba(15,23,42,.46);
     backdrop-filter: blur(4px);
@@ -1405,10 +1420,28 @@ end %>
             <%= service_icons.fetch(:folder_plus).html_safe %>
             Añadir categoría
           </button>
+          <%= link_to admin_services_path(panel: "extras"), class: "services-add-category-button mt-3 #{'is-active' if @show_extras}" do %>
+            <%= service_icons.fetch(:sparkles).html_safe %>
+            Extras
+          <% end %>
         </div>
       </aside>
 
       <div class="services-content">
+        <% if @show_extras %>
+          <section class="services-category-section">
+            <div class="services-category-section-header">
+              <div class="services-category-title-block"><span class="services-category-heading-icon"><%= service_icons.fetch(:sparkles).html_safe %></span><div><h2 class="services-category-heading">Extras</h2><p class="services-category-section-count"><%= pluralize(@extras.size, "extra disponible", plural: "extras disponibles") %></p></div></div>
+              <button type="button" class="services-menu-primary" data-services-add-extra-open>+ Añadir Extra</button>
+            </div>
+            <div class="services-row-stack">
+              <% @extras.each do |extra| %>
+                <article class="service-row" data-services-edit-extra data-extra-id="<%= extra.id %>" data-extra-title="<%= extra.title %>" data-extra-description="<%= extra.description %>" data-extra-price="<%= extra.price.to_i %>" data-extra-public-visible="<%= extra.public_visible? %>"><button type="button" class="service-row-link" aria-label="Editar <%= extra.title %>"><span class="sr-only">Editar</span></button><div class="service-row-main"><div class="service-row-icon"><%= service_icons.fetch(:sparkles).html_safe %></div><div class="service-row-copy"><div class="service-row-heading"><h3 class="service-row-title"><%= extra.title %></h3><span class="service-row-badge <%= extra.public_visible? ? 'is-public' : 'is-muted' %>"><%= extra.public_visible? ? 'Visible en reservas' : 'Oculto' %></span></div><p class="service-row-description"><%= extra.description.presence || 'Sin descripción cargada.' %></p></div></div><div class="service-row-side"><p class="service-row-price"><%= price_cents_label(extra.price_cents) %></p></div></article>
+              <% end %>
+            </div>
+            <% if @extras.empty? %><section class="services-empty"><h2>No hay extras para mostrar</h2><p>Creá un adicional para ofrecerlo al momento de reservar.</p></section><% end %>
+          </section>
+        <% else %>
         <% if selected_category.present? && @services.empty? %>
           <section class="services-category-section">
             <div class="services-category-section-header">
@@ -1572,6 +1605,7 @@ end %>
             <% end %>
           </section>
         <% end %>
+        <% end %>
       </div>
     </section>
   </div>
@@ -1633,6 +1667,18 @@ end %>
     </div>
   </dialog>
 
+  <dialog id="services-add-extra-modal" class="services-modal services-extra-modal">
+    <div class="services-modal-inner"><div class="services-modal-header"><div><h2 class="services-modal-title" data-services-extra-modal-title>Añadir Extra</h2><p class="services-modal-copy">Los extras se pueden sumar a un servicio y no agregan duración ni seña.</p></div><button type="button" class="services-modal-close" data-services-add-extra-close aria-label="Cerrar"><%= service_icons.fetch(:x).html_safe %></button></div>
+      <%= form_with url: admin_service_extras_path, method: :post, class: "services-modal-form", data: { services_extra_form: true } do |form| %>
+        <%= form.text_field :title, required: true, placeholder: "Ej. Corte de uñas", class: "services-category-input", name: "extra[title]", data: { services_extra_field: true } %>
+        <%= form.text_area :description, rows: 3, placeholder: "Descripción", class: "services-category-input", name: "extra[description]", data: { services_extra_field: true } %>
+        <label class="text-sm font-bold text-zinc-700">Precio</label><div class="services-category-input flex items-center gap-3"><span class="text-lg font-bold text-zinc-500">$</span><%= form.text_field :price, inputmode: "numeric", pattern: "[0-9]*", autocomplete: "off", required: true, placeholder: "Ej. 30000", class: "min-w-0 flex-1 bg-transparent font-semibold outline-none", name: "extra[price]", data: { services_extra_field: true } %></div>
+        <label class="text-sm font-bold text-zinc-700"><%= form.check_box :public_visible, name: "extra[public_visible]", data: { services_extra_field: true } %> Visible en la página de reservas</label>
+        <%= form.hidden_field :active, value: true, name: "extra[active]" %><div class="services-modal-actions"><button type="button" class="services-modal-secondary" data-services-add-extra-close>Cerrar</button><%= form.submit "Crear extra", class: "services-modal-primary", data: { services_extra_submit: true } %></div>
+      <% end %>
+    </div>
+  </dialog>
+
   <dialog id="services-category-image-preview-modal" class="services-modal services-category-image-modal">
     <div class="services-modal-inner">
       <div class="services-modal-header">
@@ -1665,6 +1711,34 @@ end %>
     const categoryImagePreviewDialog = root.querySelector("#services-category-image-preview-modal");
     const categoryImagePreviewImage = categoryImagePreviewDialog?.querySelector("[data-category-image-preview-image]");
     const categoryImagePreviewTitle = categoryImagePreviewDialog?.querySelector("[data-category-image-preview-title]");
+    const extraDialog = root.querySelector("#services-add-extra-modal");
+    const extraForm = extraDialog?.querySelector("[data-services-extra-form]");
+    const extraTitle = extraDialog?.querySelector("[name='extra[title]']");
+    const extraDescription = extraDialog?.querySelector("[name='extra[description]']");
+    const extraPrice = extraDialog?.querySelector("[name='extra[price]']");
+    const extraVisible = extraDialog?.querySelector("input[type='checkbox'][name='extra[public_visible]']");
+    const extraSubmit = extraDialog?.querySelector("[data-services-extra-submit]");
+    const extraModalTitle = extraDialog?.querySelector("[data-services-extra-modal-title]");
+    let extraInitial = "";
+    const extraState = () => JSON.stringify([extraTitle?.value, extraDescription?.value, extraPrice?.value, extraVisible?.checked]);
+    const updateExtraSubmit = () => { if (extraSubmit) extraSubmit.hidden = extraInitial && extraState() === extraInitial; };
+    const openExtraDialog = (row = null) => {
+      if (!extraDialog || !extraForm) return;
+      if (row) {
+        extraModalTitle.textContent = "Editar Extra";
+        extraForm.action = `/admin/servicios/extras/${row.dataset.extraId}`;
+        extraForm.querySelector("input[name='_method']")?.remove();
+        extraForm.insertAdjacentHTML("beforeend", '<input type="hidden" name="_method" value="patch">');
+        extraTitle.value = row.dataset.extraTitle || ""; extraDescription.value = row.dataset.extraDescription || ""; extraPrice.value = row.dataset.extraPrice || ""; extraVisible.checked = row.dataset.extraPublicVisible === "true";
+        extraSubmit.value = "Guardar";
+      } else {
+        extraModalTitle.textContent = "Añadir Extra"; extraForm.action = "<%= admin_service_extras_path %>";
+        extraForm.querySelector("input[name='_method']")?.remove(); extraForm.reset(); extraSubmit.value = "Crear extra";
+      }
+      extraInitial = row ? extraState() : ""; updateExtraSubmit(); extraDialog.showModal(); extraTitle.focus();
+    };
+    extraDialog?.querySelectorAll("[data-services-extra-field]").forEach((field) => field.addEventListener("input", updateExtraSubmit));
+    extraDialog?.querySelectorAll("[data-services-extra-field]").forEach((field) => field.addEventListener("change", updateExtraSubmit));
     const normalize = (value) => value.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
 
     const actionMenus = () => Array.from(root.querySelectorAll("[data-services-category-actions], [data-service-row-actions]"));
@@ -1836,6 +1910,26 @@ end %>
       if (addCategoryClose) {
         const dialog = addCategoryClose.closest("dialog");
         if (dialog) dialog.close();
+        return;
+      }
+
+      const addExtraOpen = event.target.closest("[data-services-add-extra-open]");
+      if (addExtraOpen) {
+        event.preventDefault();
+        openExtraDialog();
+        return;
+      }
+
+      const editExtra = event.target.closest("[data-services-edit-extra]");
+      if (editExtra) {
+        event.preventDefault();
+        openExtraDialog(editExtra);
+        return;
+      }
+
+      const addExtraClose = event.target.closest("[data-services-add-extra-close]");
+      if (addExtraClose) {
+        addExtraClose.closest("dialog")?.close();
         return;
       }
 

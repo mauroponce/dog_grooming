@@ -11,13 +11,14 @@ else
     "client_notes" => "Clientes",
     "customer_reminders" => "Clientes",
     "services" => "Servicios",
+    "extras" => "Extras",
     "service_categories" => "Servicios",
     "waitlist_entries" => "Lista de espera",
     "employee_memberships" => "Equipo",
     "settings" => "Configuración",
     "tutorials" => "Tutoriales",
     "profiles" => "Editar perfil"
-  }.fetch(controller_name, "Dog Grooming")
+  }.fetch(controller_name, "Cita.pet")
 end %>
 <% profile_membership = @business&.employee_memberships&.available_for_booking&.find_by(user_id: current_user.id) || @business&.employee_memberships&.find_by(user_id: current_user.id) %>
 <% profile_display_name = profile_membership&.display_name.presence || current_user.try(:name).presence || current_user.email_address.to_s.split("@").first.presence || "Usuario" %>

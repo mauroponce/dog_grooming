@@ -17,7 +17,7 @@ class SalesMailer < ApplicationMailer
     @top_links = business.campaign_links.includes(:booking_attributions, :campaign_visits).recent.limit(5)
     @url = admin_calendar_url(host: app_host, protocol: app_protocol)
 
-    mail subject: "Resumen semanal de ventas en Dog Grooming", to: business.owner.email_address
+    mail subject: "Resumen semanal de ventas en Cita.pet", to: business.owner.email_address
   end
 
   def campaign_summary(campaign)

@@ -53,6 +53,11 @@
 }
 
 @layer base {
+  :focus-visible {
+    outline: 3px solid var(--color-brand-600);
+    outline-offset: 3px;
+  }
+
   :where(
     a[href],
     button:not(:disabled),
@@ -75,6 +80,12 @@
   :where(button:disabled, select:disabled, input:disabled, [aria-disabled="true"]) {
     cursor: not-allowed;
   }
+}
+
+@layer utilities {
+  /* Secondary text remains readable on the app's predominantly white surfaces. */
+  .text-zinc-400 { color: #71717a; }
+  .text-slate-400 { color: #64748b; }
 }
 
 @layer components {

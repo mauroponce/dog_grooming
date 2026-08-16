@@ -1,0 +1,17 @@
+<%= form_with model: [:admin, extra], class: "mx-auto max-w-2xl space-y-6 rounded-3xl border border-zinc-200 bg-white p-7 shadow-card" do |form| %>
+  <div>
+    <%= form.label :title, "Título", class: "mb-2 block text-sm font-bold text-zinc-900" %>
+    <%= form.text_field :title, required: true, class: "h-12 w-full rounded-2xl border border-zinc-200 px-4 font-semibold", placeholder: "Ej. Corte de uñas" %>
+  </div>
+  <div>
+    <%= form.label :description, "Descripción", class: "mb-2 block text-sm font-bold text-zinc-900" %>
+    <%= form.text_area :description, rows: 4, class: "w-full rounded-2xl border border-zinc-200 px-4 py-3 font-semibold", placeholder: "Descripción breve del extra" %>
+  </div>
+  <div>
+    <%= form.label :price, "Precio", class: "mb-2 block text-sm font-bold text-zinc-900" %>
+    <%= form.number_field :price, min: 0, step: 1, required: true, class: "h-12 w-full rounded-2xl border border-zinc-200 px-4 font-semibold", placeholder: "0" %>
+  </div>
+  <label class="flex items-center gap-3 rounded-2xl bg-brand-50 p-4 text-sm font-bold text-brand-900"><%= form.check_box :public_visible, class: "h-5 w-5 rounded border-brand-300 text-brand-600" %> Visible en la página de reservas</label>
+  <label class="flex items-center gap-3 text-sm font-bold text-zinc-700"><%= form.check_box :active, class: "h-5 w-5 rounded border-zinc-300 text-brand-600" %> Activo</label>
+  <div class="flex gap-3"><%= link_to "Cancelar", admin_extras_path, class: "inline-flex h-12 items-center rounded-2xl border border-zinc-200 px-5 text-sm font-bold text-zinc-800" %><%= form.submit class: "h-12 rounded-2xl bg-zinc-950 px-5 text-sm font-bold text-white" %></div>
+<% end %>

@@ -6,7 +6,7 @@ class ResendDeliveryMethod
   class DeliveryError < StandardError; end
 
   DEFAULT_ENDPOINT = "https://api.resend.com/emails"
-  DEFAULT_FROM = "Dog Grooming <notificaciones@dog-grooming.example.com>"
+  DEFAULT_FROM = "Cita.pet <notificaciones@cita.pet>"
   RESEND_TEST_DOMAIN_PATTERN = /@resend\.dev(?:\s*>|\z)/i
 
   def self.configured_from

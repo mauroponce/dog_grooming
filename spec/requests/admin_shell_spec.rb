@@ -358,6 +358,7 @@ RSpec.describe "Admin shell", type: :request do
       "admin/customer_reminders",
       "admin/dashboard",
       "admin/employee_memberships",
+      "admin/extras",
       "admin/home",
       "admin/home_opportunities",
       "admin/mercado_pago_connections",
@@ -401,7 +402,7 @@ RSpec.describe "Admin shell", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(request.path).to eq("/admin/asistente")
-    expect(response.body).to include("Asistente Dog Grooming")
+    expect(response.body).to include("Asistente Cita.pet")
     expect(response.body).to include("Consulta agenda, clientes, comprobantes y facturación")
     expect(response.body).to include("Tu asistente diario")
     expect(response.body).to include("¿Qué querés saber de")

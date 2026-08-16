@@ -11,16 +11,16 @@
 	reverse_proxy web:80
 }
 
-{$APP_HOST:dog-grooming.example.com} {
+{$APP_HOST:cita.pet} {
 	import app_proxy
 }
 
-{$APP_WWW_HOST:www.dog-grooming.example.com} {
-	redir https://{$APP_HOST:dog-grooming.example.com}{uri} permanent
+{$APP_WWW_HOST:www.cita.pet} {
+	redir https://{$APP_HOST:cita.pet}{uri} permanent
 }
 
 # Customer domains resolve to the same server (typically through a CNAME to
-# custom.dog-grooming.example.com). Caddy obtains their certificate on the first TLS
+# custom.cita.pet). Caddy obtains their certificate on the first TLS
 # handshake only after Rails authorizes the domain in the database.
 https:// {
 	tls {

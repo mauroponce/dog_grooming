@@ -356,7 +356,7 @@ module Admin
       return "No entra ningún servicio en los espacios libres que quedan. Abrí el calendario si querés reorganizar la agenda manualmente." if opportunity_state == :too_short
       return "Hoy tenés #{today_activity_summary}. Revisá el calendario o la configuración de horarios para encontrar disponibilidad." if opportunity_state == :unavailable
 
-      "Cuando completes algunas visitas, Dog Grooming podrá recomendar a qué tutores ofrecer cada hueco."
+      "Cuando completes algunas visitas, Cita.pet podrá recomendar a qué tutores ofrecer cada hueco."
     end
 
     def opportunity_payloads

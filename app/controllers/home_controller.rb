@@ -5,13 +5,13 @@ class HomeController < ApplicationController
   end
 
   def registration_closed
-    redirect_to root_path(anchor: "contacto"), alert: "Por ahora creamos las cuentas desde Dog Grooming. Escribinos y te damos el alta."
+    redirect_to root_path(anchor: "contacto"), alert: "Por ahora creamos las cuentas desde Cita.pet. Escribinos y te damos el alta."
   end
 
   def registration_closed_json
     render json: {
       available: false,
-      message: "Por ahora creamos las cuentas desde Dog Grooming."
+      message: "Por ahora creamos las cuentas desde Cita.pet."
     }, status: :gone
   end
 end

@@ -1,5 +1,5 @@
 class ApplicationMailer < ActionMailer::Base
-  default from: ENV.fetch("MAIL_FROM", "Dog Grooming <notificaciones@dog-grooming.example.com>"),
+  default from: ENV.fetch("MAIL_FROM", "Cita.pet <notificaciones@cita.pet>"),
     reply_to: -> { ENV["MAIL_REPLY_TO"].presence }
   layout "mailer"
 

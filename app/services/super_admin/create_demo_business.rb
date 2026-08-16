@@ -9,7 +9,7 @@ module SuperAdmin
 
     def call
       suffix = Time.current.strftime("%Y%m%d%H%M%S")
-      email = "demo-#{suffix}@dog-grooming.test"
+      email = "demo-#{suffix}@cita.pet.test"
       password = DEFAULT_PASSWORD
 
       business = nil
@@ -26,8 +26,8 @@ module SuperAdmin
     private
       def business_attributes(suffix)
         {
-          name: "Demo Dog Grooming #{suffix.last(4)}",
-          slug: Slugs::GenerateUnique.call("demo-dog-grooming", scope: Business),
+          name: "Demo Cita.pet #{suffix.last(4)}",
+          slug: Slugs::GenerateUnique.call("demo-cita-pet", scope: Business),
           business_kind: "business",
           industry: "dog_grooming",
           contact_phone: "+5491100000000",
@@ -42,11 +42,11 @@ module SuperAdmin
             "deposits_enabled" => true,
             "deposit_percentage" => 50,
             "deposit_alias" => "demo.dog.grooming",
-            "deposit_holder" => "Demo Dog Grooming",
+            "deposit_holder" => "Demo Cita.pet",
             "deposit_instructions" => "Transferí la seña y subí el comprobante desde el link de tu reserva."
           ),
           ai_context: [
-            "Cuenta demo de Dog Grooming para probar agenda, servicios, tutores, mascotas y comprobantes.",
+            "Cuenta demo de Cita.pet para probar agenda, servicios, tutores, mascotas y comprobantes.",
             "El tutor puede reservar online para su mascota y el negocio confirma desde el panel."
           ].join("\n")
         }

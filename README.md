@@ -1,4 +1,4 @@
-# Dog Grooming
+# Cita.pet
 
 MVP Rails 8.1 para reservas online de peluquerías caninas. Usa PostgreSQL, Hotwire/Tailwind, auth nativa con bcrypt, Solid Queue, Active Storage, Action Mailer con Mailpit en desarrollo, Resend en producción y Kamal 2.
 
@@ -118,7 +118,7 @@ Planes comerciales:
 - Plan Profesional: $30.000 ARS/mes, 1 agenda activa, reservas online, señas manuales, comprobantes, chatbot y mensajes WhatsApp prearmados.
 - Plan Centro: $50.000 ARS/mes, varias profesionales, roles, recursos compartidos, agenda por profesional, reportes, huecos libres y gestion avanzada.
 
-La suscripción de Dog Grooming también se puede cobrar manualmente por transferencia al inicio del producto.
+La suscripción de Cita.pet también se puede cobrar manualmente por transferencia al inicio del producto.
 
 ## WhatsApp
 
@@ -153,18 +153,18 @@ La diferencia del Plan Centro es operativa:
 
 Las invitaciones de empleados y notificaciones usan Action Mailer. En desarrollo, todos los emails quedan capturados en Mailpit. En producción, la app envía por Resend usando la API HTTP sin gema externa.
 
-En producción, Resend debe usar el dominio que configures y verifiques para Dog Grooming:
+En producción, Resend debe usar el dominio que configures y verifiques para Cita.pet:
 
 ```sh
-MAIL_FROM="Dog Grooming <notificaciones@tu-dominio.example>"
-RESEND_FROM="Dog Grooming <notificaciones@tu-dominio.example>"
+MAIL_FROM="Cita.pet <notificaciones@tu-dominio.example>"
+RESEND_FROM="Cita.pet <notificaciones@tu-dominio.example>"
 ```
 
 El remitente `onboarding@resend.dev` solo sirve para pruebas limitadas de onboarding.
 
 ## Active Storage / Cloudflare R2
 
-Dog Grooming reutiliza las credenciales y el endpoint R2 existentes, pero nunca los buckets de otra instalación. Antes de activar R2 creá los dos buckets aislados: `dog-grooming` para Active Storage general y backups, y `dog-grooming-service-images` para las imágenes de servicios.
+Cita.pet reutiliza las credenciales y el endpoint R2 existentes, pero nunca los buckets de otra instalación. Antes de activar R2 creá los dos buckets aislados: `dog-grooming` para Active Storage general y backups, y `dog-grooming-service-images` para las imágenes de servicios.
 
 ```sh
 ACTIVE_STORAGE_SERVICE=r2
@@ -210,9 +210,9 @@ KAMAL_IMAGE=mauroponce/dog_grooming
 KAMAL_REGISTRY_SERVER=ghcr.io
 KAMAL_REGISTRY_USERNAME=mauroponce
 KAMAL_REGISTRY_PASSWORD=<token-del-registry>
-APP_HOST=dog-grooming.example.com
+APP_HOST=cita.pet
 APP_PROTOCOL=https
-APP_HOSTS=dog-grooming.example.com,www.dog-grooming.example.com
+APP_HOSTS=cita.pet,www.cita.pet
 DOG_GROOMING_DATABASE_PASSWORD=<password-postgres-produccion>
 ```
 

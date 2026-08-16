@@ -1,7 +1,7 @@
 require "rails_helper"
 
 RSpec.describe AppointmentMailer, type: :mailer do
-  it "renders the confirmed-booking email with Calendar, portal, and Dog Grooming logo" do
+  it "renders the confirmed-booking email with Calendar, portal, and Cita.pet logo" do
     appointment = create_appointment
 
     mail = described_class.customer_booking_confirmed(appointment)

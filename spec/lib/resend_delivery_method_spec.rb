@@ -14,17 +14,17 @@ RSpec.describe ResendDeliveryMethod do
     it "ignores Resend's test sender in production and uses MAIL_FROM" do
       allow(Rails).to receive(:env).and_return(ActiveSupport::StringInquirer.new("production"))
       ENV["RESEND_FROM"] = "onboarding@resend.dev"
-      ENV["MAIL_FROM"] = "Dog Grooming <no-reply@dog-grooming.example.com>"
+      ENV["MAIL_FROM"] = "Cita.pet <no-reply@cita.pet>"
 
-      expect(described_class.configured_from).to eq("Dog Grooming <no-reply@dog-grooming.example.com>")
+      expect(described_class.configured_from).to eq("Cita.pet <no-reply@cita.pet>")
     end
 
     it "keeps a verified RESEND_FROM sender in production" do
       allow(Rails).to receive(:env).and_return(ActiveSupport::StringInquirer.new("production"))
-      ENV["RESEND_FROM"] = "Dog Grooming <notificaciones@dog-grooming.example.com>"
-      ENV["MAIL_FROM"] = "Dog Grooming <no-reply@dog-grooming.example.com>"
+      ENV["RESEND_FROM"] = "Cita.pet <notificaciones@cita.pet>"
+      ENV["MAIL_FROM"] = "Cita.pet <no-reply@cita.pet>"
 
-      expect(described_class.configured_from).to eq("Dog Grooming <notificaciones@dog-grooming.example.com>")
+      expect(described_class.configured_from).to eq("Cita.pet <notificaciones@cita.pet>")
     end
   end
 
@@ -35,7 +35,7 @@ RSpec.describe ResendDeliveryMethod do
         def body = '{"message":"The from address is not verified"}'
         def is_a?(klass) = false
       end.new
-      delivery_method = described_class.new(api_key: "test", from: "Dog Grooming <no-reply@dog-grooming.example.com>")
+      delivery_method = described_class.new(api_key: "test", from: "Cita.pet <no-reply@cita.pet>")
       mail = Mail.new(to: "user@example.com", subject: "Test", body: "Body")
 
       allow(delivery_method).to receive(:request).and_return(response)

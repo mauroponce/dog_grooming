@@ -4,7 +4,7 @@ module Appointments
       new(...).call
     end
 
-    def initialize(business:, service:, starts_at:, customer_name:, customer_phone:, customer_email: nil, pet: nil, pet_id: nil, pet_name: nil, pet_breed: nil, pet_size: nil, pet_sex: nil, pet_birth_date: nil, pet_notes: nil, source: :public_booking, notes: nil, add_on_service_ids: [], branch: nil, employee_membership: nil, deposit_receipt: nil, payment_method: nil)
+    def initialize(business:, service:, starts_at:, customer_name:, customer_phone:, customer_email: nil, pet: nil, pet_id: nil, pet_name: nil, pet_breed: nil, pet_size: nil, pet_sex: nil, pet_birth_date: nil, pet_notes: nil, source: :public_booking, notes: nil, add_on_service_ids: [], extra_ids: [], branch: nil, employee_membership: nil, deposit_receipt: nil, payment_method: nil)
       @business = business
       @service = service
       @starts_at = starts_at
@@ -22,6 +22,7 @@ module Appointments
       @source = source
       @notes = notes
       @add_on_service_ids = Array(add_on_service_ids).reject(&:blank?)
+      @extra_ids = Array(extra_ids).reject(&:blank?)
       @branch = branch
       @employee_membership = employee_membership
       @deposit_receipt = deposit_receipt
@@ -63,6 +64,7 @@ module Appointments
           discount_percentage: pricing.fetch(:discount_percentage)
         )
         create_addons!(appointment, pricing.fetch(:add_ons))
+        create_extras!(appointment, pricing.fetch(:extras))
         appointment
       end
 
@@ -85,7 +87,7 @@ module Appointments
     end
 
     private
-      attr_reader :business, :service, :starts_at, :customer_name, :customer_phone, :customer_email, :pet, :pet_id, :pet_name, :pet_breed, :pet_size, :pet_sex, :pet_birth_date, :pet_notes, :source, :notes, :add_on_service_ids, :branch, :employee_membership, :deposit_receipt, :payment_method
+      attr_reader :business, :service, :starts_at, :customer_name, :customer_phone, :customer_email, :pet, :pet_id, :pet_name, :pet_breed, :pet_size, :pet_sex, :pet_birth_date, :pet_notes, :source, :notes, :add_on_service_ids, :extra_ids, :branch, :employee_membership, :deposit_receipt, :payment_method
 
       def validate_payment_configuration!
         return unless service[:deposit_required]
@@ -201,12 +203,14 @@ module Appointments
         add_ons = add_on_services.map do |add_on|
           { service: add_on, price_cents: add_on.price_cents_for_time(starts_at, business) }
         end
-        total_cents = primary_price_cents + add_ons.sum { |entry| entry.fetch(:price_cents) }
+        extras = business.extras.publicly_visible.where(id: extra_ids).map { |extra| { extra: extra, price_cents: extra.price_cents } }
+        total_cents = primary_price_cents + add_ons.sum { |entry| entry.fetch(:price_cents) } + extras.sum { |entry| entry.fetch(:price_cents) }
         {
-          base_price_cents: service.price_cents + add_ons.sum { |entry| entry.fetch(:service).price_cents },
+          base_price_cents: service.price_cents + add_ons.sum { |entry| entry.fetch(:service).price_cents } + extras.sum { |entry| entry.fetch(:price_cents) },
           final_price_cents: total_cents,
           discount_percentage: service.dynamic_discount_for_time(starts_at, business),
-          add_ons: add_ons
+          add_ons: add_ons,
+          extras: extras
         }
       end
 
@@ -221,6 +225,10 @@ module Appointments
         add_ons.each do |entry|
           appointment.appointment_addons.create!(service: entry.fetch(:service), price_cents: entry.fetch(:price_cents))
         end
+      end
+
+      def create_extras!(appointment, extras)
+        extras.each { |entry| appointment.appointment_extras.create!(extra: entry.fetch(:extra), price_cents: entry.fetch(:price_cents)) }
       end
 
       def find_or_update_customer_profile!
