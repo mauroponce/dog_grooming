@@ -2018,7 +2018,7 @@ import { bindAppointmentDetailPanel, openProfessionalPicker, renderAppointmentDe
   function appointmentPetFields() {
     const pets = Array.isArray(selectedCustomer?.pets) ? selectedCustomer.pets : [];
     const petOptions = pets.map(pet => {
-      const detail = [pet.breed, pet.sizeLabel].filter(Boolean).join(" · ");
+      const detail = [pet.breed].filter(Boolean).join(" · ");
       return `<option value="${escapeAttribute(pet.id)}">${escapeHTML([pet.name, detail].filter(Boolean).join(" — "))}</option>`;
     }).join("");
 
@@ -2218,7 +2218,6 @@ import { bindAppointmentDetailPanel, openProfessionalPicker, renderAppointmentDe
     const petId = document.getElementById("appointmentPetIdInput")?.value || "";
     const petName = document.getElementById("appointmentPetNameInput")?.value.trim() || "";
     const petBreed = document.getElementById("appointmentPetBreedInput")?.value.trim() || "";
-    const petSize = document.getElementById("appointmentPetSizeInput")?.value || "";
     const petSex = document.getElementById("appointmentPetSexInput")?.value || "";
     const petNotes = document.getElementById("appointmentPetNotesInput")?.value.trim() || "";
     const status = document.getElementById("appointmentStatusInput").value;
@@ -2262,7 +2261,6 @@ import { bindAppointmentDetailPanel, openProfessionalPicker, renderAppointmentDe
             pet_id: petId,
             pet_name: petName,
             pet_breed: petBreed,
-            pet_size: petSize,
             pet_sex: petSex,
             pet_notes: petNotes,
             waitlist_entry_id: waitlistAppointmentEntryId || "",

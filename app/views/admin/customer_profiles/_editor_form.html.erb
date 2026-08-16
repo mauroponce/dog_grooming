@@ -366,10 +366,6 @@
                       <%= pet_form.text_field :breed, class: "customer-profile-editor__input", placeholder: "Ej. Caniche" %>
                     </div>
                     <div class="customer-profile-editor__field">
-                      <%= pet_form.label :size, "Tamaño" %>
-                      <%= pet_form.select :size, [[ "No especificado", "" ]] + Pet::SIZE_OPTIONS.map { |value, label| [ label, value ] }, {}, class: "customer-profile-editor__input" %>
-                    </div>
-                    <div class="customer-profile-editor__field">
                       <%= pet_form.label :sex, "Sexo" %>
                       <%= pet_form.select :sex, [[ "No especificado", "" ]] + Pet::SEX_OPTIONS.map { |value, label| [ label, value ] }, {}, class: "customer-profile-editor__input" %>
                     </div>

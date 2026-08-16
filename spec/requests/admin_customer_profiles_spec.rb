@@ -458,7 +458,6 @@ RSpec.describe "Admin customer profiles", type: :request do
           "0" => {
             name: "Coco",
             breed: "Caniche",
-            size: "small",
             sex: "male",
             notes: "Cepillado suave en patas."
           }
@@ -481,7 +480,6 @@ RSpec.describe "Admin customer profiles", type: :request do
     expect(customer.pets.sole).to have_attributes(
       name: "Coco",
       breed: "Caniche",
-      size: "small",
       sex: "male",
       business: business
     )

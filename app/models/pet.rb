@@ -1,12 +1,4 @@
 class Pet < ApplicationRecord
-  SIZE_OPTIONS = {
-    "extra_small" => "Mini",
-    "small" => "Chico",
-    "medium" => "Mediano",
-    "large" => "Grande",
-    "extra_large" => "Gigante"
-  }.freeze
-
   SEX_OPTIONS = {
     "female" => "Hembra",
     "male" => "Macho"
@@ -24,7 +16,6 @@ class Pet < ApplicationRecord
 
   validates :name, presence: true, length: { maximum: 120 }
   validates :breed, length: { maximum: 120 }, allow_blank: true
-  validates :size, inclusion: { in: SIZE_OPTIONS.keys }, allow_blank: true
   validates :sex, inclusion: { in: SEX_OPTIONS.keys }, allow_blank: true
   validates :notes, length: { maximum: 10_000 }, allow_blank: true
 
@@ -32,10 +23,6 @@ class Pet < ApplicationRecord
   validate :birth_date_cannot_be_in_the_future
 
   scope :alphabetically, -> { order(Arel.sql("LOWER(name) ASC"), :id) }
-
-  def size_label
-    SIZE_OPTIONS[size]
-  end
 
   def sex_label
     SEX_OPTIONS[sex]
@@ -49,26 +36,8 @@ class Pet < ApplicationRecord
     def normalize_attributes
       self.name = name.to_s.squish.presence
       self.breed = breed.to_s.squish.presence
-      self.size = normalize_size(size)
       self.sex = normalize_sex(sex)
       self.notes = notes.to_s.strip.presence
-    end
-
-    def normalize_size(value)
-      normalized = value.to_s.squish.downcase.presence
-      {
-        "mini" => "extra_small",
-        "muy chico" => "extra_small",
-        "muy chica" => "extra_small",
-        "chico" => "small",
-        "chica" => "small",
-        "pequeno" => "small",
-        "pequeño" => "small",
-        "mediano" => "medium",
-        "mediana" => "medium",
-        "grande" => "large",
-        "gigante" => "extra_large"
-      }.fetch(normalized, normalized)
     end
 
     def normalize_sex(value)

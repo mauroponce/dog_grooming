@@ -75,7 +75,7 @@
 
             <div class="grid border-t border-zinc-100 sm:grid-cols-2">
               <% if @confirmation.pet.present? %>
-                <% pet_details = [ @confirmation.pet.breed, @confirmation.pet.size_label, @confirmation.pet.sex_label ].compact_blank %>
+                <% pet_details = [ @confirmation.pet.breed, @confirmation.pet.sex_label ].compact_blank %>
                 <div class="border-b border-zinc-100 p-5 sm:border-b-0 sm:border-r">
                   <p class="text-[10px] font-bold uppercase tracking-[.12em] text-zinc-400">Mascota</p>
                   <p class="mt-1.5 text-sm font-bold text-zinc-800"><%= @confirmation.pet.name %></p>

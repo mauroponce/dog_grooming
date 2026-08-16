@@ -4,16 +4,16 @@ set -euo pipefail
 # Deploy production from the server itself.
 #
 # First run, from your local machine:
-#   scp deploy.sh dog_grooming_production:/opt/dog_grooming/current/deploy.sh
-#   ssh dog_grooming_production 'cd /opt/dog_grooming/current && chmod +x deploy.sh && ./deploy.sh'
+#   scp deploy.sh citapet_production:/opt/cita.pet/dog_grooming/deploy.sh
+#   ssh citapet_production 'cd /opt/cita.pet/dog_grooming && chmod +x deploy.sh && ./deploy.sh'
 #
 # Later deploys:
-#   ssh dog_grooming_production 'cd /opt/dog_grooming/current && ./deploy.sh'
+#   ssh citapet_production 'cd /opt/cita.pet/dog_grooming && ./deploy.sh'
 #
 # Optional backup before deploy:
-#   ssh dog_grooming_production 'cd /opt/dog_grooming/current && RUN_BACKUP=1 ./deploy.sh'
+#   ssh citapet_production 'cd /opt/cita.pet/dog_grooming && RUN_BACKUP=1 ./deploy.sh'
 
-APP_DIR="${APP_DIR:-/opt/dog_grooming/current}"
+APP_DIR="${APP_DIR:-/opt/cita.pet/dog_grooming}"
 BRANCH="${BRANCH:-main}"
 GIT_REMOTE_URL="${GIT_REMOTE_URL:-git@github.com:mauroponce/dog_grooming.git}"
 RUN_BACKUP="${RUN_BACKUP:-0}"
@@ -92,7 +92,7 @@ wait_for_url() {
   local code
 
   while [ "$attempt" -le "$attempts" ]; do
-    if code="$(curl -sS -o /dev/null -w '%{http_code}' "$url" 2>/dev/null)" &&
+    if code="$(curl --connect-timeout 5 --max-time 10 -sS -o /dev/null -w '%{http_code}' "$url" 2>/dev/null)" &&
       [ "${code:-000}" -ge 200 ] &&
       [ "${code:-000}" -lt 400 ]; then
       echo "${label}=${code}"

@@ -147,11 +147,9 @@ class PublicBookingController < ApplicationController
         :pet_id,
         :pet_name,
         :pet_breed,
-        :pet_size,
         :pet_sex,
         :pet_birth_date,
         :pet_notes,
-        :notes,
         :deposit_receipt,
         :payment_method,
         service_ids: [],
@@ -425,11 +423,9 @@ class PublicBookingController < ApplicationController
             pet_id: booking_submission_params[:pet_id].presence,
             pet_name: booking_submission_params[:pet_name],
             pet_breed: booking_submission_params[:pet_breed],
-            pet_size: booking_submission_params[:pet_size],
             pet_sex: booking_submission_params[:pet_sex],
             pet_birth_date: booking_submission_params[:pet_birth_date],
             pet_notes: booking_submission_params[:pet_notes],
-            notes: booking_submission_params[:notes],
             branch: preferred_employee&.branch || selected_branch_for_booking,
             employee_membership: preferred_employee,
             deposit_receipt: receipt,
@@ -473,11 +469,9 @@ class PublicBookingController < ApplicationController
       attrs[:pet_id] = draft_attrs[:pet_id] if attrs[:pet_id].blank?
       attrs[:pet_name] = draft_attrs[:pet_name] if attrs[:pet_name].blank?
       attrs[:pet_breed] = draft_attrs[:pet_breed] if attrs[:pet_breed].blank?
-      attrs[:pet_size] = draft_attrs[:pet_size] if attrs[:pet_size].blank?
       attrs[:pet_sex] = draft_attrs[:pet_sex] if attrs[:pet_sex].blank?
       attrs[:pet_birth_date] = draft_attrs[:pet_birth_date] if attrs[:pet_birth_date].blank?
       attrs[:pet_notes] = draft_attrs[:pet_notes] if attrs[:pet_notes].blank?
-      attrs[:notes] = draft_attrs[:notes] if attrs[:notes].blank?
       attrs
     end
 
@@ -524,11 +518,9 @@ class PublicBookingController < ApplicationController
         "pet_id" => booking_submission_params[:pet_id].to_s,
         "pet_name" => booking_submission_params[:pet_name].to_s,
         "pet_breed" => booking_submission_params[:pet_breed].to_s,
-        "pet_size" => booking_submission_params[:pet_size].to_s,
         "pet_sex" => booking_submission_params[:pet_sex].to_s,
         "pet_birth_date" => booking_submission_params[:pet_birth_date].to_s,
         "pet_notes" => booking_submission_params[:pet_notes].to_s,
-        "notes" => booking_submission_params[:notes].to_s,
         "appointment_ids" => Array(@booking_draft&.dig("appointment_ids")),
         "created_at" => Time.current.iso8601
       }.compact

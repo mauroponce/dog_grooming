@@ -207,7 +207,6 @@ export function renderAppointmentDetail(appointment, { actions = {}, variant = "
             <div class="appointment-detail-panel__rows">
               ${detailRow("Nombre", appointment.petName)}
               ${appointment.petBreed ? detailRow("Raza", appointment.petBreed) : ""}
-              ${appointment.petSize ? detailRow("Tamaño", appointment.petSize) : ""}
               ${appointment.petSex ? detailRow("Sexo", appointment.petSex) : ""}
               ${appointment.petNotes ? detailRow("Cuidados", appointment.petNotes) : ""}
             </div>

@@ -2378,11 +2378,11 @@
                       <span class="service-switch-text">
                         <span class="service-switch-title">Requiere seña</span>
                       </span>
-                      <span class="service-toggle-control">
+                      <span class="service-toggle-control app-toggle-control">
                         <%= form.check_box :deposit_required,
-                          class: "service-toggle-checkbox",
+                          class: "service-toggle-checkbox app-toggle-input",
                           data: { service_deposit_target: "checkbox", action: "service-deposit#toggle" } %>
-                        <span class="service-toggle"></span>
+                        <span class="app-toggle-indicator"></span>
                       </span>
                     </label>
                     <div class="mt-5" data-service-deposit-target="amount" <%= "hidden" unless service[:deposit_required] %>>
@@ -2450,12 +2450,12 @@
                         <span class="service-switch-title">Visible en la página de reservas</span>
                         <span class="service-switch-copy">Los clientes podrán encontrar y reservar este servicio.</span>
                       </span>
-                      <span class="service-toggle-control">
+                      <span class="service-toggle-control app-toggle-control">
                         <%= form.check_box :public_visible,
-                          { checked: service.new_record? ? true : service.public_visible?, class: "service-toggle-checkbox" },
+                          { checked: service.new_record? ? true : service.public_visible?, class: "service-toggle-checkbox app-toggle-input" },
                           "1",
                           "0" %>
-                        <span class="service-toggle"></span>
+                        <span class="app-toggle-indicator"></span>
                       </span>
                   </label>
                 </section>

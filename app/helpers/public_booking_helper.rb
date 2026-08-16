@@ -1,6 +1,9 @@
 module PublicBookingHelper
   SPANISH_DAYS = %w[domingo lunes martes miercoles jueves viernes sabado].freeze
   SPANISH_MONTHS = %w[enero febrero marzo abril mayo junio julio agosto septiembre octubre noviembre diciembre].freeze
+  DOG_BREEDS = [
+    "Affenpinscher", "Airedale Terrier", "Akita Inu", "Alaskan Malamute", "American Bully", "American Staffordshire Terrier", "Basenji", "Basset Hound", "Beagle", "Bearded Collie", "Bedlington Terrier", "Bernés de la montaña", "Bichón Frisé", "Bichón Habanero", "Bloodhound", "Bobtail", "Border Collie", "Border Terrier", "Boston Terrier", "Bóxer", "Boyero de Berna", "Braco Alemán", "Braco Húngaro", "Bull Terrier", "Bulldog Francés", "Bulldog Inglés", "Bullmastiff", "Cane Corso", "Caniche", "Caniche Toy", "Cavalier King Charles Spaniel", "Chihuahua", "Chow Chow", "Cocker Spaniel Americano", "Cocker Spaniel Inglés", "Collie", "Corgi Galés Pembroke", "Dachshund", "Dálmata", "Doberman", "Dogo Argentino", "Dogo de Burdeos", "English Springer Spaniel", "Galgo", "Golden Retriever", "Gran Danés", "Husky Siberiano", "Jack Russell Terrier", "Labrador Retriever", "Lebrel Afgano", "Maltés", "Mastín Español", "Mastín Napolitano", "Mestizo", "Miniature Pinscher", "Münsterländer", "Papillón", "Pastor Alemán", "Pastor Australiano", "Pastor Belga", "Pastor Blanco Suizo", "Pastor de Shetland", "Pastor Inglés", "Pekinés", "Perro de Agua Español", "Pinscher Miniatura", "Pit Bull Terrier", "Pointer", "Pomerania", "Poodle", "Pug", "Rottweiler", "Sabueso", "Samoyedo", "San Bernardo", "Schnauzer", "Schnauzer Miniatura", "Setter Inglés", "Shar Pei", "Shiba Inu", "Shih Tzu", "Staffordshire Bull Terrier", "Teckel", "Terranova", "Terrier Escocés", "Terrier Yorkshire", "Weimaraner", "West Highland White Terrier", "Whippet", "Yorkshire Terrier"
+  ].sort.freeze
 
   def public_icon(name, css: "h-5 w-5")
     icons = {

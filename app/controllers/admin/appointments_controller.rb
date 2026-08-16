@@ -296,7 +296,6 @@ module Admin
           :pet_id,
           :pet_name,
           :pet_breed,
-          :pet_size,
           :pet_sex,
           :pet_birth_date,
           :pet_notes,
@@ -432,7 +431,6 @@ module Admin
         attributes = {
           name: attrs.delete(:pet_name),
           breed: attrs.delete(:pet_breed),
-          size: attrs.delete(:pet_size),
           sex: attrs.delete(:pet_sex),
           birth_date: attrs.delete(:pet_birth_date),
           notes: attrs.delete(:pet_notes)
@@ -503,7 +501,6 @@ module Admin
           petId: appointment.pet_id&.to_s,
           petName: appointment.pet&.name,
           petBreed: appointment.pet&.breed,
-          petSize: appointment.pet&.size_label,
           petSex: appointment.pet&.sex_label,
           petNotes: appointment.pet&.notes,
           phone: appointment.customer_phone,

@@ -890,7 +890,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_180000) do
     t.string "name", null: false
     t.text "notes"
     t.string "sex"
-    t.string "size"
     t.datetime "updated_at", null: false
     t.index ["business_id", "customer_profile_id"], name: "index_pets_on_business_id_and_customer_profile_id"
     t.index ["business_id"], name: "index_pets_on_business_id"

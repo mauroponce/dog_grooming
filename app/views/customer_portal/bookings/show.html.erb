@@ -4,7 +4,7 @@
 <% upload_accept = ".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf" %>
 <% can_upload_receipt = @appointment.manual_payment_required? && !@appointment.confirmed? && @appointment.deposit_status != "approved" && !@appointment.terminal_status? %>
 <% pet = @appointment.pet %>
-<% pet_details = [ pet&.breed, pet&.size_label, pet&.sex_label ].compact_blank %>
+<% pet_details = [ pet&.breed, pet&.sex_label ].compact_blank %>
 
 <div class="min-h-screen bg-[#F7F7FA] px-4 py-6 text-zinc-950 sm:px-6 sm:py-10">
   <div class="mx-auto max-w-5xl">

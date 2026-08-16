@@ -314,8 +314,6 @@ module Admin
           id: pet.id.to_s,
           name: pet.name,
           breed: pet.breed,
-          size: pet.size,
-          sizeLabel: pet.size_label,
           sex: pet.sex,
           sexLabel: pet.sex_label,
           notes: pet.notes
@@ -388,7 +386,7 @@ module Admin
           :gender,
           :internal_notes,
           customer_photos: [],
-          pets_attributes: [ :id, :name, :breed, :size, :sex, :birth_date, :notes ]
+          pets_attributes: [ :id, :name, :breed, :sex, :birth_date, :notes ]
         )
         permitted[:birth_date] = parsed_birth_date if birth_date_parts_present?
         permitted

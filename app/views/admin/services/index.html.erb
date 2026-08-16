@@ -803,6 +803,11 @@ end %>
     box-shadow: 0 0 0 4px rgba(255, 222, 212, .12), 0 16px 36px rgba(255, 222, 212, .08);
   }
 
+  /* Elevate the entire card's stacking context while its contextual menu is open. */
+  .service-row:has(.service-row-actions[open]) {
+    z-index: 2147483300;
+  }
+
   .service-row-link {
     position: absolute;
     inset: 0;
@@ -1673,7 +1678,7 @@ end %>
         <%= form.text_field :title, required: true, placeholder: "Ej. Corte de uñas", class: "services-category-input", name: "extra[title]", data: { services_extra_field: true } %>
         <%= form.text_area :description, rows: 3, placeholder: "Descripción", class: "services-category-input", name: "extra[description]", data: { services_extra_field: true } %>
         <label class="text-sm font-bold text-zinc-700">Precio</label><div class="services-category-input flex items-center gap-3"><span class="text-lg font-bold text-zinc-500">$</span><%= form.text_field :price, inputmode: "numeric", pattern: "[0-9]*", autocomplete: "off", required: true, placeholder: "Ej. 30000", class: "min-w-0 flex-1 bg-transparent font-semibold outline-none", name: "extra[price]", data: { services_extra_field: true } %></div>
-        <label class="text-sm font-bold text-zinc-700"><%= form.check_box :public_visible, name: "extra[public_visible]", data: { services_extra_field: true } %> Visible en la página de reservas</label>
+        <label class="flex items-center justify-between gap-4 text-sm font-bold text-zinc-700"><span>Visible en la página de reservas</span><span class="app-toggle-control"><%= form.check_box :public_visible, { name: "extra[public_visible]", class: "app-toggle-input", data: { services_extra_field: true } }, "1", "0" %><span class="app-toggle-indicator"></span></span></label>
         <%= form.hidden_field :active, value: true, name: "extra[active]" %><div class="services-modal-actions"><button type="button" class="services-modal-secondary" data-services-add-extra-close>Cerrar</button><%= form.submit "Crear extra", class: "services-modal-primary", data: { services_extra_submit: true } %></div>
       <% end %>
     </div>

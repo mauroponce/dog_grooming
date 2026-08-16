@@ -1123,7 +1123,7 @@ RSpec.describe "Admin shell", type: :request do
     service = business.services.create!(name: "Consulta", service_category: category, category: category.name, duration_minutes: 30, price_cents: 5_000_00, active: true)
     addon_service = business.services.create!(name: "Limpieza", service_category: category, category: category.name, duration_minutes: 45, price_cents: 3_000_00, active: true)
     customer = business.customer_profiles.create!(name: "Sofía Gomez", phone: "+54 9 11 7777-7777", email: "sofia@example.com")
-    pet = customer.pets.create!(business: business, name: "Mora", breed: "Caniche", size: "small", sex: "female")
+    pet = customer.pets.create!(business: business, name: "Mora", breed: "Caniche", sex: "female")
 
     sign_in(user)
     request_headers = browser_headers.merge(

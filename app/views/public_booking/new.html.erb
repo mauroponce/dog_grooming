@@ -620,12 +620,12 @@
                 <%= text_field_tag "booking[pet_name]", booking_draft[:pet_name], required: true, autocomplete: "off", placeholder: "Ej. Coco", class: "h-12 w-full rounded-2xl border border-zinc-200 bg-white px-4 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100" %>
               </div>
               <div>
-                <%= label_tag "booking[pet_breed]", "Raza", class: "mb-2 block text-sm font-bold text-zinc-800" %>
-                <%= text_field_tag "booking[pet_breed]", booking_draft[:pet_breed], autocomplete: "off", placeholder: "Ej. Caniche", class: "h-12 w-full rounded-2xl border border-zinc-200 bg-white px-4 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100" %>
-              </div>
-              <div>
-                <%= label_tag "booking[pet_size]", "Tamaño", class: "mb-2 block text-sm font-bold text-zinc-800" %>
-                <%= select_tag "booking[pet_size]", options_for_select([["No especificado", ""], ["Mini", "extra_small"], ["Chico", "small"], ["Mediano", "medium"], ["Grande", "large"], ["Gigante", "extra_large"]], booking_draft[:pet_size]), class: "h-12 w-full rounded-2xl border border-zinc-200 bg-white px-4 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100" %>
+                <div class="mb-2 flex items-center justify-between"><%= label_tag "booking[pet_breed]", "Raza", class: "block text-sm font-bold text-zinc-800" %><span class="text-xs font-semibold text-zinc-400">Opcional</span></div>
+                <div class="app-select app-autocomplete-select" data-app-select data-breed-autocomplete data-breed-options="<%= PublicBookingHelper::DOG_BREEDS.to_json %>">
+                  <%= text_field_tag "booking[pet_breed]", booking_draft[:pet_breed], autocomplete: "off", placeholder: "Buscá o escribí una raza", class: "app-select-trigger app-autocomplete-input", data: { app_select_trigger: true, breed_autocomplete_input: true }, aria: { autocomplete: "list", expanded: "false", controls: "dog-breed-options" } %>
+                  <span class="app-select-chevron app-autocomplete-chevron" aria-hidden="true">⌄</span>
+                  <div id="dog-breed-options" class="app-select-menu" data-app-select-menu data-breed-autocomplete-menu role="listbox" hidden></div>
+                </div>
               </div>
               <div>
                 <%= label_tag "booking[pet_sex]", "Sexo", class: "mb-2 block text-sm font-bold text-zinc-800" %>
@@ -639,13 +639,6 @@
               </div>
               <%= text_area_tag "booking[pet_notes]", booking_draft[:pet_notes], rows: 3, placeholder: "Alergias, sensibilidad, comportamiento o indicaciones de cuidado", class: "w-full resize-none rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100" %>
             </div>
-          </div>
-          <div>
-            <div class="mb-2 flex items-center justify-between gap-4">
-              <%= label_tag "booking[notes]", show_professional_details ? "Comentario para el profesional" : "Comentario para el negocio", class: "block text-sm font-bold text-zinc-800" %>
-              <span class="text-xs font-semibold text-zinc-400">Opcional</span>
-            </div>
-            <%= text_area_tag "booking[notes]", booking_draft[:notes], rows: 3, placeholder: "Alergias, preferencias u otra información relevante", class: "w-full resize-none rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100" %>
           </div>
           <p class="text-center text-[11px] leading-5 text-zinc-400"><%= @business.cancellation_policy_text %></p>
         <% end %>

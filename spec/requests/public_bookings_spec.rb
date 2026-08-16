@@ -349,7 +349,7 @@ RSpec.describe "Public bookings", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Responsable y mascota")
-    expect(response.body).to include("Comentario para el negocio")
+    expect(response.body).not_to include("Comentario para el negocio")
     expect(response.body).not_to include("Comentario para el profesional")
     expect(response.body).not_to include("Elegí cómo pagar la seña")
 
@@ -1079,7 +1079,7 @@ RSpec.describe "Public bookings", type: :request do
     expect(details_document.at_css("input[name='booking[customer_name]']")["value"]).to eq("Julieta Perez")
     expect(details_document.at_css("input[name='booking[customer_phone]']")["value"]).to eq("+54 9 11 1111-1111")
     expect(details_document.at_css("input[name='booking[customer_email]']")["value"]).to eq("julieta@example.com")
-    expect(details_document.at_css("textarea[name='booking[notes]']").text.strip).to eq("Prefiere turno por la mañana")
+    expect(details_document.at_css("textarea[name='booking[notes]']")).to be_nil
   end
 
   it "creates a single appointment even if multiple services are submitted" do

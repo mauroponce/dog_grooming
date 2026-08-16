@@ -127,7 +127,6 @@ module Admin
           petId: appointment.pet_id&.to_s,
           petName: appointment.pet&.name,
           petBreed: appointment.pet&.breed,
-          petSize: appointment.pet&.size_label,
           petSex: appointment.pet&.sex_label,
           petNotes: appointment.pet&.notes,
           endsAt: appointment.ends_at&.iso8601,

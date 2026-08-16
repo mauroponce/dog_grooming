@@ -4,7 +4,7 @@ module Appointments
       new(...).call
     end
 
-    def initialize(business:, service:, starts_at:, customer_name:, customer_phone:, customer_email: nil, pet: nil, pet_id: nil, pet_name: nil, pet_breed: nil, pet_size: nil, pet_sex: nil, pet_birth_date: nil, pet_notes: nil, source: :public_booking, notes: nil, add_on_service_ids: [], extra_ids: [], branch: nil, employee_membership: nil, deposit_receipt: nil, payment_method: nil)
+    def initialize(business:, service:, starts_at:, customer_name:, customer_phone:, customer_email: nil, pet: nil, pet_id: nil, pet_name: nil, pet_breed: nil, pet_sex: nil, pet_birth_date: nil, pet_notes: nil, source: :public_booking, notes: nil, add_on_service_ids: [], extra_ids: [], branch: nil, employee_membership: nil, deposit_receipt: nil, payment_method: nil)
       @business = business
       @service = service
       @starts_at = starts_at
@@ -15,7 +15,6 @@ module Appointments
       @pet_id = pet_id
       @pet_name = pet_name
       @pet_breed = pet_breed
-      @pet_size = pet_size
       @pet_sex = pet_sex
       @pet_birth_date = pet_birth_date
       @pet_notes = pet_notes
@@ -87,7 +86,7 @@ module Appointments
     end
 
     private
-      attr_reader :business, :service, :starts_at, :customer_name, :customer_phone, :customer_email, :pet, :pet_id, :pet_name, :pet_breed, :pet_size, :pet_sex, :pet_birth_date, :pet_notes, :source, :notes, :add_on_service_ids, :extra_ids, :branch, :employee_membership, :deposit_receipt, :payment_method
+      attr_reader :business, :service, :starts_at, :customer_name, :customer_phone, :customer_email, :pet, :pet_id, :pet_name, :pet_breed, :pet_sex, :pet_birth_date, :pet_notes, :source, :notes, :add_on_service_ids, :extra_ids, :branch, :employee_membership, :deposit_receipt, :payment_method
 
       def validate_payment_configuration!
         return unless service[:deposit_required]
@@ -255,7 +254,6 @@ module Appointments
           pet: selected_pet,
           name: pet_name,
           breed: pet_breed,
-          size: pet_size,
           sex: pet_sex,
           birth_date: pet_birth_date,
           notes: pet_notes
