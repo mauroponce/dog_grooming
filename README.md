@@ -113,6 +113,12 @@ El comercio configura sus cuentas de cobro desde `/admin/configuracion`. Puede u
 
 Para Mercado Pago configurá `MERCADO_PAGO_CLIENT_ID` y `MERCADO_PAGO_CLIENT_SECRET` con el App ID y Client Secret de la aplicación OAuth. También podés separar credenciales de API con `MERCADO_PAGO_TEST_*` y `MERCADO_PAGO_PRODUCTION_*`. `docker compose` local fuerza `MERCADO_PAGO_ENV=test` para intercambiar OAuth con `test_token=true` y checkout sandbox; producción fuerza `MERCADO_PAGO_ENV=production` y usa las credenciales `MERCADO_PAGO_PRODUCTION_*`. El webhook `/webhooks/mercado-pago` recibe las notificaciones de pago; si configurás `MERCADO_PAGO_WEBHOOK_SECRET`, la app valida la firma enviada por Mercado Pago.
 
+### Suscripciones de negocios
+
+El registro público en `/registro` crea una cuenta con 14 días de prueba. Para cobrar después de la prueba, configurá una aplicación de Mercado Pago **separada de la que usan los negocios para las citas** y definí `PLATFORM_MERCADO_PAGO_CLIENT_ID`, `PLATFORM_MERCADO_PAGO_CLIENT_SECRET` y `PLATFORM_MERCADO_PAGO_WEBHOOK_SECRET`. Estas variables deben estar disponibles en el contenedor `web`. Compose usa `PLATFORM_MERCADO_PAGO_ENV=test` para solicitar un token de prueba; en producción configurá `PLATFORM_MERCADO_PAGO_ENV=production`.
+
+En la aplicación de Mercado Pago registrá la URL de retorno `/super_admin/mercadopago-suscripciones/callback`. En el panel super admin, sección **Cobros**, conectá tu cuenta y configurá el precio mensual. Para las notificaciones, registrá `/webhooks/mercado-pago-suscripciones` con los eventos `subscription_preapproval` y `subscription_authorized_payment` y usá la clave de firma de esa aplicación. El precio nuevo rige para suscripciones nuevas. La suscripción se crea al elegir **Suscribirme con Mercado Pago** en el panel del negocio; el acceso después de la prueba requiere un cobro aprobado y vigente.
+
 Planes comerciales:
 
 - Plan Profesional: $30.000 ARS/mes, 1 agenda activa, reservas online, señas manuales, comprobantes, chatbot y mensajes WhatsApp prearmados.

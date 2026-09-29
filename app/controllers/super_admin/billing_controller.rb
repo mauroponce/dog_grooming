@@ -16,6 +16,15 @@ module SuperAdmin
       render :show, status: :unprocessable_entity
     end
 
+    def update_subscription_price
+      account = PlatformMercadoPagoAccount.current
+      amount = BigDecimal(params.require(:platform_mercado_pago_account).require(:monthly_amount_ars).to_s.tr(",", "."))
+      account.update!(monthly_amount_cents: (amount * 100).to_i)
+      redirect_to super_admin_billing_path, notice: "Precio mensual actualizado para nuevas suscripciones."
+    rescue ActiveRecord::RecordInvalid, ArgumentError => error
+      redirect_to super_admin_billing_path, alert: error.respond_to?(:record) ? error.record.errors.full_messages.to_sentence : "Ingresá un precio válido."
+    end
+
     def approve_payment_proof
       proof = pending_proof!
       Billing::ApprovePayment.call(invoice: proof.subscription_invoice, reviewer: current_user)
@@ -41,6 +50,7 @@ module SuperAdmin
     private
       def load_billing_data
         @billing_account = BillingTransferAccount.current
+        @platform_mercado_pago_account = PlatformMercadoPagoAccount.current
         @pending_payment_proofs = SubscriptionPaymentProof.pending_review
           .includes(:business, :uploaded_by, subscription_invoice: :subscription, file_attachment: :blob)
           .recent

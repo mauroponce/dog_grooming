@@ -139,11 +139,11 @@
 
       <div class="ml-auto hidden items-center gap-2 sm:flex">
         <%= link_to "Acceso", new_session_path, class: "rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm hover:border-brand-200 hover:text-brand-700" %>
-        <a href="#contacto" class="rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm hover:border-brand-200 hover:text-brand-700">
+        <a href="<%= registro_path %>" class="rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm hover:border-brand-200 hover:text-brand-700">
           Contacto
         </a>
-        <a href="#contacto" class="rounded-2xl bg-slate-950 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-slate-950/15 transition hover:-translate-y-0.5 hover:bg-brand-700">
-          Solicitar acceso
+        <a href="<%= registro_path %>" class="rounded-2xl bg-slate-950 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-slate-950/15 transition hover:-translate-y-0.5 hover:bg-brand-700">
+          Crear cuenta
         </a>
       </div>
 
@@ -160,7 +160,7 @@
         <a href="#precio" class="landing-mobile-link rounded-xl px-3 py-2.5 text-sm font-bold hover:bg-brand-50">Precio</a>
         <a href="#preguntas" class="landing-mobile-link rounded-xl px-3 py-2.5 text-sm font-bold hover:bg-brand-50">Preguntas</a>
         <%= link_to "Acceso", new_session_path, class: "landing-mobile-link rounded-xl px-3 py-2.5 text-sm font-bold hover:bg-brand-50" %>
-        <a href="#contacto" class="landing-mobile-link mt-2 rounded-xl bg-slate-950 px-3 py-3 text-center text-sm font-bold text-white">Solicitar acceso</a>
+        <a href="<%= registro_path %>" class="landing-mobile-link mt-2 rounded-xl bg-slate-950 px-3 py-3 text-center text-sm font-bold text-white">Crear cuenta</a>
       </div>
     </div>
   </header>
@@ -184,7 +184,7 @@
           </p>
 
           <div class="mt-8 flex flex-col gap-3 sm:flex-row">
-            <a href="#contacto" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-950 px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-slate-950/15 transition hover:-translate-y-0.5 hover:bg-brand-700">
+            <a href="<%= registro_path %>" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-950 px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-slate-950/15 transition hover:-translate-y-0.5 hover:bg-brand-700">
               Quiero una demo con mi peluquería
               <%= landing_icon.call(:arrow_right, classes: "h-4 w-4") %>
             </a>
@@ -527,11 +527,11 @@
 
               <div class="rounded-[26px] bg-slate-950 p-6 text-center text-white lg:min-w-[270px]">
                 <p class="text-xs font-bold uppercase tracking-[.14em] text-brand-300">Precio mensual</p>
-                <p class="mt-3 text-5xl font-bold">$25.000</p>
-                <p class="mt-2 text-sm text-slate-400">Por mes. Precio fijo.</p>
+                <p class="mt-3 text-5xl font-bold"><%= number_to_currency(PlatformMercadoPagoAccount.current.monthly_amount_cents / 100.0, unit: "$", precision: 0, delimiter: ".") %></p>
+                <p class="mt-2 text-sm text-slate-400">Por mes.</p>
                 <p class="mt-5 text-xs leading-5 text-slate-400">Después de la prueba gratuita. Sin comisión por reserva.</p>
-                <a href="#contacto" class="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-slate-950 hover:bg-brand-100">
-                  Solicitar acceso
+                <a href="<%= registro_path %>" class="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-slate-950 hover:bg-brand-100">
+                  Crear cuenta
                   <%= landing_icon.call(:arrow_right, classes: "h-4 w-4") %>
                 </a>
               </div>
@@ -608,26 +608,26 @@
     <section id="contacto" class="border-t border-slate-100 bg-[#f8f7fa] py-24">
       <div class="mx-auto grid max-w-7xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-[.8fr_1.2fr] lg:px-8">
         <div>
-          <p class="text-xs font-bold uppercase tracking-[.18em] text-brand-700">¿Querés verlo aplicado a tu peluquería?</p>
-          <h2 class="mt-4 max-w-xl text-4xl font-bold tracking-[-.045em] sm:text-5xl">Contanos qué querés ordenar.</h2>
+          <p class="text-xs font-bold uppercase tracking-[.18em] text-brand-700">Empezá por tu cuenta</p>
+          <h2 class="mt-4 max-w-xl text-4xl font-bold tracking-[-.045em] sm:text-5xl">Organizá tu peluquería desde hoy.</h2>
           <p class="mt-5 max-w-lg text-base leading-7 text-slate-500">
-            Preparamos una demo con tu nombre, servicios y horarios.
+            Creá tu espacio y cargá tus servicios y horarios a tu ritmo.
           </p>
 
           <div class="mt-8 space-y-5">
             <div class="flex gap-4">
               <span class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white text-brand-700 shadow-sm"><%= landing_icon.call(:scan, classes: "h-5 w-5") %></span>
               <div>
-                <h3 class="font-bold">Miramos tu caso</h3>
-                <p class="mt-1 text-sm leading-6 text-slate-500">Reservas, señas, ausencias, cambios y seguimiento.</p>
+                <h3 class="font-bold">Creás tu cuenta</h3>
+                <p class="mt-1 text-sm leading-6 text-slate-500">Solo necesitás tus datos y los de tu peluquería.</p>
               </div>
             </div>
 
             <div class="flex gap-4">
               <span class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white text-emerald-700 shadow-sm"><%= landing_icon.call(:wand, classes: "h-5 w-5") %></span>
               <div>
-                <h3 class="font-bold">Te lo dejamos armado</h3>
-                <p class="mt-1 text-sm leading-6 text-slate-500">No tenés que aprender un sistema complejo para probarlo.</p>
+                <h3 class="font-bold">Configurás tus servicios</h3>
+                <p class="mt-1 text-sm leading-6 text-slate-500">Elegí tus horarios y empezá a recibir reservas.</p>
               </div>
             </div>
 
@@ -642,58 +642,12 @@
         </div>
 
         <div class="rounded-[32px] border border-white bg-white p-5 shadow-soft sm:p-7">
-          <form id="contactForm" action="https://formspree.io/f/maqgegwn" method="POST" data-turbo="false" class="space-y-5">
-            <input type="hidden" name="_subject" value="Nuevo contacto desde Cita.pet">
-            <input type="hidden" name="_language" value="es">
-            <input type="text" name="_gotcha" class="hidden" tabindex="-1" autocomplete="off">
-
-            <div class="grid gap-5 sm:grid-cols-2">
-              <div>
-                <label for="name" class="mb-2 block text-sm font-bold text-slate-800">Nombre</label>
-                <input id="name" name="name" type="text" autocomplete="name" required class="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50/65 px-4 text-sm font-semibold outline-none transition placeholder:text-slate-400 focus:border-brand-300 focus:bg-white focus:ring-4 focus:ring-brand-100" placeholder="Tu nombre">
-              </div>
-              <div>
-                <label for="email" class="mb-2 block text-sm font-bold text-slate-800">Email</label>
-                <input id="email" name="email" type="email" autocomplete="email" required class="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50/65 px-4 text-sm font-semibold outline-none transition placeholder:text-slate-400 focus:border-brand-300 focus:bg-white focus:ring-4 focus:ring-brand-100" placeholder="nombre@email.com">
-              </div>
-              <div class="sm:col-span-2">
-                <label for="phone" class="mb-2 block text-sm font-bold text-slate-800">Teléfono</label>
-                <input id="phone" name="phone" type="tel" autocomplete="tel" class="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50/65 px-4 text-sm font-semibold outline-none transition placeholder:text-slate-400 focus:border-brand-300 focus:bg-white focus:ring-4 focus:ring-brand-100" placeholder="+54 11 5555 5555">
-              </div>
-
-              <div class="sm:col-span-2">
-                <label for="businessType" class="mb-2 block text-sm font-bold text-slate-800">¿Qué tipo de peluquería canina tenés?</label>
-                <div class="relative">
-                  <select id="businessType" name="business_type" required class="h-12 w-full appearance-none rounded-2xl border border-slate-200 bg-slate-50/65 px-4 pr-11 text-sm font-semibold text-slate-700 outline-none transition focus:border-brand-300 focus:bg-white focus:ring-4 focus:ring-brand-100">
-                    <option value="">Seleccionar una opción</option>
-                    <option>Peluquería canina integral</option>
-                    <option>Baño y secado</option>
-                    <option>Corte y grooming de raza</option>
-                    <option>Higiene y bienestar</option>
-                    <option>Groomer a domicilio</option>
-                    <option>Otro servicio para mascotas</option>
-                  </select>
-                  <%= landing_icon.call(:chevron_down, classes: "pointer-events-none absolute right-4 top-4 h-4 w-4 text-slate-400") %>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <label for="message" class="mb-2 block text-sm font-bold text-slate-800">¿Qué problema querés ordenar primero?</label>
-              <textarea id="message" name="message" rows="5" class="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50/65 px-4 py-3 text-sm font-semibold leading-6 outline-none transition placeholder:font-medium placeholder:text-slate-400 focus:border-brand-300 focus:bg-white focus:ring-4 focus:ring-brand-100" placeholder="Por ejemplo: muchos mensajes, mascotas que no llegan, horarios cruzados, cambios de último momento o señas difíciles de controlar."></textarea>
-            </div>
-
-            <div id="formStatus" class="hidden rounded-2xl px-4 py-3 text-sm font-bold"></div>
-
-            <button id="submitButton" type="submit" class="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-brand-600 to-brand-600 px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-brand-600/20 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60">
-              <span id="submitButtonText">Enviar y ver cómo quedaría</span>
-              <%= landing_icon.call(:arrow_right, classes: "h-4 w-4") %>
-            </button>
-
-            <p class="mt-4 text-center text-[10px] leading-5 text-slate-400">
-              Este formulario utiliza Formspree para procesar el envío.
-            </p>
-          </form>
+          <div class="flex h-full flex-col justify-center text-center">
+            <span class="mx-auto rounded-full bg-brand-50 px-4 py-2 text-xs font-bold text-brand-700">Empezá hoy</span>
+            <h3 class="mt-5 text-2xl font-bold text-slate-950">Tu peluquería puede empezar en minutos</h3>
+            <p class="mt-3 text-sm leading-6 text-slate-600">Creá tu cuenta, configurá tus servicios y usá Cita.pet gratis durante 14 días.</p>
+            <%= link_to "Crear mi cuenta gratis", registro_path, class: "mt-7 rounded-2xl bg-brand-600 px-5 py-4 font-bold text-white shadow-lg shadow-brand-600/20 hover:bg-brand-700" %>
+          </div>
         </div>
       </div>
     </section>
@@ -716,7 +670,7 @@
         <a href="#que-resuelve" class="hover:text-brand-700">Qué resuelve</a>
         <a href="#ia" class="hover:text-brand-700">IA</a>
         <a href="#preguntas" class="hover:text-brand-700">Preguntas</a>
-        <a href="#contacto" class="hover:text-brand-700">Contacto</a>
+        <a href="#contacto" class="hover:text-brand-700">Comenzar</a>
         <%= link_to "Acceso", new_session_path, class: "hover:text-brand-700" %>
         <a href="https://www.instagram.com/cita_pet" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 hover:text-brand-700" aria-label="Instagram de Cita.pet">
           <%= landing_icon.call(:instagram, classes: "h-3.5 w-3.5") %>
@@ -761,39 +715,5 @@
       });
     });
 
-    const contactForm = root.querySelector("#contactForm");
-    const formStatus = root.querySelector("#formStatus");
-    const submitButton = root.querySelector("#submitButton");
-    const submitButtonText = root.querySelector("#submitButtonText");
-
-    if (!contactForm || !formStatus || !submitButton || !submitButtonText) return;
-
-    contactForm.addEventListener("submit", async (event) => {
-      event.preventDefault();
-
-      submitButton.disabled = true;
-      submitButtonText.textContent = "Enviando...";
-      formStatus.classList.add("hidden");
-
-      try {
-        const response = await fetch(contactForm.getAttribute("action"), {
-          method: "POST",
-          body: new FormData(contactForm),
-          headers: { Accept: "application/json" }
-        });
-
-        if (!response.ok) throw new Error("Formspree rejected the request.");
-
-        contactForm.reset();
-        formStatus.className = "rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700";
-        formStatus.textContent = "Gracias. Recibimos tu consulta y te responderemos pronto.";
-      } catch (error) {
-        formStatus.className = "rounded-2xl bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700";
-        formStatus.textContent = "No pudimos enviar la consulta. Revisá tu conexión o intentá nuevamente.";
-      } finally {
-        submitButton.disabled = false;
-        submitButtonText.textContent = "Enviar y ver cómo quedaría";
-      }
-    });
   })();
 </script>

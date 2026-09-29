@@ -599,7 +599,7 @@ class DemoSeeds
         )
 
         Array(attributes[:pets]).each do |pet_attributes|
-          profile.pets.create!(business: business, **pet_attributes.symbolize_keys)
+          profile.pets.create!(business: business, **pet_attributes.symbolize_keys.except(:size))
         end
 
         Array(attributes[:notes]).each do |note|
@@ -641,7 +641,6 @@ class DemoSeeds
             business: business,
             name: "#{block.fetch(:pet_prefix, "Mascota")} #{sequence}",
             breed: "Mestiza",
-            size: "medium",
             sex: sequence.odd? ? "female" : "male",
             notes: "Mascota demo para representar un turno ocupado."
           )

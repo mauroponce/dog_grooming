@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_15_180000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_29_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -824,6 +824,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_180000) do
     t.datetime "created_at", null: false
     t.datetime "disconnected_at"
     t.datetime "expires_at"
+    t.boolean "live_mode"
     t.string "mercado_pago_email"
     t.string "mercado_pago_nickname"
     t.string "mercado_pago_user_id"
@@ -895,6 +896,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_180000) do
     t.index ["business_id"], name: "index_pets_on_business_id"
     t.index ["customer_profile_id", "name"], name: "index_pets_on_customer_profile_id_and_name"
     t.index ["customer_profile_id"], name: "index_pets_on_customer_profile_id"
+  end
+
+  create_table "platform_mercado_pago_accounts", force: :cascade do |t|
+    t.text "access_token_ciphertext"
+    t.datetime "connected_at"
+    t.datetime "created_at", null: false
+    t.datetime "disconnected_at"
+    t.datetime "expires_at"
+    t.string "mercado_pago_email"
+    t.string "mercado_pago_user_id"
+    t.integer "monthly_amount_cents", default: 2500000, null: false
+    t.text "refresh_token_ciphertext"
+    t.string "singleton_key", default: "primary", null: false
+    t.datetime "updated_at", null: false
+    t.index ["singleton_key"], name: "index_platform_mercado_pago_accounts_on_singleton_key", unique: true
   end
 
   create_table "promotions", force: :cascade do |t|
@@ -1320,6 +1336,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_180000) do
     t.date "next_due_on"
     t.date "paid_until"
     t.string "payer_email"
+    t.string "provider", default: "manual", null: false
+    t.string "provider_status"
+    t.string "provider_subscription_id"
     t.jsonb "raw_payload", default: {}, null: false
     t.datetime "restricted_at"
     t.string "status", default: "trialing", null: false
@@ -1330,6 +1349,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_180000) do
     t.datetime "updated_at", null: false
     t.index ["business_id"], name: "index_subscriptions_on_business_id", unique: true
     t.index ["external_reference"], name: "index_subscriptions_on_external_reference", unique: true
+    t.index ["provider_subscription_id"], name: "index_subscriptions_on_provider_subscription_id", unique: true
   end
 
   create_table "super_admin_tasks", force: :cascade do |t|

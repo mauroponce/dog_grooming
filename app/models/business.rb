@@ -450,6 +450,7 @@ class Business < ApplicationRecord
 
   def access_active?
     return !disabled? unless billing_enabled?
+    return !disabled? && (trial_active? || subscription&.active?) if subscription&.mercado_pago?
 
     !disabled? && !billing_suspended? && (trial_active? || trial_grace_period_active? || subscription_active?)
   end

@@ -11,6 +11,7 @@ module Billing
 
     def call
       return unless business.billing_enabled?
+      return if subscription.mercado_pago?
       return current_invoice if current_invoice.present?
       return unless should_create_invoice?
 

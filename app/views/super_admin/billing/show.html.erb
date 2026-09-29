@@ -42,6 +42,24 @@
         <%= link_to "Negocios", super_admin_businesses_path, class: "w-fit rounded-2xl border border-zinc-200 bg-white px-4 py-2 text-sm font-bold text-zinc-800 hover:bg-zinc-50" %>
       </header>
 
+      <section class="mt-6 rounded-[30px] border border-white bg-white p-6 shadow-card">
+        <h2 class="text-xl font-bold">Mercado Pago para suscripciones</h2>
+        <p class="mt-2 text-sm text-zinc-500">Esta conexión es exclusiva de tu cuenta receptora. Las cuentas de Mercado Pago que los negocios usan para cobrar citas siguen separadas.</p>
+        <% if @platform_mercado_pago_account.connected? %>
+          <p class="mt-4 rounded-xl bg-emerald-50 p-3 text-sm font-bold text-emerald-800">Conectada: <%= @platform_mercado_pago_account.mercado_pago_email.presence || @platform_mercado_pago_account.mercado_pago_user_id %></p>
+        <% else %>
+          <p class="mt-4 rounded-xl bg-amber-50 p-3 text-sm font-bold text-amber-800">Todavía no conectaste tu cuenta. Los negocios podrán registrarse y probar el sistema, pero no podrán pagar al terminar la prueba.</p>
+        <% end %>
+        <%= link_to @platform_mercado_pago_account.connected? ? "Volver a conectar cuenta" : "Conectar mi Mercado Pago", connect_super_admin_mercado_pago_connection_path, class: "mt-4 inline-block rounded-xl bg-ink px-5 py-3 text-sm font-bold text-white" %>
+        <%= form_with url: update_subscription_price_super_admin_billing_path, scope: :platform_mercado_pago_account, method: :patch, class: "mt-6 flex flex-wrap items-end gap-3" do |form| %>
+          <div><%= form.label :monthly_amount_ars, "Precio mensual en ARS", class: "block text-sm font-bold" %><%= form.number_field :monthly_amount_ars, value: @platform_mercado_pago_account.monthly_amount_cents / 100.0, min: 1, step: "0.01", required: true, class: "mt-2 rounded-xl border border-zinc-200 p-3" %></div>
+          <%= form.submit "Guardar precio", class: "cursor-pointer rounded-xl bg-brand-600 px-5 py-3 font-bold text-white" %>
+        <% end %>
+        <p class="mt-2 text-xs text-zinc-500">El precio nuevo se aplica a las suscripciones que se creen después del cambio.</p>
+        <p class="mt-4 text-xs text-zinc-500">Registrá esta URL de retorno OAuth en la aplicación de Mercado Pago: <code><%= callback_super_admin_mercado_pago_connection_url %></code>.</p>
+        <p class="mt-4 text-xs text-zinc-500">Configurá el webhook de esta aplicación en Mercado Pago con la URL <code><%= webhooks_platform_mercado_pago_url %></code> y los eventos subscription_preapproval y subscription_authorized_payment. Guardá su clave en PLATFORM_MERCADO_PAGO_WEBHOOK_SECRET.</p>
+      </section>
+
       <section class="mt-6 grid gap-6 xl:grid-cols-[.9fr_1.1fr]">
         <article class="rounded-[30px] border border-white bg-white p-5 shadow-card sm:p-6">
           <div class="flex items-start justify-between gap-4">

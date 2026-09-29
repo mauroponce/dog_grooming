@@ -2,17 +2,17 @@ require "openssl"
 
 module MercadoPago
   class WebhookSignature
-    def self.valid?(headers:, params:)
-      new(headers:, params:).valid?
+    def self.valid?(headers:, params:, secret: ENV["MERCADO_PAGO_WEBHOOK_SECRET"])
+      new(headers:, params:, secret:).valid?
     end
 
-    def initialize(headers:, params:)
+    def initialize(headers:, params:, secret: ENV["MERCADO_PAGO_WEBHOOK_SECRET"])
       @headers = headers
       @params = params
+      @secret = secret.to_s
     end
 
     def valid?
-      secret = ENV["MERCADO_PAGO_WEBHOOK_SECRET"].to_s
       return true if secret.blank?
       return false if request_id.blank? || signature_header.blank? || data_id.blank?
 
@@ -22,7 +22,7 @@ module MercadoPago
     end
 
     private
-      attr_reader :headers, :params
+      attr_reader :headers, :params, :secret
 
       def expected_signature(secret)
         OpenSSL::HMAC.hexdigest("SHA256", secret, "id:#{data_id};request-id:#{request_id};ts:#{timestamp};")

@@ -32,6 +32,14 @@ module Billing
         return unless business.billing_enabled?
 
         subscription = business.subscription || business.create_subscription!(external_reference: "business-#{business.id}-#{SecureRandom.hex(6)}")
+        if subscription.mercado_pago?
+          begin
+            PlatformMercadoPago::SyncSubscription.call(subscription) if subscription.provider_subscription_id.present?
+          rescue PlatformMercadoPago::Client::Error => error
+            Rails.logger.warn("No se pudo sincronizar la suscripción #{subscription.id}: #{error.message}")
+          end
+          return
+        end
         invoice = Billing::EnsureCurrentInvoice.call(business: business)
         invoice ||= subscription.current_invoice
         sync_without_invoice!(business, subscription) and return if invoice.blank?

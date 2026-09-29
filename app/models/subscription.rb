@@ -12,15 +12,24 @@ class Subscription < ApplicationRecord
 
   validates :external_reference, presence: true, uniqueness: true
   validates :status, inclusion: { in: STATUSES }
+  validates :provider, inclusion: { in: %w[manual mercado_pago] }
 
   before_validation :set_billing_defaults
 
   def active?
+    return provider_status == "authorized" && paid_until.present? && paid_until >= Time.zone.today && !cancelled? && !suspended? if mercado_pago?
+
     ACTIVE_STATUSES.include?(normalized_status) && !suspended? && !cancelled?
   end
 
   def paid?
+    return active? if mercado_pago?
+
     PAID_STATUSES.include?(normalized_status) && (paid_until.blank? || paid_until >= Time.zone.today)
+  end
+
+  def mercado_pago?
+    provider == "mercado_pago"
   end
 
   def trialing?

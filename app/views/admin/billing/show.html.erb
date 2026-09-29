@@ -1,6 +1,25 @@
 <% content_for :title, "Cita.pet Admin | Suscripción" %>
 <% content_for :admin_section_title, "Suscripción" %>
 
+<% if @subscription.mercado_pago? %>
+  <div class="mx-auto max-w-3xl rounded-3xl bg-white p-6 shadow-card sm:p-10">
+    <p class="text-sm font-bold uppercase tracking-wider text-brand-700">Suscripción Cita.pet</p>
+    <h1 class="mt-3 text-3xl font-bold text-slate-950">Tu cuenta y suscripción</h1>
+    <% if @subscription.active? %>
+      <p class="mt-4 rounded-2xl bg-emerald-50 p-4 font-semibold text-emerald-800">Tu suscripción de Mercado Pago está activa.</p>
+    <% elsif @business.trial_active? %>
+      <p class="mt-4 text-slate-600">Te quedan <strong><%= @business.trial_days_remaining %> días de prueba</strong>. Al terminar, necesitás activar la suscripción para seguir usando el panel.</p>
+    <% else %>
+      <p class="mt-4 rounded-2xl bg-amber-50 p-4 font-semibold text-amber-900">Tu prueba terminó y el acceso al panel está pausado. Activá la suscripción para continuar.</p>
+    <% end %>
+    <p class="mt-6 text-2xl font-bold text-slate-950"><%= number_to_currency(@subscription.provider_subscription_id.present? ? @subscription.amount_cents / 100.0 : PlatformMercadoPagoAccount.current.monthly_amount_cents / 100.0, unit: "$", precision: 0, delimiter: ".") %> <span class="text-base font-medium text-slate-500">por mes</span></p>
+    <% unless @subscription.active? %>
+      <%= button_to @subscription.provider_status.in?(%w[authorized paused]) ? "Verificar estado en Mercado Pago" : "Suscribirme con Mercado Pago", subscribe_admin_billing_path, method: :post, class: "mt-6 rounded-2xl bg-brand-600 px-6 py-3 font-bold text-white hover:bg-brand-700" %>
+    <% end %>
+    <p class="mt-6 text-sm text-slate-500">Mercado Pago gestiona los cobros recurrentes. El estado de tu cuenta se actualiza al confirmar la suscripción.</p>
+  </div>
+<% else %>
+
 <% money = ->(cents) { number_to_currency(cents.to_i / 100.0, unit: "$", precision: 0, delimiter: ".", separator: ",") } %>
 <% date_label = ->(value) { value.present? ? l(value.to_date, format: :long) : "Sin fecha" } %>
 <% short_date_label = ->(value) { value.present? ? l(value.to_date, format: "%-d %b %Y") : "Pendiente" } %>
@@ -516,3 +535,4 @@ end %>
     }
   })();
 </script>
+<% end %>

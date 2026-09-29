@@ -48,6 +48,9 @@ env:
     - MERCADO_PAGO_CLIENT_ID
     - MERCADO_PAGO_CLIENT_SECRET
     - MERCADO_PAGO_WEBHOOK_SECRET
+    - PLATFORM_MERCADO_PAGO_CLIENT_ID
+    - PLATFORM_MERCADO_PAGO_CLIENT_SECRET
+    - PLATFORM_MERCADO_PAGO_WEBHOOK_SECRET
     - MERCADO_PAGO_PRODUCTION_PUBLIC_KEY
     - MERCADO_PAGO_PRODUCTION_ACCESS_TOKEN
     - MERCADO_PAGO_PRODUCTION_CLIENT_ID
@@ -64,6 +67,7 @@ env:
     FORCE_SSL: "<%= ENV.fetch("FORCE_SSL", "true") %>"
     # El .env de desarrollo usa test; no debe cambiar el cobro del sitio público.
     MERCADO_PAGO_ENV: production
+    PLATFORM_MERCADO_PAGO_ENV: production
     DB_HOST: dog_grooming-db
     ACTIVE_STORAGE_SERVICE: "<%= ENV["ACTIVE_STORAGE_SERVICE"].to_s == "" ? ((ENV["CLOUDFLARE_ACCESS_KEY_ID"].to_s != "" || ENV["R2_ACCESS_KEY_ID"].to_s != "") ? "r2" : "local") : ENV["ACTIVE_STORAGE_SERVICE"] %>"
     GEMINI_MODEL: "<%= ENV.fetch("GEMINI_MODEL", "gemini-flash-lite-latest") %>"

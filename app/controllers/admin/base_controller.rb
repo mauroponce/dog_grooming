@@ -173,7 +173,7 @@ module Admin
           return
         end
 
-        redirect_to root_path, alert: "La cuenta está bloqueada o el período de prueba venció."
+        redirect_to admin_billing_path, alert: "La prueba terminó. Suscribite con Mercado Pago para continuar."
       end
 
       def require_billing_permissions!

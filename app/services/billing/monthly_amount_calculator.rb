@@ -27,6 +27,9 @@ module Billing
       attr_reader :business
 
       def base_amount_cents
+        return business.subscription.amount_cents if business.subscription&.mercado_pago? && business.subscription.provider_subscription_id.present?
+        return PlatformMercadoPagoAccount.current.monthly_amount_cents if business.subscription&.mercado_pago?
+
         Business::SUBSCRIPTION_DETAILS.fetch(:monthly_amount_cents)
       end
 

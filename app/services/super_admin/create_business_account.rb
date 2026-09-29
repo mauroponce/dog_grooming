@@ -22,7 +22,7 @@ module SuperAdmin
 	        owner = User.create!(
 	          email_address: owner_email,
 	          name: owner_name,
-	          password: DEFAULT_PASSWORD,
+	          password: params[:password].presence || DEFAULT_PASSWORD,
 	          role: :admin
 	        )
         business = owner.create_business!(business_attributes)

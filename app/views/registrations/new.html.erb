@@ -1,0 +1,18 @@
+<% content_for :title, "Crear cuenta | Cita.pet" %>
+<div class="mx-auto max-w-xl px-4 py-12">
+  <div class="rounded-3xl bg-white p-6 shadow-lg sm:p-9">
+    <h1 class="text-3xl font-bold text-slate-950">Creá la cuenta de tu negocio</h1>
+    <p class="mt-2 text-sm text-slate-600">Probá Cita.pet durante 14 días. Después necesitás una suscripción mensual de <%= number_to_currency(PlatformMercadoPagoAccount.current.monthly_amount_cents / 100.0, unit: "$", precision: 0, delimiter: ".") %> por Mercado Pago para seguir usando el panel.</p>
+    <%= form_with url: registro_path, scope: :registration, data: { turbo: false }, class: "mt-8 space-y-4" do |form| %>
+      <% values = @registration_values || {} %>
+      <div><%= form.label :business_name, "Nombre de la peluquería", class: "block text-sm font-bold" %><%= form.text_field :business_name, value: values["business_name"], required: true, class: "mt-1 w-full rounded-xl border p-3" %></div>
+      <div><%= form.label :owner_name, "Tu nombre", class: "block text-sm font-bold" %><%= form.text_field :owner_name, value: values["owner_name"], required: true, autocomplete: "name", class: "mt-1 w-full rounded-xl border p-3" %></div>
+      <div><%= form.label :owner_email, "Email para ingresar", class: "block text-sm font-bold" %><%= form.email_field :owner_email, value: values["owner_email"], required: true, autocomplete: "email", class: "mt-1 w-full rounded-xl border p-3" %></div>
+      <div><%= form.label :contact_phone, "WhatsApp del negocio", class: "block text-sm font-bold" %><%= form.telephone_field :contact_phone, value: values["contact_phone"], required: true, autocomplete: "tel", class: "mt-1 w-full rounded-xl border p-3" %></div>
+      <div><%= form.label :password, "Contraseña (mínimo 8 caracteres)", class: "block text-sm font-bold" %><%= form.password_field :password, required: true, minlength: 8, autocomplete: "new-password", class: "mt-1 w-full rounded-xl border p-3" %></div>
+      <div><%= form.label :password_confirmation, "Repetí la contraseña", class: "block text-sm font-bold" %><%= form.password_field :password_confirmation, required: true, minlength: 8, autocomplete: "new-password", class: "mt-1 w-full rounded-xl border p-3" %></div>
+      <%= form.submit "Crear cuenta y comenzar prueba", class: "w-full cursor-pointer rounded-xl bg-brand-600 p-3 font-bold text-white" %>
+    <% end %>
+    <p class="mt-5 text-center text-sm"><%= link_to "Ya tengo cuenta", new_session_path, class: "font-bold text-brand-700" %></p>
+  </div>
+</div>
