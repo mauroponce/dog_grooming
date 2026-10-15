@@ -27,7 +27,7 @@ module Billing
       attr_reader :business
 
       def base_amount_cents
-        Business::SUBSCRIPTION_DETAILS.fetch(:monthly_amount_cents)
+        business.subscription&.plan_details&.fetch(:amount_cents) || Subscription::PLANS.fetch("basic").fetch(:amount_cents)
       end
 
       def active_professionals_count

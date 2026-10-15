@@ -801,6 +801,9 @@ RSpec.describe "Public bookings", type: :request do
     allow(client).to receive(:fetch_payment!).with("123456").and_return(
       "id" => "123456",
       "status" => "approved",
+      "transaction_amount" => 3_500,
+      "currency_id" => "ARS",
+      "collector_id" => "123",
       "external_reference" => payment.external_reference
     )
 

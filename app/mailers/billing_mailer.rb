@@ -5,10 +5,6 @@ class BillingMailer < ApplicationMailer
     @subscription = invoice.subscription
     @reminder_type = reminder_type
     @billing_url = admin_billing_url(host: app_host, protocol: app_protocol)
-    @transfer_alias = Billing::TransferDetails.alias
-    @transfer_account = Billing::TransferDetails.account
-    @transfer_holder = Billing::TransferDetails.holder
-    @transfer_details_configured = Billing::TransferDetails.configured?
 
     mail subject: reminder_subject(reminder_type), to: @business.owner.email_address
   end

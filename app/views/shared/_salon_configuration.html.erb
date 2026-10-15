@@ -1,0 +1,6 @@
+<fieldset class="mb-6 space-y-3 rounded-xl border border-slate-200 p-4">
+  <legend class="px-2 font-bold">Agenda del salón</legend>
+  <div><%= label_tag "agenda_simultaneous_capacity", "¿Cuántas mascotas podés atender en simultáneo?" %><%= number_field_tag "agenda[simultaneous_capacity]", business.simultaneous_capacity || 3, min: 1, max: 10, required: true, id: "agenda_simultaneous_capacity", class: "ml-2 w-20 rounded-md border-slate-300" %></div>
+  <div><%= label_tag "agenda_arrival_mode", "Horarios de ingreso" %><%= select_tag "agenda[arrival_mode]", options_for_select([["Tandas por día", "fixed"], ["Continuos cada 30 minutos", "continuous"]], business.arrival_mode), id: "agenda_arrival_mode", class: "ml-2 rounded-md border-slate-300" %></div>
+  <p class="text-sm text-slate-600">Cada mascota ocupa un cupo durante toda la duración del servicio. Los profesionales y recursos asignados también deben estar disponibles.</p>
+</fieldset>

@@ -39,9 +39,17 @@ module Resources
     end
 
     def occupied_quantity(resource)
-      overlapping_appointments(resource).sum do |appointment|
-        quantity_required_for_service(resource, appointment.service)
+      events = overlapping_appointments(resource).flat_map do |appointment|
+        quantity = quantity_required_for_service(resource, appointment.service)
+        [ [ [ appointment.starts_at, starts_at ].max, quantity ], [ [ appointment.ends_at, ends_at ].min, -quantity ] ]
       end
+      current = 0
+      peak = 0
+      events.sort_by { |time, quantity| [ time, quantity ] }.each do |_time, quantity|
+        current += quantity
+        peak = [ peak, current ].max
+      end
+      peak
     end
 
     def blocked?(resource)

@@ -287,6 +287,7 @@ RSpec.describe "Customer portal bookings", type: :request do
   end
 
   def create_appointment(business, customer_profile: nil, starts_at: 3.days.from_now.change(hour: 10, min: 0, sec: 0), employee_membership: nil)
+    business.availability_rules.find_by!(weekday: starts_at.wday).update!(active: true, start_time: "09:00", end_time: "19:00")
     service = business.services.create!(
       name: "Esmaltado",
       slug: "esmaltado-#{SecureRandom.hex(3)}",

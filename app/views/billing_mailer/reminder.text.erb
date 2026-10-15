@@ -1,19 +1,7 @@
 <%= @business.name %>: pago de Cita.pet
 
-Tu suscripción Cita.pet tiene un pago de <%= @invoice.amount_label %> con vencimiento el <%= CustomerDateFormatter.date_label(@invoice.due_on) %>.
+Tu suscripción tiene un pago de <%= @invoice.amount_label %> con vencimiento el <%= CustomerDateFormatter.date_label(@invoice.due_on) %>.
 
-<% if @transfer_details_configured %>
-Transferí usando estos datos y subí el comprobante desde el panel:
+Ingresá al panel y pagá con Mercado Pago. Podés elegir el medio de pago disponible en Checkout Pro; no necesitás adherir una tarjeta a una suscripción.
 
-<% if @transfer_alias.present? %>Alias: <%= @transfer_alias %>
-<% end %><% if @transfer_account.present? %>CBU/CVU: <%= @transfer_account %>
-<% end %><% if @transfer_holder.present? %>Titular: <%= @transfer_holder %>
-<% end %>Referencia: <%= @invoice.reference_code %>
-<% else %>
-Ingresá al panel para ver las instrucciones de pago y subir el comprobante.
-<% end %>
-
-Subir comprobante:
 <%= @billing_url %>
-
-Si ya subiste el comprobante, no necesitás hacer nada más.

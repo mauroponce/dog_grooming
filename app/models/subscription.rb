@@ -1,4 +1,14 @@
 class Subscription < ApplicationRecord
+  PLANS = { "basic" => { name: "Básico", amount_cents: 3_500_000 }, "pro" => { name: "PRO", amount_cents: 4_500_000 } }.freeze
+  validates :plan_selected, inclusion: { in: PLANS.keys }
+
+  def pro?
+    plan_selected == "pro"
+  end
+
+  def plan_details
+    PLANS.fetch(plan_selected)
+  end
   ACTIVE_STATUSES = %w[active authorized payment_due pending_review overdue restricted].freeze
   PAID_STATUSES = %w[active authorized].freeze
   STATUSES = %w[

@@ -37,26 +37,10 @@ end %>
     "void" => "bg-zinc-100 text-zinc-600 ring-zinc-200"
   }.fetch(invoice.status, "bg-zinc-100 text-zinc-700 ring-zinc-200")
 end %>
-<% proof_label = ->(proof) do
-  next "Sin comprobante" if proof.blank?
-
-  {
-    "pending_review" => "Comprobante en revisión",
-    "approved" => "Comprobante aprobado",
-    "rejected" => "Comprobante rechazado",
-    "replaced" => "Comprobante reemplazado"
-  }.fetch(proof.status, proof.status.to_s.humanize)
-end %>
 <% next_due_on = @current_invoice&.due_on || @subscription.next_due_on || @subscription.trial_ends_on || @subscription.paid_until %>
 <% next_period_start = @current_invoice&.period_start || @subscription.current_period_start || next_due_on %>
 <% next_period_end = @current_invoice&.period_end || @subscription.current_period_end || next_period_start&.advance(months: @subscription.billing_period_months.to_i.presence || 1) %>
 <% subscription_name = Business::SUBSCRIPTION_DETAILS.fetch(:name) %>
-<% payment_details = [
-  [ "Alias", Billing::TransferDetails.alias ],
-  [ "CBU/CVU", Billing::TransferDetails.account ],
-  [ "Titular", Billing::TransferDetails.holder ],
-  [ "CUIT", Billing::TransferDetails.tax_id ]
-] %>
 <% icons = {
   wallet: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M19 7V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7h-5a2 2 0 0 1 0-4h5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M16 11h.01" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>',
   crown: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m3 8 5 4 4-7 4 7 5-4-2 11H5L3 8Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>',
@@ -188,7 +172,12 @@ end %>
             </span>
           </div>
 
-          <h2 class="mt-5 text-3xl font-bold tracking-tight sm:text-4xl"><%= subscription_name %></h2>
+          <h2 class="mt-5 text-3xl font-bold tracking-tight sm:text-4xl">Plan <%= @subscription.plan_details.fetch(:name) %></h2>
+          <% if @subscription.pro? && @business.trial_active? && !@subscription.paid? %>
+            <% usage = @business.whatsapp_deliveries.where(trial_reminder: true).where.not(status: %w[failed skipped]).count %>
+            <p class="mt-3 font-semibold">Recordatorios WhatsApp de prueba: <%= usage %>/20</p>
+            <% if usage >= 20 %><p class="mt-3 rounded-xl bg-white/10 p-4"><%= WhatsApp::AppointmentNotifications::EXHAUSTED_MESSAGE %></p><% end %>
+          <% end %>
           <p class="mt-3 max-w-2xl text-sm font-semibold leading-6 text-brand-100 sm:text-base">
             Precio fijo mensual para usar reservas, servicios, clientes, comprobantes, Mercado Pago, recordatorios y asistente con IA.
           </p>
@@ -202,11 +191,10 @@ end %>
           </p>
 
           <div class="mt-7 flex flex-wrap gap-3">
-            <% if @current_invoice.present? %>
-              <button type="button" class="billing-button inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-brand-700 shadow-lg shadow-brand-950/20 transition hover:-translate-y-0.5" data-billing-open-upload>
-                <%= icons.fetch(:upload).html_safe %>
-                Subir comprobante
-              </button>
+            <% if @current_invoice.present? || @subscription.trialing? %>
+              <%= button_to checkout_admin_billing_path, class: "billing-button inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-brand-700 shadow-lg shadow-brand-950/20 transition hover:-translate-y-0.5" do %>
+                <%= @subscription.trialing? ? "Abonar primer mes y activar mi plan" : "Pagar con Mercado Pago" %>
+              <% end %>
             <% end %>
             <button type="button" class="billing-button inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-sm font-bold text-white backdrop-blur transition hover:bg-white/15" data-billing-tab-button="facturacion">
               Ver facturación
@@ -248,9 +236,7 @@ end %>
             <div class="flex items-center gap-3">
               <span class="billing-icon shrink-0 text-emerald-200"><%= icons.fetch(:check).html_safe %></span>
               <p class="text-xs font-semibold leading-5 text-brand-100">
-                <% if @current_invoice&.pending_review? %>
-                  Tu comprobante está en revisión.
-                <% elsif @current_invoice.present? %>
+                <% if @current_invoice.present? %>
                   Tenés una factura pendiente para este período.
                 <% else %>
                   Tu cuenta no requiere ninguna acción ahora.
@@ -312,10 +298,7 @@ end %>
             <p class="mt-1 text-sm font-semibold text-slate-500"><%= next_due_on.present? ? "Vence el #{date_label.call(next_due_on)}" : "Sin factura abierta" %></p>
           </div>
           <% if @current_invoice.present? %>
-            <button type="button" class="billing-button inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-brand-500/20 transition hover:bg-brand-700" data-billing-open-upload>
-              <%= icons.fetch(:upload).html_safe %>
-              Subir comprobante
-            </button>
+            <%= button_to "Pagar con Mercado Pago", checkout_admin_billing_path, class: "billing-button rounded-2xl bg-brand-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-brand-500/20 transition hover:bg-brand-700" %>
           <% end %>
         </div>
 
@@ -340,39 +323,13 @@ end %>
       <article class="billing-card p-5 sm:p-6">
         <div class="flex items-center justify-between gap-4">
           <div>
-            <h2 class="text-xl font-bold tracking-tight text-slate-900">Datos para transferir</h2>
-            <p class="mt-1 text-sm font-semibold text-slate-500">Usá estos datos al realizar el pago de Cita.pet.</p>
+            <h2 class="text-xl font-bold tracking-tight text-slate-900">Pago por Mercado Pago</h2>
+            <p class="mt-1 text-sm font-semibold text-slate-500">Elegí cómo pagar cuando abras el Checkout Pro. No te pedimos adherir una tarjeta a una suscripción.</p>
           </div>
           <span class="billing-icon grid h-11 w-11 place-items-center rounded-2xl bg-brand-50 text-brand-700"><%= icons.fetch(:wallet).html_safe %></span>
         </div>
 
-        <div class="mt-6 space-y-3">
-          <% payment_details.each do |label, value| %>
-            <div class="rounded-2xl border border-slate-100 bg-slate-50 p-4" data-controller="copy-text" data-copy-text-preserve-content-value="true">
-              <p class="text-[10px] font-bold uppercase tracking-[.14em] text-slate-400"><%= label %></p>
-              <div class="mt-2 flex items-center justify-between gap-3">
-                <p class="break-all <%= label.in?(%w[Alias CBU/CVU CUIT]) ? 'font-mono' : '' %> text-sm font-bold text-slate-900"><%= value.presence || "Pendiente de configurar" %></p>
-                <% if value.present? %>
-                  <span class="sr-only" data-copy-text-target="source"><%= value %></span>
-                  <button type="button" class="billing-copy-button grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white text-slate-500 shadow-sm ring-1 ring-slate-100 transition hover:text-brand-700" data-copy-text-target="button" data-action="copy-text#copy" title="Copiar" aria-label="Copiar <%= label %>">
-                    <%= icons.fetch(:copy).html_safe %>
-                  </button>
-                <% end %>
-              </div>
-            </div>
-          <% end %>
-        </div>
-
-        <% unless payment_details.any? { |_label, value| value.present? } %>
-          <div class="mt-5 rounded-2xl bg-amber-50 px-4 py-3 ring-1 ring-amber-100">
-            <div class="flex items-start gap-3">
-              <span class="billing-icon mt-0.5 shrink-0 text-amber-700"><%= icons.fetch(:alert).html_safe %></span>
-              <p class="text-xs font-semibold leading-5 text-amber-800">
-                Estamos configurando los datos de transferencia. Si necesitás pagar ahora, contactanos desde el canal habitual.
-              </p>
-            </div>
-          </div>
-        <% end %>
+        <% if @current_invoice.present? %><%= button_to "Abrir Checkout Pro", checkout_admin_billing_path, class: "mt-6 rounded-xl bg-sky-500 px-4 py-3 font-bold text-white" %><% else %><p class="mt-6 text-sm text-slate-500">No tenés pagos pendientes.</p><% end %>
       </article>
     </div>
   </section>
@@ -382,7 +339,7 @@ end %>
       <div class="flex flex-col justify-between gap-4 border-b border-slate-100 p-5 sm:flex-row sm:items-center sm:p-6">
         <div>
           <h2 class="text-xl font-bold tracking-tight text-slate-900">Historial de pagos</h2>
-          <p class="mt-1 text-sm font-semibold text-slate-500">Todos los pagos, facturas y comprobantes de tu suscripción.</p>
+          <p class="mt-1 text-sm font-semibold text-slate-500">Todos los pagos y facturas de tu suscripción.</p>
         </div>
       </div>
 
@@ -411,9 +368,6 @@ end %>
                   <span class="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold ring-1 <%= invoice_status_classes.call(invoice) %>">
                     <%= invoice_status_label.call(invoice) %>
                   </span>
-                  <% if proof.present? %>
-                    <p class="mt-2 text-xs font-semibold text-slate-500"><%= proof_label.call(proof) %></p>
-                  <% end %>
                 </td>
                 <td class="px-6 py-5 text-right">
                   <% if proof&.file&.attached? %>
@@ -422,10 +376,7 @@ end %>
                       <%= icons.fetch(:external).html_safe %>
                     <% end %>
                   <% elsif invoice == @current_invoice %>
-                    <button type="button" class="billing-button inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-brand-700 transition hover:bg-brand-50" data-billing-open-upload>
-                      Subir comprobante
-                      <%= icons.fetch(:upload).html_safe %>
-                    </button>
+                    <%= button_to "Pagar", checkout_admin_billing_path, class: "billing-button rounded-xl px-3 py-2 text-xs font-bold text-brand-700 transition hover:bg-brand-50" %>
                   <% else %>
                     <span class="text-xs font-semibold text-slate-400">Sin archivo</span>
                   <% end %>
@@ -447,35 +398,6 @@ end %>
     </article>
   </section>
 
-  <% if @current_invoice.present? %>
-    <div class="fixed inset-0 z-[2147483000] hidden items-center justify-center bg-slate-950/40 p-4 backdrop-blur-sm" data-billing-upload-modal>
-      <div class="w-full max-w-xl rounded-[30px] bg-white p-5 shadow-[0_28px_90px_rgba(255, 222, 212, .22)] sm:p-6">
-        <div class="flex items-start justify-between gap-4">
-          <div>
-            <h2 class="text-2xl font-bold tracking-tight text-slate-900">Subir comprobante</h2>
-            <p class="mt-1 text-sm font-semibold leading-6 text-slate-500">
-              Factura <%= @current_invoice.reference_code %> · <%= money.call(@current_invoice.amount_cents) %>
-            </p>
-          </div>
-          <button type="button" class="grid h-10 w-10 place-items-center rounded-full bg-slate-100 text-xl font-semibold text-slate-500 hover:bg-slate-200" data-billing-close-upload aria-label="Cerrar">×</button>
-        </div>
-
-        <%= form_with url: upload_payment_proof_admin_billing_path, method: :post, multipart: true, data: { turbo: false }, class: "mt-6 space-y-4" do |form| %>
-          <label class="block rounded-[24px] border border-dashed border-slate-300 bg-slate-50 p-5 text-center transition hover:border-brand-300 hover:bg-brand-50/40">
-            <span class="billing-icon mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-white text-brand-700 shadow-sm"><%= icons.fetch(:upload).html_safe %></span>
-            <span class="mt-3 block text-sm font-bold text-slate-900">Elegí una imagen o PDF</span>
-            <span class="mt-1 block text-xs font-semibold text-slate-500">JPG, PNG, WebP o PDF de hasta 5 MB.</span>
-            <%= form.file_field :payment_proof, accept: SubscriptionPaymentProof::CONTENT_TYPES.join(","), required: true, class: "sr-only" %>
-          </label>
-
-          <div class="flex justify-end gap-3">
-            <button type="button" class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50" data-billing-close-upload>Cancelar</button>
-            <%= form.submit "Enviar comprobante", class: "cursor-pointer rounded-2xl bg-brand-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-brand-500/20 hover:bg-brand-700" %>
-          </div>
-        <% end %>
-      </div>
-    </div>
-  <% end %>
 </section>
 
 <script>
@@ -498,21 +420,5 @@ end %>
     const initial = ["resumen", "facturacion", "historial"].includes(location.hash.slice(1)) ? location.hash.slice(1) : "resumen";
     setTab(initial);
 
-    const modal = root.querySelector("[data-billing-upload-modal]");
-    if (modal) {
-      root.querySelectorAll("[data-billing-open-upload]").forEach((button) => {
-        button.addEventListener("click", () => {
-          modal.classList.remove("hidden");
-          modal.classList.add("flex");
-        });
-      });
-
-      root.querySelectorAll("[data-billing-close-upload]").forEach((button) => {
-        button.addEventListener("click", () => {
-          modal.classList.add("hidden");
-          modal.classList.remove("flex");
-        });
-      });
-    }
   })();
 </script>

@@ -4,7 +4,7 @@ class Business < ApplicationRecord
   SUBSCRIPTION_DETAILS = {
     name: "Suscripción Cita.pet",
     description: "Reservas online para peluquerías caninas, con señas, comprobantes, agenda de mascotas y WhatsApp prearmado.",
-    monthly_amount_cents: 2_500_000,
+    monthly_amount_cents: 3_500_000,
     trial_days: 14,
     setup_included: true,
     contract_required: false,
@@ -323,6 +323,7 @@ class Business < ApplicationRecord
   has_many :promotions, dependent: :destroy
   has_many :subscription_invoices, dependent: :destroy
   has_many :subscription_payment_proofs, dependent: :destroy
+  has_many :subscription_checkout_payments, dependent: :destroy
   has_many :billing_reminders, dependent: :destroy
   has_many :super_admin_tasks, dependent: :destroy
   has_many :dynamic_pricing_rules, foreign_key: :center_id, dependent: :destroy, inverse_of: :center
@@ -336,6 +337,25 @@ class Business < ApplicationRecord
   has_many :whatsapp_templates, class_name: "WhatsAppTemplate", dependent: :destroy
   has_many :email_delivery_logs, dependent: :nullify
   has_one :subscription, dependent: :destroy
+  has_one :whatsapp_connection, dependent: :destroy
+  has_many :whatsapp_contacts, dependent: :destroy
+  has_many :whatsapp_events, dependent: :destroy
+  has_many :whatsapp_deliveries, dependent: :destroy
+  validates :simultaneous_capacity, numericality: { only_integer: true, in: 1..10 }, allow_nil: true
+  validates :arrival_mode, inclusion: { in: %w[fixed continuous] }
+  validates :whatsapp_reminder_hours, inclusion: { in: [ 2, 24 ] }
+  validate :valid_arrival_times
+  validate do
+    if simultaneous_capacity.nil? && simultaneous_capacity_in_database.present?
+      errors.add(:simultaneous_capacity, "debe estar entre 1 y 10")
+    end
+  end
+
+  def valid_arrival_times
+    unless arrival_times.is_a?(Hash) && arrival_times.all? { |day, times| day.to_s.match?(/\A[0-6]\z/) && times.is_a?(Array) && times.all? { |time| time.is_a?(String) && time.match?(/\A(?:[01]\d|2[0-3]):[0-5]\d\z/) } }
+      errors.add(:arrival_times, "deben indicar horarios válidos por día")
+    end
+  end
   has_one_attached :logo
   purge_replaced_attached_blobs_for :logo
 
@@ -495,6 +515,7 @@ class Business < ApplicationRecord
   end
 
   def service_templates
+    return Grooming::Catalog.templates if industry == "dog_grooming"
     catalog_templates = service_categories.active.includes(service_catalog_category: :service_catalog_items).ordered.flat_map do |category|
       category.service_catalog_category&.service_templates
     end.compact

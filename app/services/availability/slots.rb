@@ -12,8 +12,8 @@ module Availability
       public_records_for(business:, service:, date:, employee_membership:).map(&:starts_at).uniq.sort
     end
 
-    def self.public_records_for(business:, service:, date:, employee_membership: nil)
-      AvailableSlots.for(business:, service:, date:, employee_membership:, online_booking: true)
+    def self.public_records_for(business:, service:, date:, employee_membership: nil, excluding_appointment: nil)
+      AvailableSlots.for(business:, service:, date:, employee_membership:, excluding_appointment:, online_booking: true)
     end
 
     def self.first_record_for(business:, service:, date:, employee_membership: nil)
@@ -24,8 +24,8 @@ module Availability
       AvailableSlots.available?(business:, service:, starts_at:, employee_membership:)
     end
 
-    def self.public_available?(business:, service:, starts_at:, employee_membership: nil)
-      AvailableSlots.available?(business:, service:, starts_at:, employee_membership:, online_booking: true)
+    def self.public_available?(business:, service:, starts_at:, employee_membership: nil, excluding_appointment: nil)
+      AvailableSlots.available?(business:, service:, starts_at:, employee_membership:, excluding_appointment:, online_booking: true)
     end
   end
 end

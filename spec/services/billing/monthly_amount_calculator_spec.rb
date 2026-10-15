@@ -9,15 +9,15 @@ RSpec.describe Billing::MonthlyAmountCalculator do
     ActiveJob::Base.queue_adapter = previous_adapter
   end
 
-  it "charges a fixed $25.000 monthly amount" do
+  it "charges a fixed $35.000 monthly amount for Basic" do
     business = create_business
     2.times { |index| create_employee(business, "Profesional #{index}") }
 
     result = described_class.call(business)
 
-    expect(result.base_amount_cents).to eq(2_500_000)
+    expect(result.base_amount_cents).to eq(3_500_000)
     expect(result.active_professionals_count).to eq(2)
-    expect(result.total_amount_cents).to eq(2_500_000)
+    expect(result.total_amount_cents).to eq(3_500_000)
   end
 
   it "does not add charges for more professionals" do
@@ -27,7 +27,13 @@ RSpec.describe Billing::MonthlyAmountCalculator do
     result = described_class.call(business)
 
     expect(result.active_professionals_count).to eq(4)
-    expect(result.total_amount_cents).to eq(2_500_000)
+    expect(result.total_amount_cents).to eq(3_500_000)
+  end
+
+  it "charges PRO at $45.000 with no usage or professional overages" do
+    business = create_business
+    business.subscription.update!(plan_selected: "pro")
+    expect(described_class.call(business).total_amount_cents).to eq(4_500_000)
   end
 
   it "keeps the same amount for five active professionals" do
@@ -37,7 +43,7 @@ RSpec.describe Billing::MonthlyAmountCalculator do
     result = described_class.call(business)
 
     expect(result.active_professionals_count).to eq(5)
-    expect(result.total_amount_cents).to eq(2_500_000)
+    expect(result.total_amount_cents).to eq(3_500_000)
   end
 
   it "does not count pending, archived or non-bookable professionals" do
@@ -50,7 +56,7 @@ RSpec.describe Billing::MonthlyAmountCalculator do
     result = described_class.call(business)
 
     expect(result.active_professionals_count).to eq(2)
-    expect(result.total_amount_cents).to eq(2_500_000)
+    expect(result.total_amount_cents).to eq(3_500_000)
   end
 
   it "keeps new businesses trialing for fourteen days" do

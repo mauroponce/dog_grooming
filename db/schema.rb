@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_15_180000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_15_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -195,6 +195,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_180000) do
     t.text "notes"
     t.string "payment_charge_mode", default: "none", null: false
     t.string "payment_collection_method", default: "none", null: false
+    t.datetime "payment_expires_at"
     t.bigint "pet_id"
     t.datetime "remaining_balance_paid_at"
     t.bigint "remaining_balance_paid_by_id"
@@ -212,7 +213,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_180000) do
     t.index ["branch_id"], name: "index_appointments_on_branch_id"
     t.index ["business_id", "deposit_status", "starts_at"], name: "idx_appointments_business_deposit_status_starts_at"
     t.index ["business_id", "payment_collection_method", "starts_at"], name: "idx_appointments_payment_collection"
-    t.index ["business_id", "starts_at"], name: "idx_active_unassigned_appointments", unique: true, where: "((status <> ALL (ARRAY[2, 8, 9, 10, 11])) AND (employee_membership_id IS NULL))"
+    t.index ["business_id", "starts_at"], name: "idx_active_unassigned_appointments", where: "((status <> ALL (ARRAY[2, 8, 9, 10, 11])) AND (employee_membership_id IS NULL))"
     t.index ["business_id", "starts_at"], name: "index_appointments_on_business_id_and_starts_at"
     t.index ["business_id", "status", "customer_profile_id"], name: "idx_appointments_business_status_customer"
     t.index ["business_id", "status", "starts_at"], name: "idx_appointments_business_status_starts_at"
@@ -273,6 +274,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_180000) do
     t.integer "weekday", null: false
     t.index ["business_id", "weekday"], name: "index_availability_rules_on_business_id_and_weekday", unique: true
     t.index ["business_id"], name: "index_availability_rules_on_business_id"
+  end
+
+  create_table "billing_mercado_pago_connections", force: :cascade do |t|
+    t.text "access_token_ciphertext"
+    t.datetime "connected_at"
+    t.datetime "created_at", null: false
+    t.datetime "disconnected_at"
+    t.datetime "expires_at"
+    t.string "mercado_pago_email"
+    t.string "mercado_pago_nickname"
+    t.string "mercado_pago_user_id"
+    t.jsonb "metadata", default: {}, null: false
+    t.text "refresh_token_ciphertext"
+    t.string "singleton_key", null: false
+    t.datetime "updated_at", null: false
+    t.index ["mercado_pago_user_id"], name: "index_billing_mercado_pago_connections_on_mercado_pago_user_id"
+    t.index ["singleton_key"], name: "index_billing_mercado_pago_connections_on_singleton_key", unique: true
   end
 
   create_table "billing_reminders", force: :cascade do |t|
@@ -432,6 +450,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_180000) do
     t.string "address_details"
     t.boolean "ai_chat_enabled", default: false, null: false
     t.text "ai_context"
+    t.string "arrival_mode", default: "continuous", null: false
+    t.jsonb "arrival_times", default: {}, null: false
     t.boolean "billing_enabled", default: true, null: false
     t.string "business_kind", default: "business", null: false
     t.integer "cancellation_notice_hours", default: 12, null: false
@@ -490,6 +510,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_180000) do
     t.bigint "service_catalog_category_id"
     t.integer "services_count", default: 0, null: false
     t.string "setup_status", default: "not_started", null: false
+    t.integer "simultaneous_capacity"
     t.string "slogan"
     t.string "slug", null: false
     t.datetime "trial_ends_at", null: false
@@ -497,6 +518,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_180000) do
     t.datetime "updated_at", null: false
     t.string "website_url"
     t.string "whatsapp_phone"
+    t.integer "whatsapp_reminder_hours", default: 24, null: false
     t.index "lower((slug)::text)", name: "index_businesses_on_lower_slug", unique: true
     t.index ["billing_enabled"], name: "index_businesses_on_billing_enabled"
     t.index ["custom_domain", "custom_domain_enabled"], name: "index_businesses_on_custom_domain_and_enabled"
@@ -508,6 +530,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_180000) do
     t.index ["public_site_mode"], name: "index_businesses_on_public_site_mode"
     t.index ["public_template"], name: "index_businesses_on_public_template"
     t.index ["service_catalog_category_id"], name: "index_businesses_on_service_catalog_category_id"
+    t.check_constraint "arrival_mode::text = ANY (ARRAY['fixed'::character varying::text, 'continuous'::character varying::text])", name: "businesses_valid_arrival_mode"
+    t.check_constraint "simultaneous_capacity >= 1 AND simultaneous_capacity <= 10", name: "businesses_valid_capacity"
+    t.check_constraint "whatsapp_reminder_hours = ANY (ARRAY[2, 24])", name: "businesses_valid_reminder_hours"
   end
 
   create_table "campaign_links", force: :cascade do |t|
@@ -1260,6 +1285,31 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_180000) do
     t.index ["user_id"], name: "index_sessions_on_user_id"
   end
 
+  create_table "subscription_checkout_payments", force: :cascade do |t|
+    t.integer "amount_cents", null: false
+    t.bigint "business_id", null: false
+    t.datetime "created_at", null: false
+    t.string "currency", default: "ARS", null: false
+    t.datetime "expires_at"
+    t.string "external_reference", null: false
+    t.datetime "failed_at"
+    t.text "init_point"
+    t.datetime "paid_at"
+    t.string "preference_id"
+    t.string "provider", default: "mercado_pago", null: false
+    t.string "provider_payment_id"
+    t.jsonb "raw_payload", default: {}, null: false
+    t.text "sandbox_init_point"
+    t.string "status", default: "pending", null: false
+    t.bigint "subscription_invoice_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["business_id"], name: "index_subscription_checkout_payments_on_business_id"
+    t.index ["external_reference"], name: "index_subscription_checkout_payments_on_external_reference", unique: true
+    t.index ["provider_payment_id"], name: "index_subscription_checkout_payments_on_provider_payment_id", unique: true
+    t.index ["subscription_invoice_id", "status"], name: "idx_on_subscription_invoice_id_status_e51934847e"
+    t.index ["subscription_invoice_id"], name: "idx_on_subscription_invoice_id_fe43402b46"
+  end
+
   create_table "subscription_invoices", force: :cascade do |t|
     t.integer "amount_cents", null: false
     t.integer "billing_period_months", default: 1, null: false
@@ -1306,7 +1356,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_180000) do
   end
 
   create_table "subscriptions", force: :cascade do |t|
-    t.integer "amount_cents", default: 2500000, null: false
+    t.integer "amount_cents", default: 3500000, null: false
     t.integer "billing_period_months", default: 1, null: false
     t.bigint "business_id", null: false
     t.datetime "cancelled_at"
@@ -1320,6 +1370,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_180000) do
     t.date "next_due_on"
     t.date "paid_until"
     t.string "payer_email"
+    t.string "plan_selected", default: "basic", null: false
     t.jsonb "raw_payload", default: {}, null: false
     t.datetime "restricted_at"
     t.string "status", default: "trialing", null: false
@@ -1330,6 +1381,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_180000) do
     t.datetime "updated_at", null: false
     t.index ["business_id"], name: "index_subscriptions_on_business_id", unique: true
     t.index ["external_reference"], name: "index_subscriptions_on_external_reference", unique: true
+    t.check_constraint "plan_selected::text = ANY (ARRAY['basic'::character varying::text, 'pro'::character varying::text])", name: "subscriptions_valid_plan"
   end
 
   create_table "super_admin_tasks", force: :cascade do |t|
@@ -1409,6 +1461,70 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_180000) do
     t.index ["token_seguro"], name: "index_waitlist_entries_on_token_seguro"
   end
 
+  create_table "whatsapp_connections", force: :cascade do |t|
+    t.text "access_token_ciphertext"
+    t.bigint "business_id", null: false
+    t.string "confirmation_template", default: "citapet_booking_confirmation", null: false
+    t.datetime "created_at", null: false
+    t.datetime "disconnected_at"
+    t.string "phone_number_id", null: false
+    t.string "reminder_template", default: "citapet_appointment_reminder", null: false
+    t.string "template_language", default: "es_AR", null: false
+    t.boolean "templates_approved", default: false, null: false
+    t.datetime "updated_at", null: false
+    t.string "waba_id", null: false
+    t.index ["business_id"], name: "index_whatsapp_connections_on_business_id", unique: true
+    t.index ["phone_number_id"], name: "index_whatsapp_connections_on_phone_number_id", unique: true
+  end
+
+  create_table "whatsapp_contacts", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "last_human_at"
+    t.datetime "last_inbound_at"
+    t.datetime "last_menu_at"
+    t.string "name"
+    t.datetime "opted_in_at"
+    t.datetime "paused_until"
+    t.string "phone", null: false
+    t.datetime "updated_at", null: false
+    t.index ["business_id", "phone"], name: "index_whatsapp_contacts_on_business_id_and_phone", unique: true
+    t.index ["business_id"], name: "index_whatsapp_contacts_on_business_id"
+  end
+
+  create_table "whatsapp_deliveries", force: :cascade do |t|
+    t.datetime "accepted_at"
+    t.bigint "appointment_id"
+    t.integer "attempts", default: 0, null: false
+    t.bigint "business_id", null: false
+    t.datetime "created_at", null: false
+    t.string "dedupe_key", null: false
+    t.jsonb "payload", default: {}, null: false
+    t.string "provider_id"
+    t.string "purpose", null: false
+    t.datetime "sent_at"
+    t.string "status", default: "pending", null: false
+    t.boolean "trial_reminder", default: false, null: false
+    t.datetime "updated_at", null: false
+    t.index ["appointment_id"], name: "index_whatsapp_deliveries_on_appointment_id"
+    t.index ["business_id", "trial_reminder", "status"], name: "idx_whatsapp_trial_usage"
+    t.index ["business_id"], name: "index_whatsapp_deliveries_on_business_id"
+    t.index ["dedupe_key"], name: "index_whatsapp_deliveries_on_dedupe_key", unique: true
+    t.index ["provider_id"], name: "index_whatsapp_deliveries_on_provider_id", unique: true
+  end
+
+  create_table "whatsapp_events", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.datetime "created_at", null: false
+    t.string "kind", null: false
+    t.jsonb "payload", default: {}, null: false
+    t.datetime "processed_at"
+    t.string "provider_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["business_id", "provider_id", "kind"], name: "index_whatsapp_events_on_business_id_and_provider_id_and_kind", unique: true
+    t.index ["business_id"], name: "index_whatsapp_events_on_business_id"
+  end
+
   create_table "whatsapp_templates", force: :cascade do |t|
     t.boolean "active", default: true, null: false
     t.text "body", null: false
@@ -1441,24 +1557,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_180000) do
   add_foreign_key "appointments", "employee_memberships"
   add_foreign_key "appointments", "pets", on_delete: :nullify
   add_foreign_key "appointments", "services"
-  add_foreign_key "appointments", "users", column: "canceled_by_user_id"
-  add_foreign_key "appointments", "users", column: "completed_by_id"
-  add_foreign_key "appointments", "users", column: "deposit_reviewed_by_id"
-  add_foreign_key "appointments", "users", column: "remaining_balance_paid_by_id"
-  add_foreign_key "appointments", "waitlist_entries"
   add_foreign_key "availability_blocks", "bookable_resources"
   add_foreign_key "availability_blocks", "businesses"
   add_foreign_key "availability_blocks", "employee_memberships"
-  add_foreign_key "availability_blocks", "users", column: "created_by_id"
   add_foreign_key "availability_rules", "businesses"
   add_foreign_key "billing_reminders", "businesses"
-  add_foreign_key "billing_reminders", "subscription_invoices"
   add_foreign_key "bookable_resources", "branches"
   add_foreign_key "bookable_resources", "businesses"
   add_foreign_key "booking_attachments", "appointments"
   add_foreign_key "booking_attachments", "businesses"
   add_foreign_key "booking_attachments", "customer_profiles"
-  add_foreign_key "booking_attachments", "users", column: "uploaded_by_id"
   add_foreign_key "booking_attributions", "appointments"
   add_foreign_key "booking_attributions", "businesses"
   add_foreign_key "booking_attributions", "campaign_links"
@@ -1471,18 +1579,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_180000) do
   add_foreign_key "booking_notes", "businesses"
   add_foreign_key "booking_notes", "customer_profiles"
   add_foreign_key "booking_notes", "employee_memberships"
-  add_foreign_key "booking_notes", "users", column: "created_by_id"
   add_foreign_key "branches", "businesses"
   add_foreign_key "businesses", "service_catalog_categories"
-  add_foreign_key "businesses", "users", column: "owner_id"
   add_foreign_key "campaign_links", "businesses"
   add_foreign_key "campaign_links", "services"
-  add_foreign_key "campaign_links", "users", column: "created_by_id"
   add_foreign_key "campaign_visits", "businesses"
   add_foreign_key "campaign_visits", "campaign_links"
   add_foreign_key "client_notes", "businesses"
   add_foreign_key "client_notes", "customer_profiles"
-  add_foreign_key "client_notes", "users"
   add_foreign_key "content_templates", "businesses"
   add_foreign_key "customer_packs", "businesses"
   add_foreign_key "customer_packs", "customer_profiles"
@@ -1494,20 +1598,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_180000) do
   add_foreign_key "customer_reminders", "businesses"
   add_foreign_key "customer_reminders", "customer_profiles"
   add_foreign_key "customer_reminders", "services"
-  add_foreign_key "customer_reminders", "users", column: "assigned_to_id"
-  add_foreign_key "customer_reminders", "users", column: "completed_by_id"
   add_foreign_key "dynamic_pricing_rules", "businesses", column: "center_id"
   add_foreign_key "email_delivery_logs", "businesses"
   add_foreign_key "employee_availability_rules", "employee_memberships"
   add_foreign_key "employee_memberships", "branches"
   add_foreign_key "employee_memberships", "businesses"
-  add_foreign_key "employee_memberships", "users"
-  add_foreign_key "employee_memberships", "users", column: "invited_by_id"
   add_foreign_key "extras", "businesses"
   add_foreign_key "gift_cards", "appointments", column: "redeemed_booking_id"
   add_foreign_key "gift_cards", "businesses"
   add_foreign_key "gift_cards", "services"
-  add_foreign_key "gift_cards", "users", column: "created_by_id"
   add_foreign_key "holidays", "businesses"
   add_foreign_key "mercado_pago_connections", "businesses"
   add_foreign_key "notification_deliveries", "appointments"
@@ -1515,7 +1614,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_180000) do
   add_foreign_key "pack_sessions", "appointments"
   add_foreign_key "pack_sessions", "businesses"
   add_foreign_key "pack_sessions", "customer_packs"
-  add_foreign_key "pack_sessions", "users", column: "created_by_id"
   add_foreign_key "payment_accounts", "businesses"
   add_foreign_key "pets", "businesses"
   add_foreign_key "pets", "customer_profiles"
@@ -1569,6 +1667,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_180000) do
   add_foreign_key "services", "service_catalog_items"
   add_foreign_key "services", "service_categories"
   add_foreign_key "sessions", "users"
+  add_foreign_key "subscription_checkout_payments", "businesses"
+  add_foreign_key "subscription_checkout_payments", "subscription_invoices"
   add_foreign_key "subscription_invoices", "businesses"
   add_foreign_key "subscription_invoices", "subscriptions"
   add_foreign_key "subscription_payment_proofs", "businesses"
@@ -1581,5 +1681,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_180000) do
   add_foreign_key "waitlist_entries", "customer_profiles"
   add_foreign_key "waitlist_entries", "employee_memberships"
   add_foreign_key "waitlist_entries", "services"
+  add_foreign_key "whatsapp_connections", "businesses"
+  add_foreign_key "whatsapp_contacts", "businesses"
+  add_foreign_key "whatsapp_deliveries", "appointments"
+  add_foreign_key "whatsapp_deliveries", "businesses"
+  add_foreign_key "whatsapp_events", "businesses"
   add_foreign_key "whatsapp_templates", "businesses"
 end

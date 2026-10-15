@@ -8,9 +8,12 @@ module MercadoPago
       return unless payment_event?(data, request_params)
 
       remote_payment = fetch_remote_payment!(data, request_params)
+      if (subscription_payment = find_subscription_payment(remote_payment, request_params))
+        process_subscription_payment!(subscription_payment, remote_payment)
+        return
+      end
       appointment_payment = find_appointment_payment(remote_payment, request_params)
-      return if appointment_payment.blank?
-      return if appointment_payment.approved?
+      return if appointment_payment.blank? || appointment_payment.approved?
 
       case remote_payment["status"].to_s
       when "approved"
@@ -40,12 +43,18 @@ module MercadoPago
 
       def connection_for_payload(payload, params)
         reference = params["reference"].presence || payload["external_reference"].presence
+        subscription_payment = SubscriptionCheckoutPayment.find_by(external_reference: reference) if reference.present?
+        return BillingMercadoPagoConnection.current if subscription_payment.present?
         payment = AppointmentPayment.find_by(external_reference: reference) if reference.present?
         return payment.business.mercado_pago_connection if payment&.business&.mercado_pago_connection.present?
 
         user_id = payload["user_id"].presence || params["user_id"].presence
         connection = MercadoPagoConnection.connected.find_by(mercado_pago_user_id: user_id.to_s) if user_id.present?
-        connection || MercadoPagoConnection.connected.first || raise(MercadoPago::Client::MissingAccessToken, "No se encontró la conexión de Mercado Pago.")
+        return connection if connection.present?
+        billing_connection = BillingMercadoPagoConnection.current
+        return billing_connection if billing_connection.connected? && billing_connection.mercado_pago_user_id == user_id.to_s
+
+        raise(MercadoPago::Client::MissingAccessToken, "No se encontró la conexión de Mercado Pago.")
       end
 
       def find_appointment_payment(remote_payment, params)
@@ -55,20 +64,24 @@ module MercadoPago
         AppointmentPayment.find_by(provider_payment_id: remote_payment["id"].to_s)
       end
 
-      def approve_payment!(appointment_payment, remote_payment)
-        confirmed_appointments = []
-        appointment_payment.transaction do
-          appointment_payment.mark_approved!(payload: remote_payment)
-          appointment_payment.appointments.find_each do |appointment|
-            next if appointment.confirmed?
+      def find_subscription_payment(remote_payment, params)
+        reference = remote_payment["external_reference"].presence || params["reference"].presence
+        return SubscriptionCheckoutPayment.find_by(external_reference: reference) if reference.present?
 
-            appointment.mark_deposit_approved!(reviewed_by: nil)
-            confirmed_appointments << appointment
-          end
-          confirmed_appointments.each { |appointment| Appointments::ConfirmedBookingNotificationService.call(appointment) }
+        SubscriptionCheckoutPayment.find_by(provider_payment_id: remote_payment["id"].to_s)
+      end
+
+      def process_subscription_payment!(payment, remote_payment)
+        case remote_payment["status"].to_s
+        when "approved"
+          Billing::ApproveCheckoutPayment.call(payment: payment, payload: remote_payment)
+        when "rejected", "cancelled", "canceled"
+          payment.with_lock { payment.mark_failed!(status: remote_payment["status"], payload: remote_payment) unless payment.approved? }
         end
+      end
 
-        confirmed_appointments.each { |appointment| SendCustomerBookingConfirmationJob.perform_later(appointment) }
+      def approve_payment!(appointment_payment, remote_payment)
+        MercadoPago::ApproveBookingPayment.call(payment: appointment_payment, payload: remote_payment)
       end
 
       def mark_appointments_failed!(appointment_payment)

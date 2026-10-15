@@ -1,8 +1,10 @@
 class SendCustomerBookingConfirmationJob < ApplicationJob
+  self.enqueue_after_transaction_commit = true
   queue_as :default
 
   def perform(appointment)
     return unless appointment.confirmed?
+    WhatsApp::AppointmentNotifications.call(appointment: appointment, purpose: "confirmation")
 
     queue_email_once!(
       appointment,
@@ -17,7 +19,6 @@ class SendCustomerBookingConfirmationJob < ApplicationJob
         template: "mercado_pago_booking_confirmed"
       ) { BusinessMailer.booking_confirmed_by_mercado_pago(appointment) }
     end
-
   end
 
   private
@@ -43,5 +44,4 @@ class SendCustomerBookingConfirmationJob < ApplicationJob
       end
       yield.deliver_later if delivery
     end
-
 end

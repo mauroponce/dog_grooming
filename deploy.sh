@@ -112,6 +112,11 @@ wait_for_url() {
 "${COMPOSE[@]}" up -d db
 "${COMPOSE[@]}" build web
 "${COMPOSE[@]}" run --rm web bin/deploy_migrate
+if [ "${RESET_PRELAUNCH_DATA:-}" = "confirm-citapet-prelaunch" ]; then
+  "${COMPOSE[@]}" stop web
+  $BACKUP_COMMAND
+  "${COMPOSE[@]}" run --rm -e RESET_PRELAUNCH_DATA=confirm-citapet-prelaunch web bin/rails citapet:reset_prelaunch
+fi
 "${COMPOSE[@]}" up -d --remove-orphans
 "${COMPOSE[@]}" exec -T caddy caddy reload --config /etc/caddy/Caddyfile
 "${COMPOSE[@]}" ps

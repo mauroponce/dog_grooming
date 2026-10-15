@@ -1,10 +1,10 @@
-<% content_for :title, "Cita.pet - Más reservas, más mascotas y más ventas" %>
+<% content_for :title, "Cita.pet - Turnos automáticos por WhatsApp" %>
 <% content_for :full_width, true %>
 <% content_for :head do %>
-  <meta name="description" content="Cita.pet organiza reservas, señas, comprobantes, tutores, mascotas, equipo y seguimiento para peluquerías caninas.">
+  <meta name="description" content="Automatizá reservas por WhatsApp, cobrá señas con Mercado Pago y confirmá turnos al instante. 14 días gratis, sin tarjeta.">
   <meta name="theme-color" content="#ffded4">
-  <meta property="og:title" content="Cita.pet - Más reservas, más mascotas y más ventas">
-  <meta property="og:description" content="Reservas, señas, comprobantes, tutores, mascotas, equipo e inteligencia artificial para peluquerías caninas.">
+  <meta property="og:title" content="Cita.pet - Turnos automáticos por WhatsApp">
+  <meta property="og:description" content="Tu cliente reserva y paga la seña por Mercado Pago automáticamente.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://cita.pet">
   <style>
@@ -125,14 +125,14 @@
         </span>
         <span>
           <span class="block text-[17px] font-bold tracking-tight">Cita.pet</span>
-          <span class="block text-[10px] font-bold text-brand-700">Menos mensajes. Más orden.</span>
+          <span class="block text-[10px] font-bold text-brand-700">Turnos automáticos por WhatsApp</span>
         </span>
       </a>
 
       <nav class="mx-auto hidden items-center gap-7 text-sm font-bold text-slate-500 lg:flex">
-        <a href="#que-resuelve" class="transition hover:text-brand-700">Qué resuelve</a>
+        <a href="#que-resuelve" class="transition hover:text-brand-700">El recorrido</a>
         <a href="#como-funciona" class="transition hover:text-brand-700">Cómo funciona</a>
-        <a href="#ia" class="transition hover:text-brand-700">IA</a>
+        <a href="#ia" class="transition hover:text-brand-700">Automatización</a>
         <a href="#precio" class="transition hover:text-brand-700">Precio</a>
         <a href="#preguntas" class="transition hover:text-brand-700">Preguntas</a>
       </nav>
@@ -142,9 +142,7 @@
         <a href="#contacto" class="rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm hover:border-brand-200 hover:text-brand-700">
           Contacto
         </a>
-        <a href="#contacto" class="rounded-2xl bg-slate-950 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-slate-950/15 transition hover:-translate-y-0.5 hover:bg-brand-700">
-          Solicitar acceso
-        </a>
+        <%= link_to "Empezar prueba", registro_path, class: "rounded-2xl bg-slate-950 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-slate-950/15 transition hover:-translate-y-0.5 hover:bg-brand-700" %>
       </div>
 
       <button id="landingMenuButton" type="button" class="ml-auto grid h-11 w-11 place-items-center rounded-2xl border border-slate-200 bg-white text-slate-600 shadow-sm sm:hidden" aria-label="Abrir menú" aria-expanded="false">
@@ -154,13 +152,13 @@
 
     <div id="landingMobileMenu" class="hidden border-t border-slate-100 bg-white px-4 py-4 sm:hidden">
       <div class="grid gap-2">
-        <a href="#que-resuelve" class="landing-mobile-link rounded-xl px-3 py-2.5 text-sm font-bold hover:bg-brand-50">Qué resuelve</a>
+        <a href="#que-resuelve" class="landing-mobile-link rounded-xl px-3 py-2.5 text-sm font-bold hover:bg-brand-50">El recorrido</a>
         <a href="#como-funciona" class="landing-mobile-link rounded-xl px-3 py-2.5 text-sm font-bold hover:bg-brand-50">Cómo funciona</a>
-        <a href="#ia" class="landing-mobile-link rounded-xl px-3 py-2.5 text-sm font-bold hover:bg-brand-50">IA</a>
+        <a href="#ia" class="landing-mobile-link rounded-xl px-3 py-2.5 text-sm font-bold hover:bg-brand-50">Automatización</a>
         <a href="#precio" class="landing-mobile-link rounded-xl px-3 py-2.5 text-sm font-bold hover:bg-brand-50">Precio</a>
         <a href="#preguntas" class="landing-mobile-link rounded-xl px-3 py-2.5 text-sm font-bold hover:bg-brand-50">Preguntas</a>
         <%= link_to "Acceso", new_session_path, class: "landing-mobile-link rounded-xl px-3 py-2.5 text-sm font-bold hover:bg-brand-50" %>
-        <a href="#contacto" class="landing-mobile-link mt-2 rounded-xl bg-slate-950 px-3 py-3 text-center text-sm font-bold text-white">Solicitar acceso</a>
+        <%= link_to "Empezar prueba", registro_path, class: "landing-mobile-link mt-2 rounded-xl bg-slate-950 px-3 py-3 text-center text-sm font-bold text-white" %>
       </div>
     </div>
   </header>
@@ -171,25 +169,25 @@
         <div>
           <span class="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-white/90 px-3 py-1.5 text-xs font-bold text-brand-700 shadow-sm">
             <%= landing_icon.call(:sparkles, classes: "h-3.5 w-3.5") %>
-            Para peluquerías caninas que quieren organizarse y vender más
+            Reservas 24/7, sin responder cada mensaje
           </span>
 
           <h1 class="mt-7 max-w-2xl text-5xl font-bold leading-[.98] tracking-[-.055em] text-slate-950 sm:text-6xl lg:text-[72px]">
-            Menos huecos.
-            <span class="landing-gradient-text block">Más mascotas. Más ventas.</span>
+            Tu WhatsApp toma turnos.
+            <span class="landing-gradient-text block">Vos cuidás mascotas.</span>
           </h1>
 
           <p class="mt-7 max-w-2xl text-lg leading-8 text-slate-600 [text-shadow:0_1px_0_rgba(255,255,255,.75)]">
-            Cita.pet organiza reservas, señas, tutores, mascotas y profesionales; además detecta espacios libres y te ayuda a convertir esos huecos en nuevos turnos.
+            Tus clientes eligen un servicio desde WhatsApp, reservan en una web rápida y pagan la seña con Mercado Pago. El turno se confirma solo.
           </p>
 
           <div class="mt-8 flex flex-col gap-3 sm:flex-row">
-            <a href="#contacto" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-950 px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-slate-950/15 transition hover:-translate-y-0.5 hover:bg-brand-700">
-              Quiero una demo con mi peluquería
+            <%= link_to registro_path, class: "inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-950 px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-slate-950/15 transition hover:-translate-y-0.5 hover:bg-brand-700" do %>
+              Empezar mi prueba gratis
               <%= landing_icon.call(:arrow_right, classes: "h-4 w-4") %>
-            </a>
+            <% end %>
             <a href="#que-resuelve" class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3.5 text-sm font-bold text-slate-700 shadow-sm hover:border-brand-200 hover:text-brand-700">
-              Ver cómo ayuda a vender
+              Ver cómo funciona
               <%= landing_icon.call(:chevron_down, classes: "h-4 w-4") %>
             </a>
           </div>
@@ -197,13 +195,13 @@
           <div class="mt-9 grid max-w-2xl gap-3 sm:grid-cols-3">
             <div class="rounded-2xl border border-white bg-white/80 p-4 shadow-sm">
               <%= landing_icon.call(:message_off, classes: "h-5 w-5 text-brand-700") %>
-              <p class="mt-3 text-sm font-bold">Más reservas online</p>
-              <p class="mt-1 text-xs leading-5 text-slate-500">El tutor reserva sin ida y vuelta.</p>
+              <p class="mt-3 text-sm font-bold">WhatsApp como canal</p>
+              <p class="mt-1 text-xs leading-5 text-slate-500">Donde ya están tus clientes.</p>
             </div>
             <div class="rounded-2xl border border-white bg-white/80 p-4 shadow-sm">
               <%= landing_icon.call(:dollar, classes: "h-5 w-5 text-emerald-700") %>
-              <p class="mt-3 text-sm font-bold">Menos ausencias</p>
-              <p class="mt-1 text-xs leading-5 text-slate-500">Señas, comprobantes y seguimiento.</p>
+              <p class="mt-3 text-sm font-bold">Señas acreditadas</p>
+              <p class="mt-1 text-xs leading-5 text-slate-500">Mercado Pago confirma el turno.</p>
             </div>
             <div class="rounded-2xl border border-white bg-white/80 p-4 shadow-sm">
               <%= landing_icon.call(:bot, classes: "h-5 w-5 text-blue-700") %>
@@ -331,11 +329,11 @@
         <div class="mx-auto max-w-3xl text-center">
           <p class="text-xs font-bold uppercase tracking-[.18em] text-brand-700">Mucho más que turnos</p>
           <h2 class="mt-4 text-4xl font-bold tracking-[-.045em] sm:text-5xl">
-            Una agenda muestra horarios.
-            <span class="landing-gradient-text block">Cita.pet organiza el negocio.</span>
+            Un mensaje activa la reserva.
+            <span class="landing-gradient-text block">Cita.pet completa el recorrido.</span>
           </h2>
           <p class="mx-auto mt-5 max-w-2xl text-base leading-7 text-slate-500">
-            Cada reserva activa tareas, cobros, recordatorios, historial y oportunidades.
+            Dentro de la ventana de 24 horas, el cliente elige un servicio y sigue a una reserva web personalizada, sin crear una cuenta.
           </p>
         </div>
 
@@ -344,8 +342,8 @@
             <span class="grid h-12 w-12 place-items-center rounded-2xl bg-brand-50 text-brand-700">
               <%= landing_icon.call(:calendar_range, classes: "h-5 w-5") %>
             </span>
-            <h3 class="mt-5 text-lg font-bold">Agenda inteligente</h3>
-            <p class="mt-2 text-sm leading-6 text-slate-500">Disponibilidad por profesional, duración real y horarios sin superposiciones.</p>
+            <h3 class="mt-5 text-lg font-bold">Lista interactiva</h3>
+            <p class="mt-2 text-sm leading-6 text-slate-500">El cliente encuentra catálogo, horarios o la opción de hablar con una persona.</p>
           </article>
 
           <article class="landing-feature-card rounded-[26px] border border-slate-200 bg-white p-5">
@@ -353,23 +351,23 @@
               <%= landing_icon.call(:wallet, classes: "h-5 w-5") %>
             </span>
             <h3 class="mt-5 text-lg font-bold">Señas y pagos</h3>
-            <p class="mt-2 text-sm leading-6 text-slate-500">Mercado Pago automático o transferencia con comprobante y revisión manual.</p>
+            <p class="mt-2 text-sm leading-6 text-slate-500">Mercado Pago cobra la seña; su webhook confirma el turno automáticamente.</p>
           </article>
 
           <article class="landing-feature-card rounded-[26px] border border-slate-200 bg-white p-5">
             <span class="grid h-12 w-12 place-items-center rounded-2xl bg-pink-50 text-pink-700">
               <%= landing_icon.call(:user, classes: "h-5 w-5") %>
             </span>
-            <h3 class="mt-5 text-lg font-bold">Tutores y mascotas</h3>
-            <p class="mt-2 text-sm leading-6 text-slate-500">Cada tutor conserva el historial, notas y fotos de todas sus mascotas.</p>
+            <h3 class="mt-5 text-lg font-bold">Reserva sin fricción</h3>
+            <p class="mt-2 text-sm leading-6 text-slate-500">Solo pide el nombre de la mascota, día y horario disponible.</p>
           </article>
 
           <article class="landing-feature-card rounded-[26px] border border-slate-200 bg-white p-5">
             <span class="grid h-12 w-12 place-items-center rounded-2xl bg-blue-50 text-blue-700">
               <%= landing_icon.call(:bot, classes: "h-5 w-5") %>
             </span>
-            <h3 class="mt-5 text-lg font-bold">IA para actuar</h3>
-            <p class="mt-2 text-sm leading-6 text-slate-500">Prioridades, huecos, riesgo de ausencia y tutores a contactar.</p>
+            <h3 class="mt-5 text-lg font-bold">Confirmación inmediata</h3>
+            <p class="mt-2 text-sm leading-6 text-slate-500">El pago exitoso genera el turno y avisa al cliente por WhatsApp.</p>
           </article>
         </div>
       </div>
@@ -379,33 +377,33 @@
       <div class="mx-auto grid max-w-7xl items-center gap-14 px-4 sm:px-6 lg:grid-cols-[.9fr_1.1fr] lg:px-8">
         <div>
           <p class="text-xs font-bold uppercase tracking-[.18em] text-brand-700">Antes, durante y después</p>
-          <h2 class="mt-4 text-4xl font-bold tracking-[-.045em] sm:text-5xl">Cada turno deja de ser un mensaje aislado.</h2>
+          <h2 class="mt-4 text-4xl font-bold tracking-[-.045em] sm:text-5xl">Un turno completo, en una conversación.</h2>
           <p class="mt-5 text-base leading-7 text-slate-500">
-            Cita.pet convierte cada reserva en un flujo completo.
+            El flujo empieza cuando el cliente escribe a la línea de WhatsApp de tu peluquería.
           </p>
 
           <div class="mt-8 space-y-5">
             <div class="flex gap-4">
               <span class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-slate-950 text-sm font-bold text-white">1</span>
               <div>
-                <h3 class="font-bold">El tutor reserva para su mascota</h3>
-                <p class="mt-1 text-sm leading-6 text-slate-500">Elige mascota, servicio, profesional, día y horario desde tu link.</p>
+                <h3 class="font-bold">Elige un servicio en WhatsApp</h3>
+                <p class="mt-1 text-sm leading-6 text-slate-500">Recibe una lista interactiva y Cita.pet le envía su enlace de reserva personalizado.</p>
               </div>
             </div>
 
             <div class="flex gap-4">
               <span class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-brand-600 text-sm font-bold text-white">2</span>
               <div>
-                <h3 class="font-bold">La seña sigue el método de tu peluquería</h3>
-                <p class="mt-1 text-sm leading-6 text-slate-500">Mercado Pago o comprobante de transferencia.</p>
+                <h3 class="font-bold">Reserva y paga la seña</h3>
+                <p class="mt-1 text-sm leading-6 text-slate-500">En la web anónima escribe el nombre de la mascota, elige día y horario, y paga con Mercado Pago.</p>
               </div>
             </div>
 
             <div class="flex gap-4">
               <span class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-emerald-600 text-sm font-bold text-white">3</span>
               <div>
-                <h3 class="font-bold">Cita.pet mantiene el seguimiento</h3>
-                <p class="mt-1 text-sm leading-6 text-slate-500">Recordatorios, historial y oportunidades de regreso.</p>
+                <h3 class="font-bold">El webhook cierra el ciclo</h3>
+                <p class="mt-1 text-sm leading-6 text-slate-500">Al acreditarse el pago, el turno se crea en tu agenda y llega la confirmación por WhatsApp.</p>
               </div>
             </div>
           </div>
@@ -497,47 +495,42 @@
     <section id="precio" class="border-b border-slate-100 bg-white py-24">
       <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <div class="mx-auto max-w-3xl text-center">
-          <p class="text-xs font-bold uppercase tracking-[.18em] text-brand-700">Simple de entender</p>
-          <h2 class="mt-4 text-4xl font-bold tracking-[-.045em] sm:text-5xl">Precio simple para operar toda la peluquería.</h2>
-          <p class="mt-5 text-base leading-7 text-slate-500">
-            Sin módulos escondidos, sin comisión de Cita.pet por cada seña.
-          </p>
+          <p class="text-xs font-bold uppercase tracking-[.18em] text-brand-700">Precios claros, alta instantánea</p>
+          <h2 class="mt-4 text-4xl font-bold tracking-[-.045em] sm:text-5xl">Un plan para empezar. <span class="landing-gradient-text">Otro para ir por más.</span></h2>
+          <p class="mt-5 text-base leading-7 text-slate-500">Reservas automáticas por WhatsApp y señas con Mercado Pago desde el primer plan. Con PRO, sumás recordatorios por WhatsApp.</p>
         </div>
 
-        <div class="mx-auto mt-12 max-w-4xl rounded-[34px] bg-slate-950 p-1 shadow-[0_24px_70px_rgba(10,10,14,.18)]">
-          <div class="rounded-[30px] bg-white p-6 sm:p-8">
-            <div class="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
-              <div>
-                <div class="flex flex-wrap gap-3">
-                  <span class="rounded-full bg-brand-50 px-3 py-1.5 text-xs font-bold text-brand-700">Suscripción mensual</span>
-                  <span class="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700">Sin permanencia</span>
-                </div>
+        <div class="mt-12 grid gap-6 lg:grid-cols-2">
+          <article class="rounded-[30px] border border-slate-200 bg-[#fffdfa] p-7 shadow-sm sm:p-8">
+            <p class="text-xs font-bold uppercase tracking-[.16em] text-brand-700">Plan Básico</p>
+            <p class="mt-4 text-5xl font-bold tracking-tight">$35.000</p>
+            <p class="mt-1 text-sm font-bold text-slate-500">ARS / mes</p>
+            <p class="mt-5 text-sm leading-6 text-slate-600">Para tomar turnos y cobrar señas sin responder mensajes.</p>
+            <ul class="mt-7 space-y-3 text-sm font-semibold text-slate-700">
+              <% ["Reservas automáticas por WhatsApp, 24/7", "Catálogo interactivo de servicios", "Página de reservas rápida y sin registro", "Seña obligatoria con Mercado Pago", "Confirmación instantánea tras el pago", "Recordatorios previos por email"].each do |feature| %>
+                <li class="flex gap-3"><%= landing_icon.call(:check, classes: "mt-0.5 h-4 w-4 shrink-0 text-emerald-600") %><span><%= feature %></span></li>
+              <% end %>
+            </ul>
+            <p class="mt-6 rounded-2xl bg-slate-100 px-4 py-3 text-xs font-bold text-slate-500">No incluye recordatorios por WhatsApp.</p>
+            <%= link_to "Empezar 14 días gratis", registro_path, class: "mt-7 flex w-full items-center justify-center rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-sm font-bold text-slate-800 hover:border-brand-300 hover:text-brand-700" %>
+          </article>
 
-                <h3 class="mt-5 text-3xl font-bold">Todo lo necesario para ordenar y crecer.</h3>
-
-                <div class="mt-6 grid gap-3 sm:grid-cols-2">
-                  <p class="flex items-center gap-3 text-sm font-bold text-slate-600"><%= landing_icon.call(:check, classes: "h-4 w-4 text-emerald-600") %>Equipo y agenda online</p>
-                  <p class="flex items-center gap-3 text-sm font-bold text-slate-600"><%= landing_icon.call(:check, classes: "h-4 w-4 text-emerald-600") %>Reservas ilimitadas</p>
-                  <p class="flex items-center gap-3 text-sm font-bold text-slate-600"><%= landing_icon.call(:check, classes: "h-4 w-4 text-emerald-600") %>Comprobantes y Mercado Pago</p>
-                  <p class="flex items-center gap-3 text-sm font-bold text-slate-600"><%= landing_icon.call(:check, classes: "h-4 w-4 text-emerald-600") %>Asistente con IA</p>
-                  <p class="flex items-center gap-3 text-sm font-bold text-slate-600"><%= landing_icon.call(:check, classes: "h-4 w-4 text-emerald-600") %>Configuración incluida</p>
-                  <p class="flex items-center gap-3 text-sm font-bold text-slate-600"><%= landing_icon.call(:check, classes: "h-4 w-4 text-emerald-600") %>14 días de prueba</p>
-                </div>
-              </div>
-
-              <div class="rounded-[26px] bg-slate-950 p-6 text-center text-white lg:min-w-[270px]">
-                <p class="text-xs font-bold uppercase tracking-[.14em] text-brand-300">Precio mensual</p>
-                <p class="mt-3 text-5xl font-bold">$25.000</p>
-                <p class="mt-2 text-sm text-slate-400">Por mes. Precio fijo.</p>
-                <p class="mt-5 text-xs leading-5 text-slate-400">Después de la prueba gratuita. Sin comisión por reserva.</p>
-                <a href="#contacto" class="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-slate-950 hover:bg-brand-100">
-                  Solicitar acceso
-                  <%= landing_icon.call(:arrow_right, classes: "h-4 w-4") %>
-                </a>
-              </div>
-            </div>
-          </div>
+          <article class="relative rounded-[30px] bg-slate-950 p-7 text-white shadow-[0_24px_70px_rgba(10,10,14,.18)] sm:p-8">
+            <span class="absolute right-6 top-0 -translate-y-1/2 rounded-full bg-brand-500 px-3 py-1 text-[10px] font-bold uppercase tracking-[.14em] text-white">Más completo</span>
+            <p class="text-xs font-bold uppercase tracking-[.16em] text-brand-200">Plan PRO</p>
+            <p class="mt-4 text-5xl font-bold tracking-tight">$45.000</p>
+            <p class="mt-1 text-sm font-bold text-slate-400">ARS / mes</p>
+            <p class="mt-5 text-sm leading-6 text-slate-300">Todo lo del Plan Básico, más recordatorios automáticos para reducir ausencias.</p>
+            <ul class="mt-7 space-y-3 text-sm font-semibold text-slate-100">
+              <% ["Todo lo incluido en el Plan Básico", "Recordatorios por WhatsApp con plantillas de utilidad aprobadas por Meta", "Elegí enviarlos 24 h o 2 h antes", "Recordatorios ilimitados con PRO activo, sin cargos extra", "20 recordatorios de WhatsApp durante la prueba de 14 días"].each do |feature| %>
+                <li class="flex gap-3"><%= landing_icon.call(:check, classes: "mt-0.5 h-4 w-4 shrink-0 text-emerald-300") %><span><%= feature %></span></li>
+              <% end %>
+            </ul>
+            <p class="mt-6 rounded-2xl bg-white/10 px-4 py-3 text-xs font-bold text-slate-300">Los recordatorios extra continúan enviándose y se facturan automáticamente.</p>
+            <%= link_to "Empezar 14 días gratis", registro_path, class: "mt-7 flex w-full items-center justify-center rounded-2xl bg-brand-500 px-4 py-3.5 text-sm font-bold text-white hover:bg-brand-600" %>
+          </article>
         </div>
+        <p class="mx-auto mt-7 max-w-4xl text-center text-xs leading-5 text-slate-500">Precios mensuales en pesos argentinos. La prueba de 14 días no requiere tarjeta e incluye 20 recordatorios WhatsApp con PRO. Al abonar tu primer mes, los recordatorios son ilimitados, sin excedentes. Las comisiones de Mercado Pago se rigen por las condiciones del proveedor.</p>
       </div>
     </section>
 
@@ -558,7 +551,7 @@
               <%= landing_icon.call(:chevron_down, classes: "landing-faq-chevron h-4 w-4 text-slate-400") %>
             </button>
             <div class="landing-faq-panel">
-              <p class="text-sm leading-6 text-slate-500">No. WhatsApp sigue siendo para hablar. Cita.pet evita que también tengas que usarlo como agenda, archivo e historial.</p>
+              <p class="text-sm leading-6 text-slate-500">No. El cliente inicia el flujo escribiendo a tu WhatsApp; dentro de la ventana de 24 horas recibe la lista interactiva y el enlace de reserva. Siempre puede elegir hablar con una persona.</p>
             </div>
           </article>
 
@@ -568,7 +561,7 @@
               <%= landing_icon.call(:chevron_down, classes: "landing-faq-chevron h-4 w-4 text-slate-400") %>
             </button>
             <div class="landing-faq-panel">
-              <p class="text-sm leading-6 text-slate-500">Mercado Pago con confirmación automática, transferencia con comprobante o ambas opciones.</p>
+              <p class="text-sm leading-6 text-slate-500">La seña es obligatoria y se cobra con Mercado Pago. Cuando el webhook informa el pago exitoso, Cita.pet crea el turno y confirma por WhatsApp.</p>
             </div>
           </article>
 
@@ -578,27 +571,27 @@
               <%= landing_icon.call(:chevron_down, classes: "landing-faq-chevron h-4 w-4 text-slate-400") %>
             </button>
             <div class="landing-faq-panel">
-              <p class="text-sm leading-6 text-slate-500">No. Reserva para su mascota desde el link público sin crear una cuenta ni recordar una contraseña.</p>
+              <p class="text-sm leading-6 text-slate-500">No. En el checkout web solo escribe el nombre de la mascota, elige un día y un horario disponible, y paga la seña.</p>
             </div>
           </article>
 
           <article class="landing-faq-item rounded-[22px] border border-slate-200 bg-white px-5 py-4 shadow-sm">
             <button type="button" class="landing-faq-toggle flex w-full items-center justify-between gap-4 text-left">
-              <span class="text-sm font-bold">¿Qué hace la inteligencia artificial?</span>
+              <span class="text-sm font-bold">¿Qué diferencia hay entre Básico y PRO?</span>
               <%= landing_icon.call(:chevron_down, classes: "landing-faq-chevron h-4 w-4 text-slate-400") %>
             </button>
             <div class="landing-faq-panel">
-              <p class="text-sm leading-6 text-slate-500">Muestra prioridades, detecta huecos, encuentra tutores para recuperar y prepara acciones sin ejecutarlas sin permiso.</p>
+              <p class="text-sm leading-6 text-slate-500">Los dos planes incluyen reservas por WhatsApp, catálogo, checkout web, señas por Mercado Pago y confirmación inmediata. PRO agrega recordatorios por WhatsApp con plantillas de utilidad de Meta.</p>
             </div>
           </article>
 
           <article class="landing-faq-item rounded-[22px] border border-slate-200 bg-white px-5 py-4 shadow-sm">
             <button type="button" class="landing-faq-toggle flex w-full items-center justify-between gap-4 text-left">
-              <span class="text-sm font-bold">¿Ustedes lo configuran?</span>
+              <span class="text-sm font-bold">¿Qué pasa después de los 250 recordatorios de PRO?</span>
               <%= landing_icon.call(:chevron_down, classes: "landing-faq-chevron h-4 w-4 text-slate-400") %>
             </button>
             <div class="landing-faq-panel">
-              <p class="text-sm leading-6 text-slate-500">Sí. Preparamos una demo con tu nombre, servicios y horarios para que la pruebes con tu peluquería real.</p>
+              <p class="text-sm leading-6 text-slate-500">El sistema continúa enviándolos y factura automáticamente $50 ARS por cada recordatorio adicional. El límite incluido no interrumpe las notificaciones.</p>
             </div>
           </article>
         </div>
@@ -608,10 +601,10 @@
     <section id="contacto" class="border-t border-slate-100 bg-[#f8f7fa] py-24">
       <div class="mx-auto grid max-w-7xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-[.8fr_1.2fr] lg:px-8">
         <div>
-          <p class="text-xs font-bold uppercase tracking-[.18em] text-brand-700">¿Querés verlo aplicado a tu peluquería?</p>
-          <h2 class="mt-4 max-w-xl text-4xl font-bold tracking-[-.045em] sm:text-5xl">Contanos qué querés ordenar.</h2>
+          <p class="text-xs font-bold uppercase tracking-[.18em] text-brand-700">Probalo hoy, sin esperas</p>
+          <h2 class="mt-4 max-w-xl text-4xl font-bold tracking-[-.045em] sm:text-5xl">Tu próximo turno puede reservarse solo.</h2>
           <p class="mt-5 max-w-lg text-base leading-7 text-slate-500">
-            Preparamos una demo con tu nombre, servicios y horarios.
+            Creá tu cuenta, cargá tus servicios y vinculá tu WhatsApp. Durante 14 días probás Cita.pet gratis, sin tarjeta.
           </p>
 
           <div class="mt-8 space-y-5">

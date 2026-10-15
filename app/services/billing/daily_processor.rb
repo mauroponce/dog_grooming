@@ -37,11 +37,20 @@ module Billing
         sync_without_invoice!(business, subscription) and return if invoice.blank?
 
         sync_invoice_status!(invoice)
+        ensure_checkout!(invoice) unless invoice.paid?
         return if invoice.pending_review? || subscription.pending_review?
 
         send_due_reminder_if_needed!(invoice)
         restrict_if_needed!(invoice)
         suspend_if_needed!(invoice)
+      end
+
+      def ensure_checkout!(invoice)
+        return unless BillingMercadoPagoConnection.current.connected?
+
+        Billing::CreateMercadoPagoCheckout.call(invoice: invoice)
+      rescue MercadoPago::Client::Error, ArgumentError => error
+        Rails.logger.warn("Could not create Mercado Pago subscription checkout for invoice #{invoice.id}: #{error.class}: #{error.message}")
       end
 
       def sync_without_invoice!(business, subscription)

@@ -144,7 +144,8 @@ module CustomerPortal
         Availability::Slots.public_records_for(
           business: @business,
           service: @appointment.service,
-          date: date
+          date: date,
+          excluding_appointment: @appointment
         ).reject { |slot| slot.starts_at.to_i == @appointment.starts_at.to_i }
       end
 

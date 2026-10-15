@@ -4,6 +4,7 @@
   <p class="mt-2 text-slate-600">Configurá tu semana tipo.</p>
 
   <%= form_with url: onboarding_schedule_path, method: :patch, class: "mt-6 rounded-lg border border-slate-200 bg-white p-6 shadow-sm", data: { controller: "schedule-copy" } do %>
+    <%= render "shared/salon_configuration", business: @business %>
     <div class="mb-4 flex justify-end">
       <button type="button" data-action="schedule-copy#copy" class="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium">Copiar horario a todos</button>
     </div>
@@ -17,6 +18,7 @@
           </label>
           <%= time_field_tag "rules[#{rule.weekday}][start_time]", rule.start_time&.strftime("%H:%M"), class: "rounded-md border border-slate-300 px-3 py-2", data: { schedule_copy_target: "start" } %>
           <%= time_field_tag "rules[#{rule.weekday}][end_time]", rule.end_time&.strftime("%H:%M"), class: "rounded-md border border-slate-300 px-3 py-2", data: { schedule_copy_target: "end" } %>
+          <div class="md:col-span-3"><%= label_tag "rules_#{rule.weekday}_arrival_times", "Horarios de ingreso (si usás tandas)", class: "block text-sm" %><%= text_field_tag "rules[#{rule.weekday}][arrival_times]", Array(@business.arrival_times[rule.weekday.to_s]).join(", "), id: "rules_#{rule.weekday}_arrival_times", placeholder: "09:00, 12:00, 15:00", class: "w-full rounded-md border-slate-300" %></div>
         </div>
       <% end %>
     </div>

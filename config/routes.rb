@@ -39,18 +39,21 @@ Rails.application.routes.draw do
   end
 
   root "home#index"
+  get "r/:token" => "whatsapp_bookings#show", as: :whatsapp_booking
+  get "webhooks/whatsapp" => "webhooks/whatsapp#verify"
+  post "webhooks/whatsapp" => "webhooks/whatsapp#create"
 
-  get "registro/sugerencias-slug" => "home#registration_closed_json", as: :registro_slug_suggestions
-  get "registro/disponibilidad-slug" => "home#registration_closed_json", as: :registro_slug_availability
-  get "registro" => "home#registration_closed", as: :registro
-  post "registro" => "home#registration_closed"
-  get "registro/listo" => redirect("/")
+  get "registro/sugerencias-slug" => "registrations#slug_suggestions", as: :registro_slug_suggestions
+  get "registro/disponibilidad-slug" => "registrations#slug_availability", as: :registro_slug_availability
+  get "registro" => "registrations#new", as: :registro
+  post "registro" => "registrations#create"
+  get "registro/listo" => redirect("/onboarding/horarios")
 
-  get "signup/slug_suggestions" => "home#registration_closed_json"
-  get "signup/slug_availability" => "home#registration_closed_json"
-  get "signup" => redirect("/")
-  post "signup" => "home#registration_closed"
-  get "signup/listo" => redirect("/")
+  get "signup/slug_suggestions" => "registrations#slug_suggestions", as: :signup_slug_suggestions
+  get "signup/slug_availability" => "registrations#slug_availability", as: :signup_slug_availability
+  get "signup" => redirect("/registro")
+  post "signup" => "registrations#create"
+  get "signup/listo" => redirect("/onboarding/horarios")
 
   get "onboarding/horarios" => "onboarding#schedule", as: :onboarding_schedule
   patch "onboarding/horarios" => "onboarding#update_schedule"
@@ -61,12 +64,13 @@ Rails.application.routes.draw do
   namespace :admin do
     scope path_names: { new: "nuevo", edit: "editar" } do
       root "home#show"
+      resource :whatsapp_connection, only: %i[create update destroy], path: "configuracion/whatsapp"
       get "inicio" => "home#show", as: :home
       post "inicio/oportunidades/contactos" => "home_opportunities#create", as: :home_opportunity_contacts
       get "asistente" => "dashboard#show", as: :dashboard
       resources :assistant_messages, only: :create, path: "asistente/mensajes"
       resource :billing, only: :show, path: "suscripcion", controller: "billing" do
-        post :upload_payment_proof, path: "comprobante"
+        post :checkout, path: "pagar"
       end
       resource :mercado_pago_connection, only: [], path: "configuracion/mercadopago", controller: "mercado_pago_connections" do
         get :connect, path: "conectar"
@@ -180,9 +184,10 @@ Rails.application.routes.draw do
 
   namespace :super_admin do
     root "businesses#index"
-    resource :billing, only: %i[show update], path: "cobros", controller: "billing" do
-      patch "comprobantes/:proof_id/aprobar", to: "billing#approve_payment_proof", as: :approve_payment_proof
-      patch "comprobantes/:proof_id/rechazar", to: "billing#reject_payment_proof", as: :reject_payment_proof
+    resource :billing, only: :show, path: "cobros", controller: "billing"
+    resource :mercado_pago_connection, only: :destroy, path: "cobros/mercado-pago", controller: "mercado_pago_connections" do
+      get :connect, path: "conectar"
+      get :callback
     end
     resource :usage, only: :show, path: "uso", controller: "usage"
     resources :tutorials, path: "tutoriales" do

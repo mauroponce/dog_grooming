@@ -1,7 +1,7 @@
 class Service < ApplicationRecord
   include PurgesReplacedAttachedBlobs
 
-  DURATIONS = [ 15, 30, 45, 60, 75, 90, 120 ].freeze
+  DURATIONS = (15..240).step(15).to_a.freeze
   PUBLIC_START_INTERVALS = [ 15, 30, 60 ].freeze
   VISIBILITY_MODES = %w[public hidden link_only].freeze
   PROFESSIONAL_SELECTION_MODES = %w[hidden optional required].freeze

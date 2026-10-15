@@ -27,6 +27,8 @@ RSpec.describe MercadoPago::ProcessWebhookJob do
       fetch_payment!: {
         "id" => "123456",
         "status" => "approved",
+        "transaction_amount" => 5_000,
+        "currency_id" => "ARS",
         "external_reference" => payment.external_reference
       }
     )

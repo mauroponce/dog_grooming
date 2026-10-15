@@ -1,20 +1,15 @@
 require "rails_helper"
 
 RSpec.describe BillingMailer, type: :mailer do
-  it "renders configured transfer details and the billing page link in a payment reminder" do
+  it "renders the Mercado Pago billing link in a payment reminder" do
     business = create_business
     invoice = create_invoice(business)
-    BillingTransferAccount.create!(
-      transfer_alias: "dog.grooming",
-      cbu: "0000003100012345678901",
-      account_holder: "Cita.pet SRL"
-    )
 
     mail = described_class.reminder(invoice, "due_today")
 
     expect(mail.to).to eq([ business.owner.email_address ])
-    expect(mail.html_part.body.encoded).to include("dog.grooming", "0000003100012345678901", "/admin/suscripcion")
-    expect(mail.text_part.body.encoded).to include("Alias: dog.grooming", "CBU/CVU: 0000003100012345678901", "/admin/suscripcion")
+    expect(mail.html_part.body.encoded).to include("Pagar con Mercado Pago", "/admin/suscripcion")
+    expect(mail.text_part.body.encoded).to include("Mercado Pago", "/admin/suscripcion")
   end
 
   private

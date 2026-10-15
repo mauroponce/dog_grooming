@@ -4,6 +4,8 @@ MVP Rails 8.1 para reservas online de peluquerías caninas. Usa PostgreSQL, Hotw
 
 ## Desarrollo con Docker
 
+Para el contexto técnico y el flujo de cambios para agentes, consultá [`docs/agent_guide.md`](docs/agent_guide.md).
+
 ```sh
 docker compose up --build
 ```
@@ -118,7 +120,7 @@ Planes comerciales:
 - Plan Profesional: $30.000 ARS/mes, 1 agenda activa, reservas online, señas manuales, comprobantes, chatbot y mensajes WhatsApp prearmados.
 - Plan Centro: $50.000 ARS/mes, varias profesionales, roles, recursos compartidos, agenda por profesional, reportes, huecos libres y gestion avanzada.
 
-La suscripción de Cita.pet también se puede cobrar manualmente por transferencia al inicio del producto.
+La suscripción de Cita.pet se cobra con Checkout Pro de Mercado Pago: cada período genera un checkout nuevo para que el negocio elija cómo pagar, sin adherir una tarjeta a un débito automático. La cuenta receptora se vincula desde `/super_admin/cobros` y es distinta de las cuentas Mercado Pago que cada negocio conecta para cobrar sus señas.
 
 ## WhatsApp
 
@@ -196,7 +198,7 @@ dog-grooming/
 
 ## Cobros de suscripción
 
-El super admin configura el Alias, CBU/CVU, titular y CUIT/CUIL de la cuenta receptora desde `/super_admin/cobros`. Esos datos se muestran al negocio en `/admin/suscripcion` y se incluyen en los recordatorios de pago por email. Para configurar un respaldo por entorno usá `DOG_GROOMING_BILLING_*`; la pantalla es la fuente de configuración habitual.
+El super admin vincula la cuenta de Mercado Pago receptora desde `/super_admin/cobros`. Cada factura mensual ofrece Checkout Pro en `/admin/suscripcion`; los webhooks de Mercado Pago acreditan el pago de forma automática e idempotente.
 
 Los nombres `R2_*` siguen soportados como compatibilidad.
 

@@ -98,6 +98,7 @@ Rails.application.configure do
 
   config.hosts.concat(allowed_hosts)
   config.hosts << CustomDomainHost.new
+  config.hosts << "https://cita.pet"
   config.host_authorization = { exclude: ->(request) { request.path == "/internal/caddy/tls-permission" } }
   #
   # Skip DNS rebinding protection for the default health check endpoint.

@@ -71,7 +71,7 @@ module Billing
       end
 
       def period_start
-        due_on
+        force && subscription.trialing? ? Time.zone.today : due_on
       end
 
       def period_end

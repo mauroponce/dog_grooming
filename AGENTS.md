@@ -1,5 +1,11 @@
 # Repository execution rules
 
+## Start here
+
+- For any non-trivial change, read [`docs/agent_guide.md`](docs/agent_guide.md) before editing. It maps the application boundaries, authorization/tenancy rules, test strategy, and task-specific verification.
+- Treat the existing working tree as user-owned. Inspect `git status --short` before edits; do not revert, reformat, or fold unrelated changes into your work.
+- Keep changes narrowly scoped. For a behavioral change, update the closest RSpec coverage and run the focused command from the agent guide.
+
 ## Docker is mandatory
 
 - Run every project command inside Docker. Do not run Rails, Ruby, Bundler, RSpec, Rake, database clients, linters, asset builders, or application scripts on the host.

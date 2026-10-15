@@ -17,11 +17,12 @@ module Availability
       new(...).times
     end
 
-    def self.available?(business:, service:, starts_at:, employee_membership: nil, online_booking: false)
-      new(business:, service:, date: starts_at.to_date, employee_membership:, online_booking:).slots.any? { |slot| slot.starts_at == starts_at }
+    def self.available?(business:, service:, starts_at:, employee_membership: nil, online_booking: false, excluding_appointment: nil)
+      new(business:, service:, date: starts_at.to_date, employee_membership:, online_booking:, excluding_appointment:).slots.any? { |slot| slot.starts_at == starts_at }
     end
 
-    def initialize(business:, service:, date:, employee_membership: nil, online_booking: false)
+    def initialize(business:, service:, date:, employee_membership: nil, online_booking: false, excluding_appointment: nil)
+      @excluding_appointment = excluding_appointment
       @business = business
       @service = service
       @date = date.to_date
@@ -54,7 +55,7 @@ module Availability
     end
 
     private
-      attr_reader :business, :service, :date, :employee_membership, :online_booking
+      attr_reader :business, :service, :date, :employee_membership, :online_booking, :excluding_appointment
 
       def candidates
         return @candidates if defined?(@candidates)
@@ -80,16 +81,12 @@ module Availability
         return nil unless employee_allowed?(candidate)
 
         windows_for(candidate).each do |window_start, window_end|
-          current = window_start
-
-          while current + service.duration_minutes.minutes <= window_end
+          candidate_starts(window_start, window_end).each do |current|
             ends_at = current + service.duration_minutes.minutes
             if current.future?
               resource = available_resource_for(current, ends_at, candidate)
               return slot_for(current, ends_at, candidate, resource) if resource
             end
-
-            current += slot_step
           end
         end
 
@@ -98,15 +95,12 @@ module Availability
 
       def build_slots_in_window(window_start, window_end, candidate)
         slots = []
-        current = window_start
-
-        while current + service.duration_minutes.minutes <= window_end
+        candidate_starts(window_start, window_end).each do |current|
           ends_at = current + service.duration_minutes.minutes
           if current.future?
             resource = available_resource_for(current, ends_at, candidate)
             slots << slot_for(current, ends_at, candidate, resource) if resource
           end
-          current += slot_step
         end
 
         slots
@@ -116,8 +110,27 @@ module Availability
         Slot.new(starts_at:, ends_at:, employee_membership: candidate, bookable_resource: resource == true ? nil : resource)
       end
 
+      def candidate_starts(window_start, window_end)
+        if online_booking && business.simultaneous_capacity.present? && business.arrival_mode == "fixed"
+          Array(business.arrival_times[date.wday.to_s]).uniq.sort.filter_map do |label|
+            hour, minute = label.split(":").map(&:to_i)
+            time = Time.zone.local(date.year, date.month, date.day, hour, minute)
+            time if time >= window_start && time + service.duration_minutes.minutes <= window_end
+          end
+        else
+          starts = []
+          current = window_start
+          while current + service.duration_minutes.minutes <= window_end
+            starts << current
+            current += slot_step
+          end
+          starts
+        end
+      end
+
       def slot_step
         return STEP unless online_booking
+        return 30.minutes if business.simultaneous_capacity.present?
 
         service.effective_public_start_interval_minutes.minutes
       end
@@ -195,18 +208,24 @@ module Availability
       end
 
       def available_resource_for(starts_at, ends_at, candidate)
+        if online_booking && business.simultaneous_capacity.present? && business.arrival_mode == "fixed"
+          return false unless Array(business.arrival_times[date.wday.to_s]).include?(starts_at.strftime("%H:%M"))
+        end
+        return false unless SalonCapacity.available?(business: business, starts_at: starts_at, ends_at: ends_at, excluding_appointment: excluding_appointment, appointments: day_appointments)
         return false if appointment_overlap?(starts_at, ends_at, candidate)
         return false if blocked?(starts_at, ends_at, candidate)
 
-        availability = Resources::Availability.new(business:, service:, starts_at:, ends_at:)
+        availability = Resources::Availability.new(business:, service:, starts_at:, ends_at:, excluding_appointment:)
         return true unless availability.required?
 
         availability.first_available || false
       end
 
       def appointment_overlap?(starts_at, ends_at, candidate)
+        return false if candidate.nil? && business.simultaneous_capacity.present?
         employee_id = candidate&.id
         day_appointments.any? do |appointment|
+          next false if appointment.id == excluding_appointment&.id
           appointment.employee_membership_id == employee_id &&
             appointment.starts_at < ends_at &&
             appointment.ends_at > starts_at
@@ -272,7 +291,7 @@ module Availability
       end
 
       def day_appointments
-        @day_appointments ||= business.appointments.active
+        @day_appointments ||= Appointment.unscoped.active.where(business_id: business.id)
           .where("starts_at < ? AND ends_at > ?", day_end, day_start)
           .select(:id, :employee_membership_id, :starts_at, :ends_at)
           .to_a

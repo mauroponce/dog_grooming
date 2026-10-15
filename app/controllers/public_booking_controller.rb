@@ -4,6 +4,7 @@ class PublicBookingController < ApplicationController
   allow_unauthenticated_access
 
   before_action :set_business
+  before_action :load_whatsapp_booking
   before_action :track_campaign_visit, only: %i[show new]
 
   def show
@@ -63,6 +64,11 @@ class PublicBookingController < ApplicationController
     @booking_draft_token = @booking_submission_params[:draft_token].presence
     @booking_draft = find_booking_draft(@booking_draft_token) if @booking_draft_token.present?
     @booking_submission_params = booking_submission_params_with_draft(@booking_submission_params, @booking_draft)
+    if @whatsapp_booking
+      @booking_submission_params[:customer_name] = @whatsapp_booking.full_name
+      @booking_submission_params[:customer_phone] = @whatsapp_booking.phone_e164
+      @booking_submission_params[:service_ids] = [ @whatsapp_booking.service.slug ]
+    end
     @selected_services = selected_services_from_booking_params
     @selected_extras = @business.extras.publicly_visible.where(id: Array(@booking_submission_params[:extra_ids])).to_a
     raise ActiveRecord::RecordNotFound if @selected_services.blank?
@@ -118,6 +124,10 @@ class PublicBookingController < ApplicationController
   helper_method :employee_for_service
 
   private
+    def load_whatsapp_booking
+      @whatsapp_booking = @business&.booking_intents&.active&.joins(:service)&.where("booking_intents.expires_at > ?", Time.current)&.find_by(id: session[:whatsapp_booking_intent_id])
+    end
+
     def set_business
       @business = Business.find_by_custom_domain(request.host) || Business.find_by(slug: params[:slug])
       redirect_to root_path, alert: "La página que buscás no existe." if @business.blank?
@@ -144,6 +154,7 @@ class PublicBookingController < ApplicationController
         :customer_name,
         :customer_phone,
         :customer_email,
+        :whatsapp_notifications,
         :pet_id,
         :pet_name,
         :pet_breed,
@@ -176,7 +187,10 @@ class PublicBookingController < ApplicationController
         appointments: mercado_pago_appointments,
         host: public_callback_host,
         protocol: public_callback_protocol
-      )
+      ).tap do
+        @whatsapp_booking&.mark_completed!(appointments.first)
+        session.delete(:whatsapp_booking_intent_id)
+      end
     rescue StandardError => error
       appointments.each do |appointment|
         next if appointment.canceled?
@@ -206,21 +220,10 @@ class PublicBookingController < ApplicationController
       return unless remote_payment["status"].to_s == "approved"
       return unless remote_payment["external_reference"].to_s == payment.external_reference
 
-      confirmed_appointments = []
-      payment.transaction do
-        payment.mark_approved!(payload: remote_payment)
-        payment.appointments.find_each do |payment_appointment|
-          next if payment_appointment.confirmed?
-
-          payment_appointment.mark_deposit_approved!(reviewed_by: nil)
-          confirmed_appointments << payment_appointment
-        end
-        confirmed_appointments.each { |payment_appointment| Appointments::ConfirmedBookingNotificationService.call(payment_appointment) }
-      end
-      confirmed_appointments.each { |payment_appointment| SendCustomerBookingConfirmationJob.perform_later(payment_appointment) }
+      MercadoPago::ApproveBookingPayment.call(payment: payment, payload: remote_payment)
       appointment.reload
     rescue StandardError => error
-      Rails.logger.warn("Could not sync Mercado Pago return for appointment #{appointment.id}: #{error.class}: #{error.message}")
+      Rails.logger.warn("Could not sync Mercado Pago return for appointment #{appointment.id}: #{error.class}")
     end
 
     def prepare_calendar
@@ -375,6 +378,13 @@ class PublicBookingController < ApplicationController
     end
 
     def handle_details_submission(starts_at)
+      if ActiveModel::Type::Boolean.new.cast(booking_submission_params[:whatsapp_notifications])
+        @business.whatsapp_contacts.find_or_initialize_by(phone: PhoneNumber.normalize(booking_submission_params[:customer_phone])).tap do |contact|
+          contact.name ||= booking_submission_params[:customer_name]
+          contact.opted_in_at = Time.current
+          contact.save!
+        end
+      end
       raise Appointments::UnavailableSlot, "Seleccioná un horario disponible para todos los servicios." unless sequence_available_for_booking?(starts_at, @selected_services)
 
       token = store_booking_draft(starts_at:)
@@ -445,8 +455,7 @@ class PublicBookingController < ApplicationController
     def validate_customer_details!
       raise ArgumentError, "Completá tu nombre y apellido." if booking_submission_params[:customer_name].blank?
       raise ArgumentError, "Completá tu WhatsApp." if booking_submission_params[:customer_phone].blank?
-      raise ArgumentError, "Completá tu email." if booking_submission_params[:customer_email].blank?
-      unless booking_submission_params[:customer_email].to_s.match?(URI::MailTo::EMAIL_REGEXP)
+      if booking_submission_params[:customer_email].present? && !booking_submission_params[:customer_email].to_s.match?(URI::MailTo::EMAIL_REGEXP)
         raise ArgumentError, "Ingresá un email válido."
       end
       raise ArgumentError, "Completá el nombre de tu mascota." if booking_submission_params[:pet_name].blank?

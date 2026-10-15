@@ -183,40 +183,40 @@ class DemoSeeds
           name: "Sofía Morales", phone: "+5491111111201", email: "sofia.morales@example.com",
           notes: [ { title: "Preferencias de Milo", note_type: "general", body: "Milo se siente más tranquilo si Sofía lo acompaña hasta la recepción. Avisar antes de usar el soplador." } ],
           pets: [
-            { name: "Milo", breed: "Caniche", size: "small", sex: "male", birth_date: "2021-05-20", notes: "Manto rizado; cepillar con suavidad las patas." },
-            { name: "Pipa", breed: "Mestiza", size: "medium", sex: "female", birth_date: "2020-10-12", notes: "Se queda sólo para baño y secado." }
+            { name: "Milo", breed: "Caniche", sex: "male", birth_date: "2021-05-20", notes: "Manto rizado; cepillar con suavidad las patas." },
+            { name: "Pipa", breed: "Mestiza", sex: "female", birth_date: "2020-10-12", notes: "Se queda sólo para baño y secado." }
           ]
         },
         {
           name: "Agustina Vega", phone: "+5491111111202", email: "agustina.vega@example.com",
           notes: [ { title: "Piel sensible", note_type: "clinical", body: "Luna tiene piel sensible. Usar el shampoo que trae Agustina y avisar si hay enrojecimiento." } ],
-          pets: [ { name: "Luna", breed: "Golden Retriever", size: "large", sex: "female", birth_date: "2019-03-08", notes: "Mucha muda estacional; priorizar deslanado." } ]
+          pets: [ { name: "Luna", breed: "Golden Retriever", sex: "female", birth_date: "2019-03-08", notes: "Mucha muda estacional; priorizar deslanado." } ]
         },
         {
           name: "Romina Duarte", phone: "+5491111111203", email: "romina.duarte@example.com",
-          pets: [ { name: "Simón", breed: "Labrador Retriever", size: "large", sex: "male", birth_date: "2018-09-15", notes: "Amigable con el baño; secar bien debajo del collar." } ]
+          pets: [ { name: "Simón", breed: "Labrador Retriever", sex: "male", birth_date: "2018-09-15", notes: "Amigable con el baño; secar bien debajo del collar." } ]
         },
         {
           name: "Carla Núñez", phone: "+5491111111204", email: "carla.nunez@example.com",
           notes: [ { title: "Cuidado veterinario", note_type: "technical", body: "Nala está en control dermatológico. Aplicar sólo el producto indicado por Carla." } ],
-          pets: [ { name: "Nala", breed: "Mestiza", size: "medium", sex: "female", birth_date: "2020-01-29", notes: "No usar perfume; confirmar el producto medicado al ingreso." } ]
+          pets: [ { name: "Nala", breed: "Mestiza", sex: "female", birth_date: "2020-01-29", notes: "No usar perfume; confirmar el producto medicado al ingreso." } ]
         },
         {
           name: "Belén Acosta", phone: "+5491111111205", email: "belen.acosta@example.com",
           notes: [ { title: "Preferencias", note_type: "general", body: "Mora suele venir por la mañana y responde mejor a una sesión tranquila." } ],
-          pets: [ { name: "Mora", breed: "Shih Tzu", size: "small", sex: "female", birth_date: "2022-07-04", notes: "Mantener el flequillo despejado y hacer corte higiénico." } ]
+          pets: [ { name: "Mora", breed: "Shih Tzu", sex: "female", birth_date: "2022-07-04", notes: "Mantener el flequillo despejado y hacer corte higiénico." } ]
         },
         {
           name: "Natalia Ríos", phone: "+5491111111206", email: "natalia.rios@example.com",
-          pets: [ { name: "Rocky", breed: "Border Collie", size: "medium", sex: "male", birth_date: "2021-02-18", notes: "Energético; coordinar deslanado después de un paseo corto." } ]
+          pets: [ { name: "Rocky", breed: "Border Collie", sex: "male", birth_date: "2021-02-18", notes: "Energético; coordinar deslanado después de un paseo corto." } ]
         },
         {
           name: "Marina Castro", phone: "+5491111111207", email: "marina.castro@example.com",
-          pets: [ { name: "Toby", breed: "Yorkshire Terrier", size: "small", sex: "male", birth_date: "2019-11-03", notes: "Corte de manto largo; evitar tirar del pelo de las orejas." } ]
+          pets: [ { name: "Toby", breed: "Yorkshire Terrier", sex: "male", birth_date: "2019-11-03", notes: "Corte de manto largo; evitar tirar del pelo de las orejas." } ]
         },
         {
           name: "Lucía Fernández", phone: "+5491111111208", email: "lucia.fernandez@example.com",
-          pets: [ { name: "Kira", breed: "Labrador Retriever", size: "large", sex: "female", birth_date: "2017-06-22", notes: "Baño completo y control de uñas." } ]
+          pets: [ { name: "Kira", breed: "Labrador Retriever", sex: "female", birth_date: "2017-06-22", notes: "Baño completo y control de uñas." } ]
         }
       ],
       appointments: [
@@ -313,7 +313,12 @@ class DemoSeeds
     seed_super_admin!
 
     DEMOS.each do |demo|
-      seed_demo(demo)
+      admin = seed_admin(demo)
+      business = seed_business(demo, admin)
+      seed_subscription(business)
+      business.update!(simultaneous_capacity: 3, arrival_mode: "fixed", arrival_times: (0..6).to_h { |day| [ day.to_s, %w[09:00 12:00 15:00] ] }, preferences: business.preferences.merge("deposits_enabled" => true, "enabled_payment_methods" => [ "mercado_pago" ]))
+      seed_availability(business, demo.fetch(:weekly_hours))
+      Grooming::Catalog.install!(business)
     end
 
     puts "\nDemos listas:"
@@ -641,7 +646,6 @@ class DemoSeeds
             business: business,
             name: "#{block.fetch(:pet_prefix, "Mascota")} #{sequence}",
             breed: "Mestiza",
-            size: "medium",
             sex: sequence.odd? ? "female" : "male",
             notes: "Mascota demo para representar un turno ocupado."
           )

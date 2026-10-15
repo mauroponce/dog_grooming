@@ -66,6 +66,8 @@ class Appointment < ApplicationRecord
   belongs_to :completed_by, class_name: "User", optional: true
   belongs_to :canceled_by_user, class_name: "User", optional: true
   has_many :notification_deliveries, dependent: :destroy
+  has_many :whatsapp_deliveries, dependent: :nullify
+  before_destroy -> { whatsapp_deliveries.where(status: "pending").update_all(status: "skipped") }, prepend: true
   has_many :appointment_addons, dependent: :destroy
   has_many :add_on_services, through: :appointment_addons, source: :service
   has_many :appointment_extras, dependent: :destroy
@@ -134,6 +136,7 @@ class Appointment < ApplicationRecord
   before_validation :ensure_customer_portal_token
   before_validation :ensure_deposit_review_token
   before_validation :set_ends_at
+  around_save :serialize_salon_booking
   after_create_commit :broadcast_admin_appointments_refresh_after_create, if: :confirmed?
   after_update_commit :broadcast_admin_appointments_refresh_after_confirmation, if: :confirmed_in_latest_commit?
   after_update_commit :notify_waitlist_for_cancellation, if: :waitlist_relevant_cancellation?
@@ -825,6 +828,12 @@ class Appointment < ApplicationRecord
 
     def does_not_overlap
       return if starts_at.blank? || ends_at.blank? || business.blank?
+      return if terminal_status?
+      return unless occupancy_change?
+
+      unless Availability::SalonCapacity.available?(business: business, starts_at: starts_at, ends_at: ends_at, excluding_appointment: self)
+        errors.add(:starts_at, "no tiene cupo disponible en el salón")
+      end
 
       agenda_overlap = business.appointments.active.where.not(id: id).where("starts_at < ? AND ends_at > ?", ends_at, starts_at)
       agenda_overlap = if employee_membership_id.present?
@@ -832,7 +841,8 @@ class Appointment < ApplicationRecord
       else
         agenda_overlap.where(employee_membership_id: nil)
       end
-      errors.add(:starts_at, "se superpone con otro turno de la misma agenda") if agenda_overlap.exists?
+      check_agenda = employee_membership_id.present? || business.simultaneous_capacity.nil?
+      errors.add(:starts_at, "se superpone con otro turno de la misma agenda") if check_agenda && agenda_overlap.exists?
 
       return if bookable_resource_id.blank?
 
@@ -857,6 +867,24 @@ class Appointment < ApplicationRecord
         online_booking: public_booking?
       )
       errors.add(:employee_membership, "no está disponible en ese horario") if blocked
+    end
+
+    def serialize_salon_booking
+      return yield unless occupancy_change?
+
+      business.with_lock do
+        # Recheck under the same database lock for all writers, including direct
+        # model saves and reschedules, after ordinary validations have run.
+        if business.simultaneous_capacity.present? && !terminal_status?
+          does_not_overlap
+          raise ActiveRecord::RecordInvalid, self if errors.any?
+        end
+        yield
+      end
+    end
+
+    def occupancy_change?
+      new_record? || %w[business_id service_id starts_at ends_at status employee_membership_id bookable_resource_id].any? { |field| will_save_change_to_attribute?(field) }
     end
 
     def waitlist_relevant_cancellation?

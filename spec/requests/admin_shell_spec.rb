@@ -369,7 +369,8 @@ RSpec.describe "Admin shell", type: :request do
       "admin/settings",
       "admin/services",
       "admin/tutorials",
-      "admin/waitlist_entries"
+      "admin/waitlist_entries",
+      "admin/whatsapp_connections"
     )
   end
 

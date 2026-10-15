@@ -4,23 +4,14 @@ module Admin
       load_billing_context
     end
 
-    def upload_payment_proof
+    def checkout
       load_billing_context
-
-      unless @current_invoice
-        redirect_to admin_billing_path, alert: "No hay una factura abierta para cargar comprobante."
-        return
-      end
-
-      Billing::UploadPaymentProof.call(
-        invoice: @current_invoice,
-        file: params[:payment_proof],
-        uploaded_by: current_user
-      )
-
-      redirect_to admin_billing_path(anchor: "historial"), notice: "Comprobante enviado. Lo revisaremos a la brevedad."
-    rescue ActiveRecord::RecordInvalid => error
-      redirect_to admin_billing_path, alert: error.record.errors.full_messages.to_sentence.presence || error.message
+      @current_invoice ||= Billing::EnsureCurrentInvoice.call(business: @business, force: true)
+      raise ArgumentError, "No hay una factura pendiente para pagar." unless @current_invoice
+      payment = Billing::CreateMercadoPagoCheckout.call(invoice: @current_invoice, host: request.host, protocol: request.protocol)
+      redirect_to payment.checkout_url, allow_other_host: true
+    rescue ArgumentError, MercadoPago::Client::Error => error
+      redirect_to admin_billing_path, alert: error.message
     end
 
     private
@@ -33,7 +24,8 @@ module Admin
         @billing_amount = @business.billing_amount
         @current_invoice = @subscription.current_invoice
         @latest_invoice = @subscription.latest_invoice
-        @invoices = @business.subscription_invoices.includes(subscription_payment_proofs: { file_attachment: :blob }).recent.limit(36)
+        @checkout_payment = @current_invoice&.subscription_checkout_payments&.order(created_at: :desc)&.first
+        @invoices = @business.subscription_invoices.includes(:subscription_checkout_payments).recent.limit(36)
       end
   end
 end

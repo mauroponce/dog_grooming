@@ -8,7 +8,10 @@ class OnboardingController < ApplicationController
 
   def update_schedule
     @business.transaction do
+      @business.update!(params.require(:agenda).permit(:simultaneous_capacity, :arrival_mode)) if params[:agenda].present?
+      times = @business.arrival_times.dup
       rules_params.each do |weekday, values|
+        times[weekday.to_s] = values[:arrival_times].to_s.split(/[,\s]+/).reject(&:blank?) if values.key?(:arrival_times)
         rule = @business.availability_rules.find_by!(weekday: weekday)
         rule.update!(
           active: values[:active] == "1",
@@ -16,6 +19,7 @@ class OnboardingController < ApplicationController
           end_time: values[:end_time]
         )
       end
+      @business.update!(arrival_times: times)
     end
 
     redirect_to onboarding_service_path
@@ -34,7 +38,7 @@ class OnboardingController < ApplicationController
     selected_templates = selected_service_templates
     custom_attrs = custom_service_params
 
-    if selected_templates.blank? && custom_attrs[:name].blank?
+    if selected_templates.blank? && custom_attrs[:name].blank? && @business.services.none?
       @service.assign_attributes(custom_attrs)
       flash.now[:alert] = "Elegí al menos un servicio sugerido o cargá un servicio propio."
       render :service, status: :unprocessable_entity
@@ -43,7 +47,7 @@ class OnboardingController < ApplicationController
 
     @business.transaction do
       selected_templates.each do |template|
-        @business.services.create!(template)
+        @business.services.find_or_create_by!(name: template.fetch(:name)) { |service| service.assign_attributes(template) }
       end
       @business.services.create!(custom_attrs) if custom_attrs[:name].present?
       @business.update!(onboarding_completed_at: Time.current)
@@ -73,7 +77,7 @@ class OnboardingController < ApplicationController
       params.fetch(:rules, {}).each_with_object({}) do |(weekday, values), sanitized|
         next unless weekday.to_i.in?(0..6)
 
-        sanitized[weekday] = values.permit(:active, :start_time, :end_time).to_h
+        sanitized[weekday] = values.permit(:active, :start_time, :end_time, :arrival_times).to_h
       end
     end
 

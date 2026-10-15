@@ -60,6 +60,7 @@ module Appointments
           customer_notes: notes,
           base_price_cents: pricing.fetch(:base_price_cents),
           final_price_cents: pricing.fetch(:final_price_cents),
+          payment_expires_at: service.deposit_required? ? Time.current + service.deposit_payment_deadline_minutes.minutes : nil,
           discount_percentage: pricing.fetch(:discount_percentage)
         )
         create_addons!(appointment, pricing.fetch(:add_ons))
@@ -69,7 +70,7 @@ module Appointments
 
       configure_payment!(appointment)
       appointment.update!(status: :confirmed, confirmed_at: Time.current) unless appointment.deposit_required?
-      schedule_pending_deposit_expiration!(appointment) if appointment.pending_deposit?
+      schedule_pending_deposit_expiration!(appointment) if appointment.pending_deposit? || appointment.pending_payment?
       SendAppointmentReservedMessageJob.perform_later(appointment) if appointment.public_booking?
       appointment
     rescue StandardError => error
@@ -89,6 +90,9 @@ module Appointments
       attr_reader :business, :service, :starts_at, :customer_name, :customer_phone, :customer_email, :pet, :pet_id, :pet_name, :pet_breed, :pet_sex, :pet_birth_date, :pet_notes, :source, :notes, :add_on_service_ids, :extra_ids, :branch, :employee_membership, :deposit_receipt, :payment_method
 
       def validate_payment_configuration!
+        if business.simultaneous_capacity.present? && source.to_s == "public_booking"
+          raise ArgumentError, "La reserva online requiere seña por Mercado Pago." unless service.deposit_required? && selected_payment_method == "mercado_pago"
+        end
         return unless service[:deposit_required]
 
         raise ArgumentError, "El servicio requiere seña, pero no tiene valor de seña configurado." unless service.deposit_amount_cents.to_i.positive?

@@ -1,48 +1,7 @@
 <% content_for :email_preheader, "Tu suscripción Cita.pet tiene un pago pendiente de #{@invoice.amount_label}." %>
 <% content_for :email_badge, "Facturación" %>
 <% content_for :email_status, "Pago pendiente" %>
-<% content_for :email_footer_note, "Este email fue enviado por el estado de facturación de tu cuenta Cita.pet." %>
-
 <h1><%= @business.name %>: pago de Cita.pet</h1>
-
-<p>Tu suscripción Cita.pet tiene un pago de <strong><%= @invoice.amount_label %></strong> con vencimiento el <strong><%= CustomerDateFormatter.date_label(@invoice.due_on) %></strong>.</p>
-
-<% if @transfer_details_configured %>
-  <p>Transferí usando estos datos y subí el comprobante desde el panel:</p>
-
-  <div class="email-card" style="margin-top:24px;">
-    <div class="email-card-inner">
-      <div class="email-card-title">Datos para transferir</div>
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top:10px;">
-        <% if @transfer_alias.present? %>
-          <tr class="email-detail-row">
-            <td class="email-detail-label">Alias</td>
-            <td class="email-detail-value"><%= @transfer_alias %></td>
-          </tr>
-        <% end %>
-        <% if @transfer_account.present? %>
-          <tr class="email-detail-row">
-            <td class="email-detail-label">CBU/CVU</td>
-            <td class="email-detail-value"><%= @transfer_account %></td>
-          </tr>
-        <% end %>
-        <% if @transfer_holder.present? %>
-          <tr class="email-detail-row">
-            <td class="email-detail-label">Titular</td>
-            <td class="email-detail-value"><%= @transfer_holder %></td>
-          </tr>
-        <% end %>
-        <tr>
-          <td class="email-detail-label">Referencia</td>
-          <td class="email-detail-value"><%= @invoice.reference_code %></td>
-        </tr>
-      </table>
-    </div>
-  </div>
-<% else %>
-  <p>Ingresá al panel para ver las instrucciones de pago y subir el comprobante.</p>
-<% end %>
-
-<p><%= link_to "Subir comprobante", @billing_url, class: "email-button button" %></p>
-
-<div class="email-note">Si ya subiste el comprobante, no necesitás hacer nada más.</div>
+<p>Tu suscripción tiene un pago de <strong><%= @invoice.amount_label %></strong> con vencimiento el <strong><%= CustomerDateFormatter.date_label(@invoice.due_on) %></strong>.</p>
+<p>Ingresá al panel y pagá con Mercado Pago. Podés elegir el medio de pago disponible en Checkout Pro; no necesitás adherir una tarjeta a una suscripción.</p>
+<p><%= link_to "Pagar con Mercado Pago", @billing_url, class: "email-button button" %></p>

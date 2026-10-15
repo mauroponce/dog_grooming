@@ -10,7 +10,8 @@ module Appointments
     end
 
     def call
-      appointment.with_lock do
+      business.with_lock do
+        appointment.lock!
         validate_rescheduling_window!
         validate_new_starts_at!
 
@@ -68,12 +69,13 @@ module Appointments
           assignment_strategy: "first_available",
           customer_profile: appointment.customer_profile,
           lock: true,
-          online_booking: true
+          online_booking: true,
+          excluding_appointment: appointment
         )
       end
 
       def ensure_slot_is_available!(professional)
-        return if Availability::Slots.public_available?(business: business, service: service, starts_at: starts_at, employee_membership: professional)
+        return if Availability::Slots.public_available?(business: business, service: service, starts_at: starts_at, employee_membership: professional, excluding_appointment: appointment)
 
         raise UnavailableSlot, "Ese horario ya no está disponible."
       end

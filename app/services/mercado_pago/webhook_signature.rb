@@ -13,7 +13,7 @@ module MercadoPago
 
     def valid?
       secret = ENV["MERCADO_PAGO_WEBHOOK_SECRET"].to_s
-      return true if secret.blank?
+      return !Rails.env.production? if secret.blank?
       return false if request_id.blank? || signature_header.blank? || data_id.blank?
 
       ActiveSupport::SecurityUtils.secure_compare(expected_signature(secret), received_signature)

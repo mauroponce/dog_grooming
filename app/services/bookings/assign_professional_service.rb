@@ -6,7 +6,8 @@ module Bookings
       new(...).call
     end
 
-    def initialize(business:, service:, starts_at:, preferred_professional: nil, assignment_strategy: nil, customer_profile: nil, lock: true, online_booking: false)
+    def initialize(business:, service:, starts_at:, preferred_professional: nil, assignment_strategy: nil, customer_profile: nil, lock: true, online_booking: false, excluding_appointment: nil)
+      @excluding_appointment = excluding_appointment
       @business = business
       @service = service
       @starts_at = starts_at
@@ -103,7 +104,8 @@ module Bookings
           service: service,
           starts_at: starts_at,
           employee_membership: professional,
-          online_booking: online_booking
+          online_booking: online_booking,
+          excluding_appointment: @excluding_appointment
         )
       end
 

@@ -1,5 +1,8 @@
 <% content_for :title, "Inicio | Cita.pet" %>
 <% content_for :admin_section_title, "Inicio" %>
+<% if @business.subscription&.pro? && @business.trial_active? && !@business.subscription.paid? && @business.whatsapp_deliveries.where(trial_reminder: true).where.not(status: %w[failed skipped]).count >= 20 %>
+  <div class="my-4 rounded-xl bg-amber-50 p-4 text-amber-900" role="status"><%= WhatsApp::AppointmentNotifications::EXHAUSTED_MESSAGE %> <%= link_to "Abonar primer mes", admin_billing_path, class: "font-bold underline" %></div>
+<% end %>
 
 <% dashboard = @dashboard %>
 <% icons = {

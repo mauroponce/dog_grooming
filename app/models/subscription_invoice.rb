@@ -4,6 +4,7 @@ class SubscriptionInvoice < ApplicationRecord
   belongs_to :business
   belongs_to :subscription
   has_many :subscription_payment_proofs, dependent: :destroy
+  has_many :subscription_checkout_payments, dependent: :destroy
   has_many :billing_reminders, dependent: :destroy
 
   validates :period_start, :period_end, :amount_cents, :due_on, :reference_code, :status, presence: true

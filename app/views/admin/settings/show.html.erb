@@ -1,5 +1,7 @@
 <% content_for :admin_full_bleed, true %>
 <% content_for :title, "Configuración · Cita.pet" %>
+<%= render "salon" %>
+<%= render "whatsapp" %>
 
 <% business_values = @settings_business_values || {} %>
 <% business_search_address = Business.new(address: business_values[:address], neighborhood: business_values[:neighborhood], city: business_values[:city], province: business_values[:province]).location_search_address %>

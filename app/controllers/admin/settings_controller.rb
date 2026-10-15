@@ -15,6 +15,14 @@ module Admin
 
     def update
       Business.transaction do
+        if params[:agenda].present?
+          @business.lock!
+          @business.assign_attributes(params.require(:agenda).permit(:simultaneous_capacity, :arrival_mode, :whatsapp_reminder_hours))
+          if params[:agenda_times].present?
+            @business.arrival_times = params.require(:agenda_times).permit(*("0".."6").to_a).to_h.transform_values { |value| value.to_s.split(/[,\s]+/).reject(&:blank?) }
+          end
+          @business.save!
+        end
         Admin::UpdateBusinessSettings.call(@business, business_account_params) if params[:business_account].present?
         Admin::UpdateBookingPagePreferences.call(@business, booking_page_preferences_params) if params[:booking_page_preferences].present?
         Admin::UpdatePaymentPreferences.call(@business, payment_preferences_params) if params[:payment_preferences].present?
