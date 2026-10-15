@@ -129,6 +129,13 @@ module Admin
       redirect_to edit_admin_customer_profile_path(customer, section: "photos", return_to: customer_editor_return_to), notice: "Foto eliminada."
     end
 
+    def destroy_pet_reference_photo
+      require_customer_edit_permission!
+      pet = customer.pets.find(params[:pet_id])
+      pet.grooming_reference_photo.purge if pet.grooming_reference_photo.attached?
+      redirect_to edit_admin_customer_profile_path(customer, section: "pets", return_to: customer_editor_return_to), notice: "Foto de referencia eliminada."
+    end
+
     def destroy
       require_customer_edit_permission!
       selected_customer = customer
@@ -386,7 +393,7 @@ module Admin
           :gender,
           :internal_notes,
           customer_photos: [],
-          pets_attributes: [ :id, :name, :breed, :sex, :birth_date, :notes ]
+          pets_attributes: [ :id, :name, :breed, :sex, :birth_date, :notes, :coat_type, :coat_details, :grooming_reference_note, :grooming_reference_photo, { behavioral_alerts: [] } ]
         )
         permitted[:birth_date] = parsed_birth_date if birth_date_parts_present?
         permitted

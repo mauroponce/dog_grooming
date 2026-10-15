@@ -4,7 +4,7 @@ module Appointments
       new(...).call
     end
 
-    def initialize(business:, service:, starts_at:, customer_name:, customer_phone:, customer_email: nil, pet: nil, pet_id: nil, pet_name: nil, pet_breed: nil, pet_sex: nil, pet_birth_date: nil, pet_notes: nil, source: :public_booking, notes: nil, add_on_service_ids: [], extra_ids: [], branch: nil, employee_membership: nil, deposit_receipt: nil, payment_method: nil)
+    def initialize(business:, service:, starts_at:, customer_name:, customer_phone:, customer_email: nil, pet: nil, pet_id: nil, pet_name: nil, pet_breed: nil, pet_sex: nil, pet_birth_date: nil, pet_notes: nil, pet_coat_type: nil, pet_coat_details: nil, source: :public_booking, notes: nil, add_on_service_ids: [], extra_ids: [], branch: nil, employee_membership: nil, deposit_receipt: nil, payment_method: nil)
       @business = business
       @service = service
       @starts_at = starts_at
@@ -18,6 +18,8 @@ module Appointments
       @pet_sex = pet_sex
       @pet_birth_date = pet_birth_date
       @pet_notes = pet_notes
+      @pet_coat_type = pet_coat_type
+      @pet_coat_details = pet_coat_details
       @source = source
       @notes = notes
       @add_on_service_ids = Array(add_on_service_ids).reject(&:blank?)
@@ -87,7 +89,7 @@ module Appointments
     end
 
     private
-      attr_reader :business, :service, :starts_at, :customer_name, :customer_phone, :customer_email, :pet, :pet_id, :pet_name, :pet_breed, :pet_sex, :pet_birth_date, :pet_notes, :source, :notes, :add_on_service_ids, :extra_ids, :branch, :employee_membership, :deposit_receipt, :payment_method
+      attr_reader :business, :service, :starts_at, :customer_name, :customer_phone, :customer_email, :pet, :pet_id, :pet_name, :pet_breed, :pet_sex, :pet_birth_date, :pet_notes, :pet_coat_type, :pet_coat_details, :source, :notes, :add_on_service_ids, :extra_ids, :branch, :employee_membership, :deposit_receipt, :payment_method
 
       def validate_payment_configuration!
         if business.simultaneous_capacity.present? && source.to_s == "public_booking"
@@ -260,7 +262,9 @@ module Appointments
           breed: pet_breed,
           sex: pet_sex,
           birth_date: pet_birth_date,
-          notes: pet_notes
+          notes: pet_notes,
+          coat_type: pet_coat_type,
+          coat_details: pet_coat_details
         )
       end
 

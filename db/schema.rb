@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_15_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_15_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -907,11 +907,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_15_120000) do
   end
 
   create_table "pets", force: :cascade do |t|
+    t.jsonb "behavioral_alerts", default: [], null: false
     t.date "birth_date"
     t.string "breed"
     t.bigint "business_id", null: false
+    t.string "coat_details"
+    t.string "coat_type"
     t.datetime "created_at", null: false
     t.bigint "customer_profile_id", null: false
+    t.text "grooming_reference_note"
     t.string "name", null: false
     t.text "notes"
     t.string "sex"
@@ -1463,15 +1467,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_15_120000) do
 
   create_table "whatsapp_connections", force: :cascade do |t|
     t.text "access_token_ciphertext"
+    t.datetime "authorization_failed_at"
+    t.boolean "automation_enabled", default: false, null: false
     t.bigint "business_id", null: false
     t.string "confirmation_template", default: "citapet_booking_confirmation", null: false
+    t.datetime "connected_at"
     t.datetime "created_at", null: false
+    t.datetime "data_access_expires_at"
     t.datetime "disconnected_at"
     t.string "phone_number_id", null: false
     t.string "reminder_template", default: "citapet_appointment_reminder", null: false
+    t.datetime "subscribed_at"
+    t.jsonb "sync_metadata", default: {}, null: false
     t.string "template_language", default: "es_AR", null: false
     t.boolean "templates_approved", default: false, null: false
+    t.datetime "token_expires_at"
     t.datetime "updated_at", null: false
+    t.datetime "verified_at"
     t.string "waba_id", null: false
     t.index ["business_id"], name: "index_whatsapp_connections_on_business_id", unique: true
     t.index ["phone_number_id"], name: "index_whatsapp_connections_on_phone_number_id", unique: true
@@ -1496,17 +1508,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_15_120000) do
     t.datetime "accepted_at"
     t.bigint "appointment_id"
     t.integer "attempts", default: 0, null: false
+    t.jsonb "billing_metadata", default: {}, null: false
     t.bigint "business_id", null: false
     t.datetime "created_at", null: false
     t.string "dedupe_key", null: false
+    t.datetime "delivered_at"
+    t.datetime "failed_at"
+    t.datetime "last_status_at"
     t.jsonb "payload", default: {}, null: false
+    t.string "phone_number_id"
     t.string "provider_id"
     t.string "purpose", null: false
+    t.datetime "read_at"
     t.datetime "sent_at"
     t.string "status", default: "pending", null: false
     t.boolean "trial_reminder", default: false, null: false
     t.datetime "updated_at", null: false
     t.index ["appointment_id"], name: "index_whatsapp_deliveries_on_appointment_id"
+    t.index ["business_id", "phone_number_id", "created_at"], name: "idx_whatsapp_monthly_deliveries"
     t.index ["business_id", "trial_reminder", "status"], name: "idx_whatsapp_trial_usage"
     t.index ["business_id"], name: "index_whatsapp_deliveries_on_business_id"
     t.index ["dedupe_key"], name: "index_whatsapp_deliveries_on_dedupe_key", unique: true
@@ -1518,6 +1537,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_15_120000) do
     t.datetime "created_at", null: false
     t.string "kind", null: false
     t.jsonb "payload", default: {}, null: false
+    t.string "phone_number_id"
     t.datetime "processed_at"
     t.string "provider_id", null: false
     t.datetime "updated_at", null: false

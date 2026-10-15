@@ -7,8 +7,25 @@ module WhatsApp
       event.business.with_lock do
         event.lock!
         return if event.processed_at
+        # Audit only: retain the minimal metadata, without restoring tokens,
+        # marking the connection active, or invoking any automation.
+        return event.update!(processed_at: Time.current) if event.kind == "account_reconnected"
 
-        if event.kind.start_with?("status:")
+        if event.kind == "account"
+          connection = event.business.whatsapp_connection
+          timestamp = Time.at(event.payload["timestamp"].to_i).utc
+          if connection && connection.phone_number_id == event.phone_number_id && timestamp <= 5.minutes.from_now && timestamp.to_i >= (connection.connected_at || connection.created_at).to_i
+            connection.update!(sync_metadata: connection.sync_metadata.merge("_offboarded_at" => timestamp.iso8601))
+            connection.disconnect!
+          end
+        elsif event.kind.start_with?("sync:")
+          connection = event.business.whatsapp_connection
+          if connection && connection.phone_number_id == event.phone_number_id && connection.connected_at && event.created_at >= connection.connected_at
+            type = event.kind.delete_prefix("sync:")
+            metadata = connection.sync_metadata.fetch(type, {}).merge("received_at" => Time.current.iso8601)
+            connection.update!(sync_metadata: connection.sync_metadata.merge(type => metadata))
+          end
+        elsif event.kind.start_with?("status:")
           reconcile_status(event)
         else
           process_message(event)
@@ -23,14 +40,36 @@ module WhatsApp
         scope = event.business.whatsapp_deliveries
         delivery = scope.find_by(provider_id: event.provider_id) || scope.find_by(dedupe_key: payload["biz_opaque_callback_data"])
         return unless delivery
-        return if delivery.status == "sent" || (delivery.status == "failed" && payload["status"] == "sent")
+        return if delivery.phone_number_id.present? && delivery.phone_number_id != event.phone_number_id
 
-        state = payload["status"] == "failed" ? "failed" : "sent"
-        delivery.update!(provider_id: event.provider_id, status: state, accepted_at: delivery.accepted_at || Time.current, sent_at: state == "sent" ? Time.current : nil)
-        SendAppointmentReminderJob.perform_later(delivery.appointment) if state == "failed" && delivery.purpose == "reminder" && delivery.appointment
+        status = payload["status"]
+        return unless status.in?(%w[sent delivered read failed])
+
+        timestamp = Time.at(payload["timestamp"].to_i).utc
+        timestamp = Time.current if timestamp > 5.minutes.from_now || timestamp < 1.year.ago
+        attributes = { provider_id: event.provider_id, accepted_at: delivery.accepted_at || timestamp }
+        column = { "sent" => :sent_at, "delivered" => :delivered_at, "read" => :read_at, "failed" => :failed_at }.fetch(status)
+        attributes[column] = delivery.public_send(column) || timestamp
+        attributes[:sent_at] = delivery.sent_at || timestamp if status.in?(%w[delivered read])
+        attributes[:delivered_at] = delivery.delivered_at || timestamp if status == "read"
+        if delivery.last_status_at.nil? || timestamp >= delivery.last_status_at
+          attributes[:last_status_at] = timestamp
+          attributes[:billing_metadata] = delivery.billing_metadata.merge(payload.slice("pricing", "conversation"))
+        end
+        ranks = { "pending" => 0, "sending" => 0, "unknown" => 0, "accepted" => 0, "failed" => 0, "sent" => 1, "delivered" => 2, "read" => 3 }
+        if status != "failed" && ranks.fetch(status) >= ranks.fetch(delivery.status, 0)
+          attributes[:status] = status
+        elsif status == "failed" && !delivery.status.in?(%w[delivered read]) && (delivery.last_status_at.nil? || timestamp >= delivery.last_status_at)
+          attributes[:status] = "failed"
+        end
+        delivery.update!(attributes)
+        SendAppointmentReminderJob.perform_later(delivery.appointment) if attributes[:status] == "failed" && delivery.purpose == "reminder" && delivery.appointment
       end
 
       def process_message(event)
+        connection = event.business.whatsapp_connection
+        return if event.phone_number_id.present? && event.phone_number_id != connection&.phone_number_id
+
         payload = event.payload
         phone = PhoneNumber.normalize(event.kind == "human" ? payload["to"] : payload["from"])
         return if phone.blank?
@@ -44,7 +83,7 @@ module WhatsApp
           return
         end
         contact.update!(last_inbound_at: [ timestamp, contact.last_inbound_at ].compact.max, name: payload["contact_name"].presence || contact.name)
-        return if !WhatsApp.automation_enabled? || contact.paused? || !contact.window_open? || !event.business.booking_available?
+        return if !WhatsApp.automation_enabled?(event.business) || contact.paused? || !contact.window_open? || !event.business.booking_available?
 
         Bot.new(event: event, contact: contact).call
       end

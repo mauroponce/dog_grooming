@@ -150,22 +150,13 @@ class Business < ApplicationRecord
     { name: "Evaluación estética inicial", category: "General", duration_minutes: 30, price: 0, description: "Primera evaluación para recomendar protocolos y armar plan de tratamiento." }
   ].freeze
 
-  DOG_GROOMING_SERVICE_TEMPLATES = [
-    { name: "Baño y secado", category: "Baño y secado", duration_minutes: 60, price: 24_000, description: "Baño, secado completo y cepillado suave según el tipo de manto." },
-    { name: "Baño y corte", category: "Baño y secado", duration_minutes: 120, price: 42_000, description: "Baño, secado, cepillado y corte adaptado a la mascota." },
-    { name: "Corte higiénico", category: "Corte y arreglo", duration_minutes: 45, price: 19_000, description: "Recorte de zonas higiénicas, patas y contorno para mantener comodidad y limpieza." },
-    { name: "Deslanado intensivo", category: "Mantos especiales", duration_minutes: 90, price: 36_000, description: "Remoción de subpelo muerto, cepillado profundo y terminación prolija." },
-    { name: "Higiene completa", category: "Higiene y bienestar", duration_minutes: 45, price: 21_000, description: "Limpieza de oídos, corte de uñas, higiene de almohadillas y cepillado." },
-    { name: "Primera visita puppy", category: "Cachorros y adaptación", duration_minutes: 60, price: 26_000, description: "Experiencia gradual para cachorros, con baño suave y adaptación a la mesa." }
-  ].freeze
-
   INDUSTRIES = {
     "dog_grooming" => {
       label: "Peluquería canina",
       category: "Peluquería canina",
       tone: "Cálido, claro y cuidadoso con la mascota. Puede usar un tono cercano, sin sustituir indicaciones veterinarias.",
       guidance: "Priorizá especie, tamaño, tipo de manto, sensibilidad de piel, cuidados veterinarios y tiempo estimado. Confirmá que el turno corresponde a una mascota y a su responsable.",
-      service_templates: DOG_GROOMING_SERVICE_TEMPLATES
+      service_templates: Grooming::Catalog.templates
     },
     "aesthetics" => {
       label: "Estética y belleza",

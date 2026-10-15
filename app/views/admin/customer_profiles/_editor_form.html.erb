@@ -373,9 +373,43 @@
                       <%= pet_form.label :birth_date, "Fecha de nacimiento" %>
                       <%= pet_form.date_field :birth_date, class: "customer-profile-editor__input" %>
                     </div>
+                    <div class="customer-profile-editor__field">
+                      <%= pet_form.label :coat_type, "Tipo de manto" %>
+                      <%= pet_form.select :coat_type, [["No especificado", ""]] + Pet::COAT_TYPES.map { |value, label| [label, value] }, {}, class: "customer-profile-editor__input" %>
+                    </div>
+                    <div class="customer-profile-editor__field">
+                      <%= pet_form.label :coat_details, "Aclaración de manto" %>
+                      <%= pet_form.text_field :coat_details, maxlength: 250, class: "customer-profile-editor__input", placeholder: "Sólo si elegiste Otro" %>
+                    </div>
+                    <div class="customer-profile-editor__field customer-profile-editor__field--wide">
+                      <%= pet_form.label :behavioral_alerts, "Alertas para el equipo" %>
+                      <div class="mt-2 grid gap-2 sm:grid-cols-2">
+                        <% Pet::BEHAVIORAL_ALERTS.each do |value, label| %>
+                          <label class="flex items-center gap-2 text-sm font-semibold text-zinc-700">
+                            <%= check_box_tag "customer_profile[pets_attributes][#{pet_form.index}][behavioral_alerts][]", value, pet.behavioral_alerts.include?(value), id: "pet_#{pet_form.index}_alert_#{value}", class: "rounded border-zinc-300" %>
+                            <%= label %>
+                          </label>
+                        <% end %>
+                        <%= hidden_field_tag "customer_profile[pets_attributes][#{pet_form.index}][behavioral_alerts][]", "" %>
+                      </div>
+                    </div>
                     <div class="customer-profile-editor__field customer-profile-editor__field--wide">
                       <%= pet_form.label :notes, "Cuidados e información importante" %>
                       <%= pet_form.text_area :notes, rows: 3, class: "customer-profile-editor__notes-textarea customer-profile-editor__pet-notes", placeholder: "Alergias, sensibilidad, comportamiento o indicaciones para el equipo." %>
+                    </div>
+                    <div class="customer-profile-editor__field customer-profile-editor__field--wide">
+                      <%= pet_form.label :grooming_reference_note, "Preferencia de corte" %>
+                      <%= pet_form.text_area :grooming_reference_note, rows: 3, maxlength: 2000, class: "customer-profile-editor__notes-textarea", placeholder: "Ej. Mantener el largo de las orejas y cara redonda." %>
+                    </div>
+                    <div class="customer-profile-editor__field customer-profile-editor__field--wide">
+                      <%= pet_form.label :grooming_reference_photo, "Foto de referencia del corte" %>
+                      <% if pet.grooming_reference_photo.attached? %>
+                        <div class="mt-2 flex items-center gap-3">
+                          <%= image_tag pet.grooming_reference_photo, class: "h-20 w-20 rounded-xl object-cover", alt: "Referencia de corte de #{pet.name}" %>
+                          <%= link_to "Eliminar foto", destroy_pet_reference_photo_admin_customer_profile_path(customer, pet_id: pet.id), data: { turbo_method: :delete, turbo_confirm: "¿Eliminar esta foto de referencia?" }, class: "text-sm font-bold text-rose-700 underline" %>
+                        </div>
+                      <% end %>
+                      <%= pet_form.file_field :grooming_reference_photo, accept: Pet::GROOMING_REFERENCE_PHOTO_CONTENT_TYPES.join(","), class: "mt-2 block w-full text-sm" %>
                     </div>
                   </div>
                 </article>

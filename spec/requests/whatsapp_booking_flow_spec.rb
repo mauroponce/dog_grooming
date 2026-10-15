@@ -19,7 +19,7 @@ RSpec.describe "WhatsApp booking", type: :request do
     Grooming::Catalog.install!(business)
     business.update!(preferences: business.preferences.merge("enabled_payment_methods" => [ "mercado_pago" ]))
     business.create_mercado_pago_connection!(access_token: "mp-test-token", connected_at: Time.current)
-    service = business.services.find_by!(name: "Baño chico")
+    service = business.services.find_by!(name: Grooming::Catalog.templates.first.fetch(:name))
     starts_at = 3.days.from_now.change(hour: 10, min: 0, sec: 0)
     business.availability_rules.find_by!(weekday: starts_at.wday).update!(active: true, start_time: "09:00", end_time: "19:00")
     intent = business.booking_intents.create!(service: service, full_name: "Julieta", phone_e164: "+5491122222222", metadata: { source: "whatsapp" })

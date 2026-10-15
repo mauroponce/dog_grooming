@@ -9,6 +9,8 @@ module WhatsApp
       if choice == "human"
         @contact.update!(paused_until: 24.hours.from_now)
         send_payload(text("Te va a responder una persona de #{@business.name}. La atención automática queda pausada por 24 horas."), purpose: "handoff")
+      elsif choice.start_with?("services:")
+        menu(page: choice.delete_prefix("services:").to_i)
       elsif choice.start_with?("category:")
         category_id, page = choice.delete_prefix("category:").split(":")
         category = @business.service_categories.active.find_by(id: category_id)
@@ -16,10 +18,11 @@ module WhatsApp
 
         services = category.services.publicly_bookable.order(:sort_order, :name)
         page = [ page.to_i, 0 ].max
-        rows = services.offset(page * 9).limit(9).map do |service|
+        rows = services.offset(page * 8).limit(8).map do |service|
           { id: "service:#{service.id}", title: service.name.truncate(24), description: "#{service.name} · $#{service.price_cents / 100} · #{service.duration_minutes} min".truncate(72) }
         end
-        rows << { id: "category:#{category.id}:#{page + 1}", title: "Ver más servicios" } if services.count > (page + 1) * 9
+        rows << { id: "category:#{category.id}:#{page + 1}", title: "Ver más servicios" } if services.count > (page + 1) * 8
+        rows << { id: "human", title: "Hablar con una persona" }
         rows.empty? ? menu : send_payload(list("Elegí el servicio para tu mascota", rows))
       elsif choice.start_with?("service:")
         service = @business.services.publicly_bookable.find_by(id: choice.delete_prefix("service:"))
@@ -37,9 +40,19 @@ module WhatsApp
     end
 
     private
-      def menu
-        rows = [ { id: "human", title: "Hablar con una persona" } ]
-        rows += @business.service_categories.active.ordered.limit(9).map { |category| { id: "category:#{category.id}", title: category.name.truncate(24) } }
+      def menu(page: 0)
+        services = @business.services.publicly_bookable.order(:sort_order, :name, :id)
+        total = services.count
+        size = total > 9 ? 8 : 9
+        page = 0 unless page.between?(0, [ (total - 1) / size, 0 ].max)
+        rows = services.offset(page * size).limit(size).map do |service|
+          { id: "service:#{service.id}", title: service.name.truncate(24), description: "$#{service.price_cents / 100} · #{service.duration_minutes} min".truncate(72) }
+        end
+        if total > 9
+          next_page = (page + 1) * size < total ? page + 1 : 0
+          rows << { id: "services:#{next_page}", title: next_page.zero? ? "Volver al inicio" : "Ver más servicios" }
+        end
+        rows << { id: "human", title: "Hablar con una persona" }
         @contact.update!(last_menu_at: Time.current)
         send_payload(list("Bienvenido a #{@business.name}, ¿en qué te puedo ayudar?", rows))
       end

@@ -25,6 +25,8 @@ RSpec.describe "Grooming booking configuration" do
     2.times { Grooming::Catalog.install!(business) }
     expect(business.services.count).to eq(9)
     expect(business.service_categories.count).to eq(3)
+    expect(business.service_categories.order(:name).pluck(:name)).to eq([ "Baño + corte", "Baño y secado", "Sólo corte" ])
+    expect(business.industry_details.fetch(:service_templates)).to eq(Grooming::Catalog.templates)
     expect(business.services.order(:price_cents).pluck(:price_cents)).to eq([ 15_000, 18_000, 20_000, 23_000, 25_000, 25_000, 28_000, 32_000, 40_000 ].map { |n| n * 100 })
     expect(business.services.find_by!(name: "Baño + corte grande").duration_minutes).to eq(135)
     expect(business.services.all?(&:deposit_required?)).to eq(true)

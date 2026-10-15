@@ -147,6 +147,7 @@ Rails.application.routes.draw do
           patch :unblock, path: "desbloquear"
           post :send_portal_access, path: "enviar-acceso"
           delete :destroy_photo, path: "fotos/:attachment_id"
+          delete "mascotas/:pet_id/foto-referencia", to: "customer_profiles#destroy_pet_reference_photo", as: :destroy_pet_reference_photo
         end
         resources :client_notes, only: :create, path: "notas"
         resources :customer_reminders, only: :create, path: "recordatorios" do

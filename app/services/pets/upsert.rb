@@ -1,6 +1,6 @@
 module Pets
   class Upsert
-    ATTRIBUTES = %i[name breed sex birth_date notes].freeze
+    ATTRIBUTES = %i[name breed sex birth_date notes coat_type coat_details behavioral_alerts grooming_reference_note].freeze
 
     def self.call(...)
       new(...).call
@@ -20,7 +20,9 @@ module Pets
       ensure_pet_belongs_to_scope!(record) if record.persisted?
       # Selection flows often submit only a pet id. Do not erase profile data
       # already saved for that pet when optional fields are omitted.
-      record.assign_attributes(attributes.compact_blank.merge(business: business, customer_profile: customer_profile))
+      assignable_attributes = attributes.compact_blank
+      assignable_attributes[:behavioral_alerts] = attributes[:behavioral_alerts] if attributes.key?(:behavioral_alerts)
+      record.assign_attributes(assignable_attributes.merge(business: business, customer_profile: customer_profile))
       record.save!
       record
     end

@@ -254,6 +254,80 @@ RSpec.describe "Admin customer profiles", type: :request do
     expect(Nokogiri::HTML(response.body).at_css('input[name="return_to"]')["value"]).to eq(calendar_return_path)
   end
 
+  it "lets authorized staff maintain private grooming alerts and a cut reference" do
+    user, business = create_admin_with_business
+    customer = business.customer_profiles.create!(name: "Ada Lovelace", phone: "+54 9 11 3333-3333")
+    pet = customer.pets.create!(name: "Coco")
+
+    sign_in(user)
+    patch admin_customer_profile_path(customer), params: {
+      customer_profile: {
+        name: customer.name,
+        phone: customer.phone,
+        pets_attributes: {
+          "0" => {
+            id: pet.id,
+            name: pet.name,
+            coat_type: "curly",
+            behavioral_alerts: [ "blower_fear", "paw_sensitive", "" ],
+            notes: "Necesita descansos cortos.",
+            grooming_reference_note: "Cara redonda y patas parejas."
+          }
+        }
+      }
+    }, headers: browser_headers
+
+    expect(response).to redirect_to(edit_admin_customer_profile_path(customer, section: "personal"))
+    expect(pet.reload).to have_attributes(
+      coat_type: "curly",
+      behavioral_alerts: %w[blower_fear paw_sensitive],
+      notes: "Necesita descansos cortos.",
+      grooming_reference_note: "Cara redonda y patas parejas."
+    )
+  end
+
+  it "uploads and removes a pet cut reference within the current business" do
+    user, business = create_admin_with_business
+    customer = business.customer_profiles.create!(name: "Ada Lovelace", phone: "+54 9 11 3333-3333")
+    pet = customer.pets.create!(name: "Coco")
+
+    sign_in(user)
+    patch admin_customer_profile_path(customer), params: {
+      section: "pets",
+      customer_profile: {
+        pets_attributes: {
+          "0" => {
+            id: pet.id,
+            name: pet.name,
+            grooming_reference_photo: fixture_file_upload("service-gallery.png", "image/png")
+          }
+        }
+      }
+    }, headers: browser_headers
+
+    expect(response).to redirect_to(edit_admin_customer_profile_path(customer, section: "pets"))
+    expect(pet.reload.grooming_reference_photo).to be_attached
+
+    delete destroy_pet_reference_photo_admin_customer_profile_path(customer, pet_id: pet.id), headers: browser_headers
+
+    expect(response).to redirect_to(edit_admin_customer_profile_path(customer, section: "pets"))
+    expect(pet.reload.grooming_reference_photo).not_to be_attached
+  end
+
+  it "does not allow an admin to remove another business's pet reference" do
+    user, = create_admin_with_business
+    _other_user, other_business = create_admin_with_business
+    customer = other_business.customer_profiles.create!(name: "Otra clienta", phone: "+54 9 11 3333-3333")
+    pet = customer.pets.create!(name: "Luna")
+    pet.grooming_reference_photo.attach(fixture_file_upload("service-gallery.png", "image/png"))
+
+    sign_in(user)
+    delete destroy_pet_reference_photo_admin_customer_profile_path(customer, pet_id: pet.id), headers: browser_headers
+
+    expect(response).to have_http_status(:not_found)
+    expect(pet.reload.grooming_reference_photo).to be_attached
+  end
+
   it "redirects the retired customer detail URL to the editor" do
     user, business = create_admin_with_business
     customer = business.customer_profiles.create!(name: "Ada Lovelace", phone: "+54 9 11 3333-3333")

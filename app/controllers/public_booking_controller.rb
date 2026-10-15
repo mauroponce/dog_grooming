@@ -160,7 +160,8 @@ class PublicBookingController < ApplicationController
         :pet_breed,
         :pet_sex,
         :pet_birth_date,
-        :pet_notes,
+        :pet_coat_type,
+        :pet_coat_details,
         :deposit_receipt,
         :payment_method,
         service_ids: [],
@@ -435,7 +436,8 @@ class PublicBookingController < ApplicationController
             pet_breed: booking_submission_params[:pet_breed],
             pet_sex: booking_submission_params[:pet_sex],
             pet_birth_date: booking_submission_params[:pet_birth_date],
-            pet_notes: booking_submission_params[:pet_notes],
+            pet_coat_type: booking_submission_params[:pet_coat_type],
+            pet_coat_details: booking_submission_params[:pet_coat_details],
             branch: preferred_employee&.branch || selected_branch_for_booking,
             employee_membership: preferred_employee,
             deposit_receipt: receipt,
@@ -480,7 +482,8 @@ class PublicBookingController < ApplicationController
       attrs[:pet_breed] = draft_attrs[:pet_breed] if attrs[:pet_breed].blank?
       attrs[:pet_sex] = draft_attrs[:pet_sex] if attrs[:pet_sex].blank?
       attrs[:pet_birth_date] = draft_attrs[:pet_birth_date] if attrs[:pet_birth_date].blank?
-      attrs[:pet_notes] = draft_attrs[:pet_notes] if attrs[:pet_notes].blank?
+      attrs[:pet_coat_type] = draft_attrs[:pet_coat_type] if attrs[:pet_coat_type].blank?
+      attrs[:pet_coat_details] = draft_attrs[:pet_coat_details] if attrs[:pet_coat_details].blank?
       attrs
     end
 
@@ -529,7 +532,8 @@ class PublicBookingController < ApplicationController
         "pet_breed" => booking_submission_params[:pet_breed].to_s,
         "pet_sex" => booking_submission_params[:pet_sex].to_s,
         "pet_birth_date" => booking_submission_params[:pet_birth_date].to_s,
-        "pet_notes" => booking_submission_params[:pet_notes].to_s,
+        "pet_coat_type" => booking_submission_params[:pet_coat_type].to_s,
+        "pet_coat_details" => booking_submission_params[:pet_coat_details].to_s,
         "appointment_ids" => Array(@booking_draft&.dig("appointment_ids")),
         "created_at" => Time.current.iso8601
       }.compact

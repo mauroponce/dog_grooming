@@ -636,13 +636,17 @@
                 <%= label_tag "booking[pet_sex]", "Sexo", class: "mb-2 block text-sm font-bold text-zinc-800" %>
                 <%= select_tag "booking[pet_sex]", options_for_select([["No especificado", ""], ["Hembra", "female"], ["Macho", "male"]], booking_draft[:pet_sex]), class: "h-12 w-full rounded-2xl border border-zinc-200 bg-white px-4 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100" %>
               </div>
+              <div>
+                <%= label_tag "booking[pet_coat_type]", "Tipo de manto", class: "mb-2 block text-sm font-bold text-zinc-800" %>
+                <%= select_tag "booking[pet_coat_type]", options_for_select([["Elegí una opción", ""]] + Pet::COAT_TYPES.map { |value, label| [label, value] }, booking_draft[:pet_coat_type]), required: true, class: "h-12 w-full rounded-2xl border border-zinc-200 bg-white px-4 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100" %>
+              </div>
             </div>
             <div class="mt-5">
               <div class="mb-2 flex items-center justify-between gap-4">
-                <%= label_tag "booking[pet_notes]", "Cuidados o información importante", class: "block text-sm font-bold text-zinc-800" %>
-                <span class="text-xs font-semibold text-zinc-400">Opcional</span>
+                <%= label_tag "booking[pet_coat_details]", "Aclaración del manto", class: "block text-sm font-bold text-zinc-800" %>
+                <span class="text-xs font-semibold text-zinc-400">Sólo si elegiste “Otro”</span>
               </div>
-              <%= text_area_tag "booking[pet_notes]", booking_draft[:pet_notes], rows: 3, placeholder: "Alergias, sensibilidad, comportamiento o indicaciones de cuidado", class: "w-full resize-none rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100" %>
+              <%= text_field_tag "booking[pet_coat_details]", booking_draft[:pet_coat_details], maxlength: 250, placeholder: "Ej. Manto con rulos muy cerrados", class: "h-12 w-full rounded-2xl border border-zinc-200 bg-white px-4 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100" %>
             </div>
           </div>
           <p class="text-center text-[11px] leading-5 text-zinc-400"><%= @business.cancellation_policy_text %></p>

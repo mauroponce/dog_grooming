@@ -103,6 +103,25 @@ RSpec.describe "Public bookings", type: :request do
     expect(response.body).not_to include("Seleccionar profesional")
   end
 
+  it "collects the coat type but never exposes internal pet alerts in the public details step" do
+    business = create_business
+    service = create_service(business)
+    starts_at = enable_availability_for(business, start_time: "09:00", end_time: "12:00")
+
+    get new_public_booking_path(
+      business.slug,
+      service_ids: [ service.slug ],
+      step: "details",
+      starts_at: starts_at.iso8601
+    ), headers: browser_headers
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Tipo de manto")
+    expect(response.body).to include('name="booking[pet_coat_type]"')
+    expect(response.body).not_to include("Cuidados o información importante")
+    expect(response.body).not_to include('name="booking[pet_notes]"')
+  end
+
   it "shows booking times at the duration interval of the selected service" do
     business = create_business
     service = create_service(business)
@@ -410,7 +429,11 @@ RSpec.describe "Public bookings", type: :request do
           customer_name: "Julieta Perez",
           customer_phone: "+54 9 11 1111-1111",
           customer_email: "julieta@example.com",
-          pet_name: "Coco"
+          pet_name: "Coco",
+          pet_coat_type: "other",
+          pet_coat_details: "Manto mixto",
+          pet_notes: "No guardar esta nota",
+          pet_behavioral_alerts: [ "bite_risk" ]
         }
       },
       headers: browser_headers
@@ -436,7 +459,14 @@ RSpec.describe "Public bookings", type: :request do
     expect(response).to have_http_status(:redirect)
     expect(response.location).to include("step=reserve")
     expect(appointment).to be_manual_payment_required
-    expect(appointment.pet).to have_attributes(name: "Coco", customer_profile: appointment.customer_profile)
+    expect(appointment.pet).to have_attributes(
+      name: "Coco",
+      customer_profile: appointment.customer_profile,
+      coat_type: "other",
+      coat_details: "Manto mixto",
+      notes: nil,
+      behavioral_alerts: []
+    )
     expect(appointment.deposit_amount_cents).to eq(3_500_00)
     expect(appointment.payment_charge_mode).to eq("deposit")
     expect(appointment.status).to eq("pending_deposit")

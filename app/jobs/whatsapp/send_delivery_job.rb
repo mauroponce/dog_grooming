@@ -5,11 +5,14 @@ module WhatsApp
 
       delivery = WhatsAppDelivery.find(id)
       connection = delivery.business.whatsapp_connection
-      return unless connection&.connected?
+      return unless WhatsApp.automation_enabled?(delivery.business)
 
       delivery.business.with_lock do
         delivery.lock!
         return unless delivery.status == "pending"
+        if connection.coexistence? && (delivery.payload["type"] == "template" || delivery.phone_number_id != connection.phone_number_id)
+          return delivery.update!(status: "skipped")
+        end
         return delivery.update!(status: "skipped") unless delivery.business.access_active?
         if delivery.purpose.in?(%w[reminder confirmation]) && delivery.appointment.nil?
           return delivery.update!(status: "skipped")
@@ -53,7 +56,8 @@ module WhatsApp
       WhatsAppDelivery.where(id: delivery.id, status: "sending").update_all(status: "unknown", updated_at: Time.current)
       SendAppointmentReminderJob.perform_later(delivery.appointment) if delivery.purpose == "reminder" && delivery.appointment
       Rails.logger.warn("whatsapp_delivery_unknown delivery_id=#{id}")
-    rescue CloudClient::Error
+    rescue CloudClient::Error => error
+      connection&.update!(authorization_failed_at: Time.current, automation_enabled: false) if error.authorization_error?
       failed!(delivery)
       Rails.logger.warn("whatsapp_delivery_failed delivery_id=#{id}")
     end

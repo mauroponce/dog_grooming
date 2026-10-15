@@ -20,13 +20,14 @@ RSpec.describe "WhatsApp automation" do
   let(:contact) { business.whatsapp_contacts.create!(phone: phone, name: "Julieta", last_inbound_at: Time.current, opted_in_at: Time.current) }
   let(:service) { business.services.create!(name: "Baño chico", category: "Baño", duration_minutes: 45, price_cents: 1_500_000) }
   let(:appointment) { business.appointments.create!(service: service, customer_name: "Julieta", customer_phone: phone, customer_email: "julieta@example.com", source: :public_booking, status: :confirmed, starts_at: 2.days.from_now) }
+  before { business.create_whatsapp_connection!(phone_number_id: "123", waba_id: "456", access_token: "secret", automation_enabled: true) }
 
   def event(kind: "inbound", **payload)
     business.whatsapp_events.create!(provider_id: SecureRandom.uuid, kind: kind, payload: { "from" => phone, "timestamp" => Time.current.to_i.to_s, "contact_name" => "Julieta" }.merge(payload.stringify_keys))
   end
 
   def connect_pro
-    business.create_whatsapp_connection!(phone_number_id: "123", waba_id: "456", access_token: "secret", templates_approved: true)
+    business.whatsapp_connection.update!(templates_approved: true)
     business.subscription.update!(plan_selected: "pro")
     contact
   end
@@ -38,7 +39,8 @@ RSpec.describe "WhatsApp automation" do
     expect(business.whatsapp_deliveries.count).to eq(1)
     payload = business.whatsapp_deliveries.first.payload
     expect(payload.dig("interactive", "body", "text")).to include("Bienvenido a Pichipurris")
-    expect(payload.dig("interactive", "action", "sections", 0, "rows").length).to eq(4)
+    expect(payload.dig("interactive", "action", "sections", 0, "rows").length).to eq(10)
+    expect(payload.dig("interactive", "action", "sections", 0, "rows", 0, "id")).to start_with("service:")
     expect(incoming.reload.payload).to eq({})
   end
 
@@ -127,5 +129,87 @@ RSpec.describe "WhatsApp automation" do
     expect(WhatsApp::CloudClient).not_to receive(:new)
     WhatsApp::SendDeliveryJob.perform_now(delivery.id)
     expect(delivery.reload.status).to eq("skipped")
+  end
+
+  it "paginates services with a human option on every page and never exceeds ten rows" do
+    12.times { |index| business.services.create!(name: "Service #{index}", duration_minutes: 30, price_cents: 1000) }
+    WhatsApp::ProcessEventJob.perform_now(event(text: { "body" => "Hola" }).id)
+    rows = business.whatsapp_deliveries.last.payload.dig("interactive", "action", "sections", 0, "rows")
+    expect(rows.length).to eq(10)
+    expect(rows.map { |row| row["id"] }).to include("human", "services:1")
+    WhatsApp::ProcessEventJob.perform_now(event(interactive: { "list_reply" => { "id" => "services:1" } }).id)
+    next_rows = business.whatsapp_deliveries.last.payload.dig("interactive", "action", "sections", 0, "rows")
+    expect(next_rows.length).to be <= 10
+    expect(next_rows.map { |row| row["id"] }).to include("human", "services:0")
+    first_ids = rows.filter_map { |row| row["id"] if row["id"].start_with?("service:") }
+    next_ids = next_rows.filter_map { |row| row["id"] if row["id"].start_with?("service:") }
+    expect(first_ids & next_ids).to be_empty
+  end
+
+  it "does not automatically repeat the menu on subsequent customer messages" do
+    2.times { WhatsApp::ProcessEventJob.perform_now(event(text: { "body" => "Hola" }).id) }
+    expect(business.whatsapp_deliveries.count).to eq(1)
+  end
+
+  it "keeps new connections silent even when the global switch is enabled" do
+    business.whatsapp_connection.update!(automation_enabled: false)
+    WhatsApp::ProcessEventJob.perform_now(event(text: { "body" => "Hola" }).id)
+    expect(business.whatsapp_deliveries).to be_empty
+  end
+
+  it "does not answer an old event after the tenant connects a different number" do
+    incoming = event(text: { "body" => "Hola" })
+    incoming.update!(phone_number_id: "123")
+    business.whatsapp_connection.update!(phone_number_id: "999")
+    WhatsApp::ProcessEventJob.perform_now(incoming.id)
+    expect(business.whatsapp_deliveries).to be_empty
+    expect(business.whatsapp_contacts).to be_empty
+  end
+
+  it "does not open a service belonging to another tenant" do
+    other = User.create!(email_address: "isolated-#{SecureRandom.hex(4)}@example.com", password: "password123").create_business!(name: "Other", slug: "isolated-#{SecureRandom.hex(4)}")
+    other_service = other.services.create!(name: "Secret service", duration_minutes: 30, price_cents: 1000)
+    WhatsApp::ProcessEventJob.perform_now(event(interactive: { "list_reply" => { "id" => "service:#{other_service.id}" } }).id)
+    expect(business.booking_intents).to be_empty
+    expect(business.whatsapp_deliveries.last.payload.to_json).not_to include("Secret service")
+  end
+
+  it "rejects templates on newly verified Coexistence connections" do
+    business.whatsapp_connection.update!(verified_at: Time.current)
+    delivery = WhatsAppDelivery.enqueue!(business: business, key: "no-templates", purpose: "reply", payload: { to: phone, type: "template" })
+    expect(WhatsApp::CloudClient).not_to receive(:new)
+    WhatsApp::SendDeliveryJob.perform_now(delivery.id)
+    expect(delivery.reload.status).to eq("skipped")
+  end
+
+  it "never sends a queued reply outside the twenty-four-hour window" do
+    contact.update!(last_inbound_at: 25.hours.ago)
+    delivery = WhatsAppDelivery.enqueue!(business: business, key: "expired-window", purpose: "reply", payload: { to: phone, type: "text", text: { body: "Reply" } })
+    expect(WhatsApp::CloudClient).not_to receive(:new)
+    WhatsApp::SendDeliveryJob.perform_now(delivery.id)
+    expect(delivery.reload.status).to eq("skipped")
+  end
+
+  it "does not reuse a previous connection's service window" do
+    contact.update!(last_inbound_at: 1.minute.ago)
+    business.whatsapp_connection.update!(connected_at: Time.current, verified_at: Time.current)
+    expect(contact.reload).not_to be_window_open
+    contact.update!(last_inbound_at: 1.second.from_now)
+    expect(contact.reload).to be_window_open
+  end
+
+  it "keeps sent, delivered and read timestamps and billing data without downgrading out-of-order events" do
+    delivery = WhatsAppDelivery.enqueue!(business: business, key: "status-history", purpose: "reply", payload: { to: phone })
+    delivery.update!(provider_id: "wamid-outgoing", status: "accepted", accepted_at: Time.current)
+    %w[read delivered sent].each do |status|
+      incoming = business.whatsapp_events.create!(phone_number_id: "123", provider_id: "wamid-outgoing", kind: "status:#{status}", payload: { status: status, timestamp: Time.current.to_i.to_s, pricing: { billable: false, pricing_model: "PMP", category: "service" } })
+      WhatsApp::ProcessEventJob.perform_now(incoming.id)
+    end
+    expect(delivery.reload.status).to eq("read")
+    expect(delivery.delivered_at).to be_present
+    expect(delivery.sent_at).to be_present
+    expect(delivery.read_at).to be_present
+    expect(delivery.billing_metadata.dig("pricing", "billable")).to be(false)
+    expect(business.whatsapp_deliveries.monthly_usage.sole).to include(phone_number_id: "123", outgoing: 1, delivered: 1, read: 1, billable: 0)
   end
 end

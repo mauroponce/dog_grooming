@@ -2,7 +2,18 @@ require "net/http"
 
 module WhatsApp
   class CloudClient
-    class Error < StandardError; end
+    class Error < StandardError
+      attr_reader :code, :subcode
+
+      def initialize(message = "No se pudo completar la solicitud a Meta", code: nil, subcode: nil)
+        @code, @subcode = code, subcode
+        super(message)
+      end
+
+      def authorization_error?
+        code.to_i.in?([ 102, 190 ])
+      end
+    end
     class UncertainDelivery < Error; end
     class RetryableError < Error; end
 
@@ -26,7 +37,7 @@ module WhatsApp
 
     private
       def request(method, path, payload, token:)
-        version = ENV.fetch("META_GRAPH_VERSION", "v25.0")
+        version = SignupConfiguration.graph_version
         raise Error, "Versión de Meta inválida" unless version.match?(/\Av\d+\.\d+\z/)
 
         uri = URI("https://graph.facebook.com/#{version}/#{path}")
@@ -37,11 +48,16 @@ module WhatsApp
         response = Net::HTTP.start(uri.host, uri.port, use_ssl: true, open_timeout: 5, read_timeout: 15, write_timeout: 15) { |http| http.request(req) }
         raise RetryableError, "Meta limitó temporalmente los envíos" if response.code == "429"
         raise UncertainDelivery, "Error temporal de Meta" if response.code.to_i >= 500
-        raise Error, "Meta respondió HTTP #{response.code}" unless response.is_a?(Net::HTTPSuccess)
+        unless response.is_a?(Net::HTTPSuccess)
+          error = JSON.parse(response.body).fetch("error", {})
+          raise Error.new("Meta respondió HTTP #{response.code}", code: error["code"], subcode: error["error_subcode"])
+        end
 
         JSON.parse(response.body)
       rescue JSON::ParserError
         raise UncertainDelivery, "Respuesta de Meta inválida"
+      rescue Net::OpenTimeout, Net::ReadTimeout, Net::WriteTimeout, EOFError, Errno::ECONNRESET, Errno::ECONNREFUSED, SocketError, OpenSSL::SSL::SSLError
+        raise UncertainDelivery, "No se pudo confirmar la respuesta de Meta. Volvé a conectar la cuenta."
       end
   end
 end
