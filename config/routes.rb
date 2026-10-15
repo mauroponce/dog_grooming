@@ -3,8 +3,9 @@ Rails.application.routes.draw do
   mount ActionCable.server => "/cable"
 
   get "acceder" => "sessions#new", as: :new_session
-  resource :session, only: %i[create destroy]
-  resources :passwords, param: :token
+  resource :session, only: :destroy
+  get "auth/google_oauth2/callback" => "google_authentication#callback"
+  match "auth/failure" => "google_authentication#failure", via: %i[get post]
   get "acceso" => "magic_links#new", as: :new_magic_link
   post "acceso" => "magic_links#create", as: :magic_links
   get "acceso/:token" => "magic_links#show", as: :magic_link
@@ -237,7 +238,6 @@ Rails.application.routes.draw do
   post "depositos/:token/confirmar" => "deposit_reviews#confirm", as: :confirm_legacy_deposit_review
   post "depositos/:token/rechazar" => "deposit_reviews#reject", as: :reject_legacy_deposit_review
   get "invitaciones/empleado/:token" => "employee_invitations#show", as: :employee_invitation
-  patch "invitaciones/empleado/:token" => "employee_invitations#update"
   get "w/:token" => "waitlist_confirmations#show", as: :waitlist_confirmation
   post "w/:token/confirmar" => "waitlist_confirmations#confirm", as: :confirm_waitlist_confirmation
   get "l/:slug" => "campaign_links#show", as: :campaign_link

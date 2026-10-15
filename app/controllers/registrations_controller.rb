@@ -4,12 +4,18 @@ class RegistrationsController < ApplicationController
 
   def new
     redirect_to admin_root_path if authenticated?
+
+    @identity = GoogleOAuth::Identity.from_session(session[:google_registration_identity]) if session[:google_registration_identity]
   end
 
   def create
-    result = Registrations::CreateBusinessAccount.call(registration_params)
+    identity = GoogleOAuth::Identity.from_session(session[:google_registration_identity])
+    result = Registrations::CreateBusinessAccount.call(registration_params, identity: identity)
+    session.delete(:google_registration_identity)
     start_new_session_for(result.owner)
     redirect_to onboarding_schedule_path, notice: "¡Tu prueba de 14 días ya está activa! Configurá tus horarios para empezar."
+  rescue GoogleOAuth::Identity::Invalid
+    redirect_to registro_path, alert: "Primero continuá con Google para crear tu cuenta."
   rescue ArgumentError, ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique => error
     @values = registration_params.to_h
     flash.now[:alert] = error.message
@@ -27,6 +33,6 @@ class RegistrationsController < ApplicationController
 
   private
     def registration_params
-      params.require(:registration).permit(:business_name, :owner_name, :email_address, :password, :password_confirmation, :contact_phone, :slug, :plan_selected)
+      params.require(:registration).permit(:business_name, :owner_name, :contact_phone, :slug, :plan_selected)
     end
 end

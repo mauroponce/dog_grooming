@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_15_140000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_15_150000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -1420,13 +1420,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_15_140000) do
     t.datetime "created_at", null: false
     t.datetime "disabled_at"
     t.string "email_address", null: false
+    t.datetime "google_connected_at"
+    t.string "google_uid"
     t.string "last_login_provider"
     t.string "name"
-    t.string "password_digest", null: false
+    t.string "password_digest"
     t.string "phone"
     t.integer "role", default: 0, null: false
     t.datetime "updated_at", null: false
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
+    t.index ["google_uid"], name: "index_users_on_google_uid", unique: true
   end
 
   create_table "waitlist_entries", force: :cascade do |t|

@@ -1,62 +1,89 @@
 require "rails_helper"
 
 RSpec.describe "Sessions", type: :request do
-  before { host! "localhost" }
+  before do
+    host! "localhost"
+    OmniAuth.config.test_mode = true
+  end
 
-  it "renders email and password login without a magic-link form" do
+  after do
+    OmniAuth.config.test_mode = false
+    OmniAuth.config.mock_auth[:google_oauth2] = nil
+  end
+
+  it "renders Google as the only login method" do
     get new_session_path, headers: browser_headers
 
     document = Nokogiri::HTML(response.body)
-    password_input = document.at_css("input[name='password']")
-    password_toggle = document.at_css("button[data-password-visibility-target='button']")
+    google_form = document.at_css(%(form[action="/auth/google_oauth2"][method="post"]))
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include(%(action="#{session_path}"))
-    expect(response.body).to include(%(name="password"))
-    expect(response.body).not_to include("Enviarme link mágico")
-    expect(response.body).not_to include(%(action="#{magic_links_path}"))
-    expect(password_input["type"]).to eq("password")
-    expect(password_input["autocomplete"]).to eq("off")
-    expect(password_input["data-password-visibility-target"]).to eq("input")
-    expect(password_toggle["data-action"]).to include("password-visibility#toggle")
-    expect(password_toggle["aria-pressed"]).to eq("false")
-    password_icon = password_toggle.at_css("svg[data-password-visibility-target='icon']")
-
-    expect(password_icon).to be_present
-    expect(password_icon.at_css("circle[cx='12'][cy='12']")).to be_present
-    expect(password_toggle["class"]).not_to include("focus:ring-brand-300")
+    expect(google_form).to be_present
+    expect(response.body).to include("Ingresar con Google")
+    expect(document.at_css("input[name='password']")).to be_nil
+    expect(document.at_css("input[name='email_address']")).to be_nil
   end
 
-  it "redirects signed-in admins from the login form to the admin home" do
-    user = create_user(role: :admin, email_prefix: "session-admin")
-    Business.create!(
-      owner: user,
-      name: "Session Admin Center",
-      slug: "session-admin-center-#{SecureRandom.hex(4)}",
-      contact_phone: "+54 9 11 5555-5555",
-      onboarding_completed_at: Time.current
-    )
+  it "starts an internal session for a Google identity linked to a user" do
+    user = create_user(role: :admin, email_prefix: "session-admin", google_uid: "google-admin-uid")
+    Business.create!(owner: user, name: "Session Admin Center", slug: "session-admin-center-#{SecureRandom.hex(4)}", contact_phone: "+54 9 11 5555-5555", onboarding_completed_at: Time.current)
 
-    sign_in(user)
-    get new_session_path, headers: browser_headers
+    authenticate_with_google(uid: "google-admin-uid", email: user.email_address)
 
     expect(response).to redirect_to(admin_root_url)
+    expect(user.reload.last_login_provider).to eq("google")
   end
 
-  it "redirects signed-in super admins from the login form to businesses" do
-    user = create_user(role: :super_admin, email_prefix: "session-super")
+  it "links a preprovisioned account only when Google verifies the same email" do
+    user = create_user(role: :admin, email_prefix: "preprovisioned")
+    Business.create!(owner: user, name: "Preprovisioned", slug: "preprovisioned-#{SecureRandom.hex(4)}", contact_phone: "+54 9 11 5555-5555", onboarding_completed_at: Time.current)
 
-    sign_in(user)
-    get new_session_path, headers: browser_headers
+    authenticate_with_google(uid: "google-preprovisioned", email: user.email_address)
 
-    expect(response).to redirect_to(super_admin_businesses_url)
+    expect(response).to redirect_to(admin_root_url)
+    expect(user.reload).to have_attributes(google_uid: "google-preprovisioned", last_login_provider: "google")
   end
 
-  def sign_in(user)
-    session = user.sessions.create!(user_agent: browser_headers.fetch("User-Agent"), ip_address: "127.0.0.1")
-    allow_any_instance_of(ApplicationController).to receive(:resume_session) do
-      Current.session = session
-    end
+  it "does not authenticate an unknown Google email" do
+    authenticate_with_google(uid: "unknown", email: "unknown@example.com")
+
+    expect(response).to redirect_to(new_session_url)
+    expect(flash[:alert]).to include("No encontramos")
+  end
+
+  it "rejects a Google identity whose email is not verified" do
+    user = create_user(role: :admin, email_prefix: "unverified", google_uid: "google-unverified")
+
+    authenticate_with_google(uid: "google-unverified", email: user.email_address, email_verified: false)
+
+    expect(response).to redirect_to(new_session_url)
+    expect(flash[:alert]).to include("No pudimos verificar")
+  end
+
+  it "rejects disabled users" do
+    user = create_user(role: :admin, email_prefix: "disabled", google_uid: "google-disabled")
+    user.update!(disabled_at: Time.current)
+
+    authenticate_with_google(uid: "google-disabled", email: user.email_address)
+
+    expect(response).to redirect_to(new_session_url)
+    expect(flash[:alert]).to include("deshabilitado")
+  end
+
+  def omniauth_env(uid:, email:, email_verified: true)
+    {
+      "omniauth.auth" => {
+        "provider" => "google_oauth2",
+        "uid" => uid,
+        "info" => { "email" => email, "name" => "Mauro Ponce" },
+        "extra" => { "raw_info" => { "email_verified" => email_verified } }
+      }
+    }
+  end
+
+  def authenticate_with_google(uid:, email:, email_verified: true)
+    OmniAuth.config.mock_auth[:google_oauth2] = OmniAuth::AuthHash.new(omniauth_env(uid:, email:, email_verified:).fetch("omniauth.auth"))
+    get "/auth/google_oauth2/callback"
   end
 
   def browser_headers
@@ -66,11 +93,7 @@ RSpec.describe "Sessions", type: :request do
     }
   end
 
-  def create_user(role:, email_prefix:)
-    User.create!(
-      email_address: "#{email_prefix}-#{SecureRandom.hex(4)}@example.com",
-      password: "password123",
-      role: role
-    )
+  def create_user(role:, email_prefix:, google_uid: nil)
+    User.create!(email_address: "#{email_prefix}-#{SecureRandom.hex(4)}@example.com", password: "password123", google_uid:, role: role)
   end
 end

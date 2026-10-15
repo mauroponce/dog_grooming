@@ -156,7 +156,7 @@ RSpec.describe "Super admin businesses", type: :request do
 	    owner_membership = business.employee_memberships.find_by!(user: business.owner)
 	    monday_rule = business.availability_rules.find_by!(weekday: 1)
 	    saturday_rule = business.availability_rules.find_by!(weekday: 6)
-	    expect(User.authenticate_by(email_address: owner_email, password: "12345678")).to eq(business.owner)
+    expect(business.owner.password_digest).to be_nil
 	    expect(business.owner.name).to eq("Mauro Ponce")
 	    expect(owner_membership.name).to eq("Mauro Ponce")
 	    expect(owner_membership.first_name).to eq("Mauro")

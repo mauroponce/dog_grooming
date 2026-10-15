@@ -29,6 +29,8 @@ services:
       DB_PASSWORD: dog_grooming
       APP_HOST: ${APP_HOST:-localhost:3003}
       APP_PROTOCOL: ${APP_PROTOCOL:-http}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       MAILPIT_HOST: mailpit
       MAILPIT_SMTP_PORT: 1025
       RAILS_ENV: development

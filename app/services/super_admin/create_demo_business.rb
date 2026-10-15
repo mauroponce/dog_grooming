@@ -1,7 +1,6 @@
 module SuperAdmin
   class CreateDemoBusiness
-    DEFAULT_PASSWORD = SuperAdmin::CreateBusinessAccount::DEFAULT_PASSWORD
-    Result = Struct.new(:business, :email, :password, keyword_init: true)
+    Result = Struct.new(:business, :email, keyword_init: true)
 
     def self.call
       new.call
@@ -10,17 +9,15 @@ module SuperAdmin
     def call
       suffix = Time.current.strftime("%Y%m%d%H%M%S")
       email = "demo-#{suffix}@cita.pet.test"
-      password = DEFAULT_PASSWORD
-
       business = nil
       User.transaction do
-        owner = User.create!(email_address: email, name: business_attributes(suffix)[:name], password: password, role: :admin)
+        owner = User.create!(email_address: email, name: business_attributes(suffix)[:name], role: :admin)
         business = owner.create_business!(business_attributes(suffix))
         professional = create_owner_professional!(business, owner)
         create_first_service!(business, professional)
       end
 
-      Result.new(business: business, email: email, password: password)
+      Result.new(business: business, email: email)
     end
 
     private

@@ -1,18 +1,8 @@
 class SessionsController < ApplicationController
-  allow_unauthenticated_access only: %i[ new create ]
-  rate_limit to: 10, within: 3.minutes, only: :create, with: -> { redirect_to new_session_path, alert: "Probá de nuevo más tarde." }
+  allow_unauthenticated_access only: :new
 
   def new
     redirect_to after_authentication_url if authenticated?
-  end
-
-  def create
-    if user = User.authenticate_by(params.permit(:email_address, :password))
-      start_new_session_for user
-      redirect_to after_authentication_url
-    else
-      redirect_to new_session_path, alert: "Probá con otro correo electrónico o contraseña."
-    end
   end
 
   def destroy

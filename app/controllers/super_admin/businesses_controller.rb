@@ -60,7 +60,7 @@ module SuperAdmin
     def create_demo
       result = SuperAdmin::CreateDemoBusiness.call
       redirect_to super_admin_businesses_path(business_id: result.business.id),
-        notice: "Demo creado. Admin: #{result.email} · Password: #{result.password}"
+        notice: "Demo creado. Admin: #{result.email}"
     end
 
     def destroy

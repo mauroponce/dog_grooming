@@ -35,12 +35,7 @@ module Admin
 
     private
       def profile_params
-        attributes = params.require(:user).permit(:name, :phone, :profile_photo, :password, :password_confirmation)
-        if attributes[:password].blank?
-          attributes.delete(:password)
-          attributes.delete(:password_confirmation)
-        end
-        attributes
+        params.require(:user).permit(:name, :phone, :profile_photo)
       end
 
       def sync_linked_membership!(profile_photo_changed:)

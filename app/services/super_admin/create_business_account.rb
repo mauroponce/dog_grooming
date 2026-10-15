@@ -1,6 +1,5 @@
 module SuperAdmin
   class CreateBusinessAccount
-    DEFAULT_PASSWORD = "12345678"
     Result = Struct.new(:business, :owner, keyword_init: true)
     ARGENTINA_LATITUDE_RANGE = -55.2..-21.7
     ARGENTINA_LONGITUDE_RANGE = -73.7..-53.6
@@ -19,12 +18,7 @@ module SuperAdmin
       business = nil
       owner = nil
       User.transaction do
-	        owner = User.create!(
-	          email_address: owner_email,
-	          name: owner_name,
-	          password: DEFAULT_PASSWORD,
-	          role: :admin
-	        )
+        owner = User.create!(email_address: owner_email, name: owner_name, role: :admin)
         business = owner.create_business!(business_attributes)
         sync_availability_rules!(business)
         create_owner_professional!(business, owner)

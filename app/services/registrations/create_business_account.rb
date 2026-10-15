@@ -2,12 +2,19 @@ module Registrations
   class CreateBusinessAccount
     Result = Struct.new(:business, :owner, keyword_init: true)
     def self.call(...) = new(...).call
-    def initialize(params) = @params = params.to_h.symbolize_keys
+    def initialize(params, identity:) = (@params = params.to_h.symbolize_keys; @identity = identity)
 
     def call
       validate!
       User.transaction do
-        owner = User.create!(email_address: email_address, name: owner_name, password: password, password_confirmation: password_confirmation, role: :admin)
+        owner = User.create!(
+          email_address: identity.email_address,
+          name: owner_name,
+          google_uid: identity.uid,
+          google_connected_at: Time.current,
+          last_login_provider: "google",
+          role: :admin
+        )
         business = owner.create_business!(name: business_name, slug: slug, business_kind: "business", industry: "dog_grooming", contact_phone: contact_phone, phone: contact_phone, whatsapp_phone: contact_phone, setup_status: "not_started")
         business.update!(simultaneous_capacity: 3, arrival_mode: "fixed", arrival_times: (0..6).to_h { |day| [ day.to_s, %w[09:00 12:00 15:00] ] }, preferences: business.preferences.merge("deposits_enabled" => true, "enabled_payment_methods" => [ "mercado_pago" ]))
         business.subscription.update!(plan_selected: plan_selected, amount_cents: Subscription::PLANS.fetch(plan_selected).fetch(:amount_cents))
@@ -22,9 +29,6 @@ module Registrations
       attr_reader :params
       def business_name = params[:business_name].to_s.squish
       def owner_name = params[:owner_name].to_s.squish
-      def email_address = params[:email_address].to_s.strip.downcase
-      def password = params[:password].to_s
-      def password_confirmation = params[:password_confirmation].to_s
       def contact_phone = params[:contact_phone].to_s.strip
       def slug = Business.slug_for(params[:slug].presence || business_name)
       def plan_selected = params[:plan_selected].presence || "basic"
@@ -32,12 +36,11 @@ module Registrations
         raise ArgumentError, "Elegí Básico o PRO." unless Subscription::PLANS.key?(plan_selected)
         raise ArgumentError, "Completá el nombre de la peluquería." if business_name.blank?
         raise ArgumentError, "Completá tu nombre." if owner_name.blank?
-        raise ArgumentError, "Completá un email válido." unless email_address.match?(/\A[^@\s]+@[^@\s]+\.[^@\s]+\z/)
-        raise ArgumentError, "Elegí una contraseña de al menos 8 caracteres." if password.length < 8
-        raise ArgumentError, "Las contraseñas no coinciden." unless password == password_confirmation
         raise ArgumentError, "Completá tu WhatsApp." if contact_phone.blank?
-        raise ArgumentError, "Ese email ya tiene una cuenta." if User.exists?(email_address: email_address)
+        raise ArgumentError, "Ese email ya tiene una cuenta." if User.exists?(email_address: identity.email_address) || User.exists?(google_uid: identity.uid)
         raise ArgumentError, "El link elegido no está disponible." unless Slugs::GenerateUnique.valid?(slug) && Slugs::GenerateUnique.available?(slug, scope: Business)
       end
+
+      attr_reader :identity
   end
 end

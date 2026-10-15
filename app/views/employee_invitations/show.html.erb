@@ -6,21 +6,11 @@
       <p class="mt-2 text-sm leading-6 text-zinc-500"><%= @membership.business.name %> te invitó a gestionar turnos en Cita.pet.</p>
     </div>
 
-    <%= form_with model: @user, url: employee_invitation_path(params[:token]), method: :patch, class: "space-y-5 p-5 sm:p-7" do |form| %>
-      <div>
-        <%= form.label :email_address, "Correo electrónico", class: "mb-2 block text-sm font-bold text-zinc-800" %>
-        <%= form.email_field :email_address, disabled: true, class: "h-12 w-full rounded-lg border border-zinc-200 bg-zinc-50 px-4 text-sm font-semibold text-zinc-500" %>
-      </div>
-      <div>
-        <%= form.label :password, "Contraseña", class: "mb-2 block text-sm font-bold text-zinc-800" %>
-        <%= form.password_field :password, required: true, minlength: 8, autocomplete: "new-password", class: "h-12 w-full rounded-lg border border-zinc-200 bg-white px-4 text-sm font-semibold outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100" %>
-      </div>
-      <div>
-        <%= form.label :password_confirmation, "Confirmar contraseña", class: "mb-2 block text-sm font-bold text-zinc-800" %>
-        <%= form.password_field :password_confirmation, required: true, minlength: 8, autocomplete: "new-password", class: "h-12 w-full rounded-lg border border-zinc-200 bg-white px-4 text-sm font-semibold outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100" %>
-      </div>
-
-      <%= form.submit "Crear mi usuario", class: "inline-flex h-12 w-full cursor-pointer items-center justify-center rounded-lg bg-zinc-950 px-5 text-sm font-bold text-white shadow-lg shadow-zinc-900/15 transition hover:-translate-y-0.5 hover:bg-zinc-800" %>
-    <% end %>
+    <div class="space-y-5 p-5 sm:p-7">
+      <p class="text-sm leading-6 text-zinc-600">Continuá con la cuenta de Google de <strong><%= @membership.email_address %></strong> para activar tu acceso.</p>
+      <%= button_to "/auth/google_oauth2?origin=employee_invitation:#{params[:token]}", method: :post, class: "inline-flex h-12 w-full cursor-pointer items-center justify-center rounded-lg bg-zinc-950 px-5 text-sm font-bold text-white shadow-lg shadow-zinc-900/15 transition hover:-translate-y-0.5 hover:bg-zinc-800" do %>
+        Continuar con Google
+      <% end %>
+    </div>
   </section>
 </div>

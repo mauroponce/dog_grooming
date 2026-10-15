@@ -4,7 +4,7 @@ class User < ApplicationRecord
   PROFILE_PHOTO_CONTENT_TYPES = %w[image/png image/jpeg image/jpg image/webp].freeze
   PROFILE_PHOTO_MAX_SIZE = 5.megabytes
 
-  has_secure_password
+  has_secure_password validations: false
   has_many :sessions, dependent: :destroy
   has_one :business, foreign_key: :owner_id, dependent: :destroy, inverse_of: :owner
   has_many :employee_memberships, dependent: :destroy

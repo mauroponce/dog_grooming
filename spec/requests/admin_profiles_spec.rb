@@ -83,53 +83,17 @@ RSpec.describe "Admin profiles", type: :request do
     expect(storage_service.exist?(blob_key)).to eq(false)
   end
 
-  it "renders client-side password confirmation validation hooks" do
+  it "does not render or accept password changes" do
     user, = create_admin_with_business
 
     sign_in(user)
     get edit_admin_profile_path, headers: browser_headers
 
     document = Nokogiri::HTML(response.body)
-    form = document.at_css("form[data-controller='password-confirmation']")
-
     expect(response).to have_http_status(:ok)
-    expect(form).to be_present
-    expect(form["data-action"]).to include("submit->password-confirmation#submit")
-    password_input = document.at_css("input[name='user[password]']")
-    confirmation_input = document.at_css("input[name='user[password_confirmation]']")
-    password_toggle = password_input.parent.at_css("button[data-password-visibility-target='button']")
-    confirmation_toggle = confirmation_input.parent.at_css("button[data-password-visibility-target='button']")
-
-    expect(password_input["data-password-confirmation-target"]).to eq("password")
-    expect(confirmation_input["data-password-confirmation-target"]).to eq("confirmation")
-    expect(password_input["type"]).to eq("password")
-    expect(confirmation_input["type"]).to eq("password")
-    expect(password_toggle["data-action"]).to include("password-visibility#toggle")
-    expect(confirmation_toggle["data-action"]).to include("password-visibility#toggle")
-    expect(password_toggle["aria-pressed"]).to eq("false")
-    expect(confirmation_toggle["aria-pressed"]).to eq("false")
-    expect(password_toggle.at_css("svg[data-password-visibility-target='icon']")).to be_present
-    expect(confirmation_toggle.at_css("svg[data-password-visibility-target='icon']")).to be_present
-    expect(password_toggle["class"]).not_to include("focus:ring-brand-300")
-    expect(confirmation_toggle["class"]).not_to include("focus:ring-brand-300")
-  end
-
-  it "shows translated password confirmation errors from the server" do
-    user, = create_admin_with_business
-
-    sign_in(user)
-    patch admin_profile_path, params: {
-      user: {
-        name: user.name,
-        password: "password123",
-        password_confirmation: "otra-password"
-      }
-    }, headers: browser_headers
-
-    expect(response).to have_http_status(:unprocessable_entity)
-    expect(response.body).to include("Confirmación de contraseña no coincide con la contraseña")
-    expect(response.body).not_to include("Translation missing")
-    expect(response.body).not_to include("activerecord.errors")
+    expect(document.at_css("input[name='user[password]']")).to be_nil
+    expect(document.at_css("input[name='user[password_confirmation]']")).to be_nil
+    expect(response.body).not_to include("contraseña")
   end
 
   def sign_in(user)
