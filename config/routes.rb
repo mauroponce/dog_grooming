@@ -39,6 +39,8 @@ Rails.application.routes.draw do
   end
 
   root "home#index"
+  get "politica-de-privacidad" => "legal_pages#privacy", as: :privacy_policy
+  get "eliminacion-de-datos" => "legal_pages#data_deletion", as: :data_deletion
   get "r/:token" => "whatsapp_bookings#show", as: :whatsapp_booking
   get "webhooks/whatsapp" => "webhooks/whatsapp#verify"
   post "webhooks/whatsapp" => "webhooks/whatsapp#create"
