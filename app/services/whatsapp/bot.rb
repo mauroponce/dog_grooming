@@ -33,7 +33,7 @@ module WhatsApp
         intent = @business.booking_intents.create!(service: service, full_name: @contact.name.presence || "Responsable de mascota", phone_e164: @contact.phone, expires_at: 2.hours.from_now, metadata: { source: "whatsapp" })
         token = intent.signed_id(expires_in: 2.hours, purpose: :whatsapp_booking)
         url = Rails.application.routes.url_helpers.whatsapp_booking_url(token: token, host: AppUrl.host, protocol: AppUrl.protocol)
-        send_payload(text("Reservá #{service.name} acá: #{url}"))
+        send_payload(text("Perfecto, ahora reservá tu turno aquí: #{url}"))
       elsif @contact.last_menu_at.nil? || @contact.last_menu_at < 24.hours.ago || @event.payload.dig("text", "body").to_s.strip.casecmp?("menu") || @event.payload.dig("text", "body").to_s.strip.casecmp?("menú")
         menu
       end
@@ -66,7 +66,9 @@ module WhatsApp
       end
 
       def send_payload(payload, purpose: "reply")
-        WhatsAppDelivery.enqueue!(business: @business, key: "reply:#{@event.id}", purpose: purpose, payload: payload.merge(to: @contact.phone.delete_prefix("+")))
+        recipient = @contact.whatsapp_id.presence || @contact.phone.delete_prefix("+")
+        recipient = WhatsApp.outbound_recipient_for(@business, recipient: recipient)
+        WhatsAppDelivery.enqueue!(business: @business, key: "reply:#{@event.id}", purpose: purpose, payload: payload.merge(to: recipient))
       end
   end
 end

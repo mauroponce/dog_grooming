@@ -2,6 +2,15 @@ class WhatsAppContact < ApplicationRecord
   belongs_to :business
   before_validation -> { self.phone = PhoneNumber.normalize(phone) }
   validates :phone, presence: true, uniqueness: { scope: :business_id }
+  validates :whatsapp_id, format: { with: /\A\d+\z/ }, allow_blank: true
+
+  def whatsapp_id
+    TokenEncryptor.decrypt(whatsapp_id_ciphertext)
+  end
+
+  def whatsapp_id=(value)
+    self.whatsapp_id_ciphertext = TokenEncryptor.encrypt(value)
+  end
 
   def window_open?
     return false unless last_inbound_at.present? && last_inbound_at > 24.hours.ago

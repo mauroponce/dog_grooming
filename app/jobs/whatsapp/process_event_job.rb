@@ -71,7 +71,8 @@ module WhatsApp
         return if event.phone_number_id.present? && event.phone_number_id != connection&.phone_number_id
 
         payload = event.payload
-        phone = PhoneNumber.normalize(event.kind == "human" ? payload["to"] : payload["from"])
+        whatsapp_id = (event.kind == "human" ? payload["to"] : payload["from"]).to_s.delete("^0-9")
+        phone = PhoneNumber.normalize(whatsapp_id)
         return if phone.blank?
 
         contact = event.business.whatsapp_contacts.find_or_create_by!(phone: phone)
@@ -79,11 +80,11 @@ module WhatsApp
         return if timestamp > 5.minutes.from_now || timestamp < 2.days.ago
 
         if event.kind == "human"
-          contact.update!(last_human_at: [ timestamp, contact.last_human_at ].compact.max, paused_until: [ timestamp + 24.hours, contact.paused_until ].compact.max)
+          contact.update!(whatsapp_id: whatsapp_id.presence || contact.whatsapp_id, last_human_at: [ timestamp, contact.last_human_at ].compact.max, paused_until: [ timestamp + 24.hours, contact.paused_until ].compact.max)
           return
         end
-        contact.update!(last_inbound_at: [ timestamp, contact.last_inbound_at ].compact.max, name: payload["contact_name"].presence || contact.name)
-        return if !WhatsApp.automation_enabled?(event.business) || contact.paused? || !contact.window_open? || !event.business.booking_available?
+        contact.update!(whatsapp_id: whatsapp_id.presence || contact.whatsapp_id, last_inbound_at: [ timestamp, contact.last_inbound_at ].compact.max, name: payload["contact_name"].presence || contact.name)
+        return if !WhatsApp.automation_enabled?(event.business, recipient: phone) || contact.paused? || !contact.window_open? || !event.business.booking_available?
 
         Bot.new(event: event, contact: contact).call
       end

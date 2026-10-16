@@ -44,6 +44,42 @@ RSpec.describe "WhatsApp automation" do
     expect(incoming.reload.payload).to eq({})
   end
 
+  it "uses Meta's incoming WhatsApp identifier rather than the normalized local phone number for replies" do
+    raw_whatsapp_id = "541160347665"
+    WhatsApp::ProcessEventJob.perform_now(event(from: raw_whatsapp_id, text: { "body" => "menu" }).id)
+
+    delivery = business.whatsapp_deliveries.sole
+    expect(business.whatsapp_contacts.sole.whatsapp_id).to eq(raw_whatsapp_id)
+    expect(delivery.payload["to"]).to eq(raw_whatsapp_id)
+  end
+
+  it "uses the configured API recipient only for the scoped local demo" do
+    original_global = ENV.delete("WHATSAPP_AUTOMATION_ENABLED")
+    previous_phone = ENV["WHATSAPP_DEMO_AUTOMATION_PHONE_NUMBER_ID"]
+    previous_recipient = ENV["WHATSAPP_DEMO_AUTOMATION_RECIPIENT"]
+    previous_api_recipient = ENV["WHATSAPP_DEMO_API_RECIPIENT"]
+    ENV["WHATSAPP_DEMO_AUTOMATION_PHONE_NUMBER_ID"] = "123"
+    ENV["WHATSAPP_DEMO_AUTOMATION_RECIPIENT"] = "541160347665"
+    ENV["WHATSAPP_DEMO_API_RECIPIENT"] = "54111560347665"
+
+    connect_pro
+    client = instance_double(WhatsApp::CloudClient)
+    allow(WhatsApp::CloudClient).to receive(:new).and_return(client)
+    allow(client).to receive(:send_message!).and_return({ "messages" => [ { "id" => "wamid-demo" } ] })
+    WhatsApp::ProcessEventJob.perform_now(event(from: "5491160347665", text: { "body" => "menu" }).id)
+
+    delivery = business.whatsapp_deliveries.sole
+    expect(delivery.payload["to"]).to eq("54111560347665")
+    expect(WhatsApp.automation_enabled?(business, recipient: "54111560347665")).to be(true)
+    WhatsApp::SendDeliveryJob.perform_now(delivery.id)
+    expect(delivery.reload).to have_attributes(status: "accepted", provider_id: "wamid-demo")
+  ensure
+    original_global.nil? ? ENV.delete("WHATSAPP_AUTOMATION_ENABLED") : ENV["WHATSAPP_AUTOMATION_ENABLED"] = original_global
+    previous_phone.nil? ? ENV.delete("WHATSAPP_DEMO_AUTOMATION_PHONE_NUMBER_ID") : ENV["WHATSAPP_DEMO_AUTOMATION_PHONE_NUMBER_ID"] = previous_phone
+    previous_recipient.nil? ? ENV.delete("WHATSAPP_DEMO_AUTOMATION_RECIPIENT") : ENV["WHATSAPP_DEMO_AUTOMATION_RECIPIENT"] = previous_recipient
+    previous_api_recipient.nil? ? ENV.delete("WHATSAPP_DEMO_API_RECIPIENT") : ENV["WHATSAPP_DEMO_API_RECIPIENT"] = previous_api_recipient
+  end
+
   it "pauses only the requesting contact and renews on a human reply" do
     incoming = event(interactive: { "list_reply" => { "id" => "human" } })
     WhatsApp::ProcessEventJob.perform_now(incoming.id)
@@ -62,9 +98,35 @@ RSpec.describe "WhatsApp automation" do
   it "creates an expiring signed booking link without a phone query parameter" do
     WhatsApp::ProcessEventJob.perform_now(event(interactive: { "list_reply" => { "id" => "service:#{service.id}" } }).id)
     payload = business.whatsapp_deliveries.last.payload.dig("text", "body")
+    expect(payload).to start_with("Perfecto, ahora reservá tu turno aquí:")
     expect(payload).to include("/r/")
     expect(payload).not_to include("phone=")
     expect(business.booking_intents.last.phone_e164).to eq(phone)
+  end
+
+  it "allows a locally scoped demo only for its configured sender and recipient while the global switch is off" do
+    original_global = ENV.delete("WHATSAPP_AUTOMATION_ENABLED")
+    original_phone = ENV["WHATSAPP_DEMO_AUTOMATION_PHONE_NUMBER_ID"]
+    original_recipient = ENV["WHATSAPP_DEMO_AUTOMATION_RECIPIENT"]
+    ENV["WHATSAPP_DEMO_AUTOMATION_PHONE_NUMBER_ID"] = "123"
+    ENV["WHATSAPP_DEMO_AUTOMATION_RECIPIENT"] = phone
+
+    WhatsApp::ProcessEventJob.perform_now(event(text: { "body" => "Hola" }).id)
+    expect(business.whatsapp_deliveries.count).to eq(1)
+
+    WhatsApp::ProcessEventJob.perform_now(event(from: "+5491133333333", text: { "body" => "Hola" }).id)
+    expect(business.whatsapp_deliveries.count).to eq(1)
+
+    other = User.create!(email_address: "demo-guard-#{SecureRandom.hex(4)}@example.com", password: "password123")
+      .create_business!(name: "Other demo", slug: "demo-guard-#{SecureRandom.hex(4)}")
+    other.create_whatsapp_connection!(phone_number_id: "789", waba_id: "987", access_token: "secret", automation_enabled: true)
+    other_event = other.whatsapp_events.create!(phone_number_id: "789", provider_id: SecureRandom.uuid, kind: "inbound", payload: { "from" => phone, "timestamp" => Time.current.to_i.to_s, "text" => { "body" => "Hola" } })
+    WhatsApp::ProcessEventJob.perform_now(other_event.id)
+    expect(other.whatsapp_deliveries).to be_empty
+  ensure
+    original_global.nil? ? ENV.delete("WHATSAPP_AUTOMATION_ENABLED") : ENV["WHATSAPP_AUTOMATION_ENABLED"] = original_global
+    original_phone.nil? ? ENV.delete("WHATSAPP_DEMO_AUTOMATION_PHONE_NUMBER_ID") : ENV["WHATSAPP_DEMO_AUTOMATION_PHONE_NUMBER_ID"] = original_phone
+    original_recipient.nil? ? ENV.delete("WHATSAPP_DEMO_AUTOMATION_RECIPIENT") : ENV["WHATSAPP_DEMO_AUTOMATION_RECIPIENT"] = original_recipient
   end
 
   it "reserves only twenty trial reminders, keeps the booking operational and falls back to email" do
@@ -109,6 +171,21 @@ RSpec.describe "WhatsApp automation" do
     expect(client).to receive(:send_message!).once.and_raise(WhatsApp::CloudClient::UncertainDelivery)
     2.times { WhatsApp::SendDeliveryJob.perform_now(delivery.id) }
     expect(delivery.reload.status).to eq("unknown")
+  end
+
+  it "retains a sanitized Meta rejection diagnostic without saving the outgoing payload in metadata" do
+    connect_pro
+    delivery = WhatsAppDelivery.enqueue!(business: business, key: "rejected-reply", purpose: "reply", payload: { to: phone, type: "text", text: { body: "private customer text" } })
+    client = instance_double(WhatsApp::CloudClient)
+    error = WhatsApp::CloudClient::Error.new("Meta respondió HTTP 400", http_status: 400, code: 100, subcode: 42, error_type: "OAuthException", provider_message: "Invalid interactive message", fbtrace_id: "trace-123")
+    allow(WhatsApp::CloudClient).to receive(:new).and_return(client)
+    allow(client).to receive(:send_message!).and_raise(error)
+
+    WhatsApp::SendDeliveryJob.perform_now(delivery.id)
+
+    expect(delivery.reload).to have_attributes(status: "failed", failed_at: be_present)
+    expect(delivery.billing_metadata.fetch("last_error")).to eq({ "http_status" => 400, "code" => 100, "subcode" => 42, "type" => "OAuthException", "message" => "Invalid interactive message", "fbtrace_id" => "trace-123" })
+    expect(delivery.billing_metadata.to_json).not_to include("private customer text")
   end
 
   it "keeps accepted trial usage when a booking is deleted" do

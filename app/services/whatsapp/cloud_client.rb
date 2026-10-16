@@ -3,15 +3,28 @@ require "net/http"
 module WhatsApp
   class CloudClient
     class Error < StandardError
-      attr_reader :code, :subcode
+      attr_reader :code, :subcode, :http_status, :error_type, :fbtrace_id, :provider_message
 
-      def initialize(message = "No se pudo completar la solicitud a Meta", code: nil, subcode: nil)
-        @code, @subcode = code, subcode
+      def initialize(message = "No se pudo completar la solicitud a Meta", code: nil, subcode: nil, http_status: nil, error_type: nil, fbtrace_id: nil, provider_message: nil)
+        @code, @subcode, @http_status = code, subcode, http_status
+        @error_type, @fbtrace_id = error_type, fbtrace_id
+        @provider_message = provider_message
         super(message)
       end
 
       def authorization_error?
         code.to_i.in?([ 102, 190 ])
+      end
+
+      def diagnostic
+        {
+          "http_status" => http_status,
+          "code" => code,
+          "subcode" => subcode,
+          "type" => error_type,
+          "message" => provider_message,
+          "fbtrace_id" => fbtrace_id
+        }.compact
       end
     end
     class UncertainDelivery < Error; end
@@ -50,7 +63,15 @@ module WhatsApp
         raise UncertainDelivery, "Error temporal de Meta" if response.code.to_i >= 500
         unless response.is_a?(Net::HTTPSuccess)
           error = JSON.parse(response.body).fetch("error", {})
-          raise Error.new("Meta respondió HTTP #{response.code}", code: error["code"], subcode: error["error_subcode"])
+          raise Error.new(
+            "Meta respondió HTTP #{response.code}",
+            code: error["code"],
+            subcode: error["error_subcode"],
+            http_status: response.code.to_i,
+            error_type: error["type"],
+            fbtrace_id: error["fbtrace_id"],
+            provider_message: sanitize_provider_message(error["message"])
+          )
         end
 
         JSON.parse(response.body)
@@ -58,6 +79,10 @@ module WhatsApp
         raise UncertainDelivery, "Respuesta de Meta inválida"
       rescue Net::OpenTimeout, Net::ReadTimeout, Net::WriteTimeout, EOFError, Errno::ECONNRESET, Errno::ECONNREFUSED, SocketError, OpenSSL::SSL::SSLError
         raise UncertainDelivery, "No se pudo confirmar la respuesta de Meta. Volvé a conectar la cuenta."
+      end
+
+      def sanitize_provider_message(message)
+        message.to_s.scrub[0, 500].gsub(/\b(?:access[\s_-]?token|authorization|app[\s_-]?secret|client[\s_-]?secret)\b\s*[:=]\s*\S+/i, "[REDACTED]")
       end
   end
 end

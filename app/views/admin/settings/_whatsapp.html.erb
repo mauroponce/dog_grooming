@@ -5,7 +5,7 @@
   <% connection = @business.whatsapp_connection %>
   <% if connection&.connected? %>
     <p class="my-3 font-semibold">WhatsApp conectado<%= " · Coexistence verificado" if connection.coexistence? %></p>
-    <p class="text-sm text-slate-600">Automatización: <%= connection.automation_enabled? && WhatsApp.automation_enabled? ? "habilitada" : "desactivada" %></p>
+    <p class="text-sm text-slate-600">Automatización: <%= connection.automation_enabled? && WhatsApp.automation_enabled?(connection.business) ? "habilitada" : "desactivada" %></p>
     <% expiration = [connection.token_expires_at, connection.data_access_expires_at].compact.min %>
     <% if expiration %>
       <p class="text-sm text-slate-600">Credenciales válidas hasta <%= l(expiration.to_date) %>. Renovación mediante reconexión segura con Meta.</p>

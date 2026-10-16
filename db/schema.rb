@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_15_150000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_16_010100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -530,7 +530,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_15_150000) do
     t.index ["public_site_mode"], name: "index_businesses_on_public_site_mode"
     t.index ["public_template"], name: "index_businesses_on_public_template"
     t.index ["service_catalog_category_id"], name: "index_businesses_on_service_catalog_category_id"
-    t.check_constraint "arrival_mode::text = ANY (ARRAY['fixed'::character varying::text, 'continuous'::character varying::text])", name: "businesses_valid_arrival_mode"
+    t.check_constraint "arrival_mode::text = ANY (ARRAY['fixed'::character varying, 'continuous'::character varying]::text[])", name: "businesses_valid_arrival_mode"
     t.check_constraint "simultaneous_capacity >= 1 AND simultaneous_capacity <= 10", name: "businesses_valid_capacity"
     t.check_constraint "whatsapp_reminder_hours = ANY (ARRAY[2, 24])", name: "businesses_valid_reminder_hours"
   end
@@ -1385,7 +1385,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_15_150000) do
     t.datetime "updated_at", null: false
     t.index ["business_id"], name: "index_subscriptions_on_business_id", unique: true
     t.index ["external_reference"], name: "index_subscriptions_on_external_reference", unique: true
-    t.check_constraint "plan_selected::text = ANY (ARRAY['basic'::character varying::text, 'pro'::character varying::text])", name: "subscriptions_valid_plan"
+    t.check_constraint "plan_selected::text = ANY (ARRAY['basic'::character varying, 'pro'::character varying]::text[])", name: "subscriptions_valid_plan"
   end
 
   create_table "super_admin_tasks", force: :cascade do |t|
@@ -1503,6 +1503,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_15_150000) do
     t.datetime "paused_until"
     t.string "phone", null: false
     t.datetime "updated_at", null: false
+    t.text "whatsapp_id_ciphertext"
     t.index ["business_id", "phone"], name: "index_whatsapp_contacts_on_business_id_and_phone", unique: true
     t.index ["business_id"], name: "index_whatsapp_contacts_on_business_id"
   end
@@ -1580,16 +1581,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_15_150000) do
   add_foreign_key "appointments", "employee_memberships"
   add_foreign_key "appointments", "pets", on_delete: :nullify
   add_foreign_key "appointments", "services"
+  add_foreign_key "appointments", "users", column: "canceled_by_user_id"
+  add_foreign_key "appointments", "users", column: "completed_by_id"
+  add_foreign_key "appointments", "users", column: "deposit_reviewed_by_id"
+  add_foreign_key "appointments", "users", column: "remaining_balance_paid_by_id"
+  add_foreign_key "appointments", "waitlist_entries"
   add_foreign_key "availability_blocks", "bookable_resources"
   add_foreign_key "availability_blocks", "businesses"
   add_foreign_key "availability_blocks", "employee_memberships"
+  add_foreign_key "availability_blocks", "users", column: "created_by_id"
   add_foreign_key "availability_rules", "businesses"
   add_foreign_key "billing_reminders", "businesses"
+  add_foreign_key "billing_reminders", "subscription_invoices"
   add_foreign_key "bookable_resources", "branches"
   add_foreign_key "bookable_resources", "businesses"
   add_foreign_key "booking_attachments", "appointments"
   add_foreign_key "booking_attachments", "businesses"
   add_foreign_key "booking_attachments", "customer_profiles"
+  add_foreign_key "booking_attachments", "users", column: "uploaded_by_id"
   add_foreign_key "booking_attributions", "appointments"
   add_foreign_key "booking_attributions", "businesses"
   add_foreign_key "booking_attributions", "campaign_links"
@@ -1602,14 +1611,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_15_150000) do
   add_foreign_key "booking_notes", "businesses"
   add_foreign_key "booking_notes", "customer_profiles"
   add_foreign_key "booking_notes", "employee_memberships"
+  add_foreign_key "booking_notes", "users", column: "created_by_id"
   add_foreign_key "branches", "businesses"
   add_foreign_key "businesses", "service_catalog_categories"
+  add_foreign_key "businesses", "users", column: "owner_id"
   add_foreign_key "campaign_links", "businesses"
   add_foreign_key "campaign_links", "services"
+  add_foreign_key "campaign_links", "users", column: "created_by_id"
   add_foreign_key "campaign_visits", "businesses"
   add_foreign_key "campaign_visits", "campaign_links"
   add_foreign_key "client_notes", "businesses"
   add_foreign_key "client_notes", "customer_profiles"
+  add_foreign_key "client_notes", "users"
   add_foreign_key "content_templates", "businesses"
   add_foreign_key "customer_packs", "businesses"
   add_foreign_key "customer_packs", "customer_profiles"
@@ -1621,15 +1634,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_15_150000) do
   add_foreign_key "customer_reminders", "businesses"
   add_foreign_key "customer_reminders", "customer_profiles"
   add_foreign_key "customer_reminders", "services"
+  add_foreign_key "customer_reminders", "users", column: "assigned_to_id"
+  add_foreign_key "customer_reminders", "users", column: "completed_by_id"
   add_foreign_key "dynamic_pricing_rules", "businesses", column: "center_id"
   add_foreign_key "email_delivery_logs", "businesses"
   add_foreign_key "employee_availability_rules", "employee_memberships"
   add_foreign_key "employee_memberships", "branches"
   add_foreign_key "employee_memberships", "businesses"
+  add_foreign_key "employee_memberships", "users"
+  add_foreign_key "employee_memberships", "users", column: "invited_by_id"
   add_foreign_key "extras", "businesses"
   add_foreign_key "gift_cards", "appointments", column: "redeemed_booking_id"
   add_foreign_key "gift_cards", "businesses"
   add_foreign_key "gift_cards", "services"
+  add_foreign_key "gift_cards", "users", column: "created_by_id"
   add_foreign_key "holidays", "businesses"
   add_foreign_key "mercado_pago_connections", "businesses"
   add_foreign_key "notification_deliveries", "appointments"
@@ -1637,6 +1655,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_15_150000) do
   add_foreign_key "pack_sessions", "appointments"
   add_foreign_key "pack_sessions", "businesses"
   add_foreign_key "pack_sessions", "customer_packs"
+  add_foreign_key "pack_sessions", "users", column: "created_by_id"
   add_foreign_key "payment_accounts", "businesses"
   add_foreign_key "pets", "businesses"
   add_foreign_key "pets", "customer_profiles"

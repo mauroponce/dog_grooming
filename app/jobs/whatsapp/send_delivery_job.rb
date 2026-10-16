@@ -1,11 +1,9 @@
 module WhatsApp
   class SendDeliveryJob < ApplicationJob
     def perform(id)
-      return unless WhatsApp.automation_enabled?
-
       delivery = WhatsAppDelivery.find(id)
       connection = delivery.business.whatsapp_connection
-      return unless WhatsApp.automation_enabled?(delivery.business)
+      return unless WhatsApp.automation_enabled?(delivery.business, recipient: delivery.payload["to"])
 
       delivery.business.with_lock do
         delivery.lock!
@@ -30,11 +28,11 @@ module WhatsApp
           return
         end
         if delivery.purpose == "reply"
-          contact = delivery.business.whatsapp_contacts.find_by(phone: PhoneNumber.normalize(delivery.payload["to"]))
+          contact = contact_for(delivery)
           return delivery.update!(status: "skipped") unless contact&.window_open? && !contact.paused?
         end
         unless delivery.payload["type"] == "template"
-          contact = delivery.business.whatsapp_contacts.find_by(phone: PhoneNumber.normalize(delivery.payload["to"]))
+          contact = contact_for(delivery)
           return delivery.update!(status: "skipped") unless contact&.window_open?
         end
         delivery.update!(status: "sending", attempts: delivery.attempts + 1)
@@ -58,13 +56,27 @@ module WhatsApp
       Rails.logger.warn("whatsapp_delivery_unknown delivery_id=#{id}")
     rescue CloudClient::Error => error
       connection&.update!(authorization_failed_at: Time.current, automation_enabled: false) if error.authorization_error?
-      failed!(delivery)
-      Rails.logger.warn("whatsapp_delivery_failed delivery_id=#{id}")
+      failed!(delivery, error: error)
+      Rails.logger.warn("whatsapp_delivery_failed delivery_id=#{id} http_status=#{error.http_status} code=#{error.code} subcode=#{error.subcode} type=#{error.error_type} fbtrace_id=#{error.fbtrace_id}")
     end
 
     private
-      def failed!(delivery)
-        delivery.update!(status: "failed")
+      def contact_for(delivery)
+        business = delivery.business
+        business.whatsapp_contacts.find_by(phone: PhoneNumber.normalize(delivery.payload["to"])) ||
+          demo_contact_for(business, delivery.payload["to"])
+      end
+
+      def demo_contact_for(business, recipient)
+        return unless WhatsApp.demo_api_recipient?(business, recipient)
+
+        business.whatsapp_contacts.find_by(phone: PhoneNumber.normalize(ENV["WHATSAPP_DEMO_AUTOMATION_RECIPIENT"]))
+      end
+
+      def failed!(delivery, error: nil)
+        metadata = delivery.billing_metadata
+        metadata = metadata.merge("last_error" => error.diagnostic) if error
+        delivery.update!(status: "failed", failed_at: Time.current, billing_metadata: metadata)
         SendAppointmentReminderJob.perform_later(delivery.appointment) if delivery.purpose == "reminder" && delivery.appointment
       end
   end
