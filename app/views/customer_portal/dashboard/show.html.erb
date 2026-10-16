@@ -328,12 +328,6 @@
                   <h2 class="mt-5 text-xl font-bold">¿Cancelar este turno?</h2>
                   <p class="mt-2 text-sm font-bold text-slate-700"><%= appointment.service.name %> · <%= portal_appointment_date_label(appointment) %></p>
                   <p class="mt-2 text-sm leading-6 text-slate-500">El turno quedará disponible para otra persona. La seña no se devuelve automáticamente por cancelación.</p>
-                  <% if @business.whatsapp_contact_link.present? %>
-                    <%= link_to @business.whatsapp_contact_link, target: "_blank", rel: "noopener", class: "mt-4 inline-flex items-center gap-2 text-sm font-bold text-emerald-700 underline decoration-emerald-200 underline-offset-4 hover:text-emerald-800" do %>
-                      <%= public_icon("message", css: "h-4 w-4") %>
-                      Contactar al centro por WhatsApp
-                    <% end %>
-                  <% end %>
 
                   <%= form_with url: customer_portal_booking_cancel_path(@business.slug, appointment.customer_portal_booking_token), method: :post, class: "mt-5" do %>
                     <label class="block">
@@ -401,11 +395,8 @@
           <article class="rounded-[26px] border border-slate-200 bg-white p-5 shadow-card">
             <p class="text-xs font-bold uppercase tracking-[.14em] text-slate-400">Contacto</p>
             <h3 class="mt-2 text-base font-bold">¿Necesitás ayuda?</h3>
-            <p class="mt-2 text-sm leading-6 text-slate-500"><%= @business.name %> responde consultas por WhatsApp.</p>
-            <%= link_to @business.whatsapp_contact_link, target: "_blank", rel: "noopener", class: "mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-emerald-700" do %>
-              <%= public_icon("message", css: "h-4 w-4") %>
-              Hablar con el centro
-            <% end %>
+            <p class="mt-2 text-sm leading-6 text-slate-500">Encontrá los datos de contacto de <%= @business.name %> en su página pública.</p>
+            <%= link_to "Ver página del centro", @business.public_url, class: "mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-emerald-700" %>
           </article>
         </aside>
       </div>
@@ -501,9 +492,9 @@
           </label>
 
           <label>
-            <span class="text-xs font-bold text-slate-800">WhatsApp</span>
+            <span class="text-xs font-bold text-slate-800">Teléfono</span>
             <%= form.telephone_field :phone, required: true, autocomplete: "tel", inputmode: "tel", placeholder: "+54 11 5555 5555", class: "mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-slate-50/70 px-4 text-sm font-semibold outline-none transition focus:border-brand-300 focus:bg-white focus:ring-4 focus:ring-brand-100" %>
-            <p class="mt-2 text-[11px] leading-5 text-slate-400">Usalo para recibir las confirmaciones y recordatorios de tus turnos.</p>
+            <p class="mt-2 text-[11px] leading-5 text-slate-400">Usalo para identificar tu historial de turnos.</p>
           </label>
 
           <label>

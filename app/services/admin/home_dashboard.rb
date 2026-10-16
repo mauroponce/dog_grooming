@@ -17,8 +17,6 @@ module Admin
       :compatibility_tone,
       :last_visit_label,
       :source,
-      :whatsapp_url,
-      :message,
       keyword_init: true
     )
     Opportunity = Struct.new(
@@ -394,9 +392,7 @@ module Admin
               compatibilityLabel: candidate.compatibility_label,
               compatibilityTone: candidate.compatibility_tone,
               lastVisitLabel: candidate.last_visit_label,
-              source: candidate.source,
-              whatsappUrl: candidate.whatsapp_url,
-              message: candidate.message
+              source: candidate.source
             }
           end
         }
@@ -492,7 +488,7 @@ module Admin
       if pending_customer_action_count.positive?
         items << Priority.new(
           title: "#{pending_customer_action_count} #{plural_label(pending_customer_action_count, 'turno', 'turnos')} sin confirmar",
-          body: "Conviene reforzar por WhatsApp antes de que avance el día.",
+          body: "Conviene revisar estos turnos antes de que avance el día.",
           tone: "amber",
           icon: "bell",
           path: Rails.application.routes.url_helpers.admin_calendar_path(date: date.iso8601),
@@ -802,22 +798,8 @@ module Admin
           compatibility_label: compatibility_label_for(suggestion),
           compatibility_tone: compatibility_tone_for(suggestion),
           last_visit_label: last_visit_label(suggestion.last_visit_at),
-          source: suggestion.source,
-          whatsapp_url: suggestion.whatsapp_url,
-          message: opportunity_whatsapp_message(suggestion, gap)
+          source: suggestion.source
         )
-      end
-
-      def opportunity_whatsapp_message(suggestion, gap)
-        first_name = suggestion.customer.name.to_s.split.first.presence || "Hola"
-        professional = gap.employee_membership&.display_name
-        lines = []
-        lines << "Hola #{first_name}. Se liberó un horario hoy a las #{time_label(gap.starts_at)}"
-        lines.last << " con #{professional}" if professional.present?
-        lines.last << " para #{suggestion.service.name}."
-        lines << message_reason_for(suggestion)
-        lines << "¿Te interesa aprovecharlo?"
-        lines.compact_blank.join(" ")
       end
 
       def message_reason_for(suggestion)
@@ -902,10 +884,10 @@ module Admin
 
       def mask_phone(value)
         digits = PhoneNumber.normalize(value)
-        return "WhatsApp cargado" if digits.blank?
+        return "Teléfono cargado" if digits.blank?
 
         visible = digits.last(4)
-        "WhatsApp •••• #{visible}"
+        "Teléfono •••• #{visible}"
       end
 
       def day_name(day)

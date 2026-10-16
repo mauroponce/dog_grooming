@@ -129,9 +129,6 @@ module Public
       PublicUrls.path(:waitlist, business, use_custom_domain: @use_custom_domain)
     end
 
-    def whatsapp_url
-      business.whatsapp_contact_link.presence || business.contact_whatsapp_link
-    end
 
     def public_url
       PublicLinks::UrlBuilder.business(business)

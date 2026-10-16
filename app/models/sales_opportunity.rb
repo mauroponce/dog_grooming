@@ -1,5 +1,3 @@
-require "ostruct"
-
 class SalesOpportunity < ApplicationRecord
   TYPES = %w[
     follow_up_due
@@ -49,52 +47,6 @@ class SalesOpportunity < ApplicationRecord
     return "Media" if score >= 50
 
     "Baja"
-  end
-
-  def whatsapp_template_key
-    {
-      "follow_up_due" => "sales_follow_up",
-      "inactive_customer" => "inactive_customer_reactivation",
-      "fillable_gap" => "gap_offer",
-      "waitlist_match" => "waitlist_offer",
-      "abandoned_booking" => "abandoned_booking_recovery",
-      "pack_ending" => "pack_renewal",
-      "referral_request" => "referral_invite"
-    }.fetch(opportunity_type, "customer_reactivation")
-  end
-
-  def whatsapp_url
-    phone = customer_profile&.phone.presence || appointment&.customer_phone.presence || metadata["phone_e164"].presence
-    return "" if phone.blank?
-
-    WhatsApp::MessageBuilder.new(
-      business: business,
-      template_key: whatsapp_template_key,
-      booking: appointment,
-      customer: customer_profile,
-      service: service,
-      professional: employee_membership,
-      gap: gap_context,
-      customer_pack: customer_pack_context,
-      campaign_link: campaign_link_context
-    ).url(phone: phone)
-  end
-
-  def gap_context
-    starts_at = metadata["gap_starts_at"].presence
-    return if starts_at.blank?
-
-    OpenStruct.new(starts_at: Time.zone.parse(starts_at))
-  rescue ArgumentError, TypeError
-    nil
-  end
-
-  def customer_pack_context
-    CustomerPack.find_by(id: metadata["customer_pack_id"], business: business) if metadata["customer_pack_id"].present?
-  end
-
-  def campaign_link_context
-    CampaignLink.find_by(id: metadata["campaign_link_id"], business: business) if metadata["campaign_link_id"].present?
   end
 
   private

@@ -328,12 +328,6 @@ class EmployeeMembership < ApplicationRecord
     pending?
   end
 
-  def whatsapp_url(text: nil)
-    return "" if phone.blank?
-
-    PhoneNumber.whatsapp_link(phone, text: text)
-  end
-
   def last_access_at
     user&.sessions&.maximum(:created_at)
   end

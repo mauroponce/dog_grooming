@@ -107,7 +107,6 @@ RSpec.describe Appointment, type: :model do
       expect(event.event_type).to eq("customer_cancelled_booking")
       expect(event.title).to eq("Cliente canceló un turno")
       expect(event.metadata["appointment_id"]).to eq(appointment.id)
-      expect(event.metadata["whatsapp_url"]).to be_present
       expect(event.metadata["action_url"]).to end_with("/admin/clientes/#{customer.id}/editar#turnos")
       expect(Admin::NotificationItem.new(event).action_url).to eq(event.metadata["action_url"])
       expect(appointment.cancellation_actor_label).to eq("Cliente")
@@ -130,37 +129,6 @@ RSpec.describe Appointment, type: :model do
       expect {
         appointment.cancel!(by: "customer_link")
       }.not_to change { business.provider_events.count }
-    end
-  end
-
-  describe "#manual_whatsapp_message" do
-    it "formats the appointment date for customers in Spanish" do
-      appointment = described_class.new(
-        business: Business.new(name: "Aura Centro de Estetica", address: "Av. Siempre Viva 123", city: "Buenos Aires"),
-        service: Service.new(name: "Limpieza facial profunda"),
-        customer_name: "Julieta",
-        customer_phone: "+54 9 11 1111-1111",
-        starts_at: Time.zone.local(2026, 6, 30, 15, 30),
-        status: :pending_confirmation,
-        deposit_status: "not_required"
-      )
-
-      expect(appointment.customer_starts_at_label).to eq("30/06/2026 · 15:30 hs")
-      expect(appointment.manual_whatsapp_message).to include("Fecha: 30/06/2026 · 15:30 hs")
-      expect(appointment.manual_whatsapp_message).not_to include("June")
-    end
-
-    it "does not include Google Calendar links in customer WhatsApp messages" do
-      business = create_business
-      customer = business.customer_profiles.create!(
-        name: "Julieta Perez",
-        phone: "+54 9 11 1111-1111",
-        email: "julieta@gmail.com"
-      )
-      appointment = create_appointment(business, customer_profile: customer)
-
-      expect(appointment.manual_whatsapp_message).not_to include("calendar.google.com")
-      expect(appointment.deposit_confirmation_whatsapp_message).not_to include("calendar.google.com")
     end
   end
 

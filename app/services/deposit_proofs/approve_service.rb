@@ -22,8 +22,7 @@ module DepositProofs
               appointment,
               host: app_host,
               protocol: app_protocol
-            ),
-            whatsapp_url: WhatsApp::ProofMessageBuilder.new(appointment).confirmed_url
+            )
           }
         )
         Appointments::ConfirmedBookingNotificationService.call(appointment) if notify_customer

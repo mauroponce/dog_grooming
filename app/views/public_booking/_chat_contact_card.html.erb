@@ -15,10 +15,7 @@
       <% end %>
     </div>
 
-    <a href="<%= center.contact_whatsapp_link %>" target="_blank" rel="noopener" class="flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-3 py-2 text-center text-xs font-bold text-white shadow-lg shadow-emerald-600/15 transition hover:bg-emerald-700">
-      <%= public_icon("message", css: "h-4 w-4") %>
-      <span>WhatsApp <%= center.public_phone %></span>
-    </a>
+    <p class="flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-3 py-2 text-center text-xs font-bold text-white shadow-lg shadow-emerald-600/15"><%= center.public_phone %></p>
 
     <% if center.geocoded? %>
       <div class="relative overflow-hidden rounded-2xl border border-zinc-100 bg-zinc-50">

@@ -163,7 +163,7 @@ export function renderAppointmentDetail(appointment, { actions = {}, variant = "
         <dl class="appointment-detail-panel__customer-data">
           ${appointment.petName ? `<div><dt>Mascota</dt><dd>${escapeHTML(appointment.petName)}</dd></div>` : ""}
           <div><dt>Responsable</dt><dd>${escapeHTML(appointment.ownerName || appointment.client || "Sin registrar")}</dd></div>
-          <div><dt>WhatsApp</dt><dd>${appointment.whatsappUrl ? `<a href="${escapeAttribute(appointment.whatsappUrl)}" target="_blank" rel="noopener noreferrer">${escapeHTML(appointment.phone || "Abrir WhatsApp")}</a>` : escapeHTML(appointment.phone || "Sin WhatsApp")}</dd></div>
+          <div><dt>Teléfono</dt><dd>${escapeHTML(appointment.phone || "Sin teléfono")}</dd></div>
           <div><dt>Email</dt><dd>${appointment.customerEmail ? `<a href="mailto:${escapeAttribute(appointment.customerEmail)}">${escapeHTML(appointment.customerEmail)}</a>` : "Sin email"}</dd></div>
           <div><dt>Cliente desde</dt><dd>${escapeHTML(appointment.customerCreatedAt ? dateTime(appointment.customerCreatedAt).split(",")[0] : "Sin registrar")}</dd></div>
         </dl>

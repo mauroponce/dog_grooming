@@ -69,9 +69,4 @@ RSpec.describe "Grooming booking configuration" do
     first.update!(internal_notes: "Cuidados")
     expect(first.reload.ends_at).to eq(start + 45.minutes)
   end
-
-  it "limits active WhatsApp categories to nine" do
-    9.times { |i| ServiceCategory.find_or_create_for!(business: business, name: "Categoría #{i}") }
-    expect { ServiceCategory.find_or_create_for!(business: business, name: "Décima") }.to raise_error(ActiveRecord::RecordInvalid, /nueve/)
-  end
 end

@@ -449,7 +449,7 @@ module Admin
       end
 
       def validate_customer_contact_details!(attrs)
-        raise ArgumentError, "Completá el WhatsApp del cliente." if attrs[:customer_phone].blank?
+        raise ArgumentError, "Completá el teléfono del cliente." if attrs[:customer_phone].blank?
         raise ArgumentError, "Completá el email del cliente." if attrs[:customer_email].blank?
         raise ArgumentError, "Ingresá un email válido." unless attrs[:customer_email].to_s.match?(URI::MailTo::EMAIL_REGEXP)
       end
@@ -504,7 +504,6 @@ module Admin
           petSex: appointment.pet&.sex_label,
           petNotes: appointment.pet&.notes,
           phone: appointment.customer_phone,
-          whatsappUrl: appointment.customer_whatsapp_link,
           customerEmail: appointment.customer_calendar_email,
           service: appointment.service.name,
           services: appointment_services,

@@ -1,9 +1,9 @@
-<% content_for :title, "Cita.pet - Turnos automáticos por WhatsApp" %>
+<% content_for :title, "Cita.pet - Reservas online" %>
 <% content_for :full_width, true %>
 <% content_for :head do %>
-  <meta name="description" content="Automatizá reservas por WhatsApp, cobrá señas con Mercado Pago y confirmá turnos al instante. 14 días gratis, sin tarjeta.">
+  <meta name="description" content="Publicá tu página de reservas, cobrá señas con Mercado Pago y administrá turnos. 14 días gratis, sin tarjeta.">
   <meta name="theme-color" content="#ffded4">
-  <meta property="og:title" content="Cita.pet - Turnos automáticos por WhatsApp">
+  <meta property="og:title" content="Cita.pet - Reservas online">
   <meta property="og:description" content="Tu cliente reserva y paga la seña por Mercado Pago automáticamente.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://cita.pet">
@@ -125,7 +125,7 @@
         </span>
         <span>
           <span class="block text-[17px] font-bold tracking-tight">Cita.pet</span>
-          <span class="block text-[10px] font-bold text-brand-700">Turnos automáticos por WhatsApp</span>
+          <span class="block text-[10px] font-bold text-brand-700">Reservas online para peluquerías</span>
         </span>
       </a>
 
@@ -173,12 +173,12 @@
           </span>
 
           <h1 class="mt-7 max-w-2xl text-5xl font-bold leading-[.98] tracking-[-.055em] text-slate-950 sm:text-6xl lg:text-[72px]">
-            Tu WhatsApp toma turnos.
+            Tu página toma turnos.
             <span class="landing-gradient-text block">Vos cuidás mascotas.</span>
           </h1>
 
           <p class="mt-7 max-w-2xl text-lg leading-8 text-slate-600 [text-shadow:0_1px_0_rgba(255,255,255,.75)]">
-            Tus clientes eligen un servicio desde WhatsApp, reservan en una web rápida y pagan la seña con Mercado Pago. El turno se confirma solo.
+            Compartí tu enlace de reservas donde quieras. Tus clientes eligen un servicio, reservan en una web rápida y pagan la seña con Mercado Pago.
           </p>
 
           <div class="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -195,8 +195,8 @@
           <div class="mt-9 grid max-w-2xl gap-3 sm:grid-cols-3">
             <div class="rounded-2xl border border-white bg-white/80 p-4 shadow-sm">
               <%= landing_icon.call(:message_off, classes: "h-5 w-5 text-brand-700") %>
-              <p class="mt-3 text-sm font-bold">WhatsApp como canal</p>
-              <p class="mt-1 text-xs leading-5 text-slate-500">Donde ya están tus clientes.</p>
+              <p class="mt-3 text-sm font-bold">Un enlace propio</p>
+              <p class="mt-1 text-xs leading-5 text-slate-500">Para compartir en tus canales.</p>
             </div>
             <div class="rounded-2xl border border-white bg-white/80 p-4 shadow-sm">
               <%= landing_icon.call(:dollar, classes: "h-5 w-5 text-emerald-700") %>
@@ -367,7 +367,7 @@
               <%= landing_icon.call(:bot, classes: "h-5 w-5") %>
             </span>
             <h3 class="mt-5 text-lg font-bold">Confirmación inmediata</h3>
-            <p class="mt-2 text-sm leading-6 text-slate-500">El pago exitoso genera el turno y avisa al cliente por WhatsApp.</p>
+            <p class="mt-2 text-sm leading-6 text-slate-500">El pago exitoso genera el turno y lo registra en tu agenda.</p>
           </article>
         </div>
       </div>
@@ -377,17 +377,17 @@
       <div class="mx-auto grid max-w-7xl items-center gap-14 px-4 sm:px-6 lg:grid-cols-[.9fr_1.1fr] lg:px-8">
         <div>
           <p class="text-xs font-bold uppercase tracking-[.18em] text-brand-700">Antes, durante y después</p>
-          <h2 class="mt-4 text-4xl font-bold tracking-[-.045em] sm:text-5xl">Un turno completo, en una conversación.</h2>
+          <h2 class="mt-4 text-4xl font-bold tracking-[-.045em] sm:text-5xl">Un turno completo, desde tu enlace.</h2>
           <p class="mt-5 text-base leading-7 text-slate-500">
-            El flujo empieza cuando el cliente escribe a la línea de WhatsApp de tu peluquería.
+            El flujo empieza cuando el cliente abre la página de reservas de tu peluquería.
           </p>
 
           <div class="mt-8 space-y-5">
             <div class="flex gap-4">
               <span class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-slate-950 text-sm font-bold text-white">1</span>
               <div>
-                <h3 class="font-bold">Elige un servicio en WhatsApp</h3>
-                <p class="mt-1 text-sm leading-6 text-slate-500">Recibe una lista interactiva y Cita.pet le envía su enlace de reserva personalizado.</p>
+                <h3 class="font-bold">Abre tu página de reservas</h3>
+                <p class="mt-1 text-sm leading-6 text-slate-500">Podés compartir el enlace en Instagram, tu perfil de Google o un mensaje manual.</p>
               </div>
             </div>
 
@@ -403,7 +403,7 @@
               <span class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-emerald-600 text-sm font-bold text-white">3</span>
               <div>
                 <h3 class="font-bold">El webhook cierra el ciclo</h3>
-                <p class="mt-1 text-sm leading-6 text-slate-500">Al acreditarse el pago, el turno se crea en tu agenda y llega la confirmación por WhatsApp.</p>
+                <p class="mt-1 text-sm leading-6 text-slate-500">Al acreditarse el pago, el turno se crea en tu agenda y el administrador recibe un email.</p>
               </div>
             </div>
           </div>
@@ -485,7 +485,7 @@
           <div class="mt-8 space-y-4">
             <p class="flex gap-3 text-sm leading-6 text-slate-300"><%= landing_icon.call(:check_circle, classes: "mt-0.5 h-5 w-5 shrink-0 text-emerald-300") %>Detecta qué requiere atención.</p>
             <p class="flex gap-3 text-sm leading-6 text-slate-300"><%= landing_icon.call(:check_circle, classes: "mt-0.5 h-5 w-5 shrink-0 text-emerald-300") %>Encuentra huecos y tutores compatibles.</p>
-            <p class="flex gap-3 text-sm leading-6 text-slate-300"><%= landing_icon.call(:check_circle, classes: "mt-0.5 h-5 w-5 shrink-0 text-emerald-300") %>Prepara mensajes para WhatsApp.</p>
+            <p class="flex gap-3 text-sm leading-6 text-slate-300"><%= landing_icon.call(:check_circle, classes: "mt-0.5 h-5 w-5 shrink-0 text-emerald-300") %>Prioriza tareas y seguimientos internos.</p>
             <p class="flex gap-3 text-sm leading-6 text-slate-300"><%= landing_icon.call(:check_circle, classes: "mt-0.5 h-5 w-5 shrink-0 text-emerald-300") %>Muestra dónde se pierden turnos o ingresos.</p>
           </div>
         </div>
@@ -497,7 +497,7 @@
         <div class="mx-auto max-w-3xl text-center">
           <p class="text-xs font-bold uppercase tracking-[.18em] text-brand-700">Precios claros, alta instantánea</p>
           <h2 class="mt-4 text-4xl font-bold tracking-[-.045em] sm:text-5xl">Un plan para empezar. <span class="landing-gradient-text">Otro para ir por más.</span></h2>
-          <p class="mt-5 text-base leading-7 text-slate-500">Reservas automáticas por WhatsApp y señas con Mercado Pago desde el primer plan. Con PRO, sumás recordatorios por WhatsApp.</p>
+          <p class="mt-5 text-base leading-7 text-slate-500">Página de reservas y señas con Mercado Pago desde el primer plan.</p>
         </div>
 
         <div class="mt-12 grid gap-6 lg:grid-cols-2">
@@ -507,11 +507,10 @@
             <p class="mt-1 text-sm font-bold text-slate-500">ARS / mes</p>
             <p class="mt-5 text-sm leading-6 text-slate-600">Para tomar turnos y cobrar señas sin responder mensajes.</p>
             <ul class="mt-7 space-y-3 text-sm font-semibold text-slate-700">
-              <% ["Reservas automáticas por WhatsApp, 24/7", "Catálogo interactivo de servicios", "Página de reservas rápida y sin registro", "Seña obligatoria con Mercado Pago", "Confirmación instantánea tras el pago", "Recordatorios previos por email"].each do |feature| %>
+              <% ["Página de reservas disponible 24/7", "Catálogo interactivo de servicios", "Página de reservas rápida y sin registro", "Seña obligatoria con Mercado Pago", "Registro instantáneo tras el pago", "Agenda y clientes centralizados"].each do |feature| %>
                 <li class="flex gap-3"><%= landing_icon.call(:check, classes: "mt-0.5 h-4 w-4 shrink-0 text-emerald-600") %><span><%= feature %></span></li>
               <% end %>
             </ul>
-            <p class="mt-6 rounded-2xl bg-slate-100 px-4 py-3 text-xs font-bold text-slate-500">No incluye recordatorios por WhatsApp.</p>
             <%= link_to "Empezar 14 días gratis", registro_path, class: "mt-7 flex w-full items-center justify-center rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-sm font-bold text-slate-800 hover:border-brand-300 hover:text-brand-700" %>
           </article>
 
@@ -520,17 +519,16 @@
             <p class="text-xs font-bold uppercase tracking-[.16em] text-brand-200">Plan PRO</p>
             <p class="mt-4 text-5xl font-bold tracking-tight">$45.000</p>
             <p class="mt-1 text-sm font-bold text-slate-400">ARS / mes</p>
-            <p class="mt-5 text-sm leading-6 text-slate-300">Todo lo del Plan Básico, más recordatorios automáticos para reducir ausencias.</p>
+            <p class="mt-5 text-sm leading-6 text-slate-300">Todo lo del Plan Básico, más herramientas avanzadas para administrar tu operación.</p>
             <ul class="mt-7 space-y-3 text-sm font-semibold text-slate-100">
-              <% ["Todo lo incluido en el Plan Básico", "Recordatorios por WhatsApp con plantillas de utilidad aprobadas por Meta", "Elegí enviarlos 24 h o 2 h antes", "Recordatorios ilimitados con PRO activo, sin cargos extra", "20 recordatorios de WhatsApp durante la prueba de 14 días"].each do |feature| %>
+              <% ["Todo lo incluido en el Plan Básico", "Gestión avanzada de agenda", "Seguimientos internos", "Reportes operativos", "Asistente con IA"].each do |feature| %>
                 <li class="flex gap-3"><%= landing_icon.call(:check, classes: "mt-0.5 h-4 w-4 shrink-0 text-emerald-300") %><span><%= feature %></span></li>
               <% end %>
             </ul>
-            <p class="mt-6 rounded-2xl bg-white/10 px-4 py-3 text-xs font-bold text-slate-300">Los recordatorios extra continúan enviándose y se facturan automáticamente.</p>
             <%= link_to "Empezar 14 días gratis", registro_path, class: "mt-7 flex w-full items-center justify-center rounded-2xl bg-brand-500 px-4 py-3.5 text-sm font-bold text-white hover:bg-brand-600" %>
           </article>
         </div>
-        <p class="mx-auto mt-7 max-w-4xl text-center text-xs leading-5 text-slate-500">Precios mensuales en pesos argentinos. La prueba de 14 días no requiere tarjeta e incluye 20 recordatorios WhatsApp con PRO. Al abonar tu primer mes, los recordatorios son ilimitados, sin excedentes. Las comisiones de Mercado Pago se rigen por las condiciones del proveedor.</p>
+        <p class="mx-auto mt-7 max-w-4xl text-center text-xs leading-5 text-slate-500">Precios mensuales en pesos argentinos. La prueba de 14 días no requiere tarjeta. Las comisiones de Mercado Pago se rigen por las condiciones del proveedor.</p>
       </div>
     </section>
 
@@ -540,18 +538,18 @@
           <p class="text-xs font-bold uppercase tracking-[.18em] text-brand-700">Preguntas frecuentes</p>
           <h2 class="mt-4 text-4xl font-bold tracking-[-.045em] sm:text-5xl">Lo importante antes de empezar.</h2>
           <p class="mt-5 max-w-md text-base leading-7 text-slate-500">
-            Pensado para peluquerías caninas que hoy dependen demasiado de WhatsApp.
+            Pensado para peluquerías caninas que buscan ordenar sus reservas.
           </p>
         </div>
 
         <div class="space-y-3">
           <article class="landing-faq-item is-open rounded-[22px] border border-slate-200 bg-white px-5 py-4 shadow-sm">
             <button type="button" class="landing-faq-toggle flex w-full items-center justify-between gap-4 text-left">
-              <span class="text-sm font-bold">¿Tengo que dejar de usar WhatsApp?</span>
+              <span class="text-sm font-bold">¿Cómo comparto mi página de reservas?</span>
               <%= landing_icon.call(:chevron_down, classes: "landing-faq-chevron h-4 w-4 text-slate-400") %>
             </button>
             <div class="landing-faq-panel">
-              <p class="text-sm leading-6 text-slate-500">No. El cliente inicia el flujo escribiendo a tu WhatsApp; dentro de la ventana de 24 horas recibe la lista interactiva y el enlace de reserva. Siempre puede elegir hablar con una persona.</p>
+              <p class="text-sm leading-6 text-slate-500">Cada negocio tiene un enlace propio que puede compartir en Instagram, su perfil de Google o cualquier mensaje que envíe manualmente.</p>
             </div>
           </article>
 
@@ -561,7 +559,7 @@
               <%= landing_icon.call(:chevron_down, classes: "landing-faq-chevron h-4 w-4 text-slate-400") %>
             </button>
             <div class="landing-faq-panel">
-              <p class="text-sm leading-6 text-slate-500">La seña es obligatoria y se cobra con Mercado Pago. Cuando el webhook informa el pago exitoso, Cita.pet crea el turno y confirma por WhatsApp.</p>
+              <p class="text-sm leading-6 text-slate-500">La seña es obligatoria y se cobra con Mercado Pago. Cuando el webhook informa el pago exitoso, Cita.pet crea el turno en la agenda.</p>
             </div>
           </article>
 
@@ -581,17 +579,17 @@
               <%= landing_icon.call(:chevron_down, classes: "landing-faq-chevron h-4 w-4 text-slate-400") %>
             </button>
             <div class="landing-faq-panel">
-              <p class="text-sm leading-6 text-slate-500">Los dos planes incluyen reservas por WhatsApp, catálogo, checkout web, señas por Mercado Pago y confirmación inmediata. PRO agrega recordatorios por WhatsApp con plantillas de utilidad de Meta.</p>
+              <p class="text-sm leading-6 text-slate-500">Los dos planes incluyen página de reservas, catálogo, checkout web y señas por Mercado Pago. PRO agrega herramientas avanzadas de operación.</p>
             </div>
           </article>
 
           <article class="landing-faq-item rounded-[22px] border border-slate-200 bg-white px-5 py-4 shadow-sm">
             <button type="button" class="landing-faq-toggle flex w-full items-center justify-between gap-4 text-left">
-              <span class="text-sm font-bold">¿Qué pasa después de los 250 recordatorios de PRO?</span>
+              <span class="text-sm font-bold">¿El tutor necesita registrarse?</span>
               <%= landing_icon.call(:chevron_down, classes: "landing-faq-chevron h-4 w-4 text-slate-400") %>
             </button>
             <div class="landing-faq-panel">
-              <p class="text-sm leading-6 text-slate-500">El sistema continúa enviándolos y factura automáticamente $50 ARS por cada recordatorio adicional. El límite incluido no interrumpe las notificaciones.</p>
+              <p class="text-sm leading-6 text-slate-500">No. Puede reservar desde la página pública del negocio sin crear una cuenta.</p>
             </div>
           </article>
         </div>
@@ -604,7 +602,7 @@
           <p class="text-xs font-bold uppercase tracking-[.18em] text-brand-700">Probalo hoy, sin esperas</p>
           <h2 class="mt-4 max-w-xl text-4xl font-bold tracking-[-.045em] sm:text-5xl">Tu próximo turno puede reservarse solo.</h2>
           <p class="mt-5 max-w-lg text-base leading-7 text-slate-500">
-            Creá tu cuenta, cargá tus servicios y vinculá tu WhatsApp. Durante 14 días probás Cita.pet gratis, sin tarjeta.
+            Creá tu cuenta, cargá tus servicios y publicá tu página de reservas. Durante 14 días probás Cita.pet gratis, sin tarjeta.
           </p>
 
           <div class="mt-8 space-y-5">

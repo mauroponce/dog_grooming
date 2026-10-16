@@ -17,8 +17,7 @@ module Appointments
           appointment_id: appointment.id,
           appointment_ids: appointment.appointment_payment&.appointment_ids,
           appointment_payment_id: appointment.appointment_payment&.id,
-          action_url: admin_appointment_url,
-          whatsapp_url: appointment.manual_whatsapp_url
+          action_url: admin_appointment_url
         }.compact
       )
     end

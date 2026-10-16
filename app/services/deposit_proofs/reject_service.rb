@@ -23,8 +23,7 @@ module DepositProofs
               appointment,
               host: app_host,
               protocol: app_protocol
-            ),
-            whatsapp_url: WhatsApp::ProofMessageBuilder.new(appointment).rejected_url(reason:)
+            )
           }
         )
       end

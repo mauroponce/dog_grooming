@@ -1,7 +1,7 @@
 class BillingReminder < ApplicationRecord
   TYPES = %w[
     due_7_days due_3_days due_today overdue_2_days overdue_5_days overdue_10_days
-    manual_whatsapp_task restricted_notice suspended_notice
+    manual_contact_task restricted_notice suspended_notice
   ].freeze
 
   belongs_to :business

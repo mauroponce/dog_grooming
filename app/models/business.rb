@@ -3,7 +3,7 @@ class Business < ApplicationRecord
 
   SUBSCRIPTION_DETAILS = {
     name: "Suscripción Cita.pet",
-    description: "Reservas online para peluquerías caninas, con señas, comprobantes, agenda de mascotas y WhatsApp prearmado.",
+    description: "Reservas online para peluquerías caninas, con señas, comprobantes y agenda de mascotas.",
     monthly_amount_cents: 3_500_000,
     trial_days: 14,
     setup_included: true,
@@ -325,16 +325,10 @@ class Business < ApplicationRecord
   has_many :ai_api_usage_events, dependent: :nullify
   has_many :ai_chat_conversations, dependent: :destroy
   has_many :ai_context_imports, dependent: :destroy
-  has_many :whatsapp_templates, class_name: "WhatsAppTemplate", dependent: :destroy
   has_many :email_delivery_logs, dependent: :nullify
   has_one :subscription, dependent: :destroy
-  has_one :whatsapp_connection, dependent: :destroy
-  has_many :whatsapp_contacts, dependent: :destroy
-  has_many :whatsapp_events, dependent: :destroy
-  has_many :whatsapp_deliveries, dependent: :destroy
   validates :simultaneous_capacity, numericality: { only_integer: true, in: 1..10 }, allow_nil: true
   validates :arrival_mode, inclusion: { in: %w[fixed continuous] }
-  validates :whatsapp_reminder_hours, inclusion: { in: [ 2, 24 ] }
   validate :valid_arrival_times
   validate do
     if simultaneous_capacity.nil? && simultaneous_capacity_in_database.present?
@@ -356,7 +350,6 @@ class Business < ApplicationRecord
   after_create :create_default_subscription!, if: :billing_enabled?
   after_create :create_default_availability_rules!
   after_create :create_default_branch!
-  after_create :create_default_whatsapp_templates!
   after_create :create_default_content_templates!
   after_create :create_default_payment_account_from_legacy!
   after_update_commit :broadcast_public_services_later, if: :public_profile_changed?
@@ -385,7 +378,7 @@ class Business < ApplicationRecord
     numericality: { only_integer: true, greater_than_or_equal_to: 0, less_than_or_equal_to: 168 }
   validate :logo_file_is_valid
   validate :preferences_are_valid
-  normalizes :city, :province, :neighborhood, :address, :address_details, :contact_phone, :phone, :whatsapp_phone, :legal_name, :slogan, :public_headline, :public_email, :instagram_url, :website_url, :ai_context, :public_primary_color, :public_secondary_color, :public_accent_color, :public_font_style, :public_custom_css, :public_custom_html, :public_category_custom_html, with: ->(value) { value.to_s.strip.presence }
+  normalizes :city, :province, :neighborhood, :address, :address_details, :contact_phone, :phone, :legal_name, :slogan, :public_headline, :public_email, :instagram_url, :website_url, :ai_context, :public_primary_color, :public_secondary_color, :public_accent_color, :public_font_style, :public_custom_css, :public_custom_html, :public_category_custom_html, with: ->(value) { value.to_s.strip.presence }
   normalizes :custom_domain, with: ->(value) { Business.normalize_custom_domain(value) }
 
   def self.slug_for(name)
@@ -709,17 +702,11 @@ class Business < ApplicationRecord
   end
 
   def public_phone
-    phone.presence || contact_phone.presence || whatsapp_phone
+    phone.presence || contact_phone
   end
 
   def clean_phone
     PhoneNumber.normalize(public_phone).delete_prefix("+")
-  end
-
-  def contact_whatsapp_link
-    return "" if clean_phone.blank?
-
-    "https://wa.me/#{clean_phone}?text=Hola!%20Quiero%20hacer%20una%20consulta"
   end
 
   def geocoded?
@@ -846,10 +833,6 @@ class Business < ApplicationRecord
 
   def public_url
     PublicUrls.url(:business, self)
-  end
-
-  def whatsapp_contact_link
-    PhoneNumber.whatsapp_link(whatsapp_phone.presence || contact_phone)
   end
 
   def inferred_enabled_payment_methods(raw_preferences = preferences.to_h)
@@ -985,10 +968,6 @@ class Business < ApplicationRecord
       end
     end
 
-    def create_default_whatsapp_templates!
-      WhatsAppTemplate.ensure_defaults_for!(self)
-    end
-
     def create_default_content_templates!
       ContentTemplate.ensure_defaults_for!(self)
     end
@@ -1046,7 +1025,7 @@ class Business < ApplicationRecord
 
     def public_profile_changed?
       (saved_changes.keys & %w[
-        name slug business_kind industry contact_phone whatsapp_phone phone public_email instagram_url website_url
+        name slug business_kind industry contact_phone phone public_email instagram_url website_url
         address city province neighborhood slogan public_headline cancellation_notice_hours rescheduling_notice_hours preferences
         public_site_mode public_custom_css public_custom_html public_category_custom_html public_primary_color public_secondary_color public_accent_color public_font_style
         ai_chat_enabled disabled_at

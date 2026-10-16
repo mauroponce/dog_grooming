@@ -1,6 +1,6 @@
 module Gaps
   class SuggestedCustomers
-    Suggestion = Struct.new(:customer, :service, :reason, :reasons, :score, :source, :last_visit_at, :whatsapp_url, keyword_init: true)
+    Suggestion = Struct.new(:customer, :service, :reason, :reasons, :score, :source, :last_visit_at, keyword_init: true)
 
     def initialize(business:, gap:, limit: 5)
       @business = business
@@ -121,14 +121,7 @@ module Gaps
           reasons: reasons.compact_blank.uniq.first(4),
           score: score,
           source: source,
-          last_visit_at: last_visit_at,
-          whatsapp_url: WhatsApp::MessageBuilder.new(
-            business: business,
-            template_key: "gap_offer",
-            customer: customer,
-            service: service,
-            gap: gap
-          ).url(phone: customer.phone)
+          last_visit_at: last_visit_at
         )
       end
 

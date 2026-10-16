@@ -10,11 +10,11 @@ class ContentTemplate < ApplicationRecord
     },
     "gift_card_offer" => {
       name: "Promocionar gift card",
-      body: "Regalá un momento de cuidado en {{business_name}}. Pedinos una gift card por WhatsApp."
+      body: "Regalá un momento de cuidado en {{business_name}}. Pedinos una gift card desde nuestra página."
     },
     "pack_offer" => {
       name: "Vender pack",
-      body: "Tenemos packs para que mantengas tu tratamiento con más orden. Consultanos por WhatsApp o reservá acá: {{public_booking_link}}"
+      body: "Tenemos packs para que mantengas tu tratamiento con más orden. Reservá acá: {{public_booking_link}}"
     }
   }.freeze
 
@@ -44,7 +44,7 @@ class ContentTemplate < ApplicationRecord
         "public_booking_link" => business.public_url,
         "service_name" => service&.name.to_s,
         "service_link" => service&.public_service_url.to_s,
-        "campaign_link" => campaign_link&.tracked_url.to_s,
+        "campaign_link" => campaign_link&.tracked_url.to_s
       }.fetch(variable, "")
     end
   end

@@ -14,48 +14,4 @@ class AppointmentMailer < ApplicationMailer
 
     mail subject: "Nuevo comprobante de seña para revisar", to: @business.owner.email_address
   end
-
-  def customer_booking_received(appointment)
-    return if appointment.customer_email.blank?
-
-    @appointment = appointment
-    @business = appointment.business
-    @booking_url = appointment.customer_portal_booking_url
-    @deposit_upload_url = appointment.deposit_upload_url if appointment.manual_payment_required? && !appointment.deposit_submitted?
-
-    mail subject: "Recibimos tu solicitud de turno", to: appointment.customer_email
-  end
-
-  def customer_booking_confirmed(appointment)
-    return if appointment.customer_email.blank?
-
-    @appointment = appointment
-    @business = appointment.business
-    @booking_url = appointment.customer_portal_booking_url
-    @google_calendar_url = appointment.google_calendar_url
-
-    mail subject: "Tu turno en #{@business.name} está confirmado", to: appointment.customer_email
-  end
-
-  def customer_booking_cancelled(appointment)
-    return if appointment.customer_email.blank?
-
-    @appointment = appointment
-    @business = appointment.business
-    @cancelled_by_business = !Appointment::CUSTOMER_CANCELLATION_ACTORS.include?(appointment.canceled_by.to_s)
-
-    mail subject: "Tu turno en #{@business.name} fue cancelado", to: appointment.customer_email
-  end
-
-  def customer_reminder(appointment)
-    return if appointment.customer_email.blank?
-
-    @appointment = appointment
-    @business = appointment.business
-    @booking_url = appointment.customer_portal_booking_url
-    @google_calendar_url = appointment.google_calendar_url
-
-    mail subject: "Recordatorio: tu turno en #{@business.name} es mañana", to: appointment.customer_email
-  end
-
 end

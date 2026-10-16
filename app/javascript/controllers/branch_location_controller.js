@@ -205,7 +205,7 @@ export default class extends Controller {
   updatePreview() {
     if (this.hasPreviewNameTarget) this.previewNameTarget.textContent = this.nameTarget.value.trim() || "Sucursal"
     if (this.hasPreviewAddressTarget) this.previewAddressTarget.textContent = this.visibleAddress() || "Dirección a confirmar"
-    if (this.hasPreviewPhoneTarget) this.previewPhoneTarget.textContent = `WhatsApp: ${this.phoneTarget.value.trim() || "usa WhatsApp general"}`
+    if (this.hasPreviewPhoneTarget) this.previewPhoneTarget.textContent = `Teléfono: ${this.phoneTarget.value.trim() || "sin teléfono informado"}`
     if (this.hasSelectedAddressTarget) this.selectedAddressTarget.textContent = this.visibleAddress() || "Elegí una dirección para guardar el punto exacto."
   }
 

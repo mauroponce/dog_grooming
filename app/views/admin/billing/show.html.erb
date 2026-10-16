@@ -174,9 +174,6 @@ end %>
 
           <h2 class="mt-5 text-3xl font-bold tracking-tight sm:text-4xl">Plan <%= @subscription.plan_details.fetch(:name) %></h2>
           <% if @subscription.pro? && @business.trial_active? && !@subscription.paid? %>
-            <% usage = @business.whatsapp_deliveries.where(trial_reminder: true).where.not(status: %w[failed skipped]).count %>
-            <p class="mt-3 font-semibold">Recordatorios WhatsApp de prueba: <%= usage %>/20</p>
-            <% if usage >= 20 %><p class="mt-3 rounded-xl bg-white/10 p-4"><%= WhatsApp::AppointmentNotifications::EXHAUSTED_MESSAGE %></p><% end %>
           <% end %>
           <p class="mt-3 max-w-2xl text-sm font-semibold leading-6 text-brand-100 sm:text-base">
             Precio fijo mensual para usar reservas, servicios, clientes, comprobantes, Mercado Pago, recordatorios y asistente con IA.

@@ -51,17 +51,6 @@ class BookingIntent < ApplicationRecord
     customer_profile&.name.presence || full_name.presence || "clienta"
   end
 
-  def whatsapp_url
-    return "" if phone_e164.blank?
-
-    WhatsApp::MessageBuilder.new(
-      business: business,
-      template_key: "abandoned_booking_recovery",
-      customer: customer_profile,
-      service: service
-    ).url(phone: phone_e164)
-  end
-
   private
     def normalize_phone
       self.phone_e164 = PhoneNumber.normalize(phone_e164) if phone_e164.present?

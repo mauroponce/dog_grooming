@@ -56,8 +56,7 @@ module FollowUps
               customer_profile_id: appointment.customer_profile_id,
               appointment_id: appointment.id,
               service_id: appointment.service_id,
-              reminder_id: reminder.id,
-              whatsapp_url: follow_up_url(appointment)
+              reminder_id: reminder.id
             }
           )
         end
@@ -83,17 +82,6 @@ module FollowUps
 
       def days_since(appointment)
         (((now - (appointment.completed_at || appointment.starts_at)) / 1.day).floor).clamp(0, 999)
-      end
-
-      def follow_up_url(appointment)
-        WhatsApp::MessageBuilder.new(
-          business: business,
-          template_key: "customer_reactivation",
-          booking: appointment,
-          customer: appointment.customer_profile,
-          service: appointment.service,
-          professional: appointment.employee_membership
-        ).url(phone: appointment.customer_phone)
       end
   end
 end

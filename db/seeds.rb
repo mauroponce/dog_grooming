@@ -392,7 +392,6 @@ class DemoSeeds
         industry: demo.fetch(:industry),
         contact_phone: demo.fetch(:phone),
         phone: demo.fetch(:phone),
-        whatsapp_phone: demo.fetch(:phone),
         address: demo.fetch(:address),
         city: demo.fetch(:city),
         latitude: demo.fetch(:latitude),
@@ -801,10 +800,7 @@ class DemoSeeds
       event_definitions.each do |attributes|
         appointment = appointments[attributes[:appointment_key]]
         metadata = attributes.fetch(:metadata, {})
-        metadata = metadata.merge(
-          appointment_id: appointment.id,
-          whatsapp_url: appointment.manual_whatsapp_url
-        ) if appointment.present?
+        metadata = metadata.merge(appointment_id: appointment.id) if appointment.present?
 
         business.provider_events.create!(
           user: admin,

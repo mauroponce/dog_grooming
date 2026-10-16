@@ -4,15 +4,7 @@ class SendAppointmentReservedMessageJob < ApplicationJob
   def perform(appointment)
     queue_admin_access_email_once!(appointment)
 
-    unless appointment.deposit_submitted?
-      create_event!(appointment, "new_booking", "Nueva reserva para revisar", "#{appointment.customer_name} solicitó turno para #{appointment.service.name}.", appointment.manual_whatsapp_url)
-    end
-
-    if appointment.confirmed?
-      SendCustomerBookingConfirmationJob.perform_later(appointment)
-    elsif appointment.customer_email.present?
-      AppointmentMailer.customer_booking_received(appointment).deliver_later
-    end
+    create_event!(appointment, "new_booking", "Nueva reserva para revisar", "#{appointment.customer_name} solicitó turno para #{appointment.service.name}.") unless appointment.deposit_submitted?
   end
 
   private
@@ -42,15 +34,14 @@ class SendAppointmentReservedMessageJob < ApplicationJob
       AppointmentMailer.new_booking(appointment).deliver_later if delivery
     end
 
-    def create_event!(appointment, event_type, title, body, action_url)
+    def create_event!(appointment, event_type, title, body)
       appointment.business.provider_events.create!(
         event_type: event_type,
         title: title,
         body: body,
         metadata: {
           appointment_id: appointment.id,
-          whatsapp_url: appointment.manual_whatsapp_url,
-          action_url: action_url
+          action_url: admin_appointment_url_for(appointment)
         }.compact
       )
     end

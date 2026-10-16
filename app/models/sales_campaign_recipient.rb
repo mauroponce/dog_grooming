@@ -1,5 +1,5 @@
 class SalesCampaignRecipient < ApplicationRecord
-  STATUSES = %w[pending opened_whatsapp contacted dismissed booked].freeze
+  STATUSES = %w[pending contacted dismissed booked].freeze
 
   belongs_to :business
   belongs_to :sales_campaign
@@ -15,15 +15,7 @@ class SalesCampaignRecipient < ApplicationRecord
   validate :records_belong_to_business
 
   scope :pending, -> { where(status: "pending") }
-  scope :actionable, -> { where(status: %w[pending opened_whatsapp]) }
-
-  def whatsapp_url
-    PhoneNumber.whatsapp_link(phone_e164, text: rendered_message)
-  end
-
-  def opened!
-    update!(status: "opened_whatsapp", last_opened_at: Time.current)
-  end
+  scope :actionable, -> { where(status: "pending") }
 
   def contacted!
     update!(status: "contacted", contacted_at: Time.current)

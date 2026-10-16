@@ -68,7 +68,7 @@ RSpec.describe "Admin customer profiles", type: :request do
     expect(response.body).to include("Pedro Porro")
     expect(response.body).to include("jane@example.com")
     expect(response.body).to include("Añadir")
-    expect(response.body).to include("wa.me")
+    expect(response.body).to include("Lista de clientes")
     expect(response.body).to include("customerProfileDrawerBackdrop")
     expect(response.body).not_to include("El link privado permite ver y gestionar sus turnos")
 
@@ -80,7 +80,7 @@ RSpec.describe "Admin customer profiles", type: :request do
     expect(row["data-customer-profile-drawer-url"]).to be_nil
     expect(row.at_css(".customers-action-button").text).to include("Acciones")
     expect(row.at_css(".customers-actions-menu").text).to include("Editar", "Eliminar permanentemente")
-    expect(row.text.squish).not_to include("WhatsApp:")
+    expect(row.text.squish).not_to include("Teléfono:")
   end
 
   it "sorts customers by creation date and non-canceled appointments while preserving search and pagination" do
@@ -243,9 +243,7 @@ RSpec.describe "Admin customer profiles", type: :request do
     expect(birth_date_input["data-action"]).to include("input->customer-birth-date#format")
     expect(document.at_css("form[data-controller~='customer-birth-date']")).to be_present
     expect(document.at_css("[data-customer-birth-date-target='error']")).to be_present
-    whatsapp_link = document.at_css(".customer-profile-editor__whatsapp-link")
-    expect(whatsapp_link.text).to eq("Abrir en WhatsApp")
-    expect(whatsapp_link["href"]).to eq(PhoneNumber.whatsapp_link(customer.phone))
+    expect(document.at_css("[data-customer-editor-tabs-target='phone']")).to be_present
     turnos_link = document.at_css('[data-customer-editor-tabs-tab-value="appointments"]')
     expect(turnos_link.name).to eq("a")
     expect(turnos_link["href"]).to eq("#{edit_admin_customer_profile_path(customer)}#turnos")
@@ -602,7 +600,7 @@ RSpec.describe "Admin customer profiles", type: :request do
     expect(calendar_appointments).not_to include(include("id" => appointment.short_uuid))
   end
 
-  it "requires WhatsApp when creating a customer" do
+  it "requires a phone when creating a customer" do
     user, = create_admin_with_business
 
     sign_in(user)

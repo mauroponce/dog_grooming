@@ -140,7 +140,7 @@ module Sales
             employee_membership: intent.employee_membership,
             opportunity_type: "abandoned_booking",
             title: "#{intent.customer_name} dejó una reserva pendiente",
-            body: "Quedó pendiente la reserva de #{intent.service&.name || "un servicio"}. Podés abrir WhatsApp y ayudar a confirmarla.",
+            body: "Quedó pendiente la reserva de #{intent.service&.name || "un servicio"}. Podés revisarla y contactar a la persona manualmente.",
             score: 60,
             due_at: Time.current,
             metadata: { booking_intent_id: intent.id, phone_e164: intent.phone_e164, selected_starts_at: intent.selected_starts_at&.iso8601 }

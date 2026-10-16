@@ -47,11 +47,11 @@ module Ai
       {
         type: "function",
         name: "find_appointment_by_contact",
-        description: "Busca turnos futuros del comercio actual asociados a un correo, número de teléfono o WhatsApp.",
+        description: "Busca turnos futuros del comercio actual asociados a un correo o número de teléfono.",
         parameters: {
           type: "object",
           properties: {
-            contact_info: { type: "string", description: "Correo, teléfono o WhatsApp informado por el cliente." }
+            contact_info: { type: "string", description: "Correo o teléfono informado por el cliente." }
           },
           required: [ "contact_info" ]
         }
@@ -66,7 +66,7 @@ module Ai
             service_id: { type: "integer", description: "ID del servicio del comercio actual." },
             start_time: { type: "string", description: "Fecha y hora local o ISO8601 del turno." },
             client_name: { type: "string", description: "Nombre del cliente." },
-            client_phone: { type: "string", description: "WhatsApp del cliente." }
+            client_phone: { type: "string", description: "Teléfono del cliente." }
           },
           required: [ "service_id", "start_time", "client_name", "client_phone" ]
         }
@@ -225,11 +225,11 @@ module Ai
       if appointment.deposit_pending?
         link = appointment.deposit_upload_url
         link_type = "deposit"
-        answer = "Te dejo el enlace para subir el comprobante de la seña. El centro revisa y confirma por WhatsApp."
+        answer = "Te dejo el enlace para subir el comprobante de la seña. El centro lo revisará antes de confirmar el turno."
       else
-        link = appointment.manual_whatsapp_url
-        link_type = "pending_confirmation"
-        answer = "La solicitud quedó enviada. El centro revisa y confirma por WhatsApp."
+        link = appointment.customer_portal_booking_url
+        link_type = "confirmed"
+        answer = "La solicitud quedó enviada. Podés consultar el estado de tu turno desde este enlace."
       end
 
       {
@@ -376,7 +376,6 @@ module Ai
           starts_at_label: CustomerDateFormatter.datetime_label(appointment.starts_at),
           status: appointment.status_label,
           deposit_status: appointment.deposit_status_label,
-          customer_whatsapp_url: appointment.customer_whatsapp_link,
           action_url: appointment.manual_confirmation_url
         }
       end

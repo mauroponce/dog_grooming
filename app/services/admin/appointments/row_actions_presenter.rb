@@ -45,7 +45,7 @@ module Admin
         return review_proof_action if booking.pending_deposit_review? && can_review_deposit?
         return send_deposit_action if deposit_pending?
         return finalize_action if booking.confirmed? && booking.starts_at < Time.current && can_finalize?
-        return whatsapp_action if booking.confirmed? && booking.starts_at >= Time.current
+        return detail_action if booking.confirmed? && booking.starts_at >= Time.current
         return confirm_action if pending_without_required_deposit? && can_confirm?
         return history_action if booking.completed?
 
@@ -56,7 +56,6 @@ module Admin
         [
           confirmation_group,
           post_booking_group,
-          messages_group,
           links_group,
           follow_up_group,
           management_group
@@ -105,12 +104,6 @@ module Admin
             actions << finalize_action(label: "Subir foto")
           end
           build_group("Post-turno", actions)
-        end
-
-        def messages_group
-          actions = [ whatsapp_action ]
-          actions << portal_whatsapp_action unless booking.terminal_status?
-          build_group("Mensajes", actions)
         end
 
         def links_group
@@ -164,7 +157,7 @@ module Admin
         end
 
         def send_deposit_action
-          Action.new(key: "send_deposit", label: "Pedir seña", url: booking.manual_whatsapp_url, method: :get, tone: :ink, target: "_blank")
+          Action.new(key: "send_deposit", label: "Ver link de seña", url: booking.deposit_upload_url, method: :get, tone: :ink, target: "_blank")
         end
 
         def deposit_link_action
@@ -181,14 +174,6 @@ module Admin
 
         def finalize_action(label: "Finalizar")
           Action.new(key: "finalize", label: label, tone: :ink, anchor: "appointment_#{booking.short_uuid}_finalization")
-        end
-
-        def whatsapp_action
-          Action.new(key: "whatsapp", label: "WhatsApp", url: booking.manual_whatsapp_url, method: :get, tone: :emerald, target: "_blank")
-        end
-
-        def portal_whatsapp_action
-          Action.new(key: "portal_whatsapp", label: "WhatsApp link", url: portal_whatsapp_url, method: :get, tone: :neutral, target: "_blank")
         end
 
         def copy_booking_link_action
@@ -320,13 +305,6 @@ module Admin
 
         def can_view_customers?
           business_policy.customers?
-        end
-
-        def portal_whatsapp_url
-          PhoneNumber.whatsapp_link(
-            booking.customer_phone,
-            text: "Hola #{booking.customer_name}, acá podés ver, cancelar o reprogramar tus turnos en #{booking.business.name}: #{booking.customer_portal_profile_url}"
-          )
         end
 
         def routes

@@ -5,7 +5,6 @@
     <% Business::DAYS.each do |day, name| %>
       <div class="mb-3"><%= label_tag "agenda_times_#{day}", "#{name}: tandas", class: "block text-sm font-semibold" %><%= text_field_tag "agenda_times[#{day}]", Array(@business.arrival_times[day.to_s]).join(", "), id: "agenda_times_#{day}", placeholder: "09:00, 12:00, 15:00", class: "rounded-md border-slate-300" %></div>
     <% end %>
-    <div class="my-4"><%= label_tag "agenda_whatsapp_reminder_hours", "Recordatorio PRO" %><%= select_tag "agenda[whatsapp_reminder_hours]", options_for_select([["24 horas antes", 24], ["2 horas antes", 2]], @business.whatsapp_reminder_hours), id: "agenda_whatsapp_reminder_hours", class: "ml-2 rounded-md border-slate-300" %></div>
-    <%= submit_tag "Guardar cupos y recordatorios", class: "rounded-xl bg-slate-950 px-4 py-3 font-bold text-white" %>
+    <%= submit_tag "Guardar cupos", class: "rounded-xl bg-slate-950 px-4 py-3 font-bold text-white" %>
   <% end %>
 </section>

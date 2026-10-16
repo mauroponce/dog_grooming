@@ -29,7 +29,7 @@ RSpec.describe Appointments::CreateBooking do
     expect(appointment.customer_email).to be_blank
   end
 
-  it "reuses an existing customer by normalized WhatsApp without overwriting their canonical name" do
+  it "reuses an existing customer by normalized phone without overwriting their canonical name" do
     business = create_business
     starts_at = enable_availability_for(business)
     service = create_service(business, price_cents: 20_000_00)

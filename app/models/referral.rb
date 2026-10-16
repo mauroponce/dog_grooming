@@ -12,14 +12,6 @@ class Referral < ApplicationRecord
 
   scope :recent, -> { order(created_at: :desc) }
 
-  def whatsapp_url
-    WhatsApp::MessageBuilder.new(
-      business: business,
-      template_key: "referral_invite",
-      customer: referrer_customer
-    ).url(phone: referrer_customer.phone)
-  end
-
   private
     def normalize_referred_phone
       self.referred_phone_e164 = PhoneNumber.normalize(referred_phone_e164) if referred_phone_e164.present?

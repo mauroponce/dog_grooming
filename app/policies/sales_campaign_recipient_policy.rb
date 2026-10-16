@@ -1,10 +1,6 @@
 class SalesCampaignRecipientPolicy < ApplicationPolicy
-  def open_whatsapp?
-    owner_admin?
-  end
-
   def mark_contacted?
-    open_whatsapp?
+    owner_admin?
   end
 
   def dismiss?

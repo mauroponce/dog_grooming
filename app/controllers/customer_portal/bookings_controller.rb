@@ -58,7 +58,7 @@ module CustomerPortal
         "#{@appointment.customer_name} quiere reprogramar #{@appointment.service.name}."
       )
 
-      redirect_to @appointment.customer_portal_reschedule_whatsapp_url, allow_other_host: true
+      redirect_to customer_portal_booking_path(@business.slug, @appointment.customer_portal_token), notice: "Registramos tu solicitud de reprogramación."
     rescue Appointments::UnavailableSlot => error
       redirect_to customer_portal_dashboard_path(@business.slug), alert: error.message
     end
@@ -68,7 +68,7 @@ module CustomerPortal
         @appointment.cancel!(by: "customer_portal", reason: params[:cancellation_reason].presence || "Cancelado desde portal de cliente")
         redirect_to customer_portal_dashboard_path(@business.slug), notice: "Tu turno fue cancelado."
       else
-        redirect_to customer_portal_booking_path(@business.slug, params[:token]), alert: "Este turno ya no se puede cancelar desde el portal. Contactá al centro por WhatsApp."
+        redirect_to customer_portal_booking_path(@business.slug, params[:token]), alert: "Este turno ya no se puede cancelar desde el portal."
       end
     end
 
@@ -92,8 +92,7 @@ module CustomerPortal
               @appointment,
               host: app_host,
               protocol: app_protocol
-            ),
-            whatsapp_url: @appointment.manual_whatsapp_url
+            )
           }
         )
       end

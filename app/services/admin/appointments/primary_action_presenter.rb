@@ -8,7 +8,7 @@ module Admin
           elsif deposit_pending?
             send_deposit_action
           elsif booking.confirmed? && booking.starts_at.future?
-            whatsapp_action
+            view_turn_action
           elsif booking.confirmed? && booking.starts_at <= Time.current && can_finalize?
             finalize_detail_action
           elsif pending_without_required_deposit? && can_confirm?

@@ -22,9 +22,4 @@ class PhoneNumber
     values.compact_blank.uniq
   end
 
-  def self.whatsapp_link(value, text: nil)
-    WhatsApp::UrlBuilder.call(phone: value, text: text)
-  rescue WhatsApp::UrlBuilder::MissingPhone
-    ""
-  end
 end

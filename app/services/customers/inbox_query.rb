@@ -125,7 +125,7 @@ module Customers
       require "csv"
 
       CSV.generate(headers: true) do |csv|
-        csv << [ "Nombre", "WhatsApp", "Email", "Turnos", "Próximo turno", "Última visita" ]
+        csv << [ "Nombre", "Teléfono", "Email", "Turnos", "Próximo turno", "Última visita" ]
         customers.each do |customer|
           presenter = Customers::ProfilePresenter.new(customer:, business:, appointments_scope:, current_user:)
           csv << [

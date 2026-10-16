@@ -1,7 +1,7 @@
 Recordatorio de cliente
 
 Cliente: <%= @customer.name.presence || @customer.phone %>
-WhatsApp: <%= @customer.phone %>
+Teléfono: <%= @customer.phone %>
 Fecha: <%= CustomerDateFormatter.datetime_label(@reminder.remind_at) %>
 
 Recordatorio:

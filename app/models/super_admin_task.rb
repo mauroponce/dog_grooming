@@ -1,6 +1,6 @@
 class SuperAdminTask < ApplicationRecord
   STATUSES = %w[pending completed dismissed].freeze
-  TYPES = %w[send_billing_whatsapp review_subscription_payment call_overdue_customer].freeze
+  TYPES = %w[send_billing_contact review_subscription_payment call_overdue_customer].freeze
 
   belongs_to :business
   belongs_to :record, polymorphic: true, optional: true

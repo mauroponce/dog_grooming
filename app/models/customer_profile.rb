@@ -76,14 +76,6 @@ class CustomerProfile < ApplicationRecord
     )
   end
 
-  def portal_access_whatsapp_message
-    [
-      "Hola #{name.presence || 'clienta'}, te compartimos tu link seguro para #{business.name}.",
-      "Desde acá podés ver, cancelar o reprogramar tus turnos:",
-      customer_portal_url
-    ].join("\n")
-  end
-
   def register_cancellation!(appointment)
     if appointment.canceled_late?
       increment!(:total_cancellations_count)
@@ -115,7 +107,7 @@ class CustomerProfile < ApplicationRecord
     end
 
     def phone_must_be_present
-      errors.add(:base, "Ingresá WhatsApp") if phone.blank?
+      errors.add(:base, "Ingresá teléfono") if phone.blank?
     end
 
     def normalize_phone

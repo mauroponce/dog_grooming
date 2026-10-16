@@ -1,19 +1,12 @@
 require "rails_helper"
 
 RSpec.describe SendCustomerBookingConfirmationJob do
-  it "sends the confirmed-booking email once" do
-    business, customer, appointment = create_confirmed_appointment
-    customer_delivery = instance_double(ActionMailer::MessageDelivery, deliver_later: true)
-
-    expect(AppointmentMailer).to receive(:customer_booking_confirmed).with(appointment).and_return(customer_delivery)
+  it "does not send a confirmation email to the customer" do
+    _business, _customer, appointment = create_confirmed_appointment
 
     described_class.perform_now(appointment)
-    described_class.perform_now(appointment)
 
-    expect(customer_delivery).to have_received(:deliver_later).once
-    expect(appointment.notification_deliveries.where(template: "customer_booking_confirmed")).to contain_exactly(
-      have_attributes(channel: "email", recipient: customer.email, status: "queued")
-    )
+    expect(appointment.notification_deliveries).to be_empty
   end
 
   it "also notifies the business by email when Mercado Pago confirms the turn" do
@@ -22,15 +15,12 @@ RSpec.describe SendCustomerBookingConfirmationJob do
       deposit_status: "approved",
       deposit_amount_cents: 5_000_00
     )
-    customer_delivery = instance_double(ActionMailer::MessageDelivery, deliver_later: true)
     business_delivery = instance_double(ActionMailer::MessageDelivery, deliver_later: true)
 
-    allow(AppointmentMailer).to receive(:customer_booking_confirmed).with(appointment).and_return(customer_delivery)
     expect(BusinessMailer).to receive(:booking_confirmed_by_mercado_pago).with(appointment).and_return(business_delivery)
 
     described_class.perform_now(appointment)
 
-    expect(customer_delivery).to have_received(:deliver_later)
     expect(business_delivery).to have_received(:deliver_later)
     expect(appointment.notification_deliveries.where(template: "mercado_pago_booking_confirmed")).to contain_exactly(
       have_attributes(channel: "email", recipient: business.owner.email_address, status: "queued")

@@ -16,15 +16,6 @@ class SendOwnerEmailNotificationJob < ApplicationJob
         provider_event_id: event.id
       ) { BusinessMailer.booking_cancelled(appointment) }
     end
-
-    return unless customer_portal_cancellation?(event) || business_cancellation?(event, appointment)
-
-    queue_email_once!(
-      appointment,
-      recipient: appointment.customer_email,
-      template: "customer_booking_cancelled",
-      provider_event_id: event.id
-    ) { AppointmentMailer.customer_booking_cancelled(appointment) }
   end
 
   private
@@ -35,12 +26,6 @@ class SendOwnerEmailNotificationJob < ApplicationJob
 
     def customer_portal_cancellation?(event)
       event.event_type == "customer_cancelled_booking"
-    end
-
-    def business_cancellation?(event, appointment)
-      return false unless event.event_type == "booking_cancelled" && appointment.canceled?
-
-      !Appointment::CUSTOMER_CANCELLATION_ACTORS.include?(event.metadata["canceled_by"].to_s)
     end
 
     def queue_email_once!(appointment, recipient:, template:, provider_event_id:)

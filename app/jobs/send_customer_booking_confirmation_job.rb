@@ -4,14 +4,6 @@ class SendCustomerBookingConfirmationJob < ApplicationJob
 
   def perform(appointment)
     return unless appointment.confirmed?
-    WhatsApp::AppointmentNotifications.call(appointment: appointment, purpose: "confirmation")
-
-    queue_email_once!(
-      appointment,
-      recipient: appointment.customer_email,
-      template: "customer_booking_confirmed"
-    ) { AppointmentMailer.customer_booking_confirmed(appointment) }
-
     if appointment.mercado_pago_payment_required?
       queue_email_once!(
         appointment,

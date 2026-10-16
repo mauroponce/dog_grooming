@@ -72,10 +72,6 @@ module Team
       ]
     end
 
-    def whatsapp_message
-      "Hola #{employee.name}, te escribo de #{business.name} por tu agenda de turnos."
-    end
-
     def suggestion
       lowest = weekly_load.select(&:active).min_by(&:occupancy)
       return "Este profesional no tiene horarios activos esta semana. Revisá su disponibilidad base." if lowest.blank?

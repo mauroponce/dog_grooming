@@ -880,9 +880,9 @@
 
                 <div class="customers-contact">
                   <% if customer.phone.present? %>
-                    <%= link_to customer.phone, PhoneNumber.whatsapp_link(customer.phone), target: "_blank", rel: "noopener", class: "customers-phone-link" %>
+                    <span class="customers-phone-link"><%= customer.phone %></span>
                   <% else %>
-                    <span>Sin WhatsApp</span>
+                    <span>Sin teléfono</span>
                   <% end %>
 
                   <% if customer.email.present? %>
@@ -937,9 +937,9 @@
                   <p class="customers-card-section-title">Contacto</p>
                   <div class="customers-contact">
                     <% if customer.phone.present? %>
-                      <%= link_to customer.phone, PhoneNumber.whatsapp_link(customer.phone), target: "_blank", rel: "noopener", class: "customers-phone-link" %>
+                      <span class="customers-phone-link"><%= customer.phone %></span>
                     <% else %>
-                      <span>Sin WhatsApp</span>
+                      <span>Sin teléfono</span>
                     <% end %>
 
                     <% if customer.email.present? %>

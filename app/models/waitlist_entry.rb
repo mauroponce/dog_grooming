@@ -129,28 +129,6 @@ class WaitlistEntry < ApplicationRecord
     )
   end
 
-  def whatsapp_message
-    WhatsApp::MessageBuilder.new(
-      business: center,
-      template_key: "waitlist_offer",
-      customer: customer_profile,
-      service: service,
-      professional: employee_membership,
-      waitlist_entry: self
-    ).message
-  end
-
-  def whatsapp_url
-    WhatsApp::MessageBuilder.new(
-      business: center,
-      template_key: "waitlist_offer",
-      customer: customer_profile,
-      service: service,
-      professional: employee_membership,
-      waitlist_entry: self
-    ).url(phone: client_phone)
-  end
-
   def preferred_time_window_labels
     Array(preferred_time_windows).map { |window| self.class.time_window_label(window) }.presence || [ "En cualquier momento" ]
   end

@@ -1,7 +1,6 @@
 <% content_for :admin_full_bleed, true %>
 <% content_for :title, "Configuración · Cita.pet" %>
 <%= render "salon" %>
-<%= render "whatsapp" %>
 
 <% business_values = @settings_business_values || {} %>
 <% business_search_address = Business.new(address: business_values[:address], neighborhood: business_values[:neighborhood], city: business_values[:city], province: business_values[:province]).location_search_address %>
@@ -1745,7 +1744,7 @@
                 </div>
 
                 <div>
-                  <label class="settings-field-label" for="business_account_contact_phone">WhatsApp del negocio</label>
+                  <label class="settings-field-label" for="business_account_contact_phone">Teléfono del negocio</label>
                   <%= telephone_field_tag "business_account[contact_phone]", business_values[:contact_phone], id: "business_account_contact_phone", required: true, autocomplete: "tel", class: "settings-input" %>
                   <p class="settings-field-hint">Se usa como contacto público y para las alertas operativas del negocio.</p>
                 </div>
@@ -2053,14 +2052,14 @@
     &lt;div&gt;
       &lt;h2&gt;{{business_name}}&lt;/h2&gt;
       &lt;p&gt;{{business_intro}}&lt;/p&gt;
-      &lt;a href="{{business_whatsapp_url}}"&gt;{{business_phone}}&lt;/a&gt;
+      &lt;a href="{{business_phone_url}}"&gt;{{business_phone}}&lt;/a&gt;
     &lt;/div&gt;
   &lt;/div&gt;
 &lt;/section&gt;
 
 {{business_name}} {{business_slogan}} {{business_intro}}
 {{business_logo_url}} {{business_phone}} {{business_email}}
-{{business_address}} {{business_instagram_url}} {{business_instagram_handle}} {{business_whatsapp_url}}
+{{business_address}} {{business_instagram_url}} {{business_instagram_handle}} {{business_phone_url}}
 {{home_url}} {{services_url}} {{current_year}}</code></pre>
                 </details>
               </section>
@@ -2518,7 +2517,7 @@
       "{{business_address}}": "Tu dirección, Ciudad",
       "{{business_instagram_url}}": "https://instagram.com/tucentro",
       "{{business_instagram_handle}}": "@tucentro",
-      "{{business_whatsapp_url}}": "https://wa.me/5491100000000",
+      "{{business_phone_url}}": "tel:5491100000000",
       "{{business_logo_url}}": "https://images.example.com/logo.png",
       "{{home_url}}": "/tu-centro",
       "{{services_url}}": "/tu-centro#servicios",

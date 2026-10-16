@@ -78,7 +78,6 @@
               <div class="customer-actions-wrap">
                 <button type="button" onclick="toggleCustomerActionsMenu(event)" class="customer-profile-action">Acciones&nbsp;⌄</button>
                 <div id="customerActionsMenu" class="customer-actions-menu">
-                  ${customer.whatsappUrl ? `<a href="${escapeHTML(customer.whatsappUrl)}" target="_blank" rel="noopener">Mensajes</a>` : ""}
                   <a href="${escapeHTML(customer.profileUrl)}">Editar datos del cliente</a>
                   <button type="button">Editar la alerta para el equipo</button>
                   <button type="button">Añadir alergia</button>

@@ -69,7 +69,6 @@ module DepositProofs
           metadata: {
             appointment_id: booking.id,
             action_url: booking.deposit_review_url,
-            whatsapp_url: booking.manual_whatsapp_url,
             replacement: replacement
           }
         )

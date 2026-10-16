@@ -16,7 +16,6 @@ module Ai
       )
 
       summary = payload["summary"].to_s.strip.presence || fallback_summary
-      suggested_text = payload["whatsapp_text"].to_s.strip.presence || default_whatsapp_text(summary)
       phone = conversation.detected_customer_phone
 
       conversation.update!(
@@ -25,10 +24,10 @@ module Ai
         summary: summary,
         summarized_at: Time.current,
         customer_phone: phone,
-        metadata: conversation.metadata.merge("suggested_whatsapp_text" => suggested_text)
+        metadata: conversation.metadata
       )
 
-      create_event!(summary, suggested_text, phone)
+      create_event!(summary, phone)
       conversation
     rescue StandardError => error
       conversation.update!(summary_status: "failed", metadata: conversation.metadata.merge("summary_error" => error.message))
@@ -41,11 +40,10 @@ module Ai
       def system_prompt
         <<~PROMPT
           Sos una secretaria comercial para #{business.name}. Resumí conversaciones de chat que quedaron sin reserva.
-          Tu objetivo es que una persona del negocio pueda cerrar la venta por WhatsApp manual en un clic.
+          Tu objetivo es que una persona del negocio pueda revisar la conversación y cerrar la venta manualmente.
           Respondé exclusivamente JSON válido:
           {
-            "summary": "un párrafo concreto con nombre/interés/dudas/horarios si aparecen",
-            "whatsapp_text": "mensaje breve listo para enviar por WhatsApp"
+            "summary": "un párrafo concreto con nombre/interés/dudas/horarios si aparecen"
           }
         PROMPT
       end
@@ -60,19 +58,14 @@ module Ai
         "El cliente conversó con el asistente, pero no llegó a reservar. Revisar la conversación para seguimiento manual."
       end
 
-      def default_whatsapp_text(summary)
-        "Hola, te escribimos de #{business.name}. Vimos tu consulta en la web y queríamos ayudarte a reservar. #{summary}"
-      end
-
-      def create_event!(summary, suggested_text, phone)
+      def create_event!(summary, phone)
         business.provider_events.create!(
           event_type: "ai_chat_followup",
-          title: "Chat pendiente para cerrar por WhatsApp",
-          body: phone.present? ? summary : "#{summary} No se detectó WhatsApp en la conversación.",
+          title: "Chat pendiente para revisar",
+          body: phone.present? ? summary : "#{summary} No se detectó teléfono en la conversación.",
           metadata: {
             conversation_id: conversation.id,
-            customer_phone: phone,
-            whatsapp_url: phone.present? ? PhoneNumber.whatsapp_link(phone, text: suggested_text) : nil
+            customer_phone: phone
           }
         )
       end

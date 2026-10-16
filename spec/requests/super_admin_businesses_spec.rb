@@ -12,7 +12,7 @@ RSpec.describe "Super admin businesses", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Negocios registrados")
     expect(response.body).to include("Nueva cuenta")
-    expect(response.body).not_to include("WhatsApp API")
+    expect(response.body).not_to include("Conexiones externas")
     expect(response.body).to include("Tutoriales")
     expect(response.body).not_to include("Panel de control Cita.pet")
     expect(response.body).not_to include("Tabla compacta para operar cuentas, trials, setup y soporte")
@@ -108,7 +108,7 @@ RSpec.describe "Super admin businesses", type: :request do
     expect(response.body).to include("Nombre del centro")
 	    expect(response.body).to include("Nombre del dueño")
     expect(response.body).to include("Facturación Cita.pet activa")
-	    expect(response.body).to include("WhatsApp del negocio")
+	    expect(response.body).to include("Teléfono del negocio")
     expect(document.at_css("#business_account_owner_email")["required"]).to eq("required")
     expect(document.at_css("#business_account_contact_phone")["required"]).to eq("required")
     expect(response.body).to include("Instagram")
@@ -120,7 +120,7 @@ RSpec.describe "Super admin businesses", type: :request do
     expect(response.body).not_to include("data-super-admin-categories-payload")
   end
 
-  it "creates a business account with Instagram and WhatsApp without sending a welcome email" do
+  it "creates a business account with Instagram and a phone without sending a welcome email" do
     user = create_user(role: :super_admin, email_prefix: "super-create")
     owner_email = "owner-welcome-#{SecureRandom.hex(4)}@example.com"
     slug = "owner-welcome-#{SecureRandom.hex(4)}"
@@ -183,7 +183,7 @@ RSpec.describe "Super admin businesses", type: :request do
     expect(response).to redirect_to(edit_super_admin_business_path(business))
   end
 
-  it "requires the owner's email and the business WhatsApp when creating an account" do
+  it "requires the owner's email and the business phone when creating an account" do
     user = create_user(role: :super_admin, email_prefix: "super-required-contact")
 
     sign_in(user)
@@ -208,7 +208,7 @@ RSpec.describe "Super admin businesses", type: :request do
       post super_admin_businesses_path,
         params: {
           business_account: {
-            business_name: "Centro sin WhatsApp",
+            business_name: "Centro sin teléfono",
             owner_name: "Dueña del centro",
             owner_email: "contacto-obligatorio-#{SecureRandom.hex(4)}@example.com",
             contact_phone: "   "
@@ -218,7 +218,7 @@ RSpec.describe "Super admin businesses", type: :request do
     }.not_to change(Business, :count)
 
     expect(response).to have_http_status(:unprocessable_entity)
-    expect(response.body).to include("Completá el WhatsApp del negocio.")
+    expect(response.body).to include("Completá el teléfono del negocio.")
   end
 
   it "creates a business account with an uploaded logo" do
@@ -303,7 +303,7 @@ RSpec.describe "Super admin businesses", type: :request do
     expect(response.body).not_to include("Categorías y servicios")
     expect(response.body).to include("Instagram")
     expect(response.body).to include("Slogan")
-    expect(response.body).to include("WhatsApp del negocio")
+    expect(response.body).to include("Teléfono del negocio")
 
     new_owner_email = "edited-owner-#{SecureRandom.hex(4)}@example.com"
     patch super_admin_business_path(business),

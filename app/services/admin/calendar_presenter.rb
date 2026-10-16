@@ -514,9 +514,8 @@ module Admin
           label: pending_deposit_appointments.size == 1 ? "sin seña" : "sin seña",
           value: pending_deposit_appointments.size,
           tone: pending_deposit_appointments.any? ? :rose : :zinc,
-          url: appointment&.manual_whatsapp_url,
-          action_label: pending_deposit_appointments.any? ? "Pedir seña" : nil,
-          external: appointment.present?
+          url: appointment.present? ? routes.admin_appointment_path(appointment) : nil,
+          action_label: pending_deposit_appointments.any? ? "Ver turno" : nil
         )
       end
 
@@ -704,9 +703,8 @@ module Admin
           title: "Seña pendiente",
           body: "#{appointment.customer_name} · #{CustomerDateFormatter.time_label(appointment.starts_at).delete_suffix(' hs')}",
           tone: :rose,
-          url: appointment.manual_whatsapp_url,
-          action_label: "Pedir seña",
-          external: true
+          url: routes.admin_appointment_path(appointment),
+          action_label: "Ver turno"
         )
       end
 

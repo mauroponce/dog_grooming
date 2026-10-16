@@ -117,19 +117,10 @@ Para Mercado Pago configurá `MERCADO_PAGO_CLIENT_ID` y `MERCADO_PAGO_CLIENT_SEC
 
 Planes comerciales:
 
-- Plan Profesional: $30.000 ARS/mes, 1 agenda activa, reservas online, señas manuales, comprobantes, chatbot y mensajes WhatsApp prearmados.
+- Plan Profesional: $30.000 ARS/mes, 1 agenda activa, reservas online, señas manuales, comprobantes y chatbot.
 - Plan Centro: $50.000 ARS/mes, varias profesionales, roles, recursos compartidos, agenda por profesional, reportes, huecos libres y gestion avanzada.
 
 La suscripción de Cita.pet se cobra con Checkout Pro de Mercado Pago: cada período genera un checkout nuevo para que el negocio elija cómo pagar, sin adherir una tarjeta a un débito automático. La cuenta receptora se vincula desde `/super_admin/cobros` y es distinta de las cuentas Mercado Pago que cada negocio conecta para cobrar sus señas.
-
-## WhatsApp
-
-La app no usa WhatsApp Cloud API. Usa links manuales `wa.me` con mensajes prearmados desde el panel y desde las vistas de revision:
-
-- Confirmar turno.
-- Pedir o reemplazar comprobante.
-- Avisar cancelacion.
-- Seguir una conversacion de chatbot o lista de espera.
 
 ## Chat IA
 
@@ -138,7 +129,7 @@ El chat publico aparece para negocios con chat activo y contexto cargado. Requie
 Funciones incluidas:
 
 - Chat con deteccion de intencion de reserva y scroll automatico a servicios.
-- Resumen diario de chats abiertos para seguimiento manual por WhatsApp.
+- Resumen diario de chats abiertos para seguimiento manual.
 - Los turnos se gestionan desde el calendario en `/admin/calendario`.
 - Analisis de reseñas con alerta critica en el dashboard.
 

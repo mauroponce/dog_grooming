@@ -184,7 +184,7 @@ module Ai
         lines << weekly_priority(pending_payment_appointments, pending_review_appointments, confirmed_appointments)
         lines << ""
         lines << "Acciones sugeridas:"
-        lines << "• Enviar WhatsApp a clientes con seña pendiente."
+        lines << "• Revisar los clientes con seña pendiente."
         lines << "• Ver turnos pendientes."
         lines << "• Revisar huecos libres de la semana."
         lines.join("\n")

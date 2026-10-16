@@ -68,10 +68,6 @@ class BusinessPolicy < ApplicationPolicy
     owner_admin?
   end
 
-  def whatsapp_templates?
-    owner_admin?
-  end
-
   def billing?
     owner_admin? && record.billing_enabled?
   end

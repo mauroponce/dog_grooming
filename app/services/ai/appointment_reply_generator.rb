@@ -23,7 +23,7 @@ module Ai
 
       def system_prompt
         <<~PROMPT
-          Sos una asistente experta en atención por WhatsApp para peluquerías caninas y groomers.
+          Sos una asistente experta en atención al cliente para peluquerías caninas y groomers.
           Generá respuestas listas para enviar, claras, empáticas y sin prometer cosas que no figuran en los datos.
           Respondé exclusivamente JSON válido:
           {
@@ -40,7 +40,7 @@ module Ai
         <<~PROMPT
           Negocio: #{business.name}
           Cliente: #{appointment.customer_name}
-          WhatsApp cliente: #{appointment.customer_phone}
+          Teléfono cliente: #{appointment.customer_phone}
           Servicio: #{appointment.service.name}
           Fecha: #{appointment.customer_starts_at_label}
           Estado del turno: #{appointment.status_label}

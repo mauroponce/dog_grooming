@@ -492,7 +492,7 @@ module SuperAdmin
       score += 20 if public_services_count.positive?
       score += 15 if active_services_count.positive?
       score += 15 if professionals_count.positive?
-      score += 10 if business.contact_phone.present? || business.whatsapp_phone.present?
+      score += 10 if business.contact_phone.present? || business.phone.present?
       score += 10 if business.availability_rules.where(active: true).exists?
       [ score, 100 ].min
     end

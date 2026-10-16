@@ -114,10 +114,6 @@ module Customers
       status_chips.map(&:label).join(" · ")
     end
 
-    def transactional_whatsapp_label
-      "Autorizado para gestionar turnos"
-    end
-
     def transactional_email_label
       customer.email.present? ? "Email para confirmaciones y recordatorios" : "Sin email registrado"
     end
@@ -127,8 +123,8 @@ module Customers
       if maintenance_due?
         items << Opportunity.new(
           title: "Le toca mantenimiento",
-          body: "Su último turno fue #{last_visit_label}. Podés escribirle para repetir el servicio.",
-          url: WhatsApp::CustomerMessageBuilder.new(self).reactivation_url,
+          body: "Su último turno fue #{last_visit_label}. Podés crear un recordatorio para contactarla manualmente.",
+          url: nil,
           tone: :violet,
           action_label: "Enviar mensaje"
         )
@@ -138,9 +134,9 @@ module Customers
         items << Opportunity.new(
           title: "Tiene seña pendiente",
           body: "Podés pedir el comprobante o reenviar el enlace seguro.",
-          url: WhatsApp::CustomerMessageBuilder.new(self).deposit_request_url,
+          url: nil,
           tone: :rose,
-          action_label: "Pedir comprobante"
+          action_label: nil
         )
       end
 

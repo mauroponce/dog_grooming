@@ -10,18 +10,12 @@
 #     schedule: at 5am every day
 
 production:
-  recover_whatsapp_pending:
-    class: WhatsApp::RecoverPendingJob
-    schedule: every 5 minutes
   expire_pending_booking_payments:
     class: ExpirePendingDepositBookingsJob
     schedule: every minute
   clear_solid_queue_finished_jobs:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
     schedule: every hour at minute 12
-  send_due_appointment_reminders:
-    class: SendDueAppointmentRemindersJob
-    schedule: every 15 minutes
   summarize_ai_chat_conversations:
     class: SummarizeAiChatConversationsJob
     schedule: every day at 8pm

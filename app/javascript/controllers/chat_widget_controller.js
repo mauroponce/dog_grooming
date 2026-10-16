@@ -419,7 +419,7 @@ export default class extends Controller {
     meta.textContent = component.appointment?.starts_at_label || component.service?.name || "Turno"
     card.appendChild(meta)
 
-    card.appendChild(this.actionLink(component.link_type === "deposit" ? "Subir comprobante" : component.link_type === "confirmed" ? "Ver o cancelar turno" : "Abrir WhatsApp", component.url))
+    card.appendChild(this.actionLink(component.link_type === "deposit" ? "Subir comprobante" : "Ver o cancelar turno", component.url))
     return card
   }
 

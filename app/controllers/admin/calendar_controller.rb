@@ -135,7 +135,6 @@ module Admin
           petSex: appointment.pet&.sex_label,
           petNotes: appointment.pet&.notes,
           phone: appointment.customer_phone,
-          whatsappUrl: appointment.customer_whatsapp_link,
           customerEmail: appointment.customer_calendar_email,
           customerProfileId: appointment.customer_profile_id&.to_s,
           customerProfileUrl: appointment.customer_profile_id.present? ? edit_admin_customer_profile_path(appointment.customer_profile_id, return_to: admin_calendar_path(date: @calendar_date.iso8601, t: appointment.short_uuid)) : nil,

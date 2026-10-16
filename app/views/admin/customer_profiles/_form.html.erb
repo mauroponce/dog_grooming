@@ -216,10 +216,6 @@
     color: #94a3b8;
   }
 
-  .customer-field-icon-whatsapp {
-    color: #059669;
-  }
-
   .customer-input {
     min-width: 0;
     width: 100%;
@@ -563,9 +559,9 @@
           </label>
 
           <label>
-            <span class="customer-field-label">WhatsApp <span class="customer-required-dot">*</span></span>
+            <span class="customer-field-label">Teléfono <span class="customer-required-dot">*</span></span>
             <div class="customer-field-shell">
-              <%= icon.call(:message, "customer-field-icon customer-field-icon-whatsapp") %>
+              <%= icon.call(:message, "customer-field-icon") %>
               <%= form.telephone_field :phone,
                 required: true,
                 autocomplete: "tel",

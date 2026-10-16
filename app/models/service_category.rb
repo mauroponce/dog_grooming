@@ -19,7 +19,6 @@ class ServiceCategory < ApplicationRecord
   validates :sort_order, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
   validate :single_primary_category_per_business
   validate :cover_image_is_valid
-  validate :whatsapp_category_limit
   around_save :lock_category_business
 
   normalizes :name, :slug, :description, with: ->(value) { value.to_s.strip.presence }
@@ -55,16 +54,11 @@ class ServiceCategory < ApplicationRecord
   private
     def lock_category_business(&block)
       business.with_lock do
-        whatsapp_category_limit
         raise ActiveRecord::RecordInvalid, self if errors.any?
         block.call
       end
     end
 
-    def whatsapp_category_limit
-      return unless active? && business.present?
-      errors.add(:base, "Podés tener hasta nueve categorías activas para WhatsApp.") if business.service_categories.active.where.not(id: id).count >= 9
-    end
     def ensure_slug
       return if business.blank?
 

@@ -35,7 +35,7 @@ module SuperAdmin
 	        raise ArgumentError, "Completá el nombre del centro." if business_name.blank?
 	        raise ArgumentError, "Completá el nombre del dueño." if owner_name.blank?
 	        raise ArgumentError, "Completá el email de acceso del dueño." unless owner_email.match?(/\A[^@\s]+@[^@\s]+\.[^@\s]+\z/)
-        raise ArgumentError, "Completá el WhatsApp del negocio." if contact_phone.blank?
+        raise ArgumentError, "Completá el teléfono del negocio." if contact_phone.blank?
         raise ArgumentError, "Ese email ya tiene una cuenta." if User.exists?(email_address: owner_email)
         raise ArgumentError, "El slug elegido no es válido." if requested_slug.present? && !Slugs::GenerateUnique.valid?(requested_slug)
         raise ArgumentError, "Ese link público ya está en uso." if requested_slug.present? && !Slugs::GenerateUnique.available?(requested_slug, scope: Business)
@@ -52,7 +52,6 @@ module SuperAdmin
           industry: "dog_grooming",
           contact_phone: contact_phone,
           phone: contact_phone,
-          whatsapp_phone: contact_phone,
           instagram_url: instagram_url,
           custom_domain: params[:custom_domain],
           custom_domain_enabled: custom_domain_enabled?,

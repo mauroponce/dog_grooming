@@ -12,10 +12,10 @@
     <% if @identity.present? %>
       <p class="mt-2 text-slate-600">Vas a ingresar con <strong><%= @identity.email_address %></strong>. Configurá tu peluquería para empezar.</p>
       <%= form_with url: registro_path, scope: :registration, class: "mt-6 space-y-4" do |form| %>
-        <div><%= form.label :plan_selected, "Elegí tu plan", class: "text-sm font-bold" %><%= form.select :plan_selected, [["Básico · $35.000 ARS/mes", "basic"], ["PRO · $45.000 ARS/mes · recordatorios WhatsApp ilimitados", "pro"]], { selected: @values&.fetch("plan_selected", nil) || "basic" }, class: "mt-1 w-full rounded-xl border-slate-300" %><p class="mt-2 text-sm text-slate-600">PRO incluye hasta 20 recordatorios WhatsApp durante la prueba de 14 días.</p></div>
+        <div><%= form.label :plan_selected, "Elegí tu plan", class: "text-sm font-bold" %><%= form.select :plan_selected, [["Básico · $35.000 ARS/mes", "basic"], ["PRO · $45.000 ARS/mes", "pro"]], { selected: @values&.fetch("plan_selected", nil) || "basic" }, class: "mt-1 w-full rounded-xl border-slate-300" %></div>
         <div><%= form.label :business_name, "Nombre de la peluquería", class: "text-sm font-bold" %><%= form.text_field :business_name, value: @values&.fetch("business_name", nil), required: true, autofocus: true, class: "mt-1 w-full rounded-xl border-slate-300" %></div>
         <div><%= form.label :owner_name, "Tu nombre", class: "text-sm font-bold" %><%= form.text_field :owner_name, value: @values&.fetch("owner_name", nil) || @identity.name, required: true, class: "mt-1 w-full rounded-xl border-slate-300" %></div>
-        <div><%= form.label :contact_phone, "WhatsApp", class: "text-sm font-bold" %><%= form.telephone_field :contact_phone, value: @values&.fetch("contact_phone", nil), required: true, autocomplete: "tel", class: "mt-1 w-full rounded-xl border-slate-300" %></div>
+        <div><%= form.label :contact_phone, "Teléfono", class: "text-sm font-bold" %><%= form.telephone_field :contact_phone, value: @values&.fetch("contact_phone", nil), required: true, autocomplete: "tel", class: "mt-1 w-full rounded-xl border-slate-300" %></div>
         <div><%= form.label :slug, "Link público (opcional)", class: "text-sm font-bold" %><%= form.text_field :slug, value: @values&.fetch("slug", nil), class: "mt-1 w-full rounded-xl border-slate-300", placeholder: "mi-peluqueria" %></div>
         <%= form.submit "Empezar mi prueba gratuita", class: "w-full cursor-pointer rounded-xl bg-slate-950 px-4 py-3 font-bold text-white hover:bg-brand-700" %>
       <% end %>

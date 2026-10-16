@@ -98,7 +98,7 @@ module DepositProofs
       require "csv"
 
       CSV.generate(headers: true) do |csv|
-        csv << [ "Cliente", "WhatsApp", "Servicio", "Turno", "Profesional", "Estado", "Seña esperada", "Total", "Método informado" ]
+        csv << [ "Cliente", "Teléfono", "Servicio", "Turno", "Profesional", "Estado", "Seña esperada", "Total", "Método informado" ]
         proofs.each do |appointment|
           csv << [
             appointment.customer_name,

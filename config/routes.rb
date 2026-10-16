@@ -42,9 +42,6 @@ Rails.application.routes.draw do
   root "home#index"
   get "politica-de-privacidad" => "legal_pages#privacy", as: :privacy_policy
   get "eliminacion-de-datos" => "legal_pages#data_deletion", as: :data_deletion
-  get "r/:token" => "whatsapp_bookings#show", as: :whatsapp_booking
-  get "webhooks/whatsapp" => "webhooks/whatsapp#verify"
-  post "webhooks/whatsapp" => "webhooks/whatsapp#create"
 
   get "registro/sugerencias-slug" => "registrations#slug_suggestions", as: :registro_slug_suggestions
   get "registro/disponibilidad-slug" => "registrations#slug_availability", as: :registro_slug_availability
@@ -67,7 +64,6 @@ Rails.application.routes.draw do
   namespace :admin do
     scope path_names: { new: "nuevo", edit: "editar" } do
       root "home#show"
-      resource :whatsapp_connection, only: %i[create update destroy], path: "configuracion/whatsapp"
       get "inicio" => "home#show", as: :home
       post "inicio/oportunidades/contactos" => "home_opportunities#create", as: :home_opportunity_contacts
       get "asistente" => "dashboard#show", as: :dashboard

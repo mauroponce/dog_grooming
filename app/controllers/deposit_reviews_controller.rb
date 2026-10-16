@@ -5,15 +5,13 @@ class DepositReviewsController < ApplicationController
 
   def show
     @business = @appointment.business
-    @confirm_whatsapp_url = @appointment.deposit_confirmation_whatsapp_url
-    @reject_whatsapp_url = @appointment.deposit_rejection_whatsapp_url(reason: @appointment.deposit_rejection_reason)
   end
 
   def confirm
     redirect_to deposit_review_path(params[:token]), alert: "No se puede confirmar un turno cancelado." and return if @appointment.canceled?
 
     DepositProofs::ApproveService.new(appointment: @appointment, actor: @appointment.business.owner).call
-    redirect_to deposit_review_path(params[:token]), notice: "Turno confirmado. Ahora podés avisarle al cliente por WhatsApp."
+    redirect_to deposit_review_path(params[:token]), notice: "Turno confirmado."
   end
 
   def reject
@@ -21,7 +19,7 @@ class DepositReviewsController < ApplicationController
 
     reason = params[:reason].presence || "Comprobante no validado por el centro."
     DepositProofs::RejectService.new(appointment: @appointment, actor: @appointment.business.owner, reason: reason).call
-    redirect_to deposit_review_path(params[:token]), notice: "Comprobante rechazado. Ahora podés pedirle al cliente que reintente el pago por WhatsApp."
+    redirect_to deposit_review_path(params[:token]), notice: "Comprobante rechazado."
   rescue StandardError => error
     redirect_to deposit_review_path(params[:token]), alert: error.message
   end

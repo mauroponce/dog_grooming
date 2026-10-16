@@ -21,8 +21,7 @@ module Admin
       "tutorials" => :tutorials?,
       "non_working_periods" => :settings?,
       "notifications" => :dashboard?,
-      "mercado_pago_connections" => :settings?,
-      "whatsapp_connections" => :settings?
+      "mercado_pago_connections" => :settings?
     }.freeze
 
     before_action :require_staff!

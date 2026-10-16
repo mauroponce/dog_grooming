@@ -94,9 +94,6 @@
   .customer-profile-editor__field--wide { grid-column: 1 / -1; }
   .customer-profile-editor__field label { display: block; color: #1e293b; font-size: 12px; font-weight: 700; }
   .customer-profile-editor__field-label-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-  .customer-profile-editor__whatsapp-link { color: #047857; font-size: 12px; font-weight: 700; text-decoration: none; }
-  .customer-profile-editor__whatsapp-link:hover { color: #065f46; text-decoration: underline; }
-  .customer-profile-editor__whatsapp-link.is-disabled { pointer-events: none; color: #94a3b8; }
   .customer-profile-editor__required { color: #e11d48; }
   .customer-profile-editor__input { width: 100%; height: 50px; margin-top: 8px; border: 1px solid #e2e8f0; border-radius: 16px; background: #f8fafc; padding: 0 15px; color: #111827; font: inherit; font-size: 14px; font-weight: 700; outline: 0; transition: border-color .18s ease, background .18s ease, box-shadow .18s ease; box-sizing: border-box; }
   .customer-profile-editor__input:focus { border-color: #A63826; background: #fff; box-shadow: 0 0 0 4px rgba(255, 222, 212, .62); }
@@ -275,23 +272,12 @@
                   <%= form.text_field :last_name, value: last_name_value, class: "customer-profile-editor__input", autocomplete: "family-name" %>
                 </div>
                 <div class="customer-profile-editor__field">
-                  <div class="customer-profile-editor__field-label-row">
-                    <%= form.label :phone do %>WhatsApp <span class="customer-profile-editor__required">*</span><% end %>
-                    <%= link_to "Abrir en WhatsApp",
-                      PhoneNumber.whatsapp_link(customer.phone).presence || "#",
-                      target: "_blank",
-                      rel: "noopener",
-                      class: "customer-profile-editor__whatsapp-link #{'is-disabled' if customer.phone.blank?}",
-                      data: { customer_editor_tabs_target: "whatsapp" } %>
-                  </div>
+                  <%= form.label :phone do %>Teléfono <span class="customer-profile-editor__required">*</span><% end %>
                   <%= form.telephone_field :phone,
                     class: "customer-profile-editor__input",
                     autocomplete: "tel",
                     required: true,
-                    data: {
-                      customer_editor_tabs_target: "phone",
-                      action: "input->customer-editor-tabs#syncWhatsapp"
-                    } %>
+                    data: { customer_editor_tabs_target: "phone" } %>
                 </div>
                 <div class="customer-profile-editor__field">
                   <%= form.label :email do %>Email <span class="customer-profile-editor__required">*</span><% end %>

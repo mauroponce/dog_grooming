@@ -98,7 +98,7 @@ module PublicLandingHelper
       "{{business_address}}" => business.public_location,
       "{{business_instagram_url}}" => business.instagram_url,
       "{{business_instagram_handle}}" => instagram_handle.present? ? "@#{instagram_handle}" : "",
-      "{{business_whatsapp_url}}" => landing.whatsapp_url,
+      "{{business_phone_url}}" => "tel:#{business.clean_phone}",
       "{{business_logo_url}}" => business.logo.attached? ? url_for(business.logo) : "",
       "{{home_url}}" => landing.home_path,
       "{{services_url}}" => landing.home_path(anchor: "servicios"),

@@ -58,15 +58,6 @@ class GiftCard < ApplicationRecord
     lines.join("\n")
   end
 
-  def whatsapp_url
-    phone = recipient_phone_e164.presence || buyer_phone_e164
-    return "" if phone.blank?
-
-    WhatsApp::UrlBuilder.call(phone:, text: delivery_message)
-  rescue WhatsApp::UrlBuilder::MissingPhone
-    ""
-  end
-
   private
     def normalize_phones
       self.buyer_phone_e164 = PhoneNumber.normalize(buyer_phone_e164) if buyer_phone_e164.present?

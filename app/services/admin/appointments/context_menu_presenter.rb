@@ -110,7 +110,6 @@ module Admin
           when :deposit_pending
             [
               send_deposit_link_action,
-              whatsapp_action,
               confirm_manual_action_if_allowed
             ]
           when :confirmed
@@ -133,7 +132,6 @@ module Admin
           else
             [
               confirm_manual_action_if_allowed,
-              whatsapp_action,
               detail_action
             ]
           end
@@ -144,7 +142,7 @@ module Admin
           if booking.finalizable? && can_finalize?
             actions << finalize_action(label: "Finalizar con nota")
           elsif booking.starts_at.future?
-            actions << whatsapp_action
+            actions << detail_action
           end
           actions << suggested_next_booking_action
           actions
@@ -154,7 +152,6 @@ module Admin
           case menu_state
           when :proof_review
             [
-              whatsapp_action,
               detail_action,
               copy_booking_link_action
             ]
@@ -166,7 +163,6 @@ module Admin
             ]
           when :confirmed
             [
-              whatsapp_action,
               customer_history_action,
               detail_action,
               copy_booking_link_action
@@ -179,12 +175,10 @@ module Admin
           when :completed, :closed
             [
               detail_action,
-              whatsapp_action,
               copy_booking_link_action
             ]
           else
             [
-              whatsapp_action,
               detail_action,
               reschedule_action_if_allowed,
               copy_booking_link_action

@@ -369,8 +369,7 @@ RSpec.describe "Admin shell", type: :request do
       "admin/settings",
       "admin/services",
       "admin/tutorials",
-      "admin/waitlist_entries",
-      "admin/whatsapp_connections"
+      "admin/waitlist_entries"
     )
   end
 
@@ -549,7 +548,7 @@ RSpec.describe "Admin shell", type: :request do
     expect(answer).to include("Lo más importante ahora:")
     expect(answer).to include("Contactá al cliente con seña pendiente")
     expect(answer).to include("Acciones sugeridas:")
-    expect(answer).to include("Enviar WhatsApp a clientes con seña pendiente.")
+    expect(answer).to include("Revisar los clientes con seña pendiente.")
     expect(answer).not_to include("Tuesday")
   end
 
@@ -877,7 +876,7 @@ RSpec.describe "Admin shell", type: :request do
     expect(business.reload.enabled_payment_methods).not_to include("mercado_pago")
   end
 
-  it "does not allow an admin to clear the business WhatsApp or owner email" do
+  it "does not allow an admin to clear the business phone or owner email" do
     user, business = create_admin_with_business
 
     sign_in(user)
@@ -894,7 +893,7 @@ RSpec.describe "Admin shell", type: :request do
     }, headers: browser_headers
 
     expect(response).to have_http_status(:unprocessable_entity)
-    expect(response.body).to include("Completá el WhatsApp del negocio.")
+    expect(response.body).to include("Completá el teléfono del negocio.")
     expect(Nokogiri::HTML(response.body).at_css("#settings-active-tab")["value"]).to eq("cuentas-de-cobro")
     expect(business.reload.contact_phone).to eq("+54 9 11 4444-4444")
 
@@ -1162,8 +1161,7 @@ RSpec.describe "Admin shell", type: :request do
     )
     expect(response.parsed_body.fetch("customerProfilePanelUrl")).to include("/admin/clientes/#{customer.id}/panel")
     expect(response.parsed_body.fetch("id")).to eq(appointment.short_uuid)
-    expect(response.parsed_body.fetch("whatsappUrl")).to include("wa.me")
-    expect(response.parsed_body.fetch("whatsappUrl")).not_to include("text=")
+    expect(response.parsed_body).not_to have_key("customerMessageUrl")
     expect(response.parsed_body.fetch("customerEmail")).to eq("sofia@example.com")
     expect(response.parsed_body.fetch("petName")).to eq("Mora")
     expect(response.parsed_body.fetch("customerPortalUrl")).to start_with("https://51d9-187-61-184-88.ngrok-free.app/#{business.slug}/mis-turnos/")
@@ -1253,7 +1251,7 @@ RSpec.describe "Admin shell", type: :request do
 
     sign_in(user)
     patch cancel_admin_appointment_path(appointment, format: :json),
-      params: { reason: "El cliente pidió cancelar por WhatsApp." },
+      params: { reason: "El cliente pidió cancelar por teléfono." },
       headers: browser_headers.merge("Accept" => "application/json")
 
     expect(response).to have_http_status(:ok)
@@ -1262,10 +1260,10 @@ RSpec.describe "Admin shell", type: :request do
       status: "canceled",
       canceled_by: user.email_address,
       canceled_by_user: user,
-      cancellation_reason: "El cliente pidió cancelar por WhatsApp."
+      cancellation_reason: "El cliente pidió cancelar por teléfono."
     )
     expect(appointment.canceled_at).to be_present
-    expect(appointment.booking_notes.find_by!(note_type: "cancellation").body).to eq("El cliente pidió cancelar por WhatsApp.")
+    expect(appointment.booking_notes.find_by!(note_type: "cancellation").body).to eq("El cliente pidió cancelar por teléfono.")
 
     get admin_calendar_path(date: starts_at.to_date.iso8601), headers: browser_headers
     expect(response).to have_http_status(:ok)
@@ -1274,7 +1272,7 @@ RSpec.describe "Admin shell", type: :request do
 
     get edit_admin_customer_profile_path(customer), params: { section: "appointments" }, headers: browser_headers
     expect(response.body).to include("Cancelado por Julian Alvarez")
-    expect(response.body).to include("El cliente pidió cancelar por WhatsApp.")
+    expect(response.body).to include("El cliente pidió cancelar por teléfono.")
   end
 
   it "requires a cancellation reason when the center cancels an appointment" do

@@ -29,7 +29,6 @@ module SuperAdmin
           industry: "dog_grooming",
           contact_phone: "+5491100000000",
           phone: "+5491100000000",
-          whatsapp_phone: "+5491100000000",
           city: "Buenos Aires",
           cancellation_notice_hours: 12,
           setup_status: "completed",

@@ -66,8 +66,6 @@ class Appointment < ApplicationRecord
   belongs_to :completed_by, class_name: "User", optional: true
   belongs_to :canceled_by_user, class_name: "User", optional: true
   has_many :notification_deliveries, dependent: :destroy
-  has_many :whatsapp_deliveries, dependent: :nullify
-  before_destroy -> { whatsapp_deliveries.where(status: "pending").update_all(status: "skipped") }, prepend: true
   has_many :appointment_addons, dependent: :destroy
   has_many :add_on_services, through: :appointment_addons, source: :service
   has_many :appointment_extras, dependent: :destroy
@@ -219,10 +217,6 @@ class Appointment < ApplicationRecord
     Time.current > starts_at - business.cancellation_notice_hours.hours
   end
 
-  def customer_whatsapp_link
-    PhoneNumber.whatsapp_link(customer_phone)
-  end
-
   def manual_confirmation_token
     signed_id(expires_in: 14.days, purpose: :appointment_customer_action)
   end
@@ -233,42 +227,6 @@ class Appointment < ApplicationRecord
       host: public_app_host,
       protocol: app_protocol
     )
-  end
-
-  def manual_whatsapp_message
-    lines = [
-      "Hola #{customer_name}, te escribimos de #{business.name} por tu turno.",
-      "",
-      "Servicio: #{service.name}",
-      "Fecha: #{customer_starts_at_label}",
-      "Lugar: #{business.public_location}"
-    ]
-
-    if confirmed?
-      lines << "" << "Tu turno ya quedó confirmado. Te esperamos."
-    elsif pending_deposit? || deposit_rejected?
-      lines << "" << "Para reservarlo necesitamos la seña de #{formatted_deposit_amount}."
-      lines << "Datos de pago: #{service.deposit_payment_reference}" if service.deposit_payment_configured?
-      lines << "Podés subir el comprobante acá: #{deposit_upload_url}"
-    elsif pending_deposit_review?
-      lines << "" << "Recibimos tu comprobante y está pendiente de revisión."
-    else
-      lines << "" << "Te confirmamos por este medio cuando revisemos la disponibilidad."
-    end
-
-    lines << "" << customer_portal_management_line if customer_portal_management_line.present?
-    lines.join("\n")
-  end
-
-  def manual_whatsapp_url
-    WhatsApp::MessageBuilder.new(
-      business: business,
-      template_key: manual_whatsapp_template_key,
-      booking: self,
-      customer: customer_profile,
-      service: service,
-      professional: employee_membership
-    ).url(phone: customer_phone)
   end
 
   def customer_starts_at_label
@@ -444,33 +402,6 @@ class Appointment < ApplicationRecord
     )
   end
 
-  def deposit_confirmation_whatsapp_message
-    [
-      "¡Hola #{customer_name}!",
-      "Confirmamos tu seña. Tu turno para #{service.name} queda agendado para #{customer_starts_at_label}.",
-      "¡Te esperamos en #{business.name}!",
-      customer_portal_management_line
-    ].compact.join("\n")
-  end
-
-  def deposit_confirmation_whatsapp_url
-    PhoneNumber.whatsapp_link(customer_phone, text: deposit_confirmation_whatsapp_message)
-  end
-
-  def deposit_rejection_whatsapp_message(reason: nil)
-    lines = [
-      "Hola #{customer_name}, revisamos el comprobante de seña para tu turno de #{service.name} del #{customer_starts_at_label} y necesitamos que lo vuelvas a cargar.",
-      "Podés subir un nuevo comprobante acá: #{deposit_upload_url}",
-      customer_portal_management_line
-    ].compact
-    lines << "Motivo: #{reason}" if reason.present?
-    lines.join("\n")
-  end
-
-  def deposit_rejection_whatsapp_url(reason: nil)
-    PhoneNumber.whatsapp_link(customer_phone, text: deposit_rejection_whatsapp_message(reason:))
-  end
-
   def customer_portal_booking_token
     customer_portal_token
   end
@@ -539,13 +470,6 @@ class Appointment < ApplicationRecord
     Time.current <= starts_at - business.rescheduling_notice_hours.hours
   end
 
-  def customer_portal_reschedule_whatsapp_url
-    PhoneNumber.whatsapp_link(
-      business.whatsapp_phone.presence || business.contact_phone,
-      text: customer_portal_reschedule_message
-    )
-  end
-
   def to_param
     short_uuid.presence || super
   end
@@ -595,15 +519,6 @@ class Appointment < ApplicationRecord
       appointment_addons.includes(:service).to_a
     end
 
-    def manual_whatsapp_template_key
-      return "booking_confirmation" if confirmed?
-      return "deposit_request" if pending_deposit? || deposit_rejected?
-      return "proof_request" if pending_deposit_review?
-      return "booking_cancelled" if canceled?
-
-      "public_booking_link"
-    end
-
     def app_host
       AppUrl.host
     end
@@ -640,8 +555,7 @@ class Appointment < ApplicationRecord
           canceled_by_user_id: canceled_by_user_id,
           cancellation_reason: cancellation_reason,
           canceled_late: canceled_late,
-          action_url: customer_portal_cancellation ? customer_appointments_admin_url : admin_appointment_url,
-          whatsapp_url: manual_whatsapp_url
+          action_url: customer_portal_cancellation ? customer_appointments_admin_url : admin_appointment_url
         }.compact
       )
     end
@@ -701,7 +615,7 @@ class Appointment < ApplicationRecord
       "Turno en #{business.name}.",
       "Servicio: #{service.name}",
       customer_name.present? ? "Cliente: #{customer_name}" : nil,
-        customer_phone.present? ? "WhatsApp: #{customer_phone}" : nil,
+        customer_phone.present? ? "Teléfono: #{customer_phone}" : nil,
         customer_portal_booking_token.present? ? "Link del turno: #{customer_portal_booking_url}" : nil
       ].compact.join("\n")
     end

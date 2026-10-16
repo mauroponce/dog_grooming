@@ -226,7 +226,7 @@ class BusinessOptimizationAnalyzer
           ]
         }
 
-        Priorizá acciones automatizables: seña configurable, lista de espera, WhatsApp manual 1-click, reactivación de clientes, ajuste de horarios, descuentos por horarios muertos y recordatorios.
+        Priorizá acciones operativas: seña configurable, lista de espera, reactivación de clientes, ajuste de horarios y descuentos por horarios muertos.
         No recomiendes acciones médicas, legales ni promesas de resultados.
       PROMPT
     end

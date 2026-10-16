@@ -56,19 +56,6 @@ class BookingAttachment < ApplicationRecord
     update!(marketing_consent_status: "rejected")
   end
 
-  def marketing_consent_whatsapp_url
-    return "" if customer_profile&.phone.blank?
-
-    WhatsApp::MessageBuilder.new(
-      business: business,
-      template_key: "marketing_photo_consent",
-      booking: appointment,
-      customer: customer_profile,
-      service: appointment&.service,
-      professional: appointment&.employee_membership
-    ).url(phone: customer_profile.phone)
-  end
-
   private
     def self.invalid_record(message)
       record = new

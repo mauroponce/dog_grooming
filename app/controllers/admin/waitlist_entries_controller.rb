@@ -67,7 +67,7 @@ module Admin
       end
 
       def validate_contact_details!(attrs)
-        raise ArgumentError, "Completá el WhatsApp del cliente." if attrs[:client_phone].blank?
+        raise ArgumentError, "Completá el teléfono del cliente." if attrs[:client_phone].blank?
         raise ArgumentError, "Completá el email del cliente." if attrs[:email].blank?
         raise ArgumentError, "Ingresá un email válido." unless attrs[:email].to_s.match?(URI::MailTo::EMAIL_REGEXP)
       end

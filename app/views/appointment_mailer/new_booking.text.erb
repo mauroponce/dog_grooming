@@ -1,7 +1,7 @@
 Nueva reserva para revisar
 
 e: <%= @appointment.customer_name %>
-WhatsApp: <%= @appointment.customer_phone %>
+Teléfono: <%= @appointment.customer_phone %>
 Servicio: <%= @appointment.service.name %>
 Turno: <%= CustomerDateFormatter.datetime_label(@appointment.starts_at) %>
 Estado: <%= @appointment.status_label %>

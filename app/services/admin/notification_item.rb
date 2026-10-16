@@ -66,7 +66,7 @@ module Admin
     end
 
     def action_url
-      default_action_url.presence || metadata["action_url"].presence || metadata["whatsapp_url"].presence
+      default_action_url.presence || metadata["action_url"].presence
     end
 
     def external_action?
@@ -101,7 +101,7 @@ module Admin
         when "waitlist_entry"
           "Ver lista"
         when "follow_up_due"
-          "Abrir WhatsApp"
+          "Ver seguimiento"
         when "fillable_gap"
           "Ofrecer turno"
         else
@@ -124,7 +124,7 @@ module Admin
         when "waitlist_entry"
           metadata["action_url"].presence || route_helpers.admin_calendar_path(waitlist: "1")
         when "follow_up_due"
-          metadata["whatsapp_url"].presence || metadata["action_url"].presence
+          metadata["action_url"].presence
         when "fillable_gap"
           route_helpers.admin_calendar_path
         end

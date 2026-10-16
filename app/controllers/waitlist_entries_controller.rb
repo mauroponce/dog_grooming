@@ -79,7 +79,7 @@ class WaitlistEntriesController < ApplicationController
     end
 
     def validate_contact_details!
-      raise ArgumentError, "Completá tu WhatsApp." if waitlist_params[:client_phone].blank?
+      raise ArgumentError, "Completá tu teléfono." if waitlist_params[:client_phone].blank?
       raise ArgumentError, "Completá tu email." if waitlist_params[:email].blank?
       raise ArgumentError, "Ingresá un email válido." unless waitlist_params[:email].to_s.match?(URI::MailTo::EMAIL_REGEXP)
     end

@@ -35,7 +35,7 @@ RSpec.describe "Customer portal bookings", type: :request do
     expect(response.body).to include("calendar.google.com/calendar/u/0/r/eventedit")
     expect(response.body).to include(customer_portal_profile_access_path(business.slug, gmail_customer.customer_portal_short_token))
     expect(response.body).not_to include("Pedir reprogramación")
-    expect(response.body).not_to include("Consultar por WhatsApp")
+    expect(response.body).not_to include("Consultar por teléfono")
 
     non_gmail_customer = business.customer_profiles.create!(
       name: "Camila Ruiz",
@@ -77,7 +77,7 @@ RSpec.describe "Customer portal bookings", type: :request do
     expect(response.body).to include("La seña no se devuelve por cancelación.")
     expect(response.body).to include("La seña no se devuelve automáticamente por cancelación.")
     expect(response.body).to include("google.com/maps/dir")
-    expect(response.body).to include(business.whatsapp_contact_link)
+    expect(response.body).to include(business.public_url)
     expect(response.body).to include("Reprogramar")
     expect(response.body).to include("Cancelar turno")
     expect(response.body).to include("Sin seña")

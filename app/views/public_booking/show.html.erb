@@ -105,7 +105,6 @@
             <% elsif @confirmation.pending_deposit? || @confirmation.deposit_rejected? %>
               <%= link_to "Subir comprobante", @confirmation.deposit_upload_url, class: "flex h-12 items-center justify-center rounded-2xl border border-zinc-200 bg-white px-5 text-sm font-bold text-zinc-700 transition hover:bg-zinc-50" %>
             <% else %>
-              <%= link_to "Escribir por WhatsApp", @business.whatsapp_contact_link, target: "_blank", rel: "noopener", class: "flex h-12 items-center justify-center rounded-2xl border border-emerald-200 bg-emerald-50 px-5 text-sm font-bold text-emerald-700 transition hover:bg-emerald-100" %>
             <% end %>
             <%= link_to "Ver mi reserva", @confirmation.customer_portal_booking_url, class: "flex h-12 items-center justify-center rounded-2xl border border-brand-200 bg-brand-50 px-5 text-sm font-bold text-brand-700 transition hover:bg-brand-100" %>
             <%= link_to "Reservar otro turno", public_business_path(@business.slug), class: "flex h-12 items-center justify-center rounded-2xl bg-ink px-5 text-sm font-bold text-white transition hover:bg-zinc-800" %>

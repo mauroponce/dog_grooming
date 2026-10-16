@@ -49,7 +49,7 @@ class WaitlistNotificationService
       appointment.business.provider_events.create!(
         event_type: "waitlist_released_slot",
         title: "Lista de espera: turno liberado",
-        body: "Se liberó #{appointment.service.name} el #{CustomerDateFormatter.datetime_label(appointment.starts_at)}. Enviá los enlaces 1-click a las primeras #{entries.size} personas.",
+          body: "Se liberó #{appointment.service.name} el #{CustomerDateFormatter.datetime_label(appointment.starts_at)}. Contactá manualmente a las primeras #{entries.size} personas.",
         metadata: {
           appointment_id: appointment.id,
           service_id: appointment.service_id,
@@ -57,7 +57,7 @@ class WaitlistNotificationService
           start_time: appointment.starts_at.strftime("%H:%M"),
           action_url: admin_waitlist_url,
           waitlist_entry_ids: entries.map(&:id),
-          links: entries.map { |entry| { name: entry.client_name, phone: entry.client_phone, whatsapp_url: entry.whatsapp_url } }
+          contacts: entries.map { |entry| { name: entry.client_name, phone: entry.client_phone } }
         }
       )
     end

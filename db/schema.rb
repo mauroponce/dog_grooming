@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_16_010100) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_16_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -517,8 +517,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_16_010100) do
     t.datetime "trial_started_at", null: false
     t.datetime "updated_at", null: false
     t.string "website_url"
-    t.string "whatsapp_phone"
-    t.integer "whatsapp_reminder_hours", default: 24, null: false
     t.index "lower((slug)::text)", name: "index_businesses_on_lower_slug", unique: true
     t.index ["billing_enabled"], name: "index_businesses_on_billing_enabled"
     t.index ["custom_domain", "custom_domain_enabled"], name: "index_businesses_on_custom_domain_and_enabled"
@@ -532,7 +530,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_16_010100) do
     t.index ["service_catalog_category_id"], name: "index_businesses_on_service_catalog_category_id"
     t.check_constraint "arrival_mode::text = ANY (ARRAY['fixed'::character varying, 'continuous'::character varying]::text[])", name: "businesses_valid_arrival_mode"
     t.check_constraint "simultaneous_capacity >= 1 AND simultaneous_capacity <= 10", name: "businesses_valid_capacity"
-    t.check_constraint "whatsapp_reminder_hours = ANY (ARRAY[2, 24])", name: "businesses_valid_reminder_hours"
   end
 
   create_table "campaign_links", force: :cascade do |t|
@@ -1468,100 +1465,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_16_010100) do
     t.index ["token_seguro"], name: "index_waitlist_entries_on_token_seguro"
   end
 
-  create_table "whatsapp_connections", force: :cascade do |t|
-    t.text "access_token_ciphertext"
-    t.datetime "authorization_failed_at"
-    t.boolean "automation_enabled", default: false, null: false
-    t.bigint "business_id", null: false
-    t.string "confirmation_template", default: "citapet_booking_confirmation", null: false
-    t.datetime "connected_at"
-    t.datetime "created_at", null: false
-    t.datetime "data_access_expires_at"
-    t.datetime "disconnected_at"
-    t.string "phone_number_id", null: false
-    t.string "reminder_template", default: "citapet_appointment_reminder", null: false
-    t.datetime "subscribed_at"
-    t.jsonb "sync_metadata", default: {}, null: false
-    t.string "template_language", default: "es_AR", null: false
-    t.boolean "templates_approved", default: false, null: false
-    t.datetime "token_expires_at"
-    t.datetime "updated_at", null: false
-    t.datetime "verified_at"
-    t.string "waba_id", null: false
-    t.index ["business_id"], name: "index_whatsapp_connections_on_business_id", unique: true
-    t.index ["phone_number_id"], name: "index_whatsapp_connections_on_phone_number_id", unique: true
-  end
-
-  create_table "whatsapp_contacts", force: :cascade do |t|
-    t.bigint "business_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "last_human_at"
-    t.datetime "last_inbound_at"
-    t.datetime "last_menu_at"
-    t.string "name"
-    t.datetime "opted_in_at"
-    t.datetime "paused_until"
-    t.string "phone", null: false
-    t.datetime "updated_at", null: false
-    t.text "whatsapp_id_ciphertext"
-    t.index ["business_id", "phone"], name: "index_whatsapp_contacts_on_business_id_and_phone", unique: true
-    t.index ["business_id"], name: "index_whatsapp_contacts_on_business_id"
-  end
-
-  create_table "whatsapp_deliveries", force: :cascade do |t|
-    t.datetime "accepted_at"
-    t.bigint "appointment_id"
-    t.integer "attempts", default: 0, null: false
-    t.jsonb "billing_metadata", default: {}, null: false
-    t.bigint "business_id", null: false
-    t.datetime "created_at", null: false
-    t.string "dedupe_key", null: false
-    t.datetime "delivered_at"
-    t.datetime "failed_at"
-    t.datetime "last_status_at"
-    t.jsonb "payload", default: {}, null: false
-    t.string "phone_number_id"
-    t.string "provider_id"
-    t.string "purpose", null: false
-    t.datetime "read_at"
-    t.datetime "sent_at"
-    t.string "status", default: "pending", null: false
-    t.boolean "trial_reminder", default: false, null: false
-    t.datetime "updated_at", null: false
-    t.index ["appointment_id"], name: "index_whatsapp_deliveries_on_appointment_id"
-    t.index ["business_id", "phone_number_id", "created_at"], name: "idx_whatsapp_monthly_deliveries"
-    t.index ["business_id", "trial_reminder", "status"], name: "idx_whatsapp_trial_usage"
-    t.index ["business_id"], name: "index_whatsapp_deliveries_on_business_id"
-    t.index ["dedupe_key"], name: "index_whatsapp_deliveries_on_dedupe_key", unique: true
-    t.index ["provider_id"], name: "index_whatsapp_deliveries_on_provider_id", unique: true
-  end
-
-  create_table "whatsapp_events", force: :cascade do |t|
-    t.bigint "business_id", null: false
-    t.datetime "created_at", null: false
-    t.string "kind", null: false
-    t.jsonb "payload", default: {}, null: false
-    t.string "phone_number_id"
-    t.datetime "processed_at"
-    t.string "provider_id", null: false
-    t.datetime "updated_at", null: false
-    t.index ["business_id", "provider_id", "kind"], name: "index_whatsapp_events_on_business_id_and_provider_id_and_kind", unique: true
-    t.index ["business_id"], name: "index_whatsapp_events_on_business_id"
-  end
-
-  create_table "whatsapp_templates", force: :cascade do |t|
-    t.boolean "active", default: true, null: false
-    t.text "body", null: false
-    t.bigint "business_id", null: false
-    t.datetime "created_at", null: false
-    t.string "key", null: false
-    t.string "name", null: false
-    t.boolean "system_default", default: true, null: false
-    t.datetime "updated_at", null: false
-    t.index ["business_id", "key"], name: "index_whatsapp_templates_on_business_id_and_key", unique: true
-    t.index ["business_id"], name: "index_whatsapp_templates_on_business_id"
-  end
-
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "ai_api_usage_events", "businesses"
@@ -1723,10 +1626,4 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_16_010100) do
   add_foreign_key "waitlist_entries", "customer_profiles"
   add_foreign_key "waitlist_entries", "employee_memberships"
   add_foreign_key "waitlist_entries", "services"
-  add_foreign_key "whatsapp_connections", "businesses"
-  add_foreign_key "whatsapp_contacts", "businesses"
-  add_foreign_key "whatsapp_deliveries", "appointments"
-  add_foreign_key "whatsapp_deliveries", "businesses"
-  add_foreign_key "whatsapp_events", "businesses"
-  add_foreign_key "whatsapp_templates", "businesses"
 end

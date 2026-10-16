@@ -26,7 +26,7 @@ RSpec.describe "Deposit reviews", type: :request do
     expect(appointment.deposit_review_url).to include("/d/#{appointment.deposit_review_token}")
     expect(URI.parse(appointment.deposit_review_url).path.split("/")).not_to include(appointment.id.to_s)
     expect(response.body).to include("Comprobante de seña")
-    expect(response.body).to include("Confirmar turno y abrir WhatsApp")
+    expect(response.body).to include("Confirmar turno")
     expect(document.at_css("img[alt='Comprobante de Valentina Gómez']")).to be_present
   end
 
@@ -45,7 +45,7 @@ RSpec.describe "Deposit reviews", type: :request do
     expect(appointment.deposit_status).to eq("submitted")
   end
 
-  it "approves the receipt and shows the prepared WhatsApp action" do
+  it "approves the receipt without exposing a messaging action" do
     appointment = create_deposit_review_appointment
 
     post confirm_deposit_review_path(appointment.deposit_review_token), headers: browser_headers
@@ -59,16 +59,10 @@ RSpec.describe "Deposit reviews", type: :request do
 
     follow_redirect!
 
-    document = Nokogiri::HTML(response.body)
-    whatsapp_link = document.css("a[href^='https://wa.me/5491111111111']").find { |link| link.text.include?("WhatsApp") }
-
-    expect(whatsapp_link).to be_present
-    whatsapp_message = Rack::Utils.parse_query(URI.parse(whatsapp_link["href"]).query).fetch("text")
-    expect(whatsapp_message).to include("Confirmamos tu seña")
-    expect(whatsapp_message).to include("Depilación")
+    expect(response.body).to include("Confirmado")
   end
 
-  it "rejects the receipt and shows the prepared WhatsApp action" do
+  it "rejects the receipt without exposing a messaging action" do
     appointment = create_deposit_review_appointment
 
     post reject_deposit_review_path(appointment.deposit_review_token),
@@ -85,13 +79,7 @@ RSpec.describe "Deposit reviews", type: :request do
 
     follow_redirect!
 
-    document = Nokogiri::HTML(response.body)
-    whatsapp_link = document.css("a[href^='https://wa.me/5491111111111']").find { |link| link.text.include?("WhatsApp") }
-
-    expect(whatsapp_link).to be_present
-    whatsapp_message = Rack::Utils.parse_query(URI.parse(whatsapp_link["href"]).query).fetch("text")
-    expect(whatsapp_message).to include("necesitamos que lo vuelvas a cargar")
-    expect(whatsapp_message).to include("El monto no coincide.")
+    expect(response.body).to include("Pago pendiente")
   end
 
   it "keeps legacy signed review links working" do

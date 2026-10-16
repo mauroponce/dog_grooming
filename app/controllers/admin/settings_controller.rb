@@ -17,7 +17,7 @@ module Admin
       Business.transaction do
         if params[:agenda].present?
           @business.lock!
-          @business.assign_attributes(params.require(:agenda).permit(:simultaneous_capacity, :arrival_mode, :whatsapp_reminder_hours))
+          @business.assign_attributes(params.require(:agenda).permit(:simultaneous_capacity, :arrival_mode))
           if params[:agenda_times].present?
             @business.arrival_times = params.require(:agenda_times).permit(*("0".."6").to_a).to_h.transform_values { |value| value.to_s.split(/[,\s]+/).reject(&:blank?) }
           end
@@ -39,8 +39,6 @@ module Admin
 
     private
       def prepare_settings
-        @whatsapp_signup_state = SecureRandom.urlsafe_base64(24)
-        session[:whatsapp_signup] = { state: @whatsapp_signup_state, business_id: @business.id, user_id: current_user.id, issued_at: Time.current.to_i }
         @settings_active_tab = settings_tab || SETTINGS_TABS.first
         @settings_business_values = settings_business_values
         @settings_booking_page_preferences = settings_booking_page_preferences

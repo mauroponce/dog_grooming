@@ -362,7 +362,7 @@ module Admin
           noShowCount: no_show_count,
           profileUrl: edit_admin_customer_profile_path(profile),
           portalUrl: profile.customer_portal_url,
-          whatsappUrl: PhoneNumber.whatsapp_link(profile.phone)
+          phone: profile.phone
         }
       end
 
