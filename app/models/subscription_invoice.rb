@@ -8,6 +8,7 @@ class SubscriptionInvoice < ApplicationRecord
   has_many :billing_reminders, dependent: :destroy
 
   validates :period_start, :period_end, :amount_cents, :due_on, :reference_code, :status, presence: true
+  validates :plan_selected, inclusion: { in: Subscription::PLANS.keys }
   validates :status, inclusion: { in: STATUSES }
   validates :amount_cents, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
   validates :billing_period_months, numericality: { only_integer: true, greater_than: 0 }

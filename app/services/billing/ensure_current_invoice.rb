@@ -20,6 +20,7 @@ module Billing
         period_end: period_end,
         billing_period_months: subscription.billing_period_months.to_i.presence || 1,
         amount_cents: current_amount_cents,
+        plan_selected: subscription.plan_selected,
         status: invoice_status,
         due_on: due_on,
         reference_code: reference_code

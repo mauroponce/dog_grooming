@@ -18,6 +18,15 @@ class BillingMailer < ApplicationMailer
     mail subject: "Recibimos tu comprobante de pago", to: @business.owner.email_address
   end
 
+  def payment_proof_review_requested(proof, reviewer)
+    @proof = proof
+    @invoice = proof.subscription_invoice
+    @business = proof.business
+    @review_url = super_admin_billing_url(host: app_host, protocol: app_protocol, anchor: "payment-#{@invoice.id}")
+
+    mail subject: "Comprobante para revisar: #{@business.name}", to: reviewer.email_address
+  end
+
   def payment_approved(invoice)
     @invoice = invoice
     @business = invoice.business
@@ -53,13 +62,13 @@ class BillingMailer < ApplicationMailer
   private
     def reminder_subject(type)
       {
-        "due_7_days" => "Tu suscripción Cita.pet vence en 7 días",
+        "due_4_days" => "Tu suscripción Cita.pet vence en 4 días",
         "due_3_days" => "Tu suscripción Cita.pet vence en 3 días",
+        "due_2_days" => "Tu suscripción Cita.pet vence en 2 días",
+        "due_1_day" => "Tu suscripción Cita.pet vence mañana",
         "due_today" => "Tu suscripción Cita.pet vence hoy",
         "overdue_2_days" => "Tu pago de Cita.pet está pendiente",
-        "overdue_5_days" => "Tu pago de Cita.pet sigue pendiente",
-        "overdue_10_days" => "Vamos a pausar las reservas online de tu cuenta",
-        "restricted_notice" => "Tus reservas online fueron pausadas temporalmente",
+        "overdue_3_days" => "Tu cuenta de Cita.pet fue pausada temporalmente",
         "suspended_notice" => "Tu cuenta de Cita.pet fue pausada temporalmente"
       }.fetch(type, "Tu pago de Cita.pet está pendiente")
     end

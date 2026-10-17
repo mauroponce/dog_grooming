@@ -20,6 +20,7 @@ class Business < ApplicationRecord
     ]
   }.freeze
   TRIAL_GRACE_DAYS = 3
+  BILLING_GRACE_DAYS = 3
   BOOLEAN = ActiveModel::Type::Boolean.new
   AI_CHAT_PUBLICLY_ENABLED = false
   DEPOSIT_PERCENTAGE_OPTIONS = (10..100).step(10).to_a.freeze
@@ -428,6 +429,19 @@ class Business < ApplicationRecord
     trial_ends_at.present? && trial_ends_at.past? && Time.current <= trial_ends_at + TRIAL_GRACE_DAYS.days
   end
 
+  def billing_grace_period_active?
+    return false unless billing_enabled?
+    return true if billing_pending_review?
+
+    due_on = subscription&.current_invoice&.due_on || subscription&.next_due_on || trial_ends_at&.to_date
+    due_on.present? && Time.zone.today <= due_on + BILLING_GRACE_DAYS.days
+  end
+
+  def billing_due_in_days
+    due_on = subscription&.current_invoice&.due_on || subscription&.next_due_on || trial_ends_at&.to_date
+    due_on && (due_on - Time.zone.today).to_i
+  end
+
   def subscription_active?
     return false unless billing_enabled?
 
@@ -455,7 +469,7 @@ class Business < ApplicationRecord
   def access_active?
     return !disabled? unless billing_enabled?
 
-    !disabled? && !billing_suspended? && (trial_active? || trial_grace_period_active? || subscription_active?)
+    !disabled? && !billing_suspended? && (trial_active? || trial_grace_period_active? || billing_grace_period_active? || subscription_active?)
   end
 
   def booking_available?

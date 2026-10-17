@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_16_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_17_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -528,7 +528,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_16_120000) do
     t.index ["public_site_mode"], name: "index_businesses_on_public_site_mode"
     t.index ["public_template"], name: "index_businesses_on_public_template"
     t.index ["service_catalog_category_id"], name: "index_businesses_on_service_catalog_category_id"
-    t.check_constraint "arrival_mode::text = ANY (ARRAY['fixed'::character varying, 'continuous'::character varying]::text[])", name: "businesses_valid_arrival_mode"
+    t.check_constraint "arrival_mode::text = ANY (ARRAY['fixed'::character varying::text, 'continuous'::character varying::text])", name: "businesses_valid_arrival_mode"
     t.check_constraint "simultaneous_capacity >= 1 AND simultaneous_capacity <= 10", name: "businesses_valid_capacity"
   end
 
@@ -1322,6 +1322,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_16_120000) do
     t.datetime "paid_at"
     t.date "period_end", null: false
     t.date "period_start", null: false
+    t.string "plan_selected", default: "basic", null: false
     t.string "reference_code", null: false
     t.datetime "restricted_at"
     t.string "status", default: "open", null: false
@@ -1382,7 +1383,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_16_120000) do
     t.datetime "updated_at", null: false
     t.index ["business_id"], name: "index_subscriptions_on_business_id", unique: true
     t.index ["external_reference"], name: "index_subscriptions_on_external_reference", unique: true
-    t.check_constraint "plan_selected::text = ANY (ARRAY['basic'::character varying, 'pro'::character varying]::text[])", name: "subscriptions_valid_plan"
+    t.check_constraint "plan_selected::text = ANY (ARRAY['basic'::character varying::text, 'pro'::character varying::text])", name: "subscriptions_valid_plan"
   end
 
   create_table "super_admin_tasks", force: :cascade do |t|

@@ -26,7 +26,7 @@ class Subscription < ApplicationRecord
   before_validation :set_billing_defaults
 
   def active?
-    ACTIVE_STATUSES.include?(normalized_status) && !suspended? && !cancelled?
+    PAID_STATUSES.include?(normalized_status) && !suspended? && !cancelled? && (paid_until.blank? || paid_until >= Time.zone.today)
   end
 
   def paid?

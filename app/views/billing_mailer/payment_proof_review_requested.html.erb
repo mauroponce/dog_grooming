@@ -1,0 +1,7 @@
+<% content_for :email_preheader, "#{@business.name} subió un comprobante de #{@invoice.amount_label}." %>
+<% content_for :email_badge, "Cobros" %>
+<% content_for :email_status, "Revisión requerida" %>
+
+<h1>Hay un comprobante para revisar</h1>
+<p><strong><%= @business.name %></strong> subió un comprobante por <strong><%= @invoice.amount_label %></strong> para el período que comienza el <strong><%= CustomerDateFormatter.date_label(@invoice.period_start) %></strong>.</p>
+<p><%= link_to "Revisar pago", @review_url, class: "email-button button" %></p>

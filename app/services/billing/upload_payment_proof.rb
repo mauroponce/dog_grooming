@@ -30,6 +30,9 @@ module Billing
       end
 
       BillingMailer.payment_proof_received(proof).deliver_later
+      User.super_admin.find_each do |super_admin|
+        BillingMailer.payment_proof_review_requested(proof, super_admin).deliver_later
+      end
       proof
     end
 

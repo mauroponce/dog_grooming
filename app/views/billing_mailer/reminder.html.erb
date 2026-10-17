@@ -3,5 +3,5 @@
 <% content_for :email_status, "Pago pendiente" %>
 <h1><%= @business.name %>: pago de Cita.pet</h1>
 <p>Tu suscripción tiene un pago de <strong><%= @invoice.amount_label %></strong> con vencimiento el <strong><%= CustomerDateFormatter.date_label(@invoice.due_on) %></strong>.</p>
-<p>Ingresá al panel y pagá con Mercado Pago. Podés elegir el medio de pago disponible en Checkout Pro; no necesitás adherir una tarjeta a una suscripción.</p>
-<p><%= link_to "Pagar con Mercado Pago", @billing_url, class: "email-button button" %></p>
+<p>Ingresá al panel para ver los datos de transferencia y subir el comprobante de pago.</p>
+<p><%= link_to "Ver cómo pagar", @billing_url, class: "email-button button" %></p>

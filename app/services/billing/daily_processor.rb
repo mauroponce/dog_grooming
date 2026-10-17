@@ -1,12 +1,13 @@
 module Billing
   class DailyProcessor
     REMINDERS_BY_OFFSET = {
-      -7 => "due_7_days",
+      -4 => "due_4_days",
       -3 => "due_3_days",
+      -2 => "due_2_days",
+      -1 => "due_1_day",
       0 => "due_today",
       2 => "overdue_2_days",
-      5 => "overdue_5_days",
-      10 => "overdue_10_days"
+      3 => "overdue_3_days"
     }.freeze
 
     def self.call(...)
@@ -37,20 +38,10 @@ module Billing
         sync_without_invoice!(business, subscription) and return if invoice.blank?
 
         sync_invoice_status!(invoice)
-        ensure_checkout!(invoice) unless invoice.paid?
         return if invoice.pending_review? || subscription.pending_review?
 
         send_due_reminder_if_needed!(invoice)
-        restrict_if_needed!(invoice)
         suspend_if_needed!(invoice)
-      end
-
-      def ensure_checkout!(invoice)
-        return unless BillingMercadoPagoConnection.current.connected?
-
-        Billing::CreateMercadoPagoCheckout.call(invoice: invoice)
-      rescue MercadoPago::Client::Error, ArgumentError => error
-        Rails.logger.warn("Could not create Mercado Pago subscription checkout for invoice #{invoice.id}: #{error.class}: #{error.message}")
       end
 
       def sync_without_invoice!(business, subscription)
@@ -64,10 +55,8 @@ module Billing
         return if invoice.paid? || invoice.pending_review?
 
         days = invoice.days_overdue
-        subscription_status = if days >= 15
+        subscription_status = if days >= Business::BILLING_GRACE_DAYS
           "suspended"
-        elsif days >= 10
-          "restricted"
         elsif days.positive?
           "overdue"
         elsif invoice.due_today?
@@ -80,7 +69,7 @@ module Billing
 
         invoice_status = days.positive? ? "overdue" : "open"
         invoice.update!(status: invoice_status, overdue_at: Time.current) if invoice.status != invoice_status && !invoice.rejected?
-        invoice.subscription.update!(status: subscription_status)
+        invoice.subscription.update!(status: subscription_status) unless invoice.subscription.pending_review?
       end
 
       def send_due_reminder_if_needed!(invoice)
@@ -91,17 +80,8 @@ module Billing
         send_reminder!(invoice, reminder_type)
       end
 
-      def restrict_if_needed!(invoice)
-        return unless invoice.days_overdue >= 10
-        return if invoice.subscription.restricted? || invoice.subscription.suspended?
-
-        invoice.update!(restricted_at: Time.current)
-        invoice.subscription.update!(status: "restricted", restricted_at: Time.current)
-        send_reminder!(invoice, "restricted_notice")
-      end
-
       def suspend_if_needed!(invoice)
-        return unless invoice.days_overdue >= 15
+        return unless invoice.days_overdue >= Business::BILLING_GRACE_DAYS
         return if invoice.subscription.suspended?
 
         invoice.update!(suspended_at: Time.current)

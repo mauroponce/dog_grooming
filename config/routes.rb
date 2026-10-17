@@ -69,7 +69,8 @@ Rails.application.routes.draw do
       get "asistente" => "dashboard#show", as: :dashboard
       resources :assistant_messages, only: :create, path: "asistente/mensajes"
       resource :billing, only: :show, path: "suscripcion", controller: "billing" do
-        post :checkout, path: "pagar"
+        patch :select_plan, path: "elegir-plan"
+        post :upload_proof, path: "comprobantes"
       end
       resource :mercado_pago_connection, only: [], path: "configuracion/mercadopago", controller: "mercado_pago_connections" do
         get :connect, path: "conectar"
@@ -184,7 +185,11 @@ Rails.application.routes.draw do
 
   namespace :super_admin do
     root "businesses#index"
-    resource :billing, only: :show, path: "cobros", controller: "billing"
+    resource :billing, only: %i[show update], path: "cobros", controller: "billing" do
+      delete :remove_account_proof, path: "constancia"
+      patch :approve_invoice, path: "aprobar-factura"
+      patch :reject_invoice, path: "rechazar-factura"
+    end
     resource :mercado_pago_connection, only: :destroy, path: "cobros/mercado-pago", controller: "mercado_pago_connections" do
       get :connect, path: "conectar"
       get :callback

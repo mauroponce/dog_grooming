@@ -3,15 +3,17 @@ require "rails_helper"
 RSpec.describe "Admin billing", type: :request do
   before { host! "localhost:3000" }
 
-  it "muestra Checkout Pro como único medio para una factura pendiente" do
+  it "muestra el pago por transferencia para una factura pendiente" do
     business = create_business
+    BillingTransferAccount.current.update!(transfer_alias: "cita.pet", account_holder: "Cita.pet")
     sign_in(business.owner)
 
     get admin_billing_path, headers: browser_headers
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("Pagar con Mercado Pago")
-    expect(response.body).not_to include("Datos para transferir")
+    expect(response.body).to include("Transferencia bancaria")
+    expect(response.body).to include("cita.pet")
+    expect(response.body).not_to include("Pagar con Mercado Pago")
   end
 
   def create_business

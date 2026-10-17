@@ -3,15 +3,15 @@ require "rails_helper"
 RSpec.describe "Super admin billing", type: :request do
   before { host! "localhost:3000" }
 
-  it "muestra la conexión Mercado Pago exclusiva de Cita.pet" do
+  it "permite configurar la cuenta bancaria de Cita.pet" do
     super_admin = create_user(role: :super_admin)
     sign_in(super_admin)
 
     get super_admin_billing_path, headers: browser_headers
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("Cuenta de Mercado Pago de Cita.pet")
-    expect(response.body).to include("Conectar Mercado Pago")
+    expect(response.body).to include("Cuenta para recibir transferencias")
+    expect(response.body).to include("Constancia bancaria")
   end
 
   it "no permite el panel a un admin de negocio" do
