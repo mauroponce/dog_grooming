@@ -10,6 +10,7 @@ Este directorio conserva decisiones funcionales o arquitectónicas duraderas que
 | [0002](0002-service-pricing-by-pet-size.md) | Aceptada | Servicio base con variantes por tamaño de mascota |
 | [0003](0003-platform-subscription-by-bank-transfer.md) | Aceptada | Suscripción de Cita.pet pagada por transferencia y revisión manual |
 | [0004](0004-customer-recognition-without-login.md) | Aceptada | Reconocimiento por celular sin login y ficha interna por mascota |
+| [0005](0005-minimal-booking-and-operations.md) | Aceptada | Reserva pública y operación mínima sin IA ni autoservicio |
 
 ## Cuándo crear una decisión
 

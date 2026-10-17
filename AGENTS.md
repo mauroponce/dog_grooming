@@ -2,6 +2,8 @@
 
 ## Start here
 
+- `AGENTS.md` is the repository instruction entry point. Global Dev Skills define the working method selected for the task; the Markdown files in this repository define durable project facts. Project documentation never replaces an invoked global skill or creates a new skill by itself.
+- For a non-trivial change, select the applicable global Dev Skill first: use `dev-discovery` to understand an unclear initiative, `dev-plan` to design a defined initiative, `dev-implement` to make an approved change, `dev-review` for independent review, and `dev-release` only for release work. Follow the selected skill together with these repository rules.
 - For any non-trivial change, read [`docs/agent_guide.md`](docs/agent_guide.md), [`docs/product_context.md`](docs/product_context.md), and [`docs/architecture.md`](docs/architecture.md) before editing. Then read only the relevant entries from [`docs/decisions/README.md`](docs/decisions/README.md). These are the project-owned sources for stable functional and architectural decisions.
 - Use those documents to avoid broad repository archaeology. Verify only the code, schema, tests, and history near the requested change. Documentation does not replace targeted verification.
 - If current code and project documentation conflict, do not silently choose one. Establish the intended behavior from tests, recent history, and the user's instruction, then update the affected documentation in the same change.

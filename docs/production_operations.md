@@ -51,6 +51,8 @@ s3://dog-grooming/backups/postgres/
 
 Antes de automatizarlo, verificá que el token R2 pueda leer, escribir y listar ese bucket. Para restaurar, detené el servicio web, descargá el backup elegido al host de destino y restauralo solamente contra la base `dog_grooming_production`.
 
+La migración `20261017160000_remove_ai_customer_portal_and_waitlist` elimina tablas y columnas de IA, portal de cliente y lista de espera, y no tiene rollback. Confirmá un backup restaurable antes de aplicarla y verificá después una reserva pública, una seña y una reprogramación interna.
+
 ## Email
 
 Para email productivo, verificá tu dominio en Resend y configurá, por ejemplo:

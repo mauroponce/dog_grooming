@@ -38,7 +38,7 @@ docker compose exec -T web bash -lc 'bin/rails db:prepare'
 - `/:slug`: pagina publica para que clientes reserven sin cuenta.
 - `/super_admin`: panel global para el super admin.
 
-Los turnos publicos quedan pendientes de confirmacion. Si el servicio requiere seña, el cliente ve alias/CBU/CVU o link externo, sube comprobante y el comercio confirma o rechaza manualmente desde el panel o desde un link firmado.
+Los turnos públicos quedan pendientes de confirmación. Si el servicio requiere seña, el cliente ve alias/CBU/CVU o Mercado Pago, y puede subir comprobante. El comercio confirma o rechaza manualmente desde el panel. Para cancelar o reprogramar, el cliente contacta a la peluquería por WhatsApp.
 
 ## Super Admin
 
@@ -98,7 +98,7 @@ CLOUDFLARE_API_TOKEN
 SMTP_*
 ```
 
-El panel `/super_admin/uso` muestra el almacenamiento conocido por Active Storage y, si configurás `CLOUDFLARE_ACCOUNT_ID` junto con `CLOUDFLARE_R2_ANALYTICS_TOKEN` o `CLOUDFLARE_API_TOKEN`, también consulta métricas oficiales de R2 vía Cloudflare GraphQL. El uso de Gemini se registra localmente desde cada llamada de la app; los costos son estimados y requieren configurar las tarifas por millón de tokens.
+El panel `/super_admin/uso` muestra el almacenamiento conocido por Active Storage y, si configurás `CLOUDFLARE_ACCOUNT_ID` junto con `CLOUDFLARE_R2_ANALYTICS_TOKEN` o `CLOUDFLARE_API_TOKEN`, también consulta métricas oficiales de R2 vía Cloudflare GraphQL.
 
 ## Pagos y señas
 
@@ -109,30 +109,18 @@ El comercio configura sus cuentas de cobro desde `/admin/configuracion`. Puede u
 
 Para Mercado Pago configurá `MERCADO_PAGO_CLIENT_ID` y `MERCADO_PAGO_CLIENT_SECRET` con el App ID y Client Secret de la aplicación OAuth. También podés separar credenciales de API con `MERCADO_PAGO_TEST_*` y `MERCADO_PAGO_PRODUCTION_*`. `docker compose` local fuerza `MERCADO_PAGO_ENV=test` para intercambiar OAuth con `test_token=true` y checkout sandbox; producción fuerza `MERCADO_PAGO_ENV=production` y usa las credenciales `MERCADO_PAGO_PRODUCTION_*`. El webhook `/webhooks/mercado-pago` recibe las notificaciones de pago; si configurás `MERCADO_PAGO_WEBHOOK_SECRET`, la app valida la firma enviada por Mercado Pago.
 
-Planes comerciales:
-
-- Plan Profesional: $30.000 ARS/mes, 1 agenda activa, reservas online, señas y comprobantes.
-- Plan Centro: $50.000 ARS/mes, varias profesionales, roles, recursos compartidos, agenda por profesional, reportes, huecos libres y gestion avanzada.
-
-La suscripción de Cita.pet se cobra con Checkout Pro de Mercado Pago: cada período genera un checkout nuevo para que el negocio elija cómo pagar, sin adherir una tarjeta a un débito automático. La cuenta receptora se vincula desde `/super_admin/cobros` y es distinta de las cuentas Mercado Pago que cada negocio conecta para cobrar sus señas.
+Los planes y sus prestaciones vigentes viven en `Subscription::PLANS`. La suscripción de Cita.pet se paga por transferencia y comprobante revisado por superadmin; es independiente de Mercado Pago y de las señas de cada peluquería.
 
 Funciones incluidas:
 
-- Chat con deteccion de intencion de reserva y scroll automatico a servicios.
-- Resumen diario de chats abiertos para seguimiento manual.
-- Los turnos se gestionan desde el calendario en `/admin/calendario`.
-- Analisis de reseñas con alerta critica en el dashboard.
+- Reserva pública de servicio y variante por tamaño, con capacidad global de la peluquería.
+- Señas por transferencia/comprobante o Mercado Pago.
+- Agenda administrativa, clientes, mascotas, servicios e invitaciones al equipo.
+- Reprogramación interna de turnos futuros.
 
-## Planes y Equipo
+## Equipo
 
-La arquitectura interna es una sola: todo negocio tiene profesionales. El Plan Profesional limita la operacion a 1 agenda activa; el Plan Centro habilita multiples profesionales, roles y recursos compartidos.
-
-La diferencia del Plan Centro es operativa:
-
-- Multiples sucursales.
-- Empleados invitados por mail con link temporal.
-- Agenda/calendario por empleado.
-- Permisos configurables por empleado con Pundit.
+El responsable invita empleados por email. Los empleados activos comparten las herramientas operativas de agenda, clientes, mascotas y señas; el responsable conserva servicios, capacidad, configuración, equipo y suscripción. No hay roles configurables ni agenda pública por profesional.
 
 Las invitaciones de empleados y notificaciones usan Action Mailer. En desarrollo, todos los emails quedan capturados en Mailpit. En producción, la app envía por Resend usando la API HTTP sin gema externa.
 
@@ -179,7 +167,7 @@ dog-grooming/
 
 ## Cobros de suscripción
 
-El super admin vincula la cuenta de Mercado Pago receptora desde `/super_admin/cobros`. Cada factura mensual ofrece Checkout Pro en `/admin/suscripcion`; los webhooks de Mercado Pago acreditan el pago de forma automática e idempotente.
+El negocio paga la suscripción por transferencia a Cita.pet y carga un comprobante desde `/admin/suscripcion`. El superadmin revisa y acredita ese pago. Esta operación es independiente de las cuentas de Mercado Pago que cada peluquería conecta para cobrar señas a sus clientes.
 
 Los nombres `R2_*` siguen soportados como compatibilidad.
 

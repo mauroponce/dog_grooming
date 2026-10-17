@@ -7,8 +7,8 @@ Este documento es la fuente canónica para el comportamiento estable del product
 Cita.pet es una plataforma para peluquerías caninas. Una empresa publica servicios y disponibilidad, recibe reservas, administra mascotas y responsables, cobra señas y paga una suscripción mensual a Cita.pet.
 
 - **Responsable de la empresa:** administra una peluquería desde `/admin`.
-- **Empleado:** opera dentro de los permisos concedidos para una empresa.
-- **Cliente final:** reserva públicamente sin crear una cuenta administrativa y puede consultar sus turnos mediante el portal del responsable.
+- **Empleado:** opera la agenda, clientes, mascotas y señas de una empresa activa. No configura permisos individuales.
+- **Cliente final:** reserva públicamente sin crear una cuenta administrativa. Para cancelar, reprogramar o consultar un caso particular contacta a la peluquería por WhatsApp.
 - **Superadmin:** administra empresas, suscripciones, datos bancarios de Cita.pet y revisión de pagos desde `/super_admin`.
 - **`Business`:** límite principal de tenencia. Servicios, clientes, mascotas, turnos, empleados y configuración pertenecen a una empresa.
 
@@ -25,7 +25,7 @@ Decisión detallada: [`0001-registration-google-and-public-slug.md`](decisions/0
 
 ## Servicios y tamaño de mascota
 
-- Un servicio representa la oferta base y conserva nombre, descripción, categoría, imágenes, profesionales, disponibilidad y reglas de cobro.
+- Un servicio representa la oferta base y conserva nombre, descripción, categoría, imágenes, disponibilidad y reglas de cobro.
 - Un servicio puede tener **precio único** o **precio por tamaño de mascota**.
 - Los rangos de tamaño pertenecen a la empresa y se reutilizan en todos sus servicios. Los valores iniciales son:
   - Chico: hasta 10 kg.
@@ -43,9 +43,10 @@ Decisión detallada: [`0002-service-pricing-by-pet-size.md`](decisions/0002-serv
 ## Reservas y señas de clientes
 
 - Mercado Pago pertenece al flujo comercial de cada peluquería para cobrar señas de sus clientes. Sus credenciales y cobros no pertenecen a la facturación de Cita.pet.
-- Una reserva usa el precio y la duración efectivos seleccionados para validar disponibilidad, recursos, capacidad y asignación profesional.
+- Una reserva usa el precio y la duración efectivos seleccionados para validar disponibilidad y capacidad global de la peluquería. No se asigna ni se elige un profesional durante la reserva pública.
 - Los pagos, webhooks y cambios de estado deben ser idempotentes. Un turno no se confirma por un retorno del navegador sin validar el pago correspondiente.
 - Cuando una empresa habilita transferencia manual para sus clientes, el comprobante de la seña se revisa dentro del negocio; este flujo sigue separado del pago de la suscripción a Cita.pet.
+- La confirmación pública sólo muestra el estado de esa reserva. No ofrece portal, lista de espera, cancelación ni reprogramación autoservicio; estos pedidos se canalizan por WhatsApp.
 
 ## Clientes, mascotas y atención
 
@@ -53,9 +54,19 @@ Decisión detallada: [`0002-service-pricing-by-pet-size.md`](decisions/0002-serv
 - El celular se normaliza incluyendo país y área. Si se omite el área, se usa la del negocio, configurable e inicialmente `11`; el número interpretado se muestra antes de confirmar.
 - Se reconoce al cliente por celular completo y a la mascota por nombre dentro de ese cliente. Una coincidencia por email sólo sugiere una revisión al equipo. Las ambigüedades se corrigen desde el turno sin fusionar fichas.
 - Los datos ingresados para reservar no habilitan acceso al perfil completo ni reemplazan los cuidados guardados. La elección explícita de tamaño sí actualiza el rango recordado.
-- La ficha de mascota separa cuidados permanentes y preferencias del historial de atenciones, con servicio, fecha, profesional, autor del cierre y notas/fotos internas.
+- La ficha de mascota separa cuidados permanentes y preferencias del historial de atenciones, con servicio, fecha, autor del cierre y notas/fotos internas.
 - Finalizar no exige nota ni foto. Se pueden agregar después, sin repetir los efectos del cierre. Editar cuidados permanentes sigue requiriendo permiso de edición de clientes.
-- Con email se envía un recordatorio cuando faltan 24 horas; si se confirma con menos anticipación, se envía al confirmar. Sólo se recuerda un turno confirmado y futuro. Una reprogramación habilita un nuevo recordatorio para el nuevo horario.
+- Con email se envía un recordatorio cuando faltan 24 horas; si se confirma con menos anticipación, se envía al confirmar. Sólo se recuerda un turno confirmado y futuro. El equipo puede reprogramar internamente un turno futuro y se habilita un nuevo recordatorio para el nuevo horario.
+
+## Agenda y equipo mínimos
+
+- La capacidad es global por peluquería; inicia en `1` y cada reserva consume un cupo del mismo calendario.
+- Los servicios y sus variantes inician con una duración de 60 minutos, que el responsable puede ajustar desde el catálogo.
+- El responsable administra servicios, configuración, capacidad, equipo y suscripción. Los empleados activos acceden a la operación diaria: agenda, clientes, mascotas y señas.
+- El responsable invita empleados por email. No hay interfaz de roles, permisos individuales ni configuración de agendas por profesional.
+- La reprogramación se realiza sólo desde la agenda administrativa, conserva la mascota, el pago y el historial, y vuelve a validar la capacidad de forma atómica.
+
+Decisión detallada: [`0005-minimal-booking-and-operations.md`](decisions/0005-minimal-booking-and-operations.md).
 
 Decisión detallada: [`0004-customer-recognition-without-login.md`](decisions/0004-customer-recognition-without-login.md).
 
@@ -78,6 +89,7 @@ Decisión detallada: [`0003-platform-subscription-by-bank-transfer.md`](decision
 - Las decisiones económicas se guardan como snapshots en la operación correspondiente cuando el historial no debe variar con el catálogo actual.
 - Los estados de pago, revisión, restricción y suspensión deben ser explícitos y recuperables; no se infieren sólo de la pantalla mostrada.
 - No almacenar secretos ni credenciales en documentación, vistas, logs o metadatos de negocio.
+- No incorporar asistentes, chat, análisis ni otra lógica de inteligencia artificial sin una nueva decisión de producto y su correspondiente diseño de datos.
 
 ## Cómo mantener este documento
 

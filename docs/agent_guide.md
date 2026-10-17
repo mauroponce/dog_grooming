@@ -1,6 +1,8 @@
-# Guía de trabajo para agentes
+# Guía local de implementación
 
-Esta guía complementa `AGENTS.md`. Es el punto de partida operativo para cambios no triviales. El comportamiento funcional estable vive en `docs/product_context.md`, las fronteras técnicas en `docs/architecture.md` y las decisiones duraderas en `docs/decisions/`. Estos documentos reducen la exploración inicial, pero no reemplazan la inspección focalizada del código y de las pruebas cercanas al cambio.
+Esta guía aporta el mapa técnico y la verificación propios de Cita.pet. `AGENTS.md` es la entrada obligatoria de instrucciones del repositorio y las Dev Skills globales determinan el método de trabajo: esta guía no las reemplaza ni intenta definir una skill local.
+
+Usarla después de leer `AGENTS.md` y sólo junto con la skill global aplicable. El comportamiento estable vive en `docs/product_context.md`, las fronteras técnicas en `docs/architecture.md` y las decisiones duraderas en `docs/decisions/`. Estos documentos reducen la exploración inicial, pero no reemplazan la inspección focalizada del código y de las pruebas cercanas al cambio.
 
 ## Producto y límites del dominio
 
@@ -15,7 +17,7 @@ Cita.pet es una aplicación Rails para que peluquerías caninas publiquen su age
 
 | Necesidad | Punto de entrada | Lógica y pruebas cercanas |
 | --- | --- | --- |
-| Reserva pública, servicios y portal de clientes | `PublicBookingController`, `PublicServicePagesController`, `CustomerPortal::*` | `app/services/appointments`, `app/services/bookings`, `app/services/customer_portal`; `spec/requests/public_bookings_spec.rb`, `spec/requests/customer_portal_bookings_spec.rb` |
+| Reserva pública y servicios | `PublicBookingController`, `PublicServicePagesController` | `app/services/appointments`, `app/services/bookings`, `app/services/availability`; `spec/requests/public_bookings_spec.rb`, `spec/services/grooming/booking_configuration_spec.rb` |
 | Operación del negocio | `Admin::*Controller`, vistas `app/views/admin` | `app/services/appointments`, `availability`, `customers`, `services`, `team`; request specs `admin_*` |
 | Administración global y facturación | `SuperAdmin::*Controller` | `app/services/billing`, modelos `Subscription*`; specs `super_admin_billing_spec.rb` y `admin_billing_spec.rb` |
 | Pagos Mercado Pago | `Webhooks::MercadoPagoController`, `Admin::MercadoPagoConnectionsController` | `app/services/mercado_pago`, `app/jobs/mercado_pago`; specs de Mercado Pago y billing |
@@ -33,16 +35,11 @@ Las rutas en `config/routes.rb` tienen precedencia significativa: las rutas est�
 - La UI usa ERB, Tailwind, import maps, Turbo y Stimulus. Antes de agregar JavaScript o estilos, localizar el controlador Stimulus y las clases/patrones que ya usa la pantalla.
 - No agregar dependencias si Rails o una abstracción existente del proyecto resuelven el problema.
 
-## Flujo de trabajo recomendado
+## Relación con las Dev Skills
 
-1. Revisar `AGENTS.md`, esta guía, `docs/product_context.md`, `docs/architecture.md`, las decisiones relevantes, `git status --short` y luego sólo la ruta/controlador/modelo/servicio y pruebas cercanas.
-2. Delimitar el cambio verticalmente: contrato observable, autorización, persistencia, trabajo asíncrono/integración y vista, según aplique.
-3. Hacer el cambio mínimo coherente. No mezclar refactors ni formateos ajenos.
-4. Añadir o actualizar la prueba RSpec más próxima para cada cambio de comportamiento.
-5. Ejecutar primero la prueba focalizada y luego las comprobaciones proporcionales al riesgo.
-6. Comprobar si cambió un contrato funcional, una frontera de arquitectura, una decisión duradera o una operación; si cambió, actualizar su fuente canónica en el mismo trabajo.
-
-Para tareas amplias, usar el flujo de skills configurado: `dev-discovery` → `dev-plan` → `dev-implement` → revisión independiente con `dev-review`. Los planes de trabajo entre chats pertenecen al espacio personal de Codex, no a `PLAN.md` o `SPEC.md` del repositorio.
+- La skill global elegida decide el flujo de descubrimiento, planificación, implementación, revisión o release. No copiar sus pasos en documentos locales.
+- Esta guía resuelve únicamente preguntas que una skill global no puede conocer: límites de Cita.pet, rutas, servicios, pruebas y comandos del repositorio.
+- `AGENTS.md` indica qué fuentes locales leer y exige comprobar si esta documentación sigue vigente al cerrar un cambio. Los planes, notas de progreso y memoria entre sesiones viven fuera del repositorio, como establecen las Dev Skills.
 
 ## Ejecución local y verificación
 
@@ -73,7 +70,7 @@ docker compose exec -T web bash -lc 'bin/importmap audit'
 
 - **Esquema o datos:** inspeccionar migraciones y schema actuales; preferir operaciones compatibles con código antiguo/nuevo y explicar rollback/backfill cuando aplique.
 - **Autorización o tenancy:** validar admin, empleado y super admin cuando el comportamiento alcance más de un rol; comprobar que no se cruza el `Business` actual.
-- **Mercado Pago, webhooks, correo o IA:** conservar contratos existentes, manejo de reintentos y secretos fuera del código. Añadir pruebas de éxito y fallo/duplicado pertinentes.
+- **Mercado Pago, webhooks o correo:** conservar contratos existentes, manejo de reintentos y secretos fuera del código. Añadir pruebas de éxito y fallo/duplicado pertinentes. No reintroducir IA, portal de cliente ni lista de espera sin una decisión explícita y una migración evaluada.
 - **Rutas públicas o dominios personalizados:** comprobar ambas variantes de host y el orden de rutas para no capturar paths administrativos como slugs.
 - **Producción:** consultar `docs/production_operations.md` y `deployment.md`. Un deploy requiere aprobación explícita; esta guía no autoriza cambios de infraestructura ni secretos.
 

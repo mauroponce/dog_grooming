@@ -14,7 +14,7 @@ Esta es la fuente canónica de las fronteras técnicas e invariantes estables. S
 
 | Área | Entrada | Responsabilidad |
 | --- | --- | --- |
-| Sitio y reserva pública | `/:slug`, dominios personalizados, `PublicBookingController` | Presentación pública, selección de servicio/variante, disponibilidad y reserva |
+| Sitio y reserva pública | `/:slug`, dominios personalizados, `PublicBookingController` | Presentación pública, selección de servicio/variante, disponibilidad global, reserva y señas |
 | Operación de empresa | `/admin`, `Admin::BaseController` | Agenda, servicios, clientes, mascotas, equipo, señas y suscripción |
 | Administración global | `/super_admin`, `SuperAdmin::BaseController` | Empresas, facturación de plataforma y tareas globales |
 | Integraciones | controladores bajo `Webhooks::*` y callbacks OAuth | Validación del proveedor, idempotencia y traducción a servicios de dominio |
@@ -37,8 +37,10 @@ Las rutas administrativas y estáticas deben permanecer antes de los comodines p
 - `ServiceVariant` pertenece a un `Service` y un `PetSizeBand`; aporta precio y duración. La validación impide cruzar empresas.
 - `Bookings::ServiceSelection` es el valor efectivo usado durante disponibilidad y precio. Delega el servicio base y reemplaza precio/duración con la variante elegida.
 - `Appointments::CreateBooking` valida que una variante activa pertenezca al servicio, usa la selección efectiva para disponibilidad/recursos/precio y persiste el `Service` base, la variante y sus snapshots.
+- `Availability::AvailableSlots` y `Appointments::CreateBooking` usan capacidad global del `Business`; la reserva pública no asigna `EmployeeMembership` ni consulta su disponibilidad.
 - `Appointment` conserva `ends_at`, importes y datos de variante históricos. Los cambios posteriores del catálogo no los recalculan automáticamente.
 - `Pet#pet_size_band` es una preferencia recordada, no una fuente suficiente para cotizar una nueva reserva pública.
+- `Admin::AppointmentsController#reschedule` bloquea el negocio y el turno antes de mover una reserva futura. La validación normal del turno protege el cupo y el pago, la mascota y el historial se conservan.
 
 Pruebas de referencia: `spec/services/grooming/booking_configuration_spec.rb`, `spec/requests/public_bookings_spec.rb` y los recorridos de agenda en `spec/requests/admin_shell_spec.rb`.
 
@@ -49,7 +51,7 @@ Pruebas de referencia: `spec/services/grooming/booking_configuration_spec.rb`, `
 - `Pets::Upsert` reutiliza sólo una coincidencia inequívoca de nombre. En reservas públicas conserva cuidados y preferencias; el rango elegido explícitamente puede actualizarse. Mascotas homónimas requieren corrección interna.
 - El historial se deriva de `Appointment#pet`, `BookingNote` y `BookingAttachment`, bajo el scope de turnos autorizado. `Appointments::FinalizeService` cierra una sola vez y permite anexar información después sin repetir consumos ni eventos.
 - `Appointments::LinkCustomer` corrige una reserva dentro del negocio, realinea sus notas/archivos/seguimientos y registra actor y asociaciones anterior/nueva. No modifica otras reservas, contactos ni elimina fichas.
-- La confirmación pública y el correo enlazan únicamente al turno. Acceder al perfil completo conserva el circuito de acceso del portal.
+- La confirmación pública y el correo enlazan únicamente al turno. No existe portal de cliente: la cancelación y la reprogramación se solicitan por WhatsApp.
 
 ## Separación de pagos
 
@@ -67,6 +69,13 @@ No reutilizar cuentas, conexiones OAuth, webhooks, estados ni referencias extern
 - Webhooks y aprobaciones deben identificar de forma única el pago externo/interno y tolerar reintentos.
 - Importes, períodos y atributos del servicio que explican una operación histórica se guardan en factura/turno; no se reconstruyen desde configuración mutable.
 - Los archivos de comprobantes usan Active Storage y validaciones de tipo/tamaño; no se exponen por claves o URLs sin la autorización correspondiente.
+
+## Operación mínima y funcionalidades excluidas
+
+- `BusinessPolicy` diferencia operación diaria de administración: empleados activos pueden operar agenda, clientes, mascotas y señas; sólo el responsable administra catálogo, capacidad, equipo, configuración y suscripción.
+- Las invitaciones del equipo se materializan mediante `EmployeeMembership#invite!`; no se usa una matriz de permisos configurable desde la UI.
+- No hay modelos, rutas ni jobs para asistente, chat, análisis o generación por IA, portal de cliente o lista de espera. La migración `20261017160000_remove_ai_customer_portal_and_waitlist` eliminó sus tablas y columnas, y es irreversible.
+- Las funciones comerciales heredadas (campañas, promociones, rankings, packs, gift cards, referidos y formularios previos) no forman parte del flujo mínimo. No exponerlas ni crear dependencias nuevas sobre ellas sin una decisión explícita.
 
 ## Trabajo asíncrono y correo
 
