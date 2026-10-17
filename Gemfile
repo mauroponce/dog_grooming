@@ -69,7 +69,7 @@ end
 
 gem "dotenv-rails", "~> 3.2", :groups => [:development, :test]
 
-gem "pdf-reader", "~> 2.15"
+gem "pdf-reader", "~> 2.16"
 gem "rubyzip", "~> 3.4"
 gem "csv"
 
