@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-APP_DIR="${APP_DIR:-/opt/dog_grooming/current}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+APP_DIR="${APP_DIR:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 ENV_FILE="${ENV_FILE:-$APP_DIR/.env.production}"
 BACKUP_DIR="${BACKUP_DIR:-/var/backups/dog_grooming/postgres}"
 BACKUP_PREFIX="${POSTGRES_BACKUP_PREFIX:-backups/postgres}"

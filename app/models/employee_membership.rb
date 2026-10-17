@@ -227,7 +227,6 @@ class EmployeeMembership < ApplicationRecord
   end
 
   def can?(permission)
-    return true if active? && !owner_profile?
     return true if owner_profile?
 
     permission = permission.to_s

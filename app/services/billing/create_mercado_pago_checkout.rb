@@ -45,7 +45,7 @@ module Billing
 
       def preference_payload(payment)
         {
-          items: [{ id: payment.external_reference, title: "Suscripción Cita.pet", description: "#{invoice.business.name} · #{invoice.reference_code}", quantity: 1, currency_id: "ARS", unit_price: invoice.amount_cents / 100.0 }],
+          items: [ { id: payment.external_reference, title: "Suscripción Cita.pet", description: "#{invoice.business.name} · #{invoice.reference_code}", quantity: 1, currency_id: "ARS", unit_price: invoice.amount_cents / 100.0 } ],
           external_reference: payment.external_reference,
           metadata: { subscription_invoice_id: invoice.id, business_id: invoice.business_id, external_reference: payment.external_reference },
           payer: { email: invoice.business.owner.email_address },

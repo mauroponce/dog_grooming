@@ -22,7 +22,7 @@
 
 <aside id="admin-main-sidebar" class="admin-main-sidebar" data-admin-sidebar aria-label="Navegación principal">
   <div class="admin-sidebar-brand">
-    <%= link_to(business_policy.dashboard? ? admin_home_path : admin_calendar_path, class: "admin-sidebar-logo-link", data: { admin_sidebar_tooltip_source: true, tooltip: "Cita.pet · #{@business.name}" }) do %>
+    <%= link_to(admin_root_path, class: "admin-sidebar-logo-link", data: { admin_sidebar_tooltip_source: true, tooltip: "Cita.pet · #{@business.name}" }) do %>
       <span class="admin-sidebar-logo">
         <%= image_tag "/icon.png?v=4", alt: "", class: "admin-sidebar-logo-image" %>
       </span>

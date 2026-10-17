@@ -13,22 +13,9 @@ RSpec.describe "Super admin usage", type: :request do
     )
   end
 
-  it "shows R2 and Gemini usage to super admins" do
+  it "shows storage and R2 usage to super admins" do
     super_admin = create_user(role: :super_admin, email_prefix: "usage-super")
     business = create_business(name: "Usage Center")
-    AiApiUsageEvent.create!(
-      business: business,
-      provider: "gemini",
-      feature: "service_description",
-      model: "gemini-flash-lite-latest",
-      request_started_at: Time.current,
-      request_finished_at: Time.current,
-      status: "success",
-      prompt_tokens: 120,
-      completion_tokens: 80,
-      total_tokens: 200,
-      estimated_cost_usd: 0.0001
-    )
     blob = ActiveStorage::Blob.create!(
       key: "usage/#{SecureRandom.hex(12)}",
       filename: "usage.png",
@@ -45,10 +32,8 @@ RSpec.describe "Super admin usage", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Uso y costos")
     expect(response.body).to include("Cloudflare R2")
-    expect(response.body).to include("Gemini API")
-    expect(response.body).to include("Service description")
-    expect(response.body).to include("Usage Center")
     expect(response.body).to include("2 MB")
+    expect(response.body).not_to include("Gemini")
   end
 
   it "does not allow regular admins" do

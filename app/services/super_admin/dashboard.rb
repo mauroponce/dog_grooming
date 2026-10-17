@@ -268,8 +268,8 @@ module SuperAdmin
       def storage_bytes_by_business(ids)
         totals = Hash.new(0)
         totals.merge!(attachment_bytes_for("Business", ids))
-        totals.merge!(attachment_bytes_for_join("Appointment", "appointments", ids)) { |_key, old, value| old + value }
-        totals.merge!(attachment_bytes_for_join("Service", "services", ids)) { |_key, old, value| old + value }
+        totals.merge!(appointment_attachment_bytes(ids)) { |_key, old, value| old + value }
+        totals.merge!(service_attachment_bytes(ids)) { |_key, old, value| old + value }
         totals
       rescue StandardError
         {}
@@ -282,11 +282,19 @@ module SuperAdmin
           .sum("active_storage_blobs.byte_size")
       end
 
-      def attachment_bytes_for_join(record_type, table_name, business_ids)
+      def appointment_attachment_bytes(business_ids)
         ActiveStorage::Attachment.joins(:blob)
-          .joins("INNER JOIN #{table_name} ON #{table_name}.id = active_storage_attachments.record_id")
-          .where(record_type: record_type, table_name => { business_id: business_ids })
-          .group("#{table_name}.business_id")
+          .joins("INNER JOIN appointments ON appointments.id = active_storage_attachments.record_id")
+          .where(record_type: "Appointment", appointments: { business_id: business_ids })
+          .group("appointments.business_id")
+          .sum("active_storage_blobs.byte_size")
+      end
+
+      def service_attachment_bytes(business_ids)
+        ActiveStorage::Attachment.joins(:blob)
+          .joins("INNER JOIN services ON services.id = active_storage_attachments.record_id")
+          .where(record_type: "Service", services: { business_id: business_ids })
+          .group("services.business_id")
           .sum("active_storage_blobs.byte_size")
       end
 

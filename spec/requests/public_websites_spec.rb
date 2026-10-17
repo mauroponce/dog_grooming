@@ -94,8 +94,8 @@ RSpec.describe "Public websites", type: :request do
     get public_business_path(business.slug), headers: browser_headers
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("Quién te atiende")
-    expect(response.body).to include("Gloria Principal")
+    expect(response.body).not_to include("Quién te atiende")
+    expect(response.body).not_to include("Gloria Principal")
   end
 
   it "does not expose the former service URL" do

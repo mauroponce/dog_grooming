@@ -57,5 +57,4 @@ class BusinessMailer < ApplicationMailer
 
     mail subject: "Resumen semanal de Cita.pet", to: @business.owner.email_address
   end
-
 end

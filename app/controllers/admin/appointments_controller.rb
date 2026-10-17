@@ -414,7 +414,6 @@ module Admin
         pet = pet_for_manual_appointment(attrs, profile, pet_size_band: service_variant&.pet_size_band)
 
         starts_at = Time.zone.parse(attrs[:starts_at].to_s)
-        employee_membership = nil
         resource = resource_for(attrs, booking_service, starts_at)
         @business.appointments.new(attrs.merge(
           service: service,
@@ -655,6 +654,5 @@ module Admin
         ends_at = starts_at + service.duration_minutes.minutes
         Resources::Availability.new(business: @business, service: service, starts_at: starts_at, ends_at: ends_at).first_available(lock: true)
       end
-
   end
 end

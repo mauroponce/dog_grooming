@@ -16,7 +16,7 @@ Cita.pet es una plataforma para peluquerías caninas. Una empresa publica servic
 
 - El registro público exige validar primero una identidad de Google OAuth. No se crean cuentas administrativas nuevas a partir de un login común sin el flujo explícito de registro.
 - La persona ingresa nombre de la empresa, nombre del responsable, teléfono, plan y slug público.
-- El slug se normaliza y valida en el servidor, debe ser globalmente único y será la identidad pública del negocio en `/:slug` o su dominio personalizado.
+- El slug se normaliza y valida en el servidor, debe ser globalmente único y será la identidad pública del negocio en `https://cita.pet/:slug`. Los dominios personalizados quedan fuera del beta inicial.
 - La creación de usuario, empresa, suscripción inicial, catálogo y membresía propietaria es atómica.
 - Una empresa nueva inicia una prueba de 14 días y continúa al onboarding de horarios.
 - El catálogo inicial de peluquería canina queda precargado; el responsable lo configura, pero no parte de una pantalla vacía.
@@ -42,7 +42,7 @@ Decisión detallada: [`0002-service-pricing-by-pet-size.md`](decisions/0002-serv
 
 ## Reservas y señas de clientes
 
-- Mercado Pago pertenece al flujo comercial de cada peluquería para cobrar señas de sus clientes. Sus credenciales y cobros no pertenecen a la facturación de Cita.pet.
+- El beta inicial cobra señas únicamente por transferencia manual con comprobante. Mercado Pago queda diferido y no requiere credenciales productivas.
 - Una reserva usa el precio y la duración efectivos seleccionados para validar disponibilidad y capacidad global de la peluquería. No se asigna ni se elige un profesional durante la reserva pública.
 - Los pagos, webhooks y cambios de estado deben ser idempotentes. Un turno no se confirma por un retorno del navegador sin validar el pago correspondiente.
 - Cuando una empresa habilita transferencia manual para sus clientes, el comprobante de la seña se revisa dentro del negocio; este flujo sigue separado del pago de la suscripción a Cita.pet.
@@ -90,6 +90,7 @@ Decisión detallada: [`0003-platform-subscription-by-bank-transfer.md`](decision
 - Los estados de pago, revisión, restricción y suspensión deben ser explícitos y recuperables; no se infieren sólo de la pantalla mostrada.
 - No almacenar secretos ni credenciales en documentación, vistas, logs o metadatos de negocio.
 - No incorporar asistentes, chat, análisis ni otra lógica de inteligencia artificial sin una nueva decisión de producto y su correspondiente diseño de datos.
+- Los escenarios de `db/seeds.rb` son sólo para desarrollo. Producción nace vacía y el primer superadmin se preaprovisiona por email con una tarea específica, sin contraseña local ni datos demo.
 
 ## Cómo mantener este documento
 

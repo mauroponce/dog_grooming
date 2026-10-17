@@ -1,19 +1,13 @@
 # Deployment de Cita.pet
 
-Esta aplicación es independiente de cualquier instalación anterior. Antes del primer deploy definí servidor, dominio, imagen de contenedor y secretos propios; no reutilices bases de datos, volúmenes ni buckets de otra app.
+El procedimiento vigente está en [`docs/production_operations.md`](docs/production_operations.md).
 
-La guía operativa vigente está en [`docs/production_operations.md`](docs/production_operations.md). Resume:
+Resumen:
 
-- variables productivas y secretos pendientes;
-- deploy con Kamal y validaciones previas;
-- uso aislado de los buckets R2 `dog-grooming` y `dog-grooming-service-images`;
-- backups de `dog_grooming_production`;
-- comprobaciones de reservas, mascotas, calendario y portal luego del deploy.
+1. Preparar `/opt/cita.pet/dog_grooming/.env.production`, DNS, R2 y Resend.
+2. Instalar en el host Docker con Compose, Git, `curl` y AWS CLI.
+3. Ejecutar `./deploy.sh` desde el servidor. El script valida configuración, hace backup, construye la imagen, corre el preflight, crea las bases faltantes sin datos, migra y verifica tres endpoints.
+4. En una base vacía, ejecutar una sola vez `citapet:bootstrap_super_admin` con el email de Google del operador.
+5. Completar la comprobación funcional posterior.
 
-Para desarrollo local, iniciá la aplicación con:
-
-```sh
-docker compose up --build
-```
-
-La web queda disponible en <http://localhost:3003>.
+`db:seed` no se ejecuta en producción. Está protegido para uso exclusivo en desarrollo.

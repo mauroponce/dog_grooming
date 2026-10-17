@@ -31,10 +31,10 @@ module SuperAdmin
     private
       attr_reader :params
 
-	      def validate!
-	        raise ArgumentError, "Completá el nombre del centro." if business_name.blank?
-	        raise ArgumentError, "Completá el nombre del dueño." if owner_name.blank?
-	        raise ArgumentError, "Completá el email de acceso del dueño." unless owner_email.match?(/\A[^@\s]+@[^@\s]+\.[^@\s]+\z/)
+        def validate!
+          raise ArgumentError, "Completá el nombre del centro." if business_name.blank?
+          raise ArgumentError, "Completá el nombre del dueño." if owner_name.blank?
+          raise ArgumentError, "Completá el email de acceso del dueño." unless owner_email.match?(/\A[^@\s]+@[^@\s]+\.[^@\s]+\z/)
         raise ArgumentError, "Completá el teléfono del negocio." if contact_phone.blank?
         raise ArgumentError, "Ese email ya tiene una cuenta." if User.exists?(email_address: owner_email)
         raise ArgumentError, "El slug elegido no es válido." if requested_slug.present? && !Slugs::GenerateUnique.valid?(requested_slug)
@@ -71,10 +71,10 @@ module SuperAdmin
 
       def create_owner_professional!(business, owner)
         business.employee_memberships.create!(
-	          user: owner,
-	          name: owner_name,
-	          first_name: owner_first_name,
-	          last_name: owner_last_name,
+            user: owner,
+            name: owner_name,
+            first_name: owner_first_name,
+            last_name: owner_last_name,
           email_address: owner.email_address,
           phone: business.contact_phone,
           specialty: business.industry_label,
@@ -124,22 +124,22 @@ module SuperAdmin
         ActiveModel::Type::Boolean.new.cast(params[:custom_domain_enabled]) || false
       end
 
-	      def business_name
-	        params[:business_name].to_s.strip
-	      end
+        def business_name
+          params[:business_name].to_s.strip
+        end
 
-	      def owner_name
-	        params[:owner_name].to_s.squish
-	      end
+        def owner_name
+          params[:owner_name].to_s.squish
+        end
 
-	      def owner_first_name
-	        owner_name.split.first.presence || "Admin"
-	      end
+        def owner_first_name
+          owner_name.split.first.presence || "Admin"
+        end
 
-	      def owner_last_name
-	        parts = owner_name.split
-	        parts.drop(1).join(" ").presence || "Principal"
-	      end
+        def owner_last_name
+          parts = owner_name.split
+          parts.drop(1).join(" ").presence || "Principal"
+        end
 
       def owner_email
         params[:owner_email].to_s.strip.downcase

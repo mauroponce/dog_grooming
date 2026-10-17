@@ -45,5 +45,4 @@ class PublicServicePagesController < ApplicationController
       redirect_to root_path, alert: "La página que buscás no existe." if @business.blank?
       redirect_to root_path, alert: "La página que buscás no está disponible." if @business.present? && !@business.access_active?
     end
-
 end

@@ -17,5 +17,4 @@ class EmployeeInvitationsMailer < ApplicationMailer
         inviter.email_address.presence ||
         @business.name
     end
-
 end

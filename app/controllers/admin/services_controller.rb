@@ -9,7 +9,7 @@ module Admin
       @services = services_index_relation.to_a.sort_by { |service| alphabetical_name_key(service.name) }
       @service_monthly_stats = @service_query.monthly_stats_for(@services)
       @services_by_category_name = @services.group_by { |service| service.service_category&.name.presence || service.category_label }
-      @service_pack_counts_by_category_id = service_pack_counts_by_category_id
+      @service_pack_counts_by_category_id = {}
       @new_service = @business.services.new(
         duration_minutes: 60,
         service_category: @selected_service_category || @service_categories.first,
@@ -154,17 +154,6 @@ module Admin
 
       def alphabetical_name_key(value)
         I18n.transliterate(value.to_s).downcase
-      end
-
-      def service_pack_counts_by_category_id
-        category_ids = @service_categories.map(&:id)
-        return {} if category_ids.blank?
-
-        @business.service_packs
-          .joins(:service)
-          .where(services: { service_category_id: category_ids })
-          .group("services.service_category_id")
-          .count
       end
 
       def service_employee_memberships

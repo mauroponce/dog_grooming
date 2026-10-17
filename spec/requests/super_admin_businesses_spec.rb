@@ -18,7 +18,7 @@ RSpec.describe "Super admin businesses", type: :request do
     expect(response.body).not_to include("Tabla compacta para operar cuentas, trials, setup y soporte")
   end
 
-  it "deletes a business that has sales opportunities assigned to a team member" do
+  it "deletes a business that has a team member" do
     super_admin = create_user(role: :super_admin, email_prefix: "super-delete")
     owner = create_user(role: :admin, email_prefix: "owner-delete")
     business = Business.create!(
@@ -28,32 +28,13 @@ RSpec.describe "Super admin businesses", type: :request do
       contact_phone: "+54 9 11 5555-5555",
       onboarding_completed_at: Time.current
     )
-    membership = business.employee_memberships.create!(
+    business.employee_memberships.create!(
       name: "Profesional Demo",
       first_name: "Profesional",
       last_name: "Demo",
       email_address: "professional-delete-#{SecureRandom.hex(4)}@example.com",
       status: "active"
     )
-    opportunity = business.sales_opportunities.create!(
-      employee_membership: membership,
-      opportunity_type: "follow_up_due",
-      title: "Seguimiento pendiente",
-      score: 60,
-      status: "open"
-    )
-    usage_event = AiApiUsageEvent.create!(
-      business: business,
-      provider: "gemini",
-      feature: "service_description",
-      request_started_at: Time.current,
-      status: "success",
-      prompt_tokens: 120,
-      completion_tokens: 80,
-      total_tokens: 200,
-      estimated_cost_usd: 0.0001
-    )
-
     sign_in(super_admin)
 
     expect {
@@ -61,8 +42,7 @@ RSpec.describe "Super admin businesses", type: :request do
     }.to change(Business, :count).by(-1)
 
     expect(response).to redirect_to(super_admin_businesses_path)
-    expect(SalesOpportunity.where(id: opportunity.id)).not_to exist
-    expect(AiApiUsageEvent.find(usage_event.id).business_id).to be_nil
+    expect(EmployeeMembership.where(business_id: business.id)).not_to exist
   end
 
   it "renders compact business rows with public slug links and an actions menu" do
@@ -104,11 +84,11 @@ RSpec.describe "Super admin businesses", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Datos del negocio")
-	    expect(response.body).not_to include("Categorías y servicios")
+      expect(response.body).not_to include("Categorías y servicios")
     expect(response.body).to include("Nombre del centro")
-	    expect(response.body).to include("Nombre del dueño")
+      expect(response.body).to include("Nombre del dueño")
     expect(response.body).to include("Facturación Cita.pet activa")
-	    expect(response.body).to include("Teléfono del negocio")
+      expect(response.body).to include("Teléfono del negocio")
     expect(document.at_css("#business_account_owner_email")["required"]).to eq("required")
     expect(document.at_css("#business_account_contact_phone")["required"]).to eq("required")
     expect(response.body).to include("Instagram")
@@ -130,10 +110,10 @@ RSpec.describe "Super admin businesses", type: :request do
     sign_in(user)
     post super_admin_businesses_path,
       params: {
-	        business_account: {
-	          business_name: "Aura Welcome",
-	          owner_name: "Mauro Ponce",
-	          owner_email: owner_email,
+          business_account: {
+            business_name: "Aura Welcome",
+            owner_name: "Mauro Ponce",
+            owner_email: owner_email,
           contact_phone: "+54 9 11 5555-1234",
           instagram_url: instagram_url,
           slogan: "Belleza facial con agenda simple",
@@ -152,16 +132,16 @@ RSpec.describe "Super admin businesses", type: :request do
       },
       headers: browser_headers
 
-	    business = Business.find_by!(slug: slug)
-	    owner_membership = business.employee_memberships.find_by!(user: business.owner)
-	    monday_rule = business.availability_rules.find_by!(weekday: 1)
-	    saturday_rule = business.availability_rules.find_by!(weekday: 6)
+      business = Business.find_by!(slug: slug)
+      owner_membership = business.employee_memberships.find_by!(user: business.owner)
+      monday_rule = business.availability_rules.find_by!(weekday: 1)
+      saturday_rule = business.availability_rules.find_by!(weekday: 6)
     expect(business.owner.password_digest).to be_nil
-	    expect(business.owner.name).to eq("Mauro Ponce")
-	    expect(owner_membership.name).to eq("Mauro Ponce")
-	    expect(owner_membership.first_name).to eq("Mauro")
-	    expect(owner_membership.last_name).to eq("Ponce")
-	    expect(business.contact_phone).to eq("+54 9 11 5555-1234")
+      expect(business.owner.name).to eq("Mauro Ponce")
+      expect(owner_membership.name).to eq("Mauro Ponce")
+      expect(owner_membership.first_name).to eq("Mauro")
+      expect(owner_membership.last_name).to eq("Ponce")
+      expect(business.contact_phone).to eq("+54 9 11 5555-1234")
     expect(business.instagram_url).to eq("https://www.instagram.com/aurawelcome")
     expect(business.slogan).to eq("Belleza facial con agenda simple")
     expect(business.address).to eq("Av. Corrientes 1234, CABA")
@@ -228,10 +208,10 @@ RSpec.describe "Super admin businesses", type: :request do
     sign_in(user)
     post super_admin_businesses_path,
       params: {
-	        business_account: {
-	          business_name: "Imagen Center",
-	          owner_name: "Imagen Owner",
-	          owner_email: owner_email,
+          business_account: {
+            business_name: "Imagen Center",
+            owner_name: "Imagen Owner",
+            owner_email: owner_email,
           contact_phone: "+54 9 11 5555-1234",
           instagram_url: "",
           address: "Av. Corrientes 1234, CABA",
@@ -308,10 +288,10 @@ RSpec.describe "Super admin businesses", type: :request do
     new_owner_email = "edited-owner-#{SecureRandom.hex(4)}@example.com"
     patch super_admin_business_path(business),
       params: {
-	        business_account: {
-	          business_name: "Edited Center",
+          business_account: {
+            business_name: "Edited Center",
           owner_name: "Editada Dueña",
-	          owner_email: new_owner_email,
+            owner_email: new_owner_email,
           billing_enabled: "0",
           contact_phone: "+54 9 11 5555-4321",
           instagram_url: "https://instagram.com/edited",

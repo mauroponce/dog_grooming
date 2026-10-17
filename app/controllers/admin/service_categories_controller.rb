@@ -41,17 +41,15 @@ module Admin
     def destroy
       services = category.services.to_a
       service_count = services.size
-      pack_count = @business.service_packs.where(service_id: services.map(&:id)).count
 
       ActiveRecord::Base.transaction do
-        @business.service_packs.where(service_id: services.map(&:id)).find_each(&:destroy!)
         services.each(&:destroy!)
         category.destroy!
       end
 
-      redirect_to admin_services_path, notice: "Categoría eliminada permanentemente. Se eliminaron #{service_count} servicios y #{pack_count} paquetes."
+      redirect_to admin_services_path, notice: "Categoría eliminada permanentemente. Se eliminaron #{service_count} servicios."
     rescue ActiveRecord::DeleteRestrictionError, ActiveRecord::InvalidForeignKey, ActiveRecord::RecordInvalid, ActiveRecord::RecordNotDestroyed
-      redirect_to admin_services_path(service_category_id: category.id), alert: "No se pudo eliminar la categoría porque tiene reservas, packs asignados u otros registros vinculados."
+      redirect_to admin_services_path(service_category_id: category.id), alert: "No se pudo eliminar la categoría porque tiene reservas u otros registros vinculados."
     end
 
     private

@@ -42,8 +42,6 @@ RSpec.describe "Admin services", type: :request do
     availability_end = document.at_css('input[name="service[availability_ends_on]"]')
     upload_zone = document.at_css(".service-upload-zone")
     image_input = document.at_css('input[type="file"][name="service[service_images][]"]')
-    ai_description_controller = document.at_css('[data-controller~="service-description-ai"]')
-    ai_description_button = document.at_css('[data-action="service-description-ai#generate"]')
     description_field = document.at_css('textarea[name="service[description]"]')
     category_field = document.at_css('select[name="service[service_category_id]"]')
 
@@ -80,23 +78,18 @@ RSpec.describe "Admin services", type: :request do
     expect(service_form["enctype"]).to eq("multipart/form-data")
     expect(name_field).to be_present
     expect(name_field.ancestors.any? { |node| node["class"].to_s.include?("service-field-full") }).to eq(true)
-    expect(name_field["data-service-description-ai-target"]).to eq("name")
     price_input = document.at_css('input[name="service[price]"]')
     expect(price_input).to be_present
     expect(price_input["type"]).to eq("text")
     expect(price_input["inputmode"]).to eq("numeric")
     expect(category_field["class"]).to include("service-custom-select-input")
     expect(category_field["data-custom-select-target"]).to eq("input")
-    expect(category_field["data-service-description-ai-target"]).to eq("category")
     category_dropdown = category_field.ancestors.find { |node| node["data-controller"].to_s.split.include?("custom-select") }
     expect(category_dropdown.at_css(".service-custom-select-trigger")).to be_present
     expect(category_dropdown.css(".service-custom-select-option").map { |option| option.text.squish }).to eq(category_field.css("option").map { |option| option.text.squish })
     expect(document.at_css('select[name="service[payment_strategy]"]')).to be_nil
-    expect(description_field["data-service-description-ai-target"]).to eq("description")
-    expect(ai_description_controller["data-service-description-ai-url-value"]).to eq(generate_description_admin_services_path)
-    expect(ai_description_button.text.squish).to eq("Generar")
-    expect(ai_description_button.at_css("svg")).to be_present
-    expect(document.at_css('[data-service-description-ai-target="status"]')).to be_present
+    expect(description_field).to be_present
+    expect(document.at_css('[data-controller~="service-description-ai"]')).to be_nil
     expect(deposit_checkbox).to be_present
     expect(deposit_checkbox["checked"]).to be_nil
     expect(deposit_checkbox["data-action"]).to eq("service-deposit#toggle")
@@ -242,47 +235,6 @@ RSpec.describe "Admin services", type: :request do
     expect(document.at_css('select[name="service[payment_account_id]"]')).to be_nil
   end
 
-  it "generates a service description with Gemini context from service name and category" do
-    user, business = create_admin_with_business
-    category = ServiceCategory.find_or_create_for!(business: business, name: "Nails", primary_category: true)
-    generated_description = "Realzá tus manos con un servicio pensado para lucir impecable en cada evento, combinando detalle, cuidado y un acabado elegante que acompaña tu estilo."
-    generator = instance_double(Ai::ServiceDescriptionGenerator, call: generated_description)
-
-    allow(Ai::GeminiClient).to receive(:available?).and_return(true)
-    expect(Ai::ServiceDescriptionGenerator).to receive(:new).with(
-      business: business,
-      service_name: "Uñas para eventos",
-      category_name: "Nails"
-    ).and_return(generator)
-
-    sign_in(user)
-    post generate_description_admin_services_path,
-      params: {
-        service_name: "Uñas para eventos",
-        service_category_id: category.id
-      },
-      as: :json,
-      headers: browser_headers
-
-    expect(response).to have_http_status(:ok)
-    expect(JSON.parse(response.body)).to eq("description" => generated_description)
-  end
-
-  it "returns a clear error when Gemini is not configured for description generation" do
-    user, = create_admin_with_business
-
-    allow(Ai::GeminiClient).to receive(:available?).and_return(false)
-
-    sign_in(user)
-    post generate_description_admin_services_path,
-      params: { service_name: "Uñas para eventos", category_name: "Nails" },
-      as: :json,
-      headers: browser_headers
-
-    expect(response).to have_http_status(:service_unavailable)
-    expect(JSON.parse(response.body).fetch("error")).to include("GEMINI_API_KEY")
-  end
-
   it "creates a service with price, deposit value, team members and service images from the new service page" do
     user, business = create_admin_with_business
     category = ServiceCategory.find_or_create_for!(business: business, name: "Barbería", primary_category: true)
@@ -318,7 +270,7 @@ RSpec.describe "Admin services", type: :request do
     expect(service.employee_membership_ids).to eq([ employee.id ])
     expect(service.service_images.attached?).to be(true)
     service_image_blob = service.service_images.attachments.first.blob
-    expect(service_image_blob.service_name).to eq(Rails.application.config.active_storage.service.to_s)
+    expect(service_image_blob.service_name).to eq("service_images")
     expect(service_image_blob.key).to include("/imagenes/servicios/galeria/")
 
     follow_redirect!
@@ -662,7 +614,7 @@ RSpec.describe "Admin services", type: :request do
     expect(response).to redirect_to(edit_admin_service_path(service, tab: "images"))
     expect(service.reload.service_images.attached?).to be(true)
     service_image_blob = service.service_images.attachments.first.blob
-    expect(service_image_blob.service_name).to eq(Rails.application.config.active_storage.service.to_s)
+    expect(service_image_blob.service_name).to eq("service_images")
     expect(service_image_blob.key).to include("/imagenes/servicios/galeria/")
 
     follow_redirect!

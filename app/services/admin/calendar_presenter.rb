@@ -618,7 +618,7 @@ module Admin
       end
 
       def row_index_for(time)
-        [[ ((time - schedule_start) / SLOT_MINUTES.minutes).floor, 0 ].max, time_slots.size - 1].min
+        [ [ ((time - schedule_start) / SLOT_MINUTES.minutes).floor, 0 ].max, time_slots.size - 1 ].min
       end
 
       def column_index_for(employee)

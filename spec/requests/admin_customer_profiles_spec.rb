@@ -13,8 +13,6 @@ RSpec.describe "Admin customer profiles", type: :request do
         name: "Cliente #{index.to_s.rjust(2, '0')}",
         phone: phone,
         normalized_phone: PhoneNumber.normalize(phone),
-        customer_portal_token: CustomerProfile.unique_customer_portal_token,
-        customer_portal_short_token: CustomerProfile.unique_customer_portal_short_token,
         created_at: now + index.seconds,
         updated_at: now + index.seconds
       }
@@ -179,8 +177,6 @@ RSpec.describe "Admin customer profiles", type: :request do
         name: "Cliente Nuevo #{index.to_s.rjust(2, '0')}",
         phone: phone,
         normalized_phone: PhoneNumber.normalize(phone),
-        customer_portal_token: CustomerProfile.unique_customer_portal_token,
-        customer_portal_short_token: CustomerProfile.unique_customer_portal_short_token,
         created_at: Time.current + index.seconds,
         updated_at: Time.current + index.seconds
       }
@@ -377,13 +373,7 @@ RSpec.describe "Admin customer profiles", type: :request do
     expect(row.text.squish).to include("Cancelado por Julian Alvarez")
     expect(row.text).not_to include("August")
     expect(row.at_css(".customer-profile-editor__appointment-date")).to be_nil
-    portal_link = document.at_css(".customer-profile-editor__portal-url")
-    expect(portal_link.text).to eq(customer.customer_portal_url)
-    expect(portal_link["href"]).to eq(customer.customer_portal_url)
-    expect(portal_link["target"]).to eq("_blank")
-    portal_copy = document.at_css(".customer-profile-editor__portal-copy")
-    expect(portal_copy["data-action"]).to include("copy-text#copy")
-    expect(portal_copy["title"]).to eq("Copiar")
+    expect(document.at_css(".customer-profile-editor__portal-url")).to be_nil
   end
 
   it "uses consistent appointment badges and opens the shared detail panel from the history" do

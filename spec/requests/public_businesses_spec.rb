@@ -32,10 +32,8 @@ RSpec.describe "Public businesses", type: :request do
     sticky_nav = document.at_css("[data-controller='public-section-nav']")
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("Ver mis turnos")
     expect(response.body).to include("Reserva en línea segura")
     expect(response.body).to include("Belleza simple, turnos claros")
-    expect(response.body).to include("Confirmación inmediata")
     expect(document.at_css("[data-public-business-title]").text).to include(business.name)
     expect(document.at_css("[data-public-business-title] + p").text).to include("Belleza simple, turnos claros")
     expect(document.at_css("a[href*='google.com/maps/dir']")).to be_present
@@ -295,29 +293,14 @@ RSpec.describe "Public businesses", type: :request do
     get public_business_path(business.slug), headers: browser_headers
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("Equipo")
-    expect(response.body).to include("Jésica López")
-    expect(response.body).to include("Peluquera")
-    expect(response.body).to include("professional_id=#{professional.id}")
+    expect(response.body).not_to include("Equipo")
+    expect(response.body).not_to include("Jésica López")
 
     get public_business_path(business.slug, professional_id: professional.id), headers: browser_headers
 
     document = Nokogiri::HTML(response.body)
-    modal = document.at_css("[data-public-professional-modal]")
-    dialog = document.at_css("[data-public-professional-dialog]")
-    reserve_link = modal.at_css("a[href*='employee_membership_id=#{professional.id}'][href*='professional_mode=single']")
-
     expect(response).to have_http_status(:ok)
-    expect(modal).to be_present
-    expect(dialog).to be_present
-    expect(dialog["class"]).to include("max-w-[720px]")
-    expect(modal.text).to include("Jésica López")
-    expect(modal.text).to include("Peluquera")
-    expect(modal.text).to include("Corte de cabello")
-    expect(modal.text).to include("Manicura")
-    expect(modal.text).not_to include("Depilación")
-    expect(reserve_link).to be_present
-    expect(reserve_link["href"]).to include("/#{business.slug}/peluqueria/corte-de-cabello")
+    expect(document.at_css("[data-public-professional-modal]")).to be_nil
   end
 
   it "renders about, map and opening hours below the team section" do
@@ -360,7 +343,8 @@ RSpec.describe "Public businesses", type: :request do
     desktop_address = hours_grid.at_css("p.lg\\:block")
 
     expect(response).to have_http_status(:ok)
-    expect(document.at_css("section#team-section + section#hours-section")).to be_present
+    expect(document.at_css("section#team-section")).to be_nil
+    expect(hours_section).to be_present
     expect(hours_grid).to be_present
     expect(map_frame["src"]).to include("openstreetmap.org/export/embed.html")
     expect(map_frame["src"]).to include("-58.39918%2C-34.74675")
@@ -373,7 +357,6 @@ RSpec.describe "Public businesses", type: :request do
     expect(hours_section.text).to include("Horarios")
     expect(hours_section.text).to include("martes")
     expect(hours_section.text).to include("10:00 - 19:00")
-    expect(response.body).to include("border-radius: 9999px;")
   end
 
   it "omits location and map content when the business has no location configured" do

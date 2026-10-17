@@ -17,7 +17,7 @@ module SuperAdmin
 
       Business::DAYS.each do |weekday, _day_name|
         values = params[weekday.to_s] || params[weekday] || {}
-        active = ActiveModel::Type::Boolean.new.cast(values["active"] || values[:active])
+        active = ActiveModel::Type::Boolean.new.cast(values["active"] || values[:active]) || false
         rule = business.availability_rules.find_or_initialize_by(weekday: weekday)
         rule.update!(
           active: active,

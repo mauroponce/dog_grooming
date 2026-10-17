@@ -55,8 +55,8 @@ RSpec.describe SendAppointmentReminderJob do
     appointment.update!(customer_profile: customer)
     mail = AppointmentMailer.customer_reminder(appointment)
     expect(mail.to).to eq([ appointment.customer_email ])
-    expect(mail.html_part.body.decoded).to include(appointment.customer_portal_booking_token)
-    expect(mail.html_part.body.decoded).not_to include(customer.customer_portal_short_token, customer.customer_portal_token, "Secret internal note")
+    expect(mail.html_part.body.decoded).to include("confirmation=")
+    expect(mail.html_part.body.decoded).not_to include("Secret internal note", "/mis-turnos/")
   end
 
   it "rechecks the new schedule and resets the reminder when a sent appointment is rescheduled" do

@@ -181,7 +181,7 @@ module Public
     end
 
     def show_waitlist?
-      business.public_show_waitlist? && services.any?
+      false
     end
 
     def show_next_slots?
@@ -228,6 +228,5 @@ module Public
 
         "Algunos servicios pueden requerir seña. Si corresponde, vas a poder subir el comprobante durante la reserva."
       end
-
   end
 end

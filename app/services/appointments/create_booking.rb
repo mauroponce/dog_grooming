@@ -112,9 +112,6 @@ module Appointments
       end
 
       def validate_payment_configuration!
-        if business.simultaneous_capacity.present? && source.to_s == "public_booking"
-          raise ArgumentError, "La reserva online requiere seña por Mercado Pago." unless service.deposit_required? && selected_payment_method == "mercado_pago"
-        end
         return unless service[:deposit_required]
 
         raise ArgumentError, "El servicio requiere seña, pero no tiene valor de seña configurado." unless service.deposit_amount_cents.to_i.positive?

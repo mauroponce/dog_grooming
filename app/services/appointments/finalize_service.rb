@@ -126,7 +126,6 @@ module Appointments
         create_note!("post_appointment")
         attach_post_appointment_photos!
         create_follow_up_reminder!
-        consume_customer_pack_session!
         create_provider_event!(
           event_type: "appointment_completed",
           title: "Turno guardado en historial",
@@ -215,17 +214,6 @@ module Appointments
           remind_at: follow_up_at,
           body: "Seguimiento de #{appointment.service.name}: #{note_body.presence || "revisar evolución y próxima reserva"}"
         )
-      end
-
-      def consume_customer_pack_session!
-        pack = appointment.business.customer_packs.active.includes(:service_pack).where(customer_profile: appointment.customer_profile).find do |customer_pack|
-          customer_pack.compatible_with?(appointment.service)
-        end
-        return if pack.blank?
-
-        pack.consume_session!(appointment: appointment, actor: actor, notes: "Consumida al finalizar turno ##{appointment.id}")
-      rescue ActiveRecord::RecordInvalid, RuntimeError => error
-        Rails.logger.warn("CustomerPack consumption skipped for appointment #{appointment.id}: #{error.class} #{error.message}")
       end
 
       def create_provider_event!(event_type:, title:, body:)

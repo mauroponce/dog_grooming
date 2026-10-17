@@ -13,11 +13,11 @@ module SuperAdmin
       @params = params.to_h.symbolize_keys
     end
 
-	    def call
-	      validate!
+      def call
+        validate!
 
-	      Business.transaction do
-	        owner.update!(email_address: owner_email, name: owner_name) if owner.email_address != owner_email || owner.name != owner_name
+        Business.transaction do
+          owner.update!(email_address: owner_email, name: owner_name) if owner.email_address != owner_email || owner.name != owner_name
         business.update!(business_attributes)
         sync_primary_branch_location!
         sync_availability_rules!
@@ -35,10 +35,10 @@ module SuperAdmin
         business.owner
       end
 
-	      def validate!
-	        raise ArgumentError, "Completá el nombre del centro." if business_name.blank?
-	        raise ArgumentError, "Completá el nombre del dueño." if owner_name.blank?
-	        raise ArgumentError, "Completá el email de acceso del dueño." unless owner_email.match?(/\A[^@\s]+@[^@\s]+\.[^@\s]+\z/)
+        def validate!
+          raise ArgumentError, "Completá el nombre del centro." if business_name.blank?
+          raise ArgumentError, "Completá el nombre del dueño." if owner_name.blank?
+          raise ArgumentError, "Completá el email de acceso del dueño." unless owner_email.match?(/\A[^@\s]+@[^@\s]+\.[^@\s]+\z/)
         raise ArgumentError, "Completá el teléfono del negocio." if contact_phone.blank?
         raise ArgumentError, "Ese email ya tiene una cuenta." if User.where(email_address: owner_email).where.not(id: owner.id).exists?
         raise ArgumentError, "El slug elegido no es válido." unless Slugs::GenerateUnique.valid?(requested_slug)
@@ -69,11 +69,11 @@ module SuperAdmin
       end
 
       def update_owner_professional!
-	        membership = business.employee_memberships.find_or_initialize_by(user: owner)
-	        membership.assign_attributes(
-	          name: owner_name,
-	          first_name: owner_first_name,
-	          last_name: owner_last_name,
+          membership = business.employee_memberships.find_or_initialize_by(user: owner)
+          membership.assign_attributes(
+            name: owner_name,
+            first_name: owner_first_name,
+            last_name: owner_last_name,
           email_address: owner.email_address,
           phone: business.contact_phone,
           specialty: business.industry_label,
@@ -142,22 +142,22 @@ module SuperAdmin
         ActiveModel::Type::Boolean.new.cast(params[:custom_domain_enabled]) || false
       end
 
-	      def business_name
-	        params[:business_name].to_s.strip
-	      end
+        def business_name
+          params[:business_name].to_s.strip
+        end
 
-	      def owner_name
-	        params[:owner_name].to_s.squish
-	      end
+        def owner_name
+          params[:owner_name].to_s.squish
+        end
 
-	      def owner_first_name
-	        owner_name.split.first.presence || "Admin"
-	      end
+        def owner_first_name
+          owner_name.split.first.presence || "Admin"
+        end
 
-	      def owner_last_name
-	        parts = owner_name.split
-	        parts.drop(1).join(" ").presence || "Principal"
-	      end
+        def owner_last_name
+          parts = owner_name.split
+          parts.drop(1).join(" ").presence || "Principal"
+        end
 
       def owner_email
         params[:owner_email].to_s.strip.downcase

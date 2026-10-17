@@ -30,5 +30,4 @@ class DepositReviewsController < ApplicationController
     rescue ActiveSupport::MessageVerifier::InvalidSignature, ActiveRecord::RecordNotFound
       redirect_to root_path, alert: "El link de revisión no es válido o venció."
     end
-
 end

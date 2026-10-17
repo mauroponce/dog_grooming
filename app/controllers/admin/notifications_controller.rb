@@ -5,7 +5,7 @@ module Admin
     def mark_all_read
       @business.provider_events.unread.update_all(read_at: Time.current, updated_at: Time.current)
 
-      redirect_back fallback_location: admin_home_path
+      redirect_back fallback_location: admin_root_path
     end
 
     def mark_read
@@ -19,7 +19,7 @@ module Admin
       authorize @notification, :destroy?
       @notification.destroy!
 
-      redirect_back fallback_location: admin_home_path, notice: "Notificación eliminada."
+      redirect_back fallback_location: admin_root_path, notice: "Notificación eliminada."
     end
 
     private

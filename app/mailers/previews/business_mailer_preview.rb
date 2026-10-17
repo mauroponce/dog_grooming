@@ -1,23 +1,20 @@
-class BusinessMailerPreview < ActionMailer::Preview
-  def new_deposit_proof
-    BusinessMailer.new_deposit_proof(sample_appointment)
-  end
+module Previews
+  class BusinessMailerPreview < ActionMailer::Preview
+    def new_deposit_proof
+      BusinessMailer.new_deposit_proof(sample_appointment)
+    end
 
-  def new_waitlist_entry
-    BusinessMailer.new_waitlist_entry(sample_waitlist_entry)
-  end
+    def follow_up_digest
+      BusinessMailer.follow_up_digest(sample_business, sample_business.customer_reminders.limit(3))
+    end
 
-  def follow_up_digest
-    BusinessMailer.follow_up_digest(sample_business, sample_business.customer_reminders.limit(3))
-  end
+    def daily_digest
+      BusinessMailer.daily_digest(sample_business)
+    end
 
-  def daily_digest
-    BusinessMailer.daily_digest(sample_business)
-  end
-
-  def weekly_digest
-    BusinessMailer.weekly_digest(sample_business)
-  end
+    def weekly_digest
+      BusinessMailer.weekly_digest(sample_business)
+    end
 
   private
     def sample_business
@@ -59,19 +56,5 @@ class BusinessMailerPreview < ActionMailer::Preview
         final_price_cents: 35_000_00
       )
     end
-
-    def sample_waitlist_entry
-      sample_business.waitlist_entries.first || WaitlistEntry.new(
-        center: sample_business,
-        service: sample_service,
-        customer_profile: sample_customer,
-        client_name: sample_customer.name,
-        client_phone: sample_customer.phone,
-        desired_date: Time.zone.today,
-        preferred_time_windows: [ "Tarde" ],
-        notes: "Prefiere después de las 16 hs.",
-        source: "public_page",
-        status: "waiting"
-      )
-    end
+  end
 end

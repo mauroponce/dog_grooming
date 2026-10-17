@@ -1,4 +1,5 @@
-class SalesMailerPreview < ActionMailer::Preview
+module Previews
+  class SalesMailerPreview < ActionMailer::Preview
   def daily_sales_digest
     SalesMailer.daily_sales_digest(sample_business)
   end
@@ -24,4 +25,5 @@ class SalesMailerPreview < ActionMailer::Preview
         message_template: "Hola {{customer_name}}, esta semana tenemos turnos disponibles en {{business_name}}."
       )
     end
+  end
 end

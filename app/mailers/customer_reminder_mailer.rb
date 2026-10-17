@@ -7,5 +7,4 @@ class CustomerReminderMailer < ApplicationMailer
 
     mail subject: "Recordatorio de cliente", to: reminder.assigned_to.email_address
   end
-
 end

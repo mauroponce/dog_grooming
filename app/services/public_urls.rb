@@ -8,7 +8,7 @@ class PublicUrls
     service: [ :public_service, :custom_public_service ],
     category: [ :public_category, :custom_public_category ],
     category_service: [ :public_category_service, :custom_public_category_service ],
-    short_service: [ :short_public_service, :custom_short_public_service ],
+    short_service: [ :short_public_service, :custom_short_public_service ]
   }.freeze
 
   class << self

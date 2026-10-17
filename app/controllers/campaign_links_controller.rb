@@ -4,6 +4,7 @@ class CampaignLinksController < ApplicationController
   def show
     link = CampaignLink.active.includes(:business).find_by!(slug: params[:slug])
     Sales::TrackVisit.new(controller: self, business: link.business, campaign_link: link).call
-    redirect_to link.destination_url, allow_other_host: true
+    destination = URI.parse(link.destination_url)
+    redirect_to destination.request_uri
   end
 end

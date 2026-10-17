@@ -122,7 +122,7 @@ RSpec.describe Availability::Slots do
     expect(slots).to be_empty
   end
 
-  it "respects assigned professionals when building public slots" do
+  it "uses business capacity instead of professional calendars for unassigned public slots" do
     business = create_business
     starts_at = enable_availability_for(business, start_time: "09:00", end_time: "12:00")
     allowed = create_employee(business, "Sofia")
@@ -145,7 +145,7 @@ RSpec.describe Availability::Slots do
 
     slots = described_class.public_for(business: business, service: service, date: starts_at.to_date)
 
-    expect(time_labels(slots)).to eq([ "10:00", "10:30" ])
+    expect(time_labels(slots)).to eq([ "09:00", "09:30", "10:00", "10:30", "11:00", "11:30" ])
   end
 
   it "excludes recurring unavailable time blocks for the selected professional" do

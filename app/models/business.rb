@@ -13,7 +13,7 @@ class Business < ApplicationRecord
       "Todos los servicios",
       "Reservas ilimitadas",
       "Clientes ilimitados",
-      "Comprobantes y Mercado Pago",
+      "Comprobantes de transferencia",
       "Recordatorios",
       "Configuración inicial",
       "Usuarios administrativos"
@@ -370,11 +370,8 @@ class Business < ApplicationRecord
       .presence
   end
 
-  def self.find_by_custom_domain(host)
-    domain = normalize_custom_domain(host)
-    return if domain.blank?
-
-    where(custom_domain: domain, custom_domain_enabled: true).first
+  def self.find_by_custom_domain(_host)
+    nil
   end
 
   def onboarding_complete?
@@ -386,7 +383,7 @@ class Business < ApplicationRecord
   end
 
   def custom_domain_active?
-    custom_domain.present? && custom_domain_enabled?
+    false
   end
 
   def trial_active?

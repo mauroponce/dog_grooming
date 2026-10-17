@@ -179,13 +179,13 @@ module SuperAdmin
           raise("No hay un cobro pendiente.")
       end
 
-	      def business_account_params
-	        params.require(:business_account).permit(
+        def business_account_params
+          params.require(:business_account).permit(
           :business_name,
           :billing_enabled,
           :owner_name,
-	          :owner_email,
-	          :contact_phone,
+            :owner_email,
+            :contact_phone,
           :instagram_url,
           :slug,
           :custom_domain,
@@ -214,10 +214,10 @@ module SuperAdmin
         return submitted.to_unsafe_h.symbolize_keys if submitted.present?
         return {} if business.blank?
 
-	        {
-	          business_name: business.name,
-	          owner_name: business.owner.name.presence || business.employee_memberships.find_by(user: business.owner)&.name || business.name,
-	          owner_email: business.owner.email_address,
+          {
+            business_name: business.name,
+            owner_name: business.owner.name.presence || business.employee_memberships.find_by(user: business.owner)&.name || business.name,
+            owner_email: business.owner.email_address,
           contact_phone: business.contact_phone,
           instagram_url: business.instagram_url,
           slug: business.slug,
@@ -274,6 +274,5 @@ module SuperAdmin
       def formatted_time(value)
         value&.strftime("%H:%M")
       end
-
   end
 end

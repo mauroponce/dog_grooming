@@ -14,7 +14,6 @@ RSpec.describe DepositProofs::ReplaceService do
     delivery = instance_double(ActionMailer::MessageDelivery, deliver_later: true)
 
     expect(BusinessMailer).to receive(:new_deposit_proof).with(appointment).and_return(delivery)
-    expect(Ai::GeminiClient).not_to receive(:generate_content_json)
     expect(SendCustomerBookingConfirmationJob).not_to receive(:perform_later)
 
     described_class.new(booking: appointment, file: image_upload).call

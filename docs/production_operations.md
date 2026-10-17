@@ -1,89 +1,141 @@
 # Operaciones de producción
 
-Esta guía corresponde exclusivamente a Cita.pet. Los valores de dominio, servidor y registro son placeholders deliberados: deben definirse antes del primer deploy.
+Esta es la guía canónica para desplegar y operar el beta de Cita.pet. Producción usa `compose.production.yml` y el script raíz `deploy.sh` desde el propio servidor.
 
-## Valores a definir antes del deploy
+## 1. Dependencias y aislamiento
 
-- `KAMAL_HOST`: IP o hostname del servidor de Cita.pet.
-- `APP_HOST=cita.pet` y `APP_WWW_HOST=www.cita.pet` (o los dominios reales).
-- `APP_HOSTS=cita.pet,www.cita.pet` más la IP de diagnóstico si hiciera falta.
-- `DOG_GROOMING_DATABASE_PASSWORD`: contraseña nueva para PostgreSQL de producción.
-- Credenciales de Mercado Pago y Resend propias.
-- Los dos buckets R2 aislados: `dog-grooming` y `dog-grooming-service-images`.
+El host necesita Docker con Compose, Git, `curl` y AWS CLI. La instalación vive por defecto en `/opt/cita.pet/dog_grooming` y no debe compartir base, volúmenes ni buckets con otra aplicación.
 
-No reutilices el servidor, dominio, base de datos, volúmenes ni buckets de otra instalación.
+Preparar antes del primer deploy:
 
-## Deploy con Kamal
+- DNS de `cita.pet` hacia el servidor y puertos 80/443 libres para Caddy.
+- Una aplicación Google OAuth con callback productivo autorizado.
+- Un dominio remitente verificado en Resend.
+- Buckets R2 privados y exclusivos: uno general/backups y otro para imágenes de servicios.
+- Una credencial R2 capaz de leer, escribir y listar el bucket de backups.
 
-`bin/kamal` lee `.env`. Configurá primero las variables productivas en el host o en el secret manager:
+## 2. Configuración
 
-```sh
-KAMAL_HOST=server.example.com
-KAMAL_IMAGE=ghcr.io/your-org/dog_grooming
-DOG_GROOMING_DATABASE_PASSWORD=una_contrasena_larga_y_unica
-APP_HOST=cita.pet
-APP_PROTOCOL=https
-```
-
-Validar sin desplegar:
-
-```sh
-bin/kamal secrets print
-bin/kamal config
-```
-
-Desplegar:
-
-```sh
-bin/kamal setup
-bin/kamal deploy
-```
-
-`compose.production.yml` publica 80/443 mediante Caddy. Si convivirá con otra app en el mismo host, configurá un proxy compartido antes de levantarlo.
-
-## Backups PostgreSQL
-
-`ops/backup_postgres.sh` genera el dump de la base `dog_grooming_production` y lo guarda en:
+Copiar [`.env.production.example`](../.env.production.example) a `/opt/cita.pet/dog_grooming/.env.production`, reemplazar todos los placeholders y mantener el archivo real fuera de Git. El preflight exige:
 
 ```text
-s3://dog-grooming/backups/postgres/
+SECRET_KEY_BASE
+DOG_GROOMING_DATABASE_PASSWORD
+APP_HOST=cita.pet
+GOOGLE_CLIENT_ID
+GOOGLE_CLIENT_SECRET
+RESEND_API_KEY
+CLOUDFLARE_ACCESS_KEY_ID
+CLOUDFLARE_SECRET_ACCESS_KEY
+CLOUDFLARE_R2_ENDPOINT
+CLOUDFLARE_R2_BUCKET
+CLOUDFLARE_R2_SERVICE_IMAGES_BUCKET
 ```
 
-Antes de automatizarlo, verificá que el token R2 pueda leer, escribir y listar ese bucket. Para restaurar, detené el servicio web, descargá el backup elegido al host de destino y restauralo solamente contra la base `dog_grooming_production`.
+Configurar además:
 
-La migración `20261017160000_remove_ai_customer_portal_and_waitlist` elimina tablas y columnas de IA, portal de cliente y lista de espera, y no tiene rollback. Confirmá un backup restaurable antes de aplicarla y verificá después una reserva pública, una seña y una reprogramación interna.
+```text
+APP_PROTOCOL=https
+APP_WWW_HOST=www.cita.pet
+APP_HOSTS=cita.pet,www.cita.pet
+RESEND_FROM=Cita.pet <notificaciones@cita.pet>
+MAIL_FROM=Cita.pet <notificaciones@cita.pet>
+FORCE_SSL=true
+```
 
-## Email
+`CLOUDFLARE_ACCOUNT_ID` y `CLOUDFLARE_R2_ANALYTICS_TOKEN` son opcionales para métricas oficiales en `/super_admin/uso`. No configurar credenciales de Mercado Pago para el beta inicial.
 
-Para email productivo, verificá tu dominio en Resend y configurá, por ejemplo:
+Validar la interpolación sin arrancar servicios:
 
 ```sh
-MAIL_FROM="Cita.pet <notificaciones@tu-dominio.com>"
-RESEND_FROM="Cita.pet <notificaciones@tu-dominio.com>"
+docker compose -f compose.production.yml --env-file .env.production config --quiet
 ```
 
-## Recordatorios de turnos y celulares
+## 3. Deploy
 
-El scheduler de Solid Queue debe ejecutar `send_due_appointment_reminders` cada minuto y tener un worker para la cola `default`. Reiniciar workers/scheduler junto con el código que agrega `SendDueAppointmentRemindersJob` y `SendAppointmentReminderJob`. Verificar envío SMTP y revisar jobs fallidos; `notification_deliveries` guarda destinatario, plantilla `customer_reminder`, estado y fecha de envío. `appointments.reminder_sent_at` evita envíos repetidos normales y se reinicia al reprogramar.
-
-Se envía cuando el turno confirmado entra en las próximas 24 horas, con la demora propia de la cola. Confirmaciones de último momento encolan inmediatamente. El job vuelve a comprobar fecha, email y estado antes de enviar. Un fallo entre entrega SMTP y commit puede causar un duplicado al reintentar; no marcar un envío como exitoso manualmente sin comprobarlo.
-
-La migración de `mobile_area_code` es aditiva y debe aplicarse antes del código que usa ese campo. Revisar en configuración el código de área de cada negocio antes de normalizar datos antiguos. Auditar primero; la aplicación no fusiona clientes ni aplica esta corrección automáticamente:
+Primer arranque desde una máquina con acceso SSH:
 
 ```sh
-docker compose -f compose.production.yml exec -T web bash -lc 'bin/rails customers:normalize_mobile_numbers'
-# Sólo después de revisar el resultado y con backup vigente:
-docker compose -f compose.production.yml exec -T web bash -lc 'APPLY=1 bin/rails customers:normalize_mobile_numbers'
+scp deploy.sh citapet_production:/opt/cita.pet/dog_grooming/deploy.sh
+ssh citapet_production 'cd /opt/cita.pet/dog_grooming && chmod +x deploy.sh && ./deploy.sh'
 ```
 
-La tarea informa cantidades sin imprimir contactos. Omite números incompletos y colisiones, incluyendo clientes eliminados lógicamente. La corrección sólo cambia la clave de búsqueda; conserva el contacto original. Un rollback de código puede conservar la columna aditiva y las claves normalizadas.
+Deploys posteriores:
 
-## Comprobación posterior
+```sh
+ssh citapet_production 'cd /opt/cita.pet/dog_grooming && ./deploy.sh'
+```
+
+El script aborta si faltan `.env.production`, configuración obligatoria o si hay cambios locales rastreados. Por defecto despliega `main`; para fijar o volver a una revisión exacta:
+
+```sh
+REVISION=<sha-o-tag> ./deploy.sh
+```
+
+Antes de migrar hace un backup, construye la imagen, ejecuta `citapet:production_preflight`, corre `db:create` y `db:migrate`, levanta los servicios y verifica `/up`, `/acceder` y `/`. `RUN_BACKUP=0` existe sólo para una emergencia explícita.
+
+### Base vacía y superadmin
+
+El deploy crea esquemas pero nunca datos de aplicación. No ejecutar `db:seed` en producción; la tarea aborta fuera de desarrollo.
+
+Después del primer deploy, preaprovisionar el operador con el mismo email que usará en Google:
+
+```sh
+docker compose -f compose.production.yml --env-file .env.production run --rm \
+  -e SUPER_ADMIN_EMAIL=admin@cita.pet \
+  -e SUPER_ADMIN_NAME='Operaciones Cita.pet' \
+  web bin/rails citapet:bootstrap_super_admin
+```
+
+La tarea es idempotente, no asigna contraseña y rechaza reutilizar un usuario común existente.
+
+## 4. Backups y restauración
+
+`ops/backup_postgres.sh` crea un dump comprimido de `dog_grooming_production`, lo sube a `s3://$CLOUDFLARE_R2_BUCKET/backups/postgres/`, borra la copia temporal local y elimina objetos remotos más antiguos que `POSTGRES_BACKUP_RETENTION_DAYS` (30 por defecto).
+
+Además del backup automático previo a cada deploy, programar el script diariamente en el host. Comprobar periódicamente que los objetos existen y hacer una restauración de ensayo.
+
+Restauración controlada:
+
+1. Detener `web` y conservar `db` activo.
+2. Descargar un dump elegido desde R2 a un directorio temporal con permisos restringidos.
+3. Crear una base de restauración aislada y cargar allí el dump primero.
+4. Verificar integridad y sólo entonces restaurar la base productiva, con una ventana aprobada.
+5. Eliminar la copia temporal y ejecutar las comprobaciones posteriores.
+
+La migración `20261017160000_remove_ai_customer_portal_and_waitlist` es irreversible y elimina datos. No aplicarla sin un backup restaurable.
+
+## 5. Verificación posterior
 
 ```sh
 curl -I --max-time 20 https://cita.pet/up
-docker compose -f compose.production.yml ps
-docker compose -f compose.production.yml logs --tail=200 web
+docker compose -f compose.production.yml --env-file .env.production ps
+docker compose -f compose.production.yml --env-file .env.production logs --tail=200 web
 ```
 
-Comprobá una reserva pública, la carga de una mascota, el calendario, una seña y una invitación al equipo antes de abrir la operación real.
+Verificar manualmente:
+
+- acceso Google del superadmin y de un negocio;
+- alta/onboarding de un negocio de prueba controlado;
+- página pública `https://cita.pet/:slug` y reserva sin profesional;
+- seña manual, carga de comprobante, aprobación y email;
+- agenda, cliente, mascota, reprogramación e invitación al equipo;
+- objeto privado visible por Active Storage y entrega de Resend;
+- ejecución del scheduler y workers de Solid Queue.
+
+No abrir el beta si falla un flujo crítico, el backup no está disponible o los logs muestran migraciones/jobs fallidos.
+
+## 6. Rollback
+
+Para un problema de código sin migración incompatible, desplegar la revisión anterior con `REVISION=<sha> ./deploy.sh` y repetir la verificación. No intentar revertir la migración irreversible mencionada: restaurar el backup bajo una ventana controlada. Las restauraciones o cambios destructivos requieren aprobación operativa explícita.
+
+## 7. Mantenimiento de celulares
+
+La normalización de números antiguos se audita primero y sólo se aplica tras revisar el resultado y confirmar backup:
+
+```sh
+docker compose -f compose.production.yml --env-file .env.production exec -T web bash -lc 'bin/rails customers:normalize_mobile_numbers'
+docker compose -f compose.production.yml --env-file .env.production exec -T web bash -lc 'APPLY=1 bin/rails customers:normalize_mobile_numbers'
+```
+
+La tarea no imprime contactos y omite números incompletos o colisiones.

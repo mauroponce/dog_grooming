@@ -14,12 +14,12 @@ Esta es la fuente canónica de las fronteras técnicas e invariantes estables. S
 
 | Área | Entrada | Responsabilidad |
 | --- | --- | --- |
-| Sitio y reserva pública | `/:slug`, dominios personalizados, `PublicBookingController` | Presentación pública, selección de servicio/variante, disponibilidad global, reserva y señas |
+| Sitio y reserva pública | `/:slug`, `PublicBookingController` | Presentación pública, selección de servicio/variante, disponibilidad global, reserva y señas |
 | Operación de empresa | `/admin`, `Admin::BaseController` | Agenda, servicios, clientes, mascotas, equipo, señas y suscripción |
 | Administración global | `/super_admin`, `SuperAdmin::BaseController` | Empresas, facturación de plataforma y tareas globales |
 | Integraciones | controladores bajo `Webhooks::*` y callbacks OAuth | Validación del proveedor, idempotencia y traducción a servicios de dominio |
 
-Las rutas administrativas y estáticas deben permanecer antes de los comodines públicos de slug. Los dominios personalizados sólo pueden llegar a controladores públicos permitidos.
+Las rutas administrativas y estáticas deben permanecer antes de los comodines públicos de slug. El beta resuelve páginas públicas únicamente bajo el host canónico y mantiene desactivada la resolución de dominios personalizados.
 
 ## Tenencia, autenticación y autorización
 
@@ -57,7 +57,7 @@ Pruebas de referencia: `spec/services/grooming/booking_configuration_spec.rb`, `
 
 Existen dos contextos de pago independientes:
 
-1. **Seña de un cliente a una peluquería.** Usa configuración del `Business`, cuentas de cobro del negocio y, cuando corresponde, la conexión Mercado Pago del negocio. El agregado raíz es `Appointment` con `AppointmentPayment` y comprobantes relacionados.
+1. **Seña de un cliente a una peluquería.** En el beta usa una cuenta de transferencia del `Business` y comprobante revisado manualmente. El agregado raíz es `Appointment` con `AppointmentPayment` y comprobantes relacionados. La integración histórica con Mercado Pago permanece fuera del rollout.
 2. **Suscripción de una peluquería a Cita.pet.** Usa `Subscription`, `SubscriptionInvoice`, `SubscriptionPaymentProof` y `BillingTransferAccount`. La empresa carga un comprobante y el superadmin lo revisa mediante servicios bajo `Billing::*`.
 
 No reutilizar cuentas, conexiones OAuth, webhooks, estados ni referencias externas entre ambos contextos. Una clase histórica de checkout de suscripción no convierte Mercado Pago en un canal aprobado para la plataforma.
@@ -76,6 +76,7 @@ No reutilizar cuentas, conexiones OAuth, webhooks, estados ni referencias extern
 - Las invitaciones del equipo se materializan mediante `EmployeeMembership#invite!`; no se usa una matriz de permisos configurable desde la UI.
 - No hay modelos, rutas ni jobs para asistente, chat, análisis o generación por IA, portal de cliente o lista de espera. La migración `20261017160000_remove_ai_customer_portal_and_waitlist` eliminó sus tablas y columnas, y es irreversible.
 - Las funciones comerciales heredadas (campañas, promociones, rankings, packs, gift cards, referidos y formularios previos) no forman parte del flujo mínimo. No exponerlas ni crear dependencias nuevas sobre ellas sin una decisión explícita.
+- `db/seeds.rb` rechaza cualquier entorno distinto de desarrollo y sólo reemplaza los tenants demo conocidos. `citapet:bootstrap_super_admin` es la única inicialización de datos prevista para una producción vacía y opera sobre un solo email.
 
 ## Trabajo asíncrono y correo
 

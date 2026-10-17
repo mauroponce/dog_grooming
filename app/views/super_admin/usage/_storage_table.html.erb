@@ -1,0 +1,28 @@
+<article class="rounded-[34px] border border-white bg-white shadow-card">
+  <div class="border-b border-zinc-100 p-5">
+    <h2 class="text-2xl font-bold tracking-tight"><%= title %></h2>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="w-full min-w-[480px] text-left text-sm">
+      <thead class="bg-zinc-50 text-xs font-bold uppercase tracking-[.12em] text-zinc-400">
+        <tr>
+          <% columns.each_with_index do |column, index| %>
+            <th class="px-5 py-4 <%= 'text-right' if index.positive? %>"><%= column %></th>
+          <% end %>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-zinc-100">
+        <% rows.each do |row| %>
+          <tr>
+            <% values.call(row).each_with_index do |value, index| %>
+              <td class="px-5 py-4 font-semibold <%= index.zero? ? 'text-zinc-950' : 'text-right text-zinc-600' %>"><%= value %></td>
+            <% end %>
+          </tr>
+        <% end %>
+        <% if rows.blank? %>
+          <tr><td colspan="3" class="px-5 py-10 text-center font-semibold text-zinc-500">No hay datos cargados.</td></tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</article>

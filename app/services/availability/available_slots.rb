@@ -60,7 +60,7 @@ module Availability
       def candidates
         return @candidates if defined?(@candidates)
 
-        @candidates = [ nil ]
+        @candidates = employee_membership.present? ? [ employee_membership ] : [ nil ]
       end
 
       def slots_for_candidate(candidate)
@@ -244,9 +244,7 @@ module Availability
       end
 
       def employee_allowed?(candidate)
-        return true if candidate.blank? && !booking_enabled_employee_exists?
-        return true if candidate.blank? && !business.team_features_available?
-        return false if candidate.blank? && business.team_features_available?
+        return true if candidate.blank?
         return false unless candidate.business_id == business.id
         return false unless candidate.active? && candidate.archived_at.blank?
         return true if service_employee_membership_ids.blank?
@@ -298,12 +296,6 @@ module Availability
           ends_at: day_end,
           include_online_bookable: !online_booking
         )
-      end
-
-      def booking_enabled_employee_exists?
-        return @booking_enabled_employee_exists if defined?(@booking_enabled_employee_exists)
-
-        @booking_enabled_employee_exists = business.employee_memberships.available_for_booking.exists?
       end
   end
 end

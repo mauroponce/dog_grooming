@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 # check=error=true
 
-# This Dockerfile is designed for production, not development. Use with Kamal or build'n'run by hand:
+# This Dockerfile is designed for production and is built by deploy.sh through Compose:
 # docker build -t dog_grooming .
 # docker run -d -p 80:80 -e RAILS_MASTER_KEY=<value from config/master.key> --name dog_grooming dog_grooming
 
@@ -53,10 +53,6 @@ RUN bundle exec bootsnap precompile -j 1 app/ lib/
 
 # Precompiling assets for production without requiring secret RAILS_MASTER_KEY
 RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
-
-
-
-
 # Final stage for app image
 FROM base
 

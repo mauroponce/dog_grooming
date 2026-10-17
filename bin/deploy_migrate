@@ -5,6 +5,9 @@ max_attempts="${MIGRATION_LOCK_RETRIES:-60}"
 sleep_seconds="${MIGRATION_LOCK_SLEEP:-5}"
 attempt=1
 
+echo "Creating missing production databases (never seeds)..."
+bin/rails db:create
+
 echo "Running database migrations..."
 
 while [ "$attempt" -le "$max_attempts" ]; do

@@ -2254,7 +2254,7 @@
             </div>
 
             <div class="service-content-body">
-              <div class="service-form-grid" data-controller="service-description-ai" data-service-description-ai-url-value="<%= generate_description_admin_services_path %>">
+              <div class="service-form-grid">
                 <%= form.hidden_field :active, value: service.new_record? ? "1" : (service.active? ? "1" : "0") %>
                 <%= form.hidden_field :visibility_mode, value: service.new_record? ? "public" : service.visibility_mode %>
 
@@ -2274,8 +2274,7 @@
                       maxlength: 255,
                       autocomplete: "off",
                       placeholder: "Ej. Esmaltado semipermanente",
-                      class: "service-input",
-                      data: { service_description_ai_target: "name" } %>
+                      class: "service-input" %>
                   </div>
                 </div>
 
@@ -2296,7 +2295,7 @@
                         class: "service-custom-select-input",
                         tabindex: -1,
                         aria: { hidden: true },
-                        data: { custom_select_target: "input", service_description_ai_target: "category" }
+                        data: { custom_select_target: "input" }
                       ) %>
                     <p class="service-field-hint">La categoría que ves vos y que ven los clientes online.</p>
                   </div>
@@ -2322,24 +2321,13 @@
                     <%= form.label :description, class: "service-field-label" do %>
                       Descripción <span class="font-semibold text-zinc-400">(Opcional)</span>
                     <% end %>
-                    <span class="service-description-label-actions">
-                      <button type="button" class="service-ai-button" data-service-description-ai-target="button" data-action="service-description-ai#generate">
-                        <span>Generar</span>
-                        <svg aria-hidden="true" width="21" height="21" viewBox="0 0 24 24" fill="none">
-                          <path d="M10.7 3.4c.2-.7 1.2-.7 1.4 0l1.1 3.4c.1.3.3.5.6.6l3.4 1.1c.7.2.7 1.2 0 1.4L13.8 11c-.3.1-.5.3-.6.6L12.1 15c-.2.7-1.2.7-1.4 0l-1.1-3.4c-.1-.3-.3-.5-.6-.6L5.6 9.9c-.7-.2-.7-1.2 0-1.4L9 7.4c.3-.1.5-.3.6-.6l1.1-3.4Z" fill="currentColor"/>
-                          <path d="M17.7 14.4c.2-.5.9-.5 1.1 0l.5 1.5c.1.2.2.4.4.4l1.5.5c.5.2.5.9 0 1.1l-1.5.5c-.2.1-.4.2-.4.4l-.5 1.5c-.2.5-.9.5-1.1 0l-.5-1.5c-.1-.2-.2-.4-.4-.4l-1.5-.5c-.5-.2-.5-.9 0-1.1l1.5-.5c.2-.1.4-.2.4-.4l.5-1.5Z" fill="currentColor"/>
-                        </svg>
-                      </button>
-                      <span class="service-counter"><%= service.description.to_s.length %>/1000</span>
-                    </span>
+                    <span class="service-counter"><%= service.description.to_s.length %>/1000</span>
                   </div>
                   <%= form.text_area :description,
                     rows: 5,
                     maxlength: 1000,
                     placeholder: "Añade una breve descripción del servicio",
-                    class: "service-textarea",
-                    data: { service_description_ai_target: "description" } %>
-                  <p class="service-ai-status" data-service-description-ai-target="status" hidden></p>
+                    class: "service-textarea" %>
                 </div>
 
                 <div class="service-section-title-row">

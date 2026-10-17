@@ -54,11 +54,27 @@ module Admin
       end
 
       def availability_rules_params
-        params.fetch(:availability_rules, ActionController::Parameters.new).permit!
+        permitted_rules = Business::DAYS.map(&:first).map do |weekday|
+          { weekday.to_s => %i[active start_time end_time break_start_time break_end_time] }
+        end
+
+        params.fetch(:availability_rules, ActionController::Parameters.new).permit(*permitted_rules)
       end
 
       def payment_accounts_params
-        params.fetch(:payment_accounts, ActionController::Parameters.new).permit!
+        submitted = params.fetch(:payment_accounts, ActionController::Parameters.new)
+        submitted_items = submitted.fetch(:items, ActionController::Parameters.new)
+        permitted_items = {}
+        submitted_items.each_pair do |key, values|
+          next unless values.respond_to?(:permit)
+
+          permitted_items[key.to_s] = values.permit(:id, :name, :details, :_destroy).to_h
+        end
+
+        {
+          "primary_key" => submitted[:primary_key].to_s,
+          "items" => permitted_items
+        }
       end
 
       def payment_preferences_params

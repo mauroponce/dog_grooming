@@ -52,19 +52,6 @@ RSpec.describe Appointment, type: :model do
     end
   end
 
-  describe "customer portal deadlines" do
-    it "uses a separate deadline for online rescheduling" do
-      business = create_business
-      business.update!(cancellation_notice_hours: 12, rescheduling_notice_hours: 24)
-      appointment = create_appointment(business)
-      starts_at = 18.hours.from_now
-      appointment.update!(starts_at: starts_at, ends_at: starts_at + appointment.service.duration_minutes.minutes)
-
-      expect(appointment.customer_portal_cancellable?).to be(true)
-      expect(appointment.customer_portal_reschedulable?).to be(false)
-    end
-  end
-
   it "does not allow full-price payment mode for reservations" do
     business = create_business
     appointment = create_appointment(business)
@@ -91,25 +78,6 @@ RSpec.describe Appointment, type: :model do
       expect(event.body).to include("El local permanece cerrado")
       expect(event.metadata["appointment_id"]).to eq(appointment.id)
       expect(event.metadata["canceled_by"]).to eq("admin")
-    end
-
-    it "uses the customer cancellation event for customer-initiated cancellations" do
-      business = create_business
-      customer = business.customer_profiles.create!(
-        name: "Julieta Perez",
-        phone: "+54 9 11 1111-1111"
-      )
-      appointment = create_appointment(business, customer_profile: customer)
-
-      appointment.cancel!(by: "customer_portal", reason: "No puedo asistir")
-
-      event = business.provider_events.last
-      expect(event.event_type).to eq("customer_cancelled_booking")
-      expect(event.title).to eq("Cliente canceló un turno")
-      expect(event.metadata["appointment_id"]).to eq(appointment.id)
-      expect(event.metadata["action_url"]).to end_with("/admin/clientes/#{customer.id}/editar#turnos")
-      expect(Admin::NotificationItem.new(event).action_url).to eq(event.metadata["action_url"])
-      expect(appointment.cancellation_actor_label).to eq("Cliente")
     end
 
     it "does not classify a cancellation from a standalone customer link as a portal cancellation" do

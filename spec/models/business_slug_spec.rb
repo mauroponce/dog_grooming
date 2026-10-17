@@ -19,12 +19,13 @@ RSpec.describe Business, type: :model do
   end
 
   describe "custom domains" do
-    it "normalizes and resolves an enabled domain" do
+    it "normalizes stored domains but keeps custom-domain routing disabled for the beta" do
       business = create_business(slug: "estetica-aura")
       business.update!(custom_domain: "HTTPS://Reserva.Aura.com.ar/", custom_domain_enabled: true)
 
       expect(business.custom_domain).to eq("reserva.aura.com.ar")
-      expect(described_class.find_by_custom_domain("reserva.aura.com.ar")).to eq(business)
+      expect(business.custom_domain_active?).to eq(false)
+      expect(described_class.find_by_custom_domain("reserva.aura.com.ar")).to be_nil
     end
 
     it "does not allow platform domains or an enabled blank domain" do

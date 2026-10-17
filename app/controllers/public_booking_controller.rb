@@ -1,6 +1,6 @@
 class PublicBookingController < ApplicationController
-
   allow_unauthenticated_access
+  rate_limit to: 20, within: 10.minutes, only: :create, with: -> { redirect_to public_business_path(params[:slug]), alert: "Probá de nuevo más tarde." }
 
   before_action :set_business
 

@@ -216,6 +216,10 @@ class Appointment < ApplicationRecord
     signed_id(expires_in: 14.days, purpose: :appointment_customer_action)
   end
 
+  def public_confirmation_token
+    signed_id(expires_in: 30.days, purpose: :public_booking_confirmation)
+  end
+
   def manual_confirmation_url
     Rails.application.routes.url_helpers.appointment_action_url(
       token: manual_confirmation_token,
@@ -552,10 +556,10 @@ class Appointment < ApplicationRecord
 
     def google_calendar_details
       [
-      "Turno en #{business.name}.",
-      "Servicio: #{service.name}",
-      customer_name.present? ? "Cliente: #{customer_name}" : nil,
-        customer_phone.present? ? "Teléfono: #{customer_phone}" : nil,
+        "Turno en #{business.name}.",
+        "Servicio: #{service.name}",
+        customer_name.present? ? "Cliente: #{customer_name}" : nil,
+        customer_phone.present? ? "Teléfono: #{customer_phone}" : nil
       ].compact.join("\n")
     end
 
@@ -649,6 +653,7 @@ class Appointment < ApplicationRecord
     end
 
     def employee_required_for_team_plan
+      return if public_booking?
       return if business.blank? || !business.employee_memberships.available_for_booking.exists? || employee_membership.present?
 
       errors.add(:employee_membership, "debe asignarse para este turno")

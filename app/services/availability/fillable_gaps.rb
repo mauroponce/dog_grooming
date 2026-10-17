@@ -109,7 +109,7 @@ module Availability
           duration_minutes: minutes,
           employee_membership: employee,
           service_suggestions: suggestions,
-          waitlist_count: waitlist_count_for(suggestions, starts_at)
+          waitlist_count: 0
         )
       end
 
@@ -124,10 +124,6 @@ module Availability
         return true if service.employee_membership_ids.blank?
 
         service.employee_membership_ids.include?(employee.id)
-      end
-
-      def waitlist_count_for(services, starts_at)
-        business.waitlist_entries.visible.where(service_id: services.map(&:id), desired_date: starts_at.to_date).count
       end
 
       def next_usable_time
