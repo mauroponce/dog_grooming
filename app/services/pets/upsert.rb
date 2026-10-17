@@ -1,6 +1,6 @@
 module Pets
   class Upsert
-    ATTRIBUTES = %i[name breed sex birth_date notes coat_type coat_details behavioral_alerts grooming_reference_note].freeze
+    ATTRIBUTES = %i[name breed sex birth_date notes coat_type coat_details behavioral_alerts grooming_reference_note pet_size_band].freeze
 
     def self.call(...)
       new(...).call

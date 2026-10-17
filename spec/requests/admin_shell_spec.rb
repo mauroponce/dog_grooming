@@ -364,6 +364,7 @@ RSpec.describe "Admin shell", type: :request do
       "admin/mercado_pago_connections",
       "admin/non_working_periods",
       "admin/notifications",
+      "admin/pet_size_bands",
       "admin/profiles",
       "admin/service_categories",
       "admin/settings",
@@ -1230,6 +1231,52 @@ RSpec.describe "Admin shell", type: :request do
 
     expect(response).to have_http_status(:unprocessable_entity)
     expect(response.parsed_body.fetch("errors")).not_to be_empty
+  end
+
+  it "corrects a future appointment pet-size variant and refreshes its snapshot" do
+    user, business = create_admin_with_business
+    category = ServiceCategory.find_or_create_for!(business: business, name: "Peluquería", primary_category: true)
+    service = business.services.create!(name: "Baño + corte", service_category: category, category: category.name, pricing_mode: "by_pet_size", duration_minutes: 45, price_cents: 1_500_000, active: true)
+    small_band, _medium_band, large_band = business.ensure_default_pet_size_bands!.to_a
+    small = service.service_variants.create!(pet_size_band: small_band, price_cents: 1_500_000, duration_minutes: 45)
+    large = service.service_variants.create!(pet_size_band: large_band, price_cents: 2_500_000, duration_minutes: 90)
+    starts_at = 2.days.from_now.change(hour: 10)
+    sign_in(user)
+    post admin_appointments_path(format: :json), params: {
+      appointment: {
+        service_id: service.id,
+        service_variant_id: small.id,
+        create_customer_profile: "1",
+        customer_name: "Sofía Gomez",
+        customer_phone: "+54 9 11 7777-7777",
+        customer_email: "sofia@example.com",
+        pet_name: "Mora",
+        starts_at: starts_at.iso8601,
+        status: "confirmed"
+      }
+    }, headers: browser_headers.merge("Accept" => "application/json")
+
+    expect(response).to have_http_status(:created)
+    appointment = business.appointments.order(:created_at).last
+    pet = appointment.pet
+    expect(appointment).to have_attributes(service_variant: small, final_price_cents: 1_500_000, ends_at: starts_at + 45.minutes)
+    expect(pet.pet_size_band).to eq(small_band)
+
+    patch update_service_variant_admin_appointment_path(appointment, format: :json),
+      params: { appointment: { service_variant_id: large.id } },
+      headers: browser_headers.merge("Accept" => "application/json")
+
+    expect(response).to have_http_status(:ok)
+    expect(appointment.reload).to have_attributes(
+      service_variant: large,
+      service_variant_name: "Grande · Más de 20 kg",
+      service_variant_price_cents: 2_500_000,
+      service_variant_duration_minutes: 90,
+      ends_at: starts_at + 90.minutes,
+      final_price_cents: 2_500_000
+    )
+    expect(pet.reload.pet_size_band).to eq(large_band)
+    expect(response.parsed_body.fetch("serviceVariantId")).to eq(large.id.to_s)
   end
 
   it "cancels appointments from the calendar, records the actor and hides them from the schedule" do

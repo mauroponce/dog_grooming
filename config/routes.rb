@@ -105,6 +105,7 @@ Rails.application.routes.draw do
           patch :approve_deposit, path: "aprobar-comprobante"
           get :available_professionals, path: "profesionales-disponibles"
           patch :change_professional, path: "cambiar-profesional"
+          patch :update_service_variant, path: "cambiar-tamano"
           patch :mark_remaining_balance_paid, path: "marcar-saldo-pagado"
           patch :update_notes, path: "notas"
           patch :cancel, path: "cancelar"
@@ -125,6 +126,7 @@ Rails.application.routes.draw do
           delete :permanently_destroy, path: "eliminar-permanentemente"
         end
       end
+      resource :pet_size_bands, only: %i[edit update], path: "configuracion/rangos-de-mascota"
       post "servicios/extras", to: "extras#create", as: :service_extras
       patch "servicios/extras/:id", to: "extras#update", as: :service_extra
       resources :waitlist_entries, only: %i[create update destroy], path: "calendario/lista-de-espera"

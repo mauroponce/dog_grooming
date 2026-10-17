@@ -57,6 +57,7 @@ class Appointment < ApplicationRecord
   belongs_to :service
   belongs_to :customer_profile, optional: true
   belongs_to :pet, optional: true
+  belongs_to :service_variant, optional: true
   belongs_to :bookable_resource, optional: true
   belongs_to :branch, optional: true
   belongs_to :employee_membership, optional: true
@@ -152,6 +153,7 @@ class Appointment < ApplicationRecord
   validates :base_price_cents, :final_price_cents, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
   validate :deposit_receipt_file_is_valid
   validate :service_belongs_to_business
+  validate :service_variant_matches_service
   validate :pet_belongs_to_business
   validate :pet_belongs_to_customer_profile
   validate :resource_belongs_to_business
@@ -663,6 +665,12 @@ class Appointment < ApplicationRecord
       return if service.blank? || business.blank? || service.business_id == business_id
 
       errors.add(:service, "no pertenece a este negocio")
+    end
+
+    def service_variant_matches_service
+      return if service_variant.blank? || service_variant.service_id == service_id
+
+      errors.add(:service_variant, "no pertenece al servicio del turno")
     end
 
     def pet_belongs_to_business

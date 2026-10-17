@@ -18,13 +18,14 @@ class PublicBookingController < ApplicationController
   def new
     redirect_to public_business_path(@business.slug), alert: "La agenda no está disponible en este momento." and return unless @business.booking_available?
 
-    @services = @business.services.publicly_bookable.includes(:service_category, :service_tags, :employee_memberships, :service_availability_rules, service_resources: :bookable_resource, service_images_attachments: :blob).order(:category, :sort_order, :name).to_a
+    @services = @business.services.publicly_bookable.includes(:service_category, :service_tags, :employee_memberships, :service_availability_rules, service_variants: :pet_size_band, service_resources: :bookable_resource, service_images_attachments: :blob).order(:category, :sort_order, :name).to_a
     @categories = @services.map(&:category_label).uniq
     @selected_services = selected_services_from_params
     @public_extras = @business.extras.publicly_visible.order(:title).to_a
     @selected_extras = @public_extras.select { |extra| Array(params[:extra_ids]).map(&:to_s).include?(extra.id.to_s) }
     redirect_to public_business_path(@business.slug), alert: "El servicio no está disponible." and return if selected_service_keys.any? && @selected_services.blank?
     @service = @selected_services.first
+    @service_variant = selected_variant_from_params(@service, params[:service_variant_id])
     ensure_requested_category_matches_service!
     @service_detail = service_from_public_key(params[:service_detail], scope: @services) if params[:service_detail].present?
     @date = Date.parse(params[:date].presence || Time.zone.today.to_s)
@@ -49,12 +50,12 @@ class PublicBookingController < ApplicationController
     if @booking_step == "reserve" && @booking_draft.blank?
       redirect_to missing_booking_draft_redirect_path, alert: "Completá tus datos personales antes de reservar." and return
     end
-    @total_duration_minutes = @selected_services.sum(&:duration_minutes)
-    @total_price_cents = @selected_services.sum(&:price_cents) + @selected_extras.sum(&:price_cents)
+    @total_duration_minutes = @selected_services.sum { |service| booking_service(service).duration_minutes }
+    @total_price_cents = @selected_services.sum { |service| booking_service(service).price_cents } + @selected_extras.sum(&:price_cents)
     prepare_sequence_calendar if %w[schedule details reserve waitlist].include?(@booking_step)
     prepare_waitlist_context if @booking_step == "waitlist"
     prepare_reserve_context if @booking_step == "reserve"
-  rescue ActiveRecord::RecordNotFound, Date::Error
+  rescue ActiveRecord::RecordNotFound, Date::Error, ArgumentError
     redirect_to public_business_path(@business.slug), alert: "Selección inválida."
   end
 
@@ -151,6 +152,7 @@ class PublicBookingController < ApplicationController
         :pet_birth_date,
         :pet_coat_type,
         :pet_coat_details,
+        :service_variant_id,
         :deposit_receipt,
         :payment_method,
         service_ids: [],
@@ -298,6 +300,7 @@ class PublicBookingController < ApplicationController
 
     def booking_step
       requested = params[:step].presence_in(%w[services extras professionals schedule waitlist details reserve])
+      return "services" if @service&.tiered_pricing? && @service_variant.blank?
       return "extras" if requested == "extras" && @selected_services.any? && @public_extras.any?
       return (@selected_services.any? ? "schedule" : "services") if requested == "professionals" && !professional_step_required?
       return requested if requested.present?
@@ -331,6 +334,19 @@ class PublicBookingController < ApplicationController
 
     def selected_services_from_booking_params
       services_from_public_keys(Array(booking_submission_params[:service_ids]).compact_blank.first(1))
+    end
+
+    def selected_variant_from_params(service, variant_id)
+      return if service.blank? || !service.tiered_pricing?
+
+      variant = service.service_variants.active.find_by(id: variant_id)
+      raise ArgumentError, "Elegí el tamaño de la mascota para este servicio." if variant.blank? && variant_id.present?
+      variant
+    end
+
+    def booking_service(service, variant: nil)
+      variant ||= @service_variant if service == @service
+      Bookings::ServiceSelection.new(service: service, variant: variant)
     end
 
     def professional_mode
@@ -402,6 +418,7 @@ class PublicBookingController < ApplicationController
         manual_receipt_attached = false
 
         @selected_services.each do |service|
+          variant = selected_variant_from_params(service, booking_submission_params[:service_variant_id])
           preferred_employee = employee_for_service_booking(service)
           receipt = (!manual_receipt_attached && payment_method == "manual_transfer" && service.deposit_required?) ? deposit_receipt : nil
           appointment = Appointments::CreateBooking.call(
@@ -418,6 +435,7 @@ class PublicBookingController < ApplicationController
             pet_birth_date: booking_submission_params[:pet_birth_date],
             pet_coat_type: booking_submission_params[:pet_coat_type],
             pet_coat_details: booking_submission_params[:pet_coat_details],
+            service_variant: variant,
             branch: preferred_employee&.branch || selected_branch_for_booking,
             employee_membership: preferred_employee,
             deposit_receipt: receipt,
@@ -427,7 +445,7 @@ class PublicBookingController < ApplicationController
           manual_receipt_attached ||= payment_method == "manual_transfer" && service.deposit_required? && deposit_receipt.present?
           Sales::RecordAttribution.new(appointment: appointment, attribution: session[:sales_attribution]).call
           appointments << appointment
-          current_starts_at += service.duration_minutes.minutes
+          current_starts_at += booking_service(service, variant: variant).duration_minutes.minutes
         end
       end
 
@@ -464,6 +482,7 @@ class PublicBookingController < ApplicationController
       attrs[:pet_birth_date] = draft_attrs[:pet_birth_date] if attrs[:pet_birth_date].blank?
       attrs[:pet_coat_type] = draft_attrs[:pet_coat_type] if attrs[:pet_coat_type].blank?
       attrs[:pet_coat_details] = draft_attrs[:pet_coat_details] if attrs[:pet_coat_details].blank?
+      attrs[:service_variant_id] = draft_attrs[:service_variant_id] if attrs[:service_variant_id].blank?
       attrs
     end
 
@@ -499,6 +518,7 @@ class PublicBookingController < ApplicationController
       drafts[token] = {
         "business_id" => @business.id,
         "service_ids" => Array(booking_submission_params[:service_ids]).compact_blank.first(1),
+        "service_variant_id" => booking_submission_params[:service_variant_id].to_s,
         "extra_ids" => Array(booking_submission_params[:extra_ids]).compact_blank,
         "starts_at" => starts_at.iso8601,
         "professional_mode" => booking_submission_params[:professional_mode].presence || "any",
@@ -582,6 +602,7 @@ class PublicBookingController < ApplicationController
         @business.slug,
         {
           service_ids: Array(booking_submission_params[:service_ids]).compact_blank.first(1),
+          service_variant_id: booking_submission_params[:service_variant_id].presence,
           step: "reserve",
           draft: token,
           starts_at: starts_at.iso8601,
@@ -648,7 +669,7 @@ class PublicBookingController < ApplicationController
 
       public_slots = Availability::Slots.public_for(
         business: @business,
-        service: first_service,
+        service: booking_service(first_service),
         date: date,
         employee_membership: employee_for_service(first_service)
       )
@@ -684,8 +705,9 @@ class PublicBookingController < ApplicationController
     def sequence_available?(starts_at, services)
       current_starts_at = starts_at
       services.all? do |service|
-        available = public_service_available_with_assignment?(service, current_starts_at, employee_for_service(service))
-        current_starts_at += service.duration_minutes.minutes
+        selected_service = booking_service(service)
+        available = public_service_available_with_assignment?(selected_service, current_starts_at, employee_for_service(service))
+        current_starts_at += selected_service.duration_minutes.minutes
         available
       end
     end
@@ -693,8 +715,10 @@ class PublicBookingController < ApplicationController
     def sequence_available_for_booking?(starts_at, services)
       current_starts_at = starts_at
       services.all? do |service|
-        available = public_service_available_with_assignment?(service, current_starts_at, employee_for_service_booking(service))
-        current_starts_at += service.duration_minutes.minutes
+        variant = selected_variant_from_params(service, booking_submission_params[:service_variant_id])
+        selected_service = booking_service(service, variant: variant)
+        available = public_service_available_with_assignment?(selected_service, current_starts_at, employee_for_service_booking(service))
+        current_starts_at += selected_service.duration_minutes.minutes
         available
       end
     end
@@ -834,7 +858,7 @@ class PublicBookingController < ApplicationController
       services = base
         .where(slug: keys)
         .or(base.where(id: numeric_ids))
-        .includes(:employee_memberships, :service_availability_rules, service_resources: :bookable_resource)
+        .includes(:employee_memberships, :service_availability_rules, service_variants: :pet_size_band, service_resources: :bookable_resource)
         .to_a
       services_by_key = {}
       services.each do |service|
@@ -855,6 +879,7 @@ class PublicBookingController < ApplicationController
     helper_method def booking_calendar_params(date:, month: @month_date, step: @booking_step, date_window_start: @date_window_start)
       {
         service_ids: @selected_services.map(&:slug),
+        service_variant_id: @service_variant&.id,
         extra_ids: @selected_extras.map(&:id),
         date: date,
         month: month,

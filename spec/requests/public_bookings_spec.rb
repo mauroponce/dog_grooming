@@ -103,6 +103,35 @@ RSpec.describe "Public bookings", type: :request do
     expect(response.body).not_to include("Seleccionar profesional")
   end
 
+  it "requires and preserves a pet-size variant before showing the schedule" do
+    business = create_business
+    service = create_service(business)
+    service.update!(pricing_mode: "by_pet_size")
+    bands = business.ensure_default_pet_size_bands!
+    variants = bands.map.with_index do |band, index|
+      service.service_variants.create!(pet_size_band: band, price_cents: (15_000 + index * 5_000) * 100, duration_minutes: 30 + index * 15)
+    end
+
+    get new_public_booking_path(business.slug, service_ids: [ service.slug ], step: "schedule"), headers: browser_headers
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Elegí el tamaño para ver precio y duración")
+    expect(response.body).to include("Grande · Más de 20 kg")
+    expect(response.body).to include("$25.000 · 1 h")
+    expect(response.body).to include("Seleccionar servicio")
+
+    get new_public_booking_path(
+      business.slug,
+      service_ids: [ service.slug ],
+      service_variant_id: variants.last.id,
+      step: "schedule"
+    ), headers: browser_headers
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Seleccionar fecha y hora")
+    expect(response.body).to include("$25.000")
+  end
+
   it "collects the coat type but never exposes internal pet alerts in the public details step" do
     business = create_business
     service = create_service(business)

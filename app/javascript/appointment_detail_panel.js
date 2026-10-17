@@ -130,6 +130,24 @@ const customerCommentSection = (appointment) => {
   `
 }
 
+const serviceVariantSection = (appointment) => {
+  const options = Array.isArray(appointment.serviceVariantOptions) ? appointment.serviceVariantOptions : []
+  if (!appointment.updateServiceVariantUrl || !options.length) return ""
+
+  return `
+    <section class="appointment-detail-panel__section">
+      <h3>Tamaño de la mascota</h3>
+      <div class="appointment-detail-panel__row">
+        <span>Rango confirmado</span>
+        <select data-appointment-detail-service-variant aria-label="Tamaño de la mascota">
+          ${options.map((option) => `<option value="${escapeAttribute(option.id)}" ${String(option.id) === String(appointment.serviceVariantId || "") ? "selected" : ""}>${escapeHTML(option.label)} · ${money(option.price)} · ${durationLabel(option.duration)}</option>`).join("")}
+        </select>
+      </div>
+      <p class="appointment-detail-panel__notes-error hidden" data-appointment-detail-service-variant-error></p>
+    </section>
+  `
+}
+
 export function renderAppointmentDetail(appointment, { actions = {}, variant = "default" } = {}) {
   const services = appointment.services?.length
     ? appointment.services
@@ -225,6 +243,8 @@ export function renderAppointmentDetail(appointment, { actions = {}, variant = "
             </div>
           </section>`}
 
+          ${serviceVariantSection(appointment)}
+
           <section class="appointment-detail-panel__section">
             <h3>Pagos</h3>
             <div class="appointment-detail-panel__rows">
@@ -276,7 +296,7 @@ export function renderAppointmentDetail(appointment, { actions = {}, variant = "
   `
 }
 
-export function bindAppointmentDetailPanel(root, { onSaveNotes, onCancel } = {}) {
+export function bindAppointmentDetailPanel(root, { onSaveNotes, onCancel, onChangeServiceVariant } = {}) {
   const dialog = root.querySelector("[data-appointment-detail-receipt-dialog]")
   const previewButton = root.querySelector("[data-appointment-detail-receipt-preview]")
   const closeButton = root.querySelector("[data-appointment-detail-receipt-close]")
@@ -306,6 +326,22 @@ export function bindAppointmentDetailPanel(root, { onSaveNotes, onCancel } = {})
       })
     })
   }
+
+  const variantSelect = root.querySelector("[data-appointment-detail-service-variant]")
+  const variantError = root.querySelector("[data-appointment-detail-service-variant-error]")
+  variantSelect?.addEventListener("change", async () => {
+    variantSelect.disabled = true
+    variantError?.classList.add("hidden")
+    try {
+      await onChangeServiceVariant?.(variantSelect.value)
+    } catch (error) {
+      if (variantError) {
+        variantError.textContent = error.message || "No se pudo cambiar el tamaño."
+        variantError.classList.remove("hidden")
+      }
+      variantSelect.disabled = false
+    }
+  })
 
   if (!notesForm || !notesInput || !onSaveNotes) return
 

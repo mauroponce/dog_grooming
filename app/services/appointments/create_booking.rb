@@ -4,7 +4,7 @@ module Appointments
       new(...).call
     end
 
-    def initialize(business:, service:, starts_at:, customer_name:, customer_phone:, customer_email: nil, pet: nil, pet_id: nil, pet_name: nil, pet_breed: nil, pet_sex: nil, pet_birth_date: nil, pet_notes: nil, pet_coat_type: nil, pet_coat_details: nil, source: :public_booking, notes: nil, add_on_service_ids: [], extra_ids: [], branch: nil, employee_membership: nil, deposit_receipt: nil, payment_method: nil)
+    def initialize(business:, service:, starts_at:, customer_name:, customer_phone:, customer_email: nil, pet: nil, pet_id: nil, pet_name: nil, pet_breed: nil, pet_sex: nil, pet_birth_date: nil, pet_notes: nil, pet_coat_type: nil, pet_coat_details: nil, service_variant: nil, source: :public_booking, notes: nil, add_on_service_ids: [], extra_ids: [], branch: nil, employee_membership: nil, deposit_receipt: nil, payment_method: nil)
       @business = business
       @service = service
       @starts_at = starts_at
@@ -20,6 +20,7 @@ module Appointments
       @pet_notes = pet_notes
       @pet_coat_type = pet_coat_type
       @pet_coat_details = pet_coat_details
+      @service_variant = service_variant
       @source = source
       @notes = notes
       @add_on_service_ids = Array(add_on_service_ids).reject(&:blank?)
@@ -31,6 +32,7 @@ module Appointments
     end
 
     def call
+      validate_service_variant!
       validate_payment_configuration!
 
       appointment = business.with_lock do
@@ -48,6 +50,7 @@ module Appointments
         pricing = pricing_for
         appointment = business.appointments.create!(
           service: service,
+          service_variant: service_variant,
           customer_profile: profile,
           pet: pet,
           bookable_resource: resource,
@@ -57,11 +60,15 @@ module Appointments
           customer_phone: customer_phone,
           customer_email: customer_email,
           starts_at: starts_at,
+          ends_at: starts_at + booking_service.duration_minutes.minutes,
           source: source,
           notes: notes,
           customer_notes: notes,
           base_price_cents: pricing.fetch(:base_price_cents),
           final_price_cents: pricing.fetch(:final_price_cents),
+          service_variant_name: service_variant&.display_name,
+          service_variant_price_cents: service_variant&.price_cents,
+          service_variant_duration_minutes: service_variant&.duration_minutes,
           payment_expires_at: service.deposit_required? ? Time.current + service.deposit_payment_deadline_minutes.minutes : nil,
           discount_percentage: pricing.fetch(:discount_percentage)
         )
@@ -89,7 +96,21 @@ module Appointments
     end
 
     private
-      attr_reader :business, :service, :starts_at, :customer_name, :customer_phone, :customer_email, :pet, :pet_id, :pet_name, :pet_breed, :pet_sex, :pet_birth_date, :pet_notes, :pet_coat_type, :pet_coat_details, :source, :notes, :add_on_service_ids, :extra_ids, :branch, :employee_membership, :deposit_receipt, :payment_method
+      attr_reader :business, :service, :service_variant, :starts_at, :customer_name, :customer_phone, :customer_email, :pet, :pet_id, :pet_name, :pet_breed, :pet_sex, :pet_birth_date, :pet_notes, :pet_coat_type, :pet_coat_details, :source, :notes, :add_on_service_ids, :extra_ids, :branch, :employee_membership, :deposit_receipt, :payment_method
+
+      def validate_service_variant!
+        if service.tiered_pricing? && service_variant.blank?
+          raise ArgumentError, "Elegí el tamaño de la mascota para este servicio."
+        end
+        return if service_variant.blank?
+        return if service_variant.service_id == service.id && service_variant.active?
+
+        raise ArgumentError, "El tamaño elegido no está disponible para este servicio."
+      end
+
+      def booking_service
+        @booking_service ||= Bookings::ServiceSelection.new(service: service, variant: service_variant)
+      end
 
       def validate_payment_configuration!
         if business.simultaneous_capacity.present? && source.to_s == "public_booking"
@@ -158,8 +179,8 @@ module Appointments
       end
 
       def available_resource_for_service!
-        ends_at = starts_at + service.duration_minutes.minutes
-        availability = Resources::Availability.new(business:, service:, starts_at:, ends_at:)
+        ends_at = starts_at + booking_service.duration_minutes.minutes
+        availability = Resources::Availability.new(business:, service: booking_service, starts_at:, ends_at:)
         return unless availability.required?
 
         availability.first_available(lock: true) || raise(UnavailableSlot, "No hay recursos disponibles para ese horario")
@@ -170,7 +191,7 @@ module Appointments
 
         Bookings::AssignProfessionalService.call(
           business: business,
-          service: service,
+          service: booking_service,
           starts_at: starts_at,
           preferred_professional: employee_membership,
           assignment_strategy: assignment_strategy,
@@ -197,21 +218,21 @@ module Appointments
 
       def slot_available_for_source?(assigned_employee)
         if source.to_s == "public_booking"
-          Availability::Slots.public_available?(business:, service:, starts_at:, employee_membership: assigned_employee)
+          Availability::Slots.public_available?(business:, service: booking_service, starts_at:, employee_membership: assigned_employee)
         else
-          Availability::Slots.available?(business:, service:, starts_at:, employee_membership: assigned_employee)
+          Availability::Slots.available?(business:, service: booking_service, starts_at:, employee_membership: assigned_employee)
         end
       end
 
       def pricing_for
-        primary_price_cents = service.price_cents_for_time(starts_at, business)
+        primary_price_cents = booking_service.price_cents_for_time(starts_at, business)
         add_ons = add_on_services.map do |add_on|
           { service: add_on, price_cents: add_on.price_cents_for_time(starts_at, business) }
         end
         extras = business.extras.publicly_visible.where(id: extra_ids).map { |extra| { extra: extra, price_cents: extra.price_cents } }
         total_cents = primary_price_cents + add_ons.sum { |entry| entry.fetch(:price_cents) } + extras.sum { |entry| entry.fetch(:price_cents) }
         {
-          base_price_cents: service.price_cents + add_ons.sum { |entry| entry.fetch(:service).price_cents } + extras.sum { |entry| entry.fetch(:price_cents) },
+          base_price_cents: booking_service.price_cents + add_ons.sum { |entry| entry.fetch(:service).price_cents } + extras.sum { |entry| entry.fetch(:price_cents) },
           final_price_cents: total_cents,
           discount_percentage: service.dynamic_discount_for_time(starts_at, business),
           add_ons: add_ons,
@@ -264,7 +285,8 @@ module Appointments
           birth_date: pet_birth_date,
           notes: pet_notes,
           coat_type: pet_coat_type,
-          coat_details: pet_coat_details
+          coat_details: pet_coat_details,
+          pet_size_band: service_variant&.pet_size_band
         )
       end
 

@@ -24,6 +24,7 @@ class Pet < ApplicationRecord
 
   belongs_to :business, inverse_of: :pets
   belongs_to :customer_profile, inverse_of: :pets
+  belongs_to :pet_size_band, optional: true
 
   # Keep the legacy name available while new grooming flows use bookings.
   has_many :appointments, dependent: :nullify, inverse_of: :pet
@@ -47,6 +48,7 @@ class Pet < ApplicationRecord
   validate :coat_details_required_for_other
   validate :behavioral_alerts_are_valid
   validate :grooming_reference_photo_is_valid
+  validate :pet_size_band_belongs_to_business
 
   scope :alphabetically, -> { order(Arel.sql("LOWER(name) ASC"), :id) }
 
@@ -119,5 +121,11 @@ class Pet < ApplicationRecord
       if grooming_reference_photo.byte_size.to_i > GROOMING_REFERENCE_PHOTO_MAX_SIZE
         errors.add(:grooming_reference_photo, "no puede superar 10 MB")
       end
+    end
+
+    def pet_size_band_belongs_to_business
+      return if pet_size_band.blank? || pet_size_band.business_id == business_id
+
+      errors.add(:pet_size_band, "no pertenece a esta peluquería")
     end
 end

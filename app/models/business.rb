@@ -314,6 +314,7 @@ class Business < ApplicationRecord
   has_many :content_templates, dependent: :destroy
   has_many :promotions, dependent: :destroy
   has_many :subscription_invoices, dependent: :destroy
+  has_many :pet_size_bands, dependent: :destroy
   has_many :subscription_payment_proofs, dependent: :destroy
   has_many :subscription_checkout_payments, dependent: :destroy
   has_many :billing_reminders, dependent: :destroy
@@ -556,6 +557,17 @@ class Business < ApplicationRecord
 
   def billing_amount
     Billing::MonthlyAmountCalculator.call(self)
+  end
+
+  def ensure_default_pet_size_bands!
+    return pet_size_bands.ordered if pet_size_bands.exists?
+
+    transaction do
+      pet_size_bands.create!(name: "Chico", minimum_weight_kg: 0, maximum_weight_kg: 10, position: 0)
+      pet_size_bands.create!(name: "Mediano", minimum_weight_kg: 11, maximum_weight_kg: 20, position: 1)
+      pet_size_bands.create!(name: "Grande", minimum_weight_kg: 21, maximum_weight_kg: nil, position: 2)
+    end
+    pet_size_bands.ordered
   end
 
   def billing_status

@@ -1,6 +1,6 @@
 module ServiceCatalog
   class DefaultCatalog
-    CATEGORIES = Grooming::Catalog::GROUPS.map do |name, _prices, _durations|
+    CATEGORIES = Grooming::Catalog::SERVICES.map do |name, _prices, _durations|
       { name: name, services: Grooming::Catalog.templates.select { |item| item[:category] == name }.map { |item| item[:name] } }
     end.freeze
 

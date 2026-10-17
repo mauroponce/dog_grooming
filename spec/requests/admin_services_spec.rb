@@ -62,6 +62,9 @@ RSpec.describe "Admin services", type: :request do
     expect(response.body).to include("Seleccionar todos")
     expect(response.body).to include("Recomendación")
     expect(response.body).to include("Precio")
+    expect(response.body).to include("Cómo se calcula el precio")
+    expect(response.body).to include("Por tamaño de mascota")
+    expect(document.css('input[name*="service_variants_attributes"][name$="[pet_size_band_id]"]').size).to eq(3)
     expect(response.body).to include("Requiere seña")
     expect(response.body).not_to include("Cómo cobrar este servicio")
     expect(response.body).not_to include("Usar configuración del negocio")
@@ -117,6 +120,26 @@ RSpec.describe "Admin services", type: :request do
     expect(document.at_css("[data-service-availability-target='dateFields']").attribute("hidden")).to be_present
     expect(document.at_css("[data-service-availability-target='weeklyFields']").attribute("hidden")).to be_present
     expect(document.css('select[name^="service_availability_rules"]').map { |field| field["class"] }.uniq).to eq([ "service-custom-select-input" ])
+  end
+
+  it "updates the shared pet weight ranges" do
+    user, business = create_admin_with_business
+    bands = business.ensure_default_pet_size_bands!.to_a
+    sign_in(user)
+
+    patch admin_pet_size_bands_path, params: {
+      pet_size_bands: bands.to_h do |band|
+        [ band.id.to_s, {
+          name: band.name == "Chico" ? "Pequeño" : band.name,
+          minimum_weight_kg: band.minimum_weight_kg,
+          maximum_weight_kg: band.maximum_weight_kg,
+          position: band.position
+        } ]
+      end
+    }, headers: browser_headers
+
+    expect(response).to redirect_to(edit_admin_pet_size_bands_path)
+    expect(business.pet_size_bands.find_by!(position: 0).name).to eq("Pequeño")
   end
 
   it "renders the manual receipt account selector only when manual transfer has multiple active accounts" do
