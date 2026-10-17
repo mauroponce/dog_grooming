@@ -17,10 +17,7 @@ module Bookings
     end
 
     def price_cents_for_time(datetime, center = service.business)
-      rule = service.dynamic_pricing_rule_for(datetime, center)
-      return price_cents if rule.blank?
-
-      (price_cents * (100 - rule.discount_percentage.to_d) / 100).round
+      price_cents
     end
 
     def expected_deposit_amount_cents

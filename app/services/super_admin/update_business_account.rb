@@ -64,8 +64,7 @@ module SuperAdmin
           city: city,
           province: province,
           slogan: slogan,
-          preferences: business.preferences.to_h.merge("setup_warnings" => setup_warnings),
-          ai_context: ai_context
+          preferences: business.preferences.to_h.merge("setup_warnings" => setup_warnings)
         }
       end
 
@@ -231,16 +230,6 @@ module SuperAdmin
 
       def requested_slug
         @requested_slug ||= Business.slug_for(params[:slug].presence || business_name)
-      end
-
-      def ai_context
-        [
-          "Cuenta comercial de Cita.pet editada desde superadmin.",
-          "El catálogo de servicios se administra desde el workspace del negocio.",
-          instagram_url.present? ? "Instagram del negocio: #{instagram_url}." : nil,
-          "Las alertas operativas se envían por email al dueño.",
-          "Los mensajes a clientes se siguen enviando manualmente con enlaces prearmados."
-        ].compact.join("\n")
       end
 
       def logo

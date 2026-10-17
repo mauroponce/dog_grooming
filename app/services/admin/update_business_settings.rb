@@ -65,8 +65,7 @@ module Admin
           public_site_mode: public_site_mode,
           public_custom_css: public_custom_css,
           public_custom_html: public_custom_html,
-          public_category_custom_html: public_category_custom_html,
-          ai_context: ai_context
+          public_category_custom_html: public_category_custom_html
         }
       end
 
@@ -237,14 +236,6 @@ module Admin
 
       def requested_slug
         @requested_slug ||= Business.slug_for(params[:slug].presence || business_name)
-      end
-
-      def ai_context
-        [
-          "Cuenta comercial de Cita.pet actualizada desde admin.",
-          instagram_url.present? ? "Instagram del negocio: #{instagram_url}." : nil,
-          "Las alertas operativas se envían por email al dueño."
-        ].compact.join("\n")
       end
 
       def logo

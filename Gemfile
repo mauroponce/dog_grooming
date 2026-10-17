@@ -67,12 +67,11 @@ group :development do
   gem "foreman", require: false
 end
 
-gem "langchainrb", "~> 0.19.5"
-
 gem "dotenv-rails", "~> 3.2", :groups => [:development, :test]
 
 gem "pdf-reader", "~> 2.15"
 gem "rubyzip", "~> 3.4"
+gem "csv"
 
 gem "pundit", "~> 2.5"
 gem "pagy"

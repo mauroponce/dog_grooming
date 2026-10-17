@@ -37,7 +37,6 @@ env:
   secret:
     - RAILS_MASTER_KEY
     - DOG_GROOMING_DATABASE_PASSWORD
-    - GEMINI_API_KEY
     - RESEND_API_KEY
     - CLOUDFLARE_R2_ANALYTICS_TOKEN
     - CLOUDFLARE_API_TOKEN
@@ -68,11 +67,6 @@ env:
     MERCADO_PAGO_ENV: production
     DB_HOST: dog_grooming-db
     ACTIVE_STORAGE_SERVICE: "<%= ENV["ACTIVE_STORAGE_SERVICE"].to_s == "" ? ((ENV["CLOUDFLARE_ACCESS_KEY_ID"].to_s != "" || ENV["R2_ACCESS_KEY_ID"].to_s != "") ? "r2" : "local") : ENV["ACTIVE_STORAGE_SERVICE"] %>"
-    GEMINI_MODEL: "<%= ENV.fetch("GEMINI_MODEL", "gemini-flash-lite-latest") %>"
-    GEMINI_RECEIPT_MODEL: "<%= ENV.fetch("GEMINI_RECEIPT_MODEL", ENV.fetch("GEMINI_MODEL", "gemini-flash-lite-latest")) %>"
-    GEMINI_INPUT_USD_PER_1M_TOKENS: "<%= ENV.fetch("GEMINI_INPUT_USD_PER_1M_TOKENS", "0") %>"
-    GEMINI_OUTPUT_USD_PER_1M_TOKENS: "<%= ENV.fetch("GEMINI_OUTPUT_USD_PER_1M_TOKENS", "0") %>"
-    GEMINI_MONTHLY_BUDGET_USD: "<%= ENV.fetch("GEMINI_MONTHLY_BUDGET_USD", "0") %>"
     MAIL_FROM: "<%= ENV.fetch("MAIL_FROM", "Cita.pet <notificaciones@cita.pet>") %>"
     RESEND_FROM: "<%= ENV.fetch("RESEND_FROM", ENV.fetch("MAIL_FROM", "Cita.pet <notificaciones@cita.pet>")) %>"
     RESEND_ENDPOINT: "<%= ENV.fetch("RESEND_ENDPOINT", "https://api.resend.com/emails") %>"

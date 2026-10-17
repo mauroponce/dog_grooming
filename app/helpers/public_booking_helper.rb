@@ -61,10 +61,6 @@ module PublicBookingHelper
     "#{SPANISH_MONTHS.fetch(date.month - 1).capitalize} #{date.year}"
   end
 
-  def waitlist_time_window_label(window)
-    WaitlistEntry.time_window_label(window)
-  end
-
   def service_price_label(service)
     service.price_cents.zero? ? "Consultar" : number_to_currency(service.price_cents / 100, unit: "$", precision: 0, delimiter: ".")
   end

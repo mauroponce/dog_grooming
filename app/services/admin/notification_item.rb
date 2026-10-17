@@ -14,7 +14,6 @@ module Admin
       "appointment_cancelled_from_finalization" => "booking_cancelled",
       "appointment_rescheduled" => "booking_cancelled",
       "deposit_deadline_expired" => "system_notice",
-      "ai_chat_followup" => "system_notice",
       "customer_late_cancellation_alert" => "system_notice"
     }.freeze
 

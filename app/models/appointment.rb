@@ -61,7 +61,6 @@ class Appointment < ApplicationRecord
   belongs_to :bookable_resource, optional: true
   belongs_to :branch, optional: true
   belongs_to :employee_membership, optional: true
-  belongs_to :waitlist_entry, optional: true
   belongs_to :deposit_reviewed_by, class_name: "User", optional: true
   belongs_to :remaining_balance_paid_by, class_name: "User", optional: true
   belongs_to :completed_by, class_name: "User", optional: true
@@ -74,11 +73,6 @@ class Appointment < ApplicationRecord
   has_one :appointment_payment, dependent: :destroy
   has_many :booking_notes, dependent: :destroy
   has_many :booking_attachments, dependent: :destroy
-  has_many :sales_opportunities, dependent: :nullify
-  has_many :pack_sessions, dependent: :nullify
-  has_many :booking_intents, dependent: :nullify
-  has_many :service_form_responses, dependent: :destroy
-  has_one :booking_attribution, dependent: :destroy
   has_one_attached :deposit_receipt
   has_many_attached :deposit_receipt_history
   purge_replaced_attached_blobs_for :deposit_receipt, :deposit_receipt_history
@@ -91,7 +85,6 @@ class Appointment < ApplicationRecord
   DEPOSIT_RECEIPT_MAX_SIZE = 5.megabytes
   TERMINAL_STATUSES = %w[canceled expired completed no_show rescheduled].freeze
   GMAIL_DOMAINS = %w[gmail.com googlemail.com].freeze
-  CUSTOMER_CANCELLATION_ACTORS = %w[customer_portal customer_link].freeze
   SHORT_UUID_BYTES = 9
 
   enum :status, {
@@ -132,20 +125,17 @@ class Appointment < ApplicationRecord
 
   before_validation :normalize_customer_phone
   before_validation :ensure_short_uuid
-  before_validation :ensure_customer_portal_token
   before_validation :ensure_deposit_review_token
   before_validation :set_ends_at
   before_update :reset_customer_reminder_for_reschedule
   around_save :serialize_salon_booking
   after_create_commit :broadcast_admin_appointments_refresh_after_create, if: :confirmed?
   after_update_commit :broadcast_admin_appointments_refresh_after_confirmation, if: :confirmed_in_latest_commit?
-  after_update_commit :notify_waitlist_for_cancellation, if: :waitlist_relevant_cancellation?
   after_create_commit :enqueue_customer_reminder_if_due
   after_update_commit :enqueue_customer_reminder_if_due, if: -> { saved_change_to_status? || saved_change_to_starts_at? || saved_change_to_customer_email? }
 
   validates :customer_name, :starts_at, :ends_at, presence: true
   validates :short_uuid, presence: true, uniqueness: true, format: { with: /\A[A-Za-z0-9_-]{12}\z/ }
-  validates :customer_portal_token, presence: true, uniqueness: true
   validates :deposit_review_token, presence: true, uniqueness: true
   validates :customer_phone, presence: true, unless: :manual?
   validates :deposit_status, inclusion: { in: DEPOSIT_STATUSES }
@@ -202,7 +192,7 @@ class Appointment < ApplicationRecord
   end
 
   def cancellation_actor_label
-    return "Cliente" if canceled_by.to_s.in?(CUSTOMER_CANCELLATION_ACTORS)
+      return "Cliente" if canceled_by.to_s == "customer_link"
     return cancellation_user_label if canceled_by_user.present?
     return "Sistema" if canceled_by == "system"
     return "Administrador" if canceled_by == "admin"
@@ -407,20 +397,6 @@ class Appointment < ApplicationRecord
     )
   end
 
-  def customer_portal_booking_token
-    customer_portal_token
-  end
-
-  def customer_portal_booking_url
-    return "" if business&.slug.blank? || customer_portal_booking_token.blank?
-
-    PublicUrls.url(:customer_portal_short_booking, business, customer_portal_booking_token)
-  end
-
-  def customer_portal_profile_url
-    customer_profile&.customer_portal_url.presence || customer_portal_booking_url
-  end
-
   def google_calendar_url
     return "" unless starts_at.present? && service.present? && business.present?
 
@@ -459,20 +435,6 @@ class Appointment < ApplicationRecord
   def self.gmail_address?(value)
     domain = value.to_s.strip.downcase.split("@", 2).last
     GMAIL_DOMAINS.include?(domain)
-  end
-
-  def customer_portal_cancellable?
-    return false if terminal_status?
-    return false unless starts_at.future?
-
-    Time.current <= starts_at - business.cancellation_notice_hours.hours
-  end
-
-  def customer_portal_reschedulable?
-    return false if terminal_status?
-    return false unless starts_at.future?
-
-    Time.current <= starts_at - business.rescheduling_notice_hours.hours
   end
 
   def to_param
@@ -536,20 +498,11 @@ class Appointment < ApplicationRecord
       AppUrl.protocol
     end
 
-    def customer_portal_reschedule_message
-      [
-        "Hola #{business.name}, soy #{customer_name}.",
-        "Quiero reprogramar mi turno de #{service.name} del #{customer_starts_at_label}.",
-        "Link de la reserva: #{customer_portal_booking_url}"
-      ].join("\n")
-    end
-
     def create_cancellation_provider_event!(by:)
-      customer_initiated = CUSTOMER_CANCELLATION_ACTORS.include?(by.to_s)
-      customer_portal_cancellation = by.to_s == "customer_portal"
+      customer_initiated = false
 
       business.provider_events.create!(
-        event_type: customer_portal_cancellation ? "customer_cancelled_booking" : "booking_cancelled",
+        event_type: "booking_cancelled",
         title: customer_initiated ? "Cliente canceló un turno" : "Turno cancelado",
         body: cancellation_provider_event_body(customer_initiated: customer_initiated),
         metadata: {
@@ -560,7 +513,7 @@ class Appointment < ApplicationRecord
           canceled_by_user_id: canceled_by_user_id,
           cancellation_reason: cancellation_reason,
           canceled_late: canceled_late,
-          action_url: customer_portal_cancellation ? customer_appointments_admin_url : admin_appointment_url
+          action_url: admin_appointment_url
         }.compact
       )
     end
@@ -577,30 +530,12 @@ class Appointment < ApplicationRecord
       end
     end
 
-    def customer_appointments_admin_url
-      return if customer_profile.blank?
-
-      Rails.application.routes.url_helpers.edit_admin_customer_profile_url(
-        customer_profile,
-        anchor: "turnos",
-        host: app_host,
-        protocol: app_protocol
-      )
-    end
-
     def admin_appointment_url
       Rails.application.routes.url_helpers.admin_appointment_url(
         self,
         host: app_host,
         protocol: app_protocol
       )
-    end
-
-    def customer_portal_management_line
-      url = customer_portal_profile_url
-      return nil if url.blank?
-
-      "También podés ver, cancelar o reprogramar tus turnos acá: #{url}"
     end
 
     def google_calendar_exportable?
@@ -621,7 +556,6 @@ class Appointment < ApplicationRecord
       "Servicio: #{service.name}",
       customer_name.present? ? "Cliente: #{customer_name}" : nil,
         customer_phone.present? ? "Teléfono: #{customer_phone}" : nil,
-        customer_portal_booking_token.present? ? "Link del turno: #{customer_portal_booking_url}" : nil
       ].compact.join("\n")
     end
 
@@ -644,13 +578,6 @@ class Appointment < ApplicationRecord
       return if short_uuid.present?
 
       self.short_uuid = self.class.unique_short_uuid
-    end
-
-    def ensure_customer_portal_token
-      self.customer_portal_token ||= loop do
-        token = SecureRandom.urlsafe_base64(12)
-        break token unless self.class.exists?(customer_portal_token: token)
-      end
     end
 
     def self.unique_short_uuid
@@ -821,14 +748,6 @@ class Appointment < ApplicationRecord
 
     def occupancy_change?
       new_record? || %w[business_id service_id starts_at ends_at status employee_membership_id bookable_resource_id].any? { |field| will_save_change_to_attribute?(field) }
-    end
-
-    def waitlist_relevant_cancellation?
-      saved_change_to_status? && canceled? && starts_at.future?
-    end
-
-    def notify_waitlist_for_cancellation
-      WaitlistNotificationService.call(self)
     end
 
     def self.label_for(value, labels)

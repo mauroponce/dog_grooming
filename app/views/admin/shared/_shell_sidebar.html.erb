@@ -1,7 +1,6 @@
 <% business_policy = policy(@business) %>
 <% nav_items = [] %>
-<% nav_items << { label: "Inicio", path: admin_home_path, controllers: %w[home], icon: :dashboard } if business_policy.dashboard? %>
-<% nav_items << { label: "Calendario", path: admin_calendar_path, controllers: %w[calendar appointments availability_blocks waitlist_entries], icon: :calendar } if business_policy.appointments? %>
+<% nav_items << { label: "Calendario", path: admin_calendar_path, controllers: %w[calendar appointments availability_blocks], icon: :calendar } if business_policy.appointments? %>
 <% nav_items << { label: "Servicios", path: admin_services_path, controllers: %w[services service_categories], icon: :book, badge: @business.services_count.to_i } if business_policy.services? %>
 <% nav_items << { label: "Clientes", path: admin_customer_profiles_path, controllers: %w[customer_profiles client_notes customer_reminders], icon: :users, badge: @business.customer_profiles.count } if business_policy.customers? %>
 <% nav_items << { label: "Equipo", path: admin_employee_memberships_path, controllers: %w[employee_memberships], icon: :contact, badge: @business.employee_memberships_count.to_i } if business_policy.employees? %>
@@ -56,19 +55,6 @@
       <% end %>
     <% end %>
   </nav>
-
-  <div class="admin-sidebar-intelligence">
-    <p class="admin-sidebar-eyebrow admin-sidebar-collapsible-content">Inteligencia</p>
-    <%= link_to admin_dashboard_path,
-      class: "admin-sidebar-link admin-sidebar-ai-link #{'is-active' if controller_name == 'dashboard'}",
-      data: { admin_sidebar_tooltip_source: true, tooltip: "Asistente diario · Activo" } do %>
-      <span class="admin-sidebar-link-icon admin-sidebar-ai-icon"><%= icons.fetch(:bot).html_safe %></span>
-      <span class="admin-sidebar-ai-copy admin-sidebar-collapsible-content">
-        <span class="admin-sidebar-link-label admin-sidebar-ai-title">Asistente diario</span>
-        <span class="admin-sidebar-ai-status">Activo</span>
-      </span>
-    <% end %>
-  </div>
 
 </aside>
 

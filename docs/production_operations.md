@@ -84,4 +84,4 @@ docker compose -f compose.production.yml ps
 docker compose -f compose.production.yml logs --tail=200 web
 ```
 
-Comprobá una reserva pública, la carga de una mascota, el calendario y el portal del responsable antes de abrir la operación real.
+Comprobá una reserva pública, la carga de una mascota, el calendario, una seña y una invitación al equipo antes de abrir la operación real.

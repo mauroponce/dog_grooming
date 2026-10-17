@@ -3,7 +3,7 @@ class AppointmentMailer < ApplicationMailer
     @appointment = appointment
     @business = appointment.business
     @google_calendar_url = appointment.google_calendar_url
-    @booking_url = appointment.customer_portal_booking_url
+    @booking_url = public_booking_url(appointment.business.slug, confirmation: appointment.public_confirmation_token, host: app_host, protocol: app_protocol)
     mail subject: "Recordatorio de tu turno en #{@business.name}", to: appointment.customer_email
   end
 

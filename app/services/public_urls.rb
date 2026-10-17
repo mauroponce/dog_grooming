@@ -4,26 +4,11 @@ class PublicUrls
     booking: [ :new_public_booking, :new_custom_public_booking ],
     bookings: [ :public_bookings, :custom_public_bookings ],
     calendar: [ :public_booking_calendar, :custom_public_booking_calendar ],
-    chat: [ :center_chat, :custom_center_chat ],
-    waitlist: [ :public_waitlist_entries, :custom_public_waitlist_entries ],
     services: [ :public_services, :custom_public_services ],
     service: [ :public_service, :custom_public_service ],
-    promos: [ :public_promos, :custom_public_promos ],
     category: [ :public_category, :custom_public_category ],
     category_service: [ :public_category_service, :custom_public_category_service ],
     short_service: [ :short_public_service, :custom_short_public_service ],
-    customer_portal_entry: [ :customer_portal_entry, :custom_customer_portal_entry ],
-    customer_portal_access: [ :customer_portal_access, :custom_customer_portal_access ],
-    customer_portal_dashboard: [ :customer_portal_dashboard, :custom_customer_portal_dashboard ],
-    customer_portal_dashboard_update: [ :customer_portal_dashboard_update, :custom_customer_portal_dashboard_update ],
-    customer_portal_logout: [ :customer_portal_logout, :custom_customer_portal_logout ],
-    customer_portal_profile_access: [ :customer_portal_profile_access, :custom_customer_portal_profile_access ],
-    customer_portal_short_booking: [ :customer_portal_short_booking, :custom_customer_portal_short_booking ],
-    customer_portal_booking: [ :customer_portal_booking, :custom_customer_portal_booking ],
-    customer_portal_booking_reschedule_availability: [ :customer_portal_booking_reschedule_availability, :custom_customer_portal_booking_reschedule_availability ],
-    customer_portal_booking_receipt: [ :customer_portal_booking_receipt, :custom_customer_portal_booking_receipt ],
-    customer_portal_booking_reschedule: [ :customer_portal_booking_reschedule, :custom_customer_portal_booking_reschedule ],
-    customer_portal_booking_cancel: [ :customer_portal_booking_cancel, :custom_customer_portal_booking_cancel ]
   }.freeze
 
   class << self

@@ -1,10 +1,8 @@
 class PublicBookingController < ApplicationController
-  WAITLIST_DATE_RANGE_DAYS = 60
 
   allow_unauthenticated_access
 
   before_action :set_business
-  before_action :track_campaign_visit, only: %i[show new]
 
   def show
     @services = @business.services.publicly_bookable.includes(:service_category, :service_tags, :employee_memberships, cover_image_attachment: :blob, service_images_attachments: :blob).order(:category, :sort_order, :name)
@@ -52,8 +50,7 @@ class PublicBookingController < ApplicationController
     end
     @total_duration_minutes = @selected_services.sum { |service| booking_service(service).duration_minutes }
     @total_price_cents = @selected_services.sum { |service| booking_service(service).price_cents } + @selected_extras.sum(&:price_cents)
-    prepare_sequence_calendar if %w[schedule details reserve waitlist].include?(@booking_step)
-    prepare_waitlist_context if @booking_step == "waitlist"
+    prepare_sequence_calendar if %w[schedule details reserve].include?(@booking_step)
     prepare_reserve_context if @booking_step == "reserve"
   rescue ActiveRecord::RecordNotFound, Date::Error, ArgumentError
     redirect_to public_business_path(@business.slug), alert: "Selección inválida."
@@ -299,7 +296,7 @@ class PublicBookingController < ApplicationController
     end
 
     def booking_step
-      requested = params[:step].presence_in(%w[services extras professionals schedule waitlist details reserve])
+      requested = params[:step].presence_in(%w[services extras professionals schedule details reserve])
       return "services" if @service&.tiered_pricing? && @service_variant.blank?
       return "extras" if requested == "extras" && @selected_services.any? && @public_extras.any?
       return (@selected_services.any? ? "schedule" : "services") if requested == "professionals" && !professional_step_required?
@@ -691,7 +688,7 @@ class PublicBookingController < ApplicationController
     end
 
     def booking_horizon_end
-      WAITLIST_DATE_RANGE_DAYS.days.from_now.to_date
+      60.days.from_now.to_date
     end
 
     def booking_date_enabled?(date)
@@ -893,45 +890,6 @@ class PublicBookingController < ApplicationController
         professionals: @selected_professionals_by_service.to_h { |service, membership| [ service.slug, membership&.id ] },
         draft: @booking_draft_token
       }.compact
-    end
-
-    def prepare_waitlist_context
-      @waitlist_date_options = (Time.zone.today..WAITLIST_DATE_RANGE_DAYS.days.from_now.to_date).to_a
-      @waitlist_time_presets = WaitlistEntry::TIME_PRESETS
-      @waitlist_preferences = waitlist_preferences_from_params
-      @waitlist_available_slots_present = @waitlist_preferences.any? do |preference|
-        waitlist_window_has_available_slots?(preference.fetch(:date), preference.fetch(:window))
-      end
-    end
-
-    def waitlist_preferences_from_params
-      raw = params[:waitlist_preferences]
-      raw = raw.to_unsafe_h.values if raw.respond_to?(:to_unsafe_h)
-      raw = raw.values if raw.is_a?(Hash)
-      default_preference = default_waitlist_preference
-      return [ default_preference ] if Array(raw).blank?
-
-      raw.filter_map do |attrs|
-        attrs = attrs.respond_to?(:to_unsafe_h) ? attrs.to_unsafe_h : attrs.to_h
-        date = Date.parse(attrs["date"].presence || @date.iso8601)
-        next if date < Time.zone.today || date > WAITLIST_DATE_RANGE_DAYS.days.from_now.to_date
-
-        window = WaitlistEntry.normalize_time_window(attrs)
-        next if window.blank?
-
-        { date: date, window: window }
-      end.presence || [ default_preference ]
-    end
-
-    def default_waitlist_preference
-      {
-        date: @date,
-        window: WaitlistEntry.normalize_time_window("night")
-      }
-    end
-
-    def waitlist_window_has_available_slots?(date, window)
-      slots_for_calendar_date(date).any? { |slot| WaitlistEntry.time_window_covers?([ window ], slot) }
     end
 
     def selected_public_employee(employees)

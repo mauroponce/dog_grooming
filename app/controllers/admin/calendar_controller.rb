@@ -15,7 +15,7 @@ module Admin
       @calendar_services = calendar_services
       @calendar_appointments = calendar_appointments(scoped_appointments)
       @calendar_blocks = calendar_blocks
-      @calendar_waitlist_entries = policy(@business).waitlist? ? calendar_waitlist_entries : []
+      @calendar_waitlist_entries = []
       @calendar_notifications = calendar_notifications
     end
 
@@ -147,7 +147,6 @@ module Admin
           customerProfileId: appointment.customer_profile_id&.to_s,
           customerProfileUrl: appointment.customer_profile_id.present? ? edit_admin_customer_profile_path(appointment.customer_profile_id, return_to: admin_calendar_path(date: @calendar_date.iso8601, t: appointment.short_uuid)) : nil,
           customerProfilePanelUrl: appointment.customer_profile_id.present? ? panel_admin_customer_profile_path(appointment.customer_profile_id, format: :json) : nil,
-          customerPortalUrl: customer_portal_url_for(customer_profile),
           customerCreatedAt: customer_profile&.created_at&.to_date&.iso8601,
           customerSummary: customer_summary_payload_for(customer_profile),
           service: appointment.service.name,
@@ -178,10 +177,7 @@ module Admin
           payload[:destroyUrl] = admin_destroy_appointment_path(appointment, format: :json) if actions_available && policy(appointment).destroy?
           payload[:approveDepositUrl] = approve_deposit_admin_appointment_path(appointment, format: :json) if actions_available && appointment.pending_deposit_review? && policy(appointment).approve_deposit?
           payload[:rejectDepositUrl] = reject_deposit_admin_appointment_path(appointment, format: :json) if actions_available && appointment.pending_deposit_review? && policy(appointment).reject_deposit?
-          if actions_available && professional_change_available?(appointment)
-            payload[:availableProfessionalsUrl] = available_professionals_admin_appointment_path(appointment, format: :json)
-            payload[:changeProfessionalUrl] = change_professional_admin_appointment_path(appointment, format: :json)
-          end
+          payload[:rescheduleUrl] = reschedule_admin_appointment_path(appointment, format: :json) if actions_available && appointment.starts_at.future? && policy(appointment).update?
           payload[:cancelUrl] = cancel_admin_appointment_path(appointment, format: :json) if actions_available && !appointment.pending_deposit_review? && policy(appointment).cancel? && appointment.starts_at.future?
           payload[:markRemainingBalancePaidUrl] = mark_remaining_balance_paid_admin_appointment_path(appointment, format: :json) if actions_available && policy(appointment).update? && appointment.remaining_balance_payable?
         end
@@ -237,55 +233,6 @@ module Admin
         end
       end
 
-      def calendar_waitlist_entries
-        policy_scope(WaitlistEntry)
-          .includes(:service, :employee_membership, :customer_profile)
-          .where.not(status: "dismissed")
-          .order(:desired_date, :created_at)
-          .map { |entry| waitlist_entry_payload(entry) }
-      end
-
-      def waitlist_entry_payload(entry)
-        service = entry.service
-        employee = entry.employee_membership
-
-        {
-          id: entry.id.to_s,
-          status: entry.status,
-          statusLabel: waitlist_status_label(entry.status),
-          clientName: entry.client_name,
-          clientPhone: entry.client_phone,
-          email: entry.email,
-          customerProfileId: entry.customer_profile_id&.to_s,
-          customerInitials: initials_for(entry.customer_profile&.name.presence || entry.client_name),
-          serviceId: service.id.to_s,
-          serviceName: service.name,
-          serviceDuration: service.duration_minutes,
-          servicePrice: service.price_cents / 100,
-          employeeId: employee&.id&.to_s,
-          employeeName: employee&.display_name,
-          desiredDate: entry.desired_date.iso8601,
-          desiredDateLabel: CustomerDateFormatter.date_label(entry.desired_date),
-          preferredTimeWindows: entry.preferred_time_windows,
-          preferredTimeLabels: entry.preferred_time_window_labels,
-          notes: entry.notes,
-          createdAt: entry.created_at.iso8601,
-          createdAtLabel: helpers.time_ago_in_words(entry.created_at) + " atrás",
-          updateUrl: admin_waitlist_entry_path(entry, format: :json),
-          destroyUrl: admin_waitlist_entry_path(entry, format: :json)
-        }
-      end
-
-      def waitlist_status_label(status)
-        {
-          "waiting" => "En espera",
-          "offered" => "Disponible para reservar",
-          "booked" => "Reservada",
-          "dismissed" => "Eliminada",
-          "expired" => "Caducada"
-        }.fetch(status.to_s, status.to_s)
-      end
-
       def initials_for(value)
         value.to_s.split(/\s+/).filter_map { |part| part[0] }.first(2).join.upcase.presence || "HT"
       end
@@ -316,7 +263,7 @@ module Admin
         case item.notification_type
         when "new_booking", "booking_cancelled", "deposit_approved", "deposit_rejected"
           :appointments
-        when "new_deposit_proof", "follow_up_due", "waitlist_entry", "fillable_gap"
+        when "new_deposit_proof", "follow_up_due", "fillable_gap"
           :actions
         when "trial_ending", "subscription_overdue"
           :sales

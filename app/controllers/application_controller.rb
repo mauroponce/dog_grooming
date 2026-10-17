@@ -22,17 +22,9 @@ class ApplicationController < ActionController::Base
 
   private
     CUSTOM_DOMAIN_PUBLIC_CONTROLLERS = %w[
-      appointment_actions
-      campaign_links
-      chats
-      customer_portal/bookings
-      customer_portal/dashboard
-      customer_portal/sessions
       deposit_receipts
       public_booking
       public_service_pages
-      waitlist_confirmations
-      waitlist_entries
     ].freeze
 
     def restrict_custom_domains_to_public_routes

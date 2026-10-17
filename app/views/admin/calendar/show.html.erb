@@ -1271,9 +1271,9 @@ import { bindAppointmentDetailPanel, openProfessionalPicker, renderAppointmentDe
   const appointmentCreateUrl = "<%= admin_appointments_path(format: :json) %>";
   const availabilityBlockCreateUrl = "<%= admin_availability_blocks_path(format: :json) %>";
   const availabilityBlockDeleteUrlTemplate = "<%= admin_availability_block_path("__ID__", format: :json) %>";
-  const waitlistCreateUrl = "<%= admin_waitlist_entries_path(format: :json) %>";
-  const waitlistUpdateUrlTemplate = "<%= admin_waitlist_entry_path("__ID__", format: :json) %>";
-  const waitlistDestroyUrlTemplate = "<%= admin_waitlist_entry_path("__ID__", format: :json) %>";
+  const waitlistCreateUrl = null;
+  const waitlistUpdateUrlTemplate = null;
+  const waitlistDestroyUrlTemplate = null;
   const customerAutocompleteUrl = "<%= autocomplete_admin_customer_profiles_path(format: :json) %>";
   const csrfToken = document.querySelector("meta[name='csrf-token']")?.content;
 
@@ -2485,6 +2485,7 @@ import { bindAppointmentDetailPanel, openProfessionalPicker, renderAppointmentDe
         approveDeposit: appointment.approveDepositUrl ? `onclick="approveCalendarDeposit('${escapeAttribute(appointment.id)}')"` : "",
         rejectDeposit: appointment.rejectDepositUrl ? `onclick="rejectCalendarDeposit('${escapeAttribute(appointment.id)}')"` : "",
         markPaid: appointment.markRemainingBalancePaidUrl ? `onclick="openRemainingBalancePaymentDialog('${escapeAttribute(appointment.id)}')"` : "",
+        reschedule: appointment.rescheduleUrl ? "data-appointment-detail-reschedule" : "",
         cancel: appointment.cancelUrl ? "data-appointment-detail-cancel" : "",
         destroy: appointment.destroyUrl ? `onclick="deleteExistingAppointment('${escapeAttribute(appointment.id)}')"` : ""
       },
@@ -2494,8 +2495,27 @@ import { bindAppointmentDetailPanel, openProfessionalPicker, renderAppointmentDe
     bindAppointmentDetailPanel(document.getElementById("drawerContent"), {
       onSaveNotes: (internalNotes) => saveCalendarAppointmentNotes(appointment, internalNotes),
       onCancel: (reason) => cancelCalendarAppointment(appointment.id, reason),
+      onReschedule: (startsAt) => rescheduleCalendarAppointment(appointment, startsAt),
       onChangeServiceVariant: (serviceVariantId) => changeCalendarAppointmentVariant(appointment, serviceVariantId)
     });
+  }
+
+  async function rescheduleCalendarAppointment(appointment, startsAt) {
+    if (!appointment?.rescheduleUrl) throw new Error("No se puede reprogramar este turno.");
+    const response = await fetch(appointment.rescheduleUrl, {
+      method: "PATCH",
+      headers: { "Accept": "application/json", "Content-Type": "application/json", "X-CSRF-Token": csrfToken },
+      body: JSON.stringify({ starts_at: startsAt })
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      showToast(Array.isArray(payload.errors) ? payload.errors.join(". ") : "No se pudo reprogramar el turno.");
+      return;
+    }
+    appointments = appointments.map(item => String(item.id) === String(payload.id) ? payload : item);
+    renderAll();
+    openAppointmentDetails(payload.id);
+    showToast("Turno reprogramado");
   }
 
   async function changeCalendarAppointmentVariant(appointment, serviceVariantId) {

@@ -49,26 +49,6 @@ module Admin
       redirect_to edit_admin_service_path(service)
     end
 
-    def generate_description
-      unless Ai::GeminiClient.available?
-        render json: { error: "Gemini no está configurado. Falta GEMINI_API_KEY." }, status: :service_unavailable
-        return
-      end
-
-      description = Ai::ServiceDescriptionGenerator.new(
-        business: @business,
-        service_name: service_description_params[:service_name],
-        category_name: service_description_category_name
-      ).call
-
-      render json: { description: description }
-    rescue ArgumentError => error
-      render json: { error: error.message }, status: :unprocessable_entity
-    rescue StandardError => error
-      Rails.logger.warn("Service description AI failed for business #{@business.id}: #{error.class} - #{error.message}")
-      render json: { error: "No pudimos generar la descripción en este momento." }, status: :bad_gateway
-    end
-
     def create
       attributes = service_params
       sync_public_listing_state!(attributes)

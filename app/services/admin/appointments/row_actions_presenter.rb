@@ -176,10 +176,6 @@ module Admin
           Action.new(key: "finalize", label: label, tone: :ink, anchor: "appointment_#{booking.short_uuid}_finalization")
         end
 
-        def copy_booking_link_action
-          Action.new(key: "copy_link", label: "Copiar link", tone: :neutral, copy_text: booking.customer_portal_booking_url)
-        end
-
         def mobile_review_action
           return unless booking.manual_payment_required?
 
@@ -309,6 +305,15 @@ module Admin
 
         def routes
           Rails.application.routes.url_helpers
+        end
+
+        def copy_booking_link_action
+          Action.new(
+            key: "copy_link",
+            label: "Copiar confirmación",
+            tone: :neutral,
+            copy_text: routes.public_booking_path(booking.business.slug, confirmation: booking.public_confirmation_token)
+          )
         end
     end
   end

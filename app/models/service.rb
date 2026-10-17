@@ -24,15 +24,6 @@ class Service < ApplicationRecord
   has_many :service_recommendations, dependent: :destroy
   has_many :recommended_services, through: :service_recommendations
   has_many :inverse_service_recommendations, class_name: "ServiceRecommendation", foreign_key: :recommended_service_id, dependent: :destroy, inverse_of: :recommended_service
-  has_many :sales_opportunities, dependent: :nullify
-  has_many :campaign_links, dependent: :nullify
-  has_many :sales_campaigns, dependent: :nullify
-  has_many :service_packs, dependent: :restrict_with_error
-  has_many :booking_intents, dependent: :nullify
-  has_one :service_form, dependent: :destroy
-  has_many :service_form_responses, through: :service_form
-  has_many :gift_cards, dependent: :nullify
-  has_many :promotions, dependent: :nullify
   has_one_attached :cover_image
   has_many_attached :service_images
   purge_replaced_attached_blobs_for :cover_image
@@ -125,29 +116,16 @@ class Service < ApplicationRecord
     price_label_for_cents(price_cents)
   end
 
-  def price_cents_for_time(datetime, center = business)
-    rule = dynamic_pricing_rule_for(datetime, center)
-    return price_cents if rule.blank?
-
-    (price_cents * (100 - rule.discount_percentage.to_d) / 100).round
+  def price_cents_for_time(_datetime, _center = business)
+    price_cents
   end
 
   def price_for_time(datetime, center = business)
     price_cents_for_time(datetime, center) / 100.0
   end
 
-  def dynamic_discount_for_time(datetime, center = business)
-    dynamic_pricing_rule_for(datetime, center)&.discount_percentage.to_d || 0.to_d
-  end
-
-  def dynamic_pricing_rule_for(datetime, center)
-    return if datetime.blank? || center.blank?
-
-    local_time = datetime.in_time_zone
-    seconds = local_time.seconds_since_midnight
-    center.dynamic_pricing_rules.active.where(day_of_week: local_time.wday).sort_by { |rule| -rule.discount_percentage }.find do |rule|
-      rule.start_time.seconds_since_midnight <= seconds && rule.end_time.seconds_since_midnight > seconds
-    end
+  def dynamic_discount_for_time(_datetime, _center = business)
+    0.to_d
   end
 
   def price_label_for_cents(cents)

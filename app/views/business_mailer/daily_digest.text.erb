@@ -3,7 +3,6 @@ Resumen de hoy en Cita.pet
 Turnos de hoy: <%= @appointments.size %>
 Comprobantes pendientes: <%= @pending_proofs.size %>
 Seguimientos pendientes: <%= @follow_ups.size %>
-Lista de espera activa: <%= @waitlist_entries.size %>
 Huecos para ofrecer: <%= @gaps.size %>
 
 <% @appointments.first(8).each do |appointment| %>

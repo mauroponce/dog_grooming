@@ -72,7 +72,7 @@
 
           <% if @booking_step == "professionals" %>
             <span class="text-zinc-950">Profesional</span>
-          <% elsif @selected_services.any? && @booking_step.in?(%w[schedule waitlist details reserve]) %>
+          <% elsif @selected_services.any? && @booking_step.in?(%w[schedule details reserve]) %>
             <%= link_to "Profesional", new_public_booking_path(@business.slug, flow_params.merge(step: "professionals")), class: "hover:text-zinc-900" %>
           <% else %>
             <span>Profesional</span>
@@ -82,17 +82,13 @@
 
         <% if @booking_step == "schedule" %>
           <span class="text-zinc-950">Día y hora</span>
-        <% elsif @booking_step.in?(%w[waitlist details reserve]) %>
+        <% elsif @booking_step.in?(%w[details reserve]) %>
           <%= link_to "Día y hora", new_public_booking_path(@business.slug, selected_schedule_flow_params.merge(step: "schedule")), class: "hover:text-zinc-900" %>
         <% else %>
           <span>Día y hora</span>
         <% end %>
         <span>›</span>
 
-        <% if @booking_step == "waitlist" %>
-          <span class="text-zinc-950">Lista de espera</span>
-          <span>›</span>
-        <% end %>
 
         <% if @booking_step == "details" %>
           <span class="text-zinc-950">Responsable y mascota</span>
@@ -376,10 +372,9 @@
               <% end %>
             <% end %>
           </div>
-          <p class="mt-7 text-sm font-semibold text-zinc-950">
-            ¿Ninguna cita te viene bien?
-            <%= link_to "Únete a la lista de espera", new_public_booking_path(@business.slug, booking_calendar_params(date: @date, step: "waitlist")), class: "font-bold text-brand-700 hover:text-brand-900" %>
-          </p>
+          <% if @business.contact_phone.present? %>
+            <%= link_to "¿Ningún horario te sirve? Contactanos por WhatsApp", "https://wa.me/#{@business.contact_phone.to_s.gsub(/\D/, '')}", target: "_blank", rel: "noopener", class: "mt-7 inline-block text-sm font-bold text-brand-700 hover:text-brand-900" %>
+          <% end %>
         <% else %>
           <div class="mt-24 flex flex-col items-center text-center">
             <span class="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-b from-brand-700 to-brand-600 text-white shadow-lg shadow-brand-100">
@@ -395,7 +390,9 @@
               <% if @next_available_date.present? %>
                 <%= link_to "Ir a la próxima fecha disponible", new_public_booking_path(@business.slug, booking_calendar_params(date: @next_available_date, step: "schedule", date_window_start: @next_available_date)), class: "inline-flex h-10 items-center justify-center rounded-full border border-zinc-200 bg-white px-5 text-sm font-bold text-zinc-950 shadow-sm hover:border-zinc-950" %>
               <% end %>
-              <%= link_to "Únete a la lista de espera", new_public_booking_path(@business.slug, booking_calendar_params(date: @date, step: "waitlist")), class: "inline-flex h-10 items-center justify-center rounded-full border border-zinc-200 bg-white px-5 text-sm font-bold text-zinc-950 shadow-sm hover:border-brand-500 hover:text-brand-700" %>
+              <% if @business.contact_phone.present? %>
+                <%= link_to "Contactanos por WhatsApp", "https://wa.me/#{@business.contact_phone.to_s.gsub(/\D/, '')}", target: "_blank", rel: "noopener", class: "inline-flex h-10 items-center justify-center rounded-full border border-zinc-200 bg-white px-5 text-sm font-bold text-zinc-950 shadow-sm hover:border-brand-500 hover:text-brand-700" %>
+              <% end %>
             </div>
           </div>
         <% end %>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_17_150000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_17_160000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -40,73 +40,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_17_150000) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
-  end
-
-  create_table "ai_api_usage_events", force: :cascade do |t|
-    t.bigint "business_id"
-    t.integer "completion_tokens", default: 0, null: false
-    t.datetime "created_at", null: false
-    t.string "error_class"
-    t.text "error_message"
-    t.decimal "estimated_cost_usd", precision: 12, scale: 6, default: "0.0", null: false
-    t.string "feature", default: "unknown", null: false
-    t.jsonb "metadata", default: {}, null: false
-    t.string "model"
-    t.integer "prompt_tokens", default: 0, null: false
-    t.string "provider", default: "gemini", null: false
-    t.datetime "request_finished_at"
-    t.datetime "request_started_at", null: false
-    t.string "status", default: "success", null: false
-    t.integer "total_tokens", default: 0, null: false
-    t.datetime "updated_at", null: false
-    t.index ["business_id", "request_started_at"], name: "idx_on_business_id_request_started_at_3f61d1f678"
-    t.index ["business_id"], name: "index_ai_api_usage_events_on_business_id"
-    t.index ["feature", "request_started_at"], name: "index_ai_api_usage_events_on_feature_and_request_started_at"
-    t.index ["provider", "request_started_at"], name: "index_ai_api_usage_events_on_provider_and_request_started_at"
-    t.index ["status"], name: "index_ai_api_usage_events_on_status"
-  end
-
-  create_table "ai_chat_conversations", force: :cascade do |t|
-    t.bigint "business_id", null: false
-    t.datetime "created_at", null: false
-    t.string "customer_name"
-    t.string "customer_phone"
-    t.string "last_intent"
-    t.jsonb "metadata", default: {}, null: false
-    t.string "status", default: "open", null: false
-    t.datetime "summarized_at"
-    t.text "summary"
-    t.string "summary_status", default: "pending", null: false
-    t.datetime "updated_at", null: false
-    t.string "visitor_token", null: false
-    t.index ["business_id", "status", "updated_at"], name: "idx_on_business_id_status_updated_at_490317ce77"
-    t.index ["business_id", "visitor_token"], name: "index_ai_chat_conversations_on_business_id_and_visitor_token", unique: true
-    t.index ["business_id"], name: "index_ai_chat_conversations_on_business_id"
-  end
-
-  create_table "ai_chat_messages", force: :cascade do |t|
-    t.bigint "ai_chat_conversation_id", null: false
-    t.text "content", null: false
-    t.datetime "created_at", null: false
-    t.jsonb "metadata", default: {}, null: false
-    t.string "role", null: false
-    t.datetime "updated_at", null: false
-    t.index ["ai_chat_conversation_id", "created_at"], name: "idx_ai_chat_messages_on_conversation_and_created_at"
-    t.index ["ai_chat_conversation_id"], name: "index_ai_chat_messages_on_ai_chat_conversation_id"
-  end
-
-  create_table "ai_context_imports", force: :cascade do |t|
-    t.bigint "business_id", null: false
-    t.datetime "created_at", null: false
-    t.text "error_message"
-    t.text "generated_context"
-    t.datetime "processed_at"
-    t.text "raw_text"
-    t.string "source_url"
-    t.string "status", default: "pending", null: false
-    t.datetime "updated_at", null: false
-    t.index ["business_id", "created_at"], name: "index_ai_context_imports_on_business_id_and_created_at"
-    t.index ["business_id"], name: "index_ai_context_imports_on_business_id"
   end
 
   create_table "appointment_addons", force: :cascade do |t|
@@ -174,7 +107,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_17_150000) do
     t.string "customer_name", null: false
     t.text "customer_notes"
     t.string "customer_phone"
-    t.string "customer_portal_token", null: false
     t.bigint "customer_profile_id"
     t.integer "deposit_amount_cents", default: 0, null: false
     t.string "deposit_payment_method"
@@ -212,7 +144,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_17_150000) do
     t.datetime "starts_at", null: false
     t.integer "status", default: 0, null: false
     t.datetime "updated_at", null: false
-    t.bigint "waitlist_entry_id"
     t.index ["bookable_resource_id"], name: "index_appointments_on_bookable_resource_id"
     t.index ["branch_id"], name: "index_appointments_on_branch_id"
     t.index ["business_id", "deposit_status", "starts_at"], name: "idx_appointments_business_deposit_status_starts_at"
@@ -225,7 +156,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_17_150000) do
     t.index ["business_id"], name: "index_appointments_on_business_id"
     t.index ["canceled_by_user_id"], name: "index_appointments_on_canceled_by_user_id"
     t.index ["completed_by_id"], name: "index_appointments_on_completed_by_id"
-    t.index ["customer_portal_token"], name: "index_appointments_on_customer_portal_token", unique: true
     t.index ["customer_profile_id"], name: "index_appointments_on_customer_profile_id"
     t.index ["deposit_receipt_analysis"], name: "index_appointments_on_deposit_receipt_analysis", using: :gin
     t.index ["deposit_review_token"], name: "index_appointments_on_deposit_review_token", unique: true
@@ -237,7 +167,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_17_150000) do
     t.index ["service_id"], name: "index_appointments_on_service_id"
     t.index ["service_variant_id"], name: "index_appointments_on_service_variant_id"
     t.index ["short_uuid"], name: "index_appointments_on_short_uuid", unique: true
-    t.index ["waitlist_entry_id"], name: "index_appointments_on_waitlist_entry_id"
   end
 
   create_table "availability_blocks", force: :cascade do |t|
@@ -453,8 +382,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_17_150000) do
   create_table "businesses", force: :cascade do |t|
     t.string "address"
     t.string "address_details"
-    t.boolean "ai_chat_enabled", default: false, null: false
-    t.text "ai_context"
     t.string "arrival_mode", default: "continuous", null: false
     t.jsonb "arrival_times", default: {}, null: false
     t.boolean "billing_enabled", default: true, null: false
@@ -534,7 +461,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_17_150000) do
     t.index ["public_site_mode"], name: "index_businesses_on_public_site_mode"
     t.index ["public_template"], name: "index_businesses_on_public_template"
     t.index ["service_catalog_category_id"], name: "index_businesses_on_service_catalog_category_id"
-    t.check_constraint "arrival_mode::text = ANY (ARRAY['fixed'::character varying, 'continuous'::character varying]::text[])", name: "businesses_valid_arrival_mode"
+    t.check_constraint "arrival_mode::text = ANY (ARRAY['fixed'::character varying::text, 'continuous'::character varying::text])", name: "businesses_valid_arrival_mode"
     t.check_constraint "simultaneous_capacity >= 1 AND simultaneous_capacity <= 10", name: "businesses_valid_capacity"
   end
 
@@ -634,26 +561,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_17_150000) do
     t.index ["service_pack_id"], name: "index_customer_packs_on_service_pack_id"
   end
 
-  create_table "customer_portal_access_tokens", force: :cascade do |t|
-    t.bigint "business_id", null: false
-    t.datetime "consumed_at"
-    t.datetime "created_at", null: false
-    t.bigint "customer_profile_id"
-    t.string "email", null: false
-    t.datetime "expires_at", null: false
-    t.datetime "last_sent_at"
-    t.string "purpose", null: false
-    t.string "request_ip"
-    t.text "request_user_agent"
-    t.string "token_digest", null: false
-    t.datetime "updated_at", null: false
-    t.index ["business_id", "email"], name: "index_customer_portal_access_tokens_on_business_id_and_email"
-    t.index ["business_id"], name: "index_customer_portal_access_tokens_on_business_id"
-    t.index ["customer_profile_id"], name: "index_customer_portal_access_tokens_on_customer_profile_id"
-    t.index ["expires_at"], name: "index_customer_portal_access_tokens_on_expires_at"
-    t.index ["token_digest"], name: "index_customer_portal_access_tokens_on_token_digest", unique: true
-  end
-
   create_table "customer_profiles", force: :cascade do |t|
     t.date "birth_date"
     t.datetime "blocked_at"
@@ -661,8 +568,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_17_150000) do
     t.bigint "business_id", null: false
     t.integer "consecutive_late_cancellations_count", default: 0, null: false
     t.datetime "created_at", null: false
-    t.string "customer_portal_short_token", null: false
-    t.string "customer_portal_token", null: false
     t.datetime "deleted_at"
     t.string "email"
     t.string "first_name"
@@ -683,8 +588,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_17_150000) do
     t.index ["business_id", "normalized_email"], name: "idx_customer_profiles_business_email"
     t.index ["business_id", "normalized_phone"], name: "index_customer_profiles_on_business_id_and_normalized_phone", unique: true
     t.index ["business_id"], name: "index_customer_profiles_on_business_id"
-    t.index ["customer_portal_short_token"], name: "index_customer_profiles_on_customer_portal_short_token", unique: true
-    t.index ["customer_portal_token"], name: "index_customer_profiles_on_customer_portal_token", unique: true
   end
 
   create_table "customer_reminders", force: :cascade do |t|
@@ -1418,7 +1321,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_17_150000) do
     t.datetime "updated_at", null: false
     t.index ["business_id"], name: "index_subscriptions_on_business_id", unique: true
     t.index ["external_reference"], name: "index_subscriptions_on_external_reference", unique: true
-    t.check_constraint "plan_selected::text = ANY (ARRAY['basic'::character varying, 'pro'::character varying]::text[])", name: "subscriptions_valid_plan"
+    t.check_constraint "plan_selected::text = ANY (ARRAY['basic'::character varying::text, 'pro'::character varying::text])", name: "subscriptions_valid_plan"
   end
 
   create_table "super_admin_tasks", force: :cascade do |t|
@@ -1465,48 +1368,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_17_150000) do
     t.index ["google_uid"], name: "index_users_on_google_uid", unique: true
   end
 
-  create_table "waitlist_entries", force: :cascade do |t|
-    t.datetime "accepted_at"
-    t.bigint "center_id", null: false
-    t.string "client_name", null: false
-    t.string "client_phone", null: false
-    t.datetime "created_at", null: false
-    t.bigint "customer_profile_id"
-    t.date "desired_date", null: false
-    t.datetime "dismissed_at"
-    t.string "email"
-    t.bigint "employee_membership_id"
-    t.datetime "expires_at"
-    t.text "notes"
-    t.datetime "notified_at"
-    t.datetime "offered_at"
-    t.string "phone_e164"
-    t.jsonb "preferred_time_windows", default: [], null: false
-    t.jsonb "preferred_weekdays", default: [], null: false
-    t.bigint "released_appointment_id"
-    t.datetime "released_starts_at"
-    t.bigint "service_id", null: false
-    t.string "source", default: "public_page", null: false
-    t.string "status", default: "pending", null: false
-    t.string "token_seguro"
-    t.datetime "updated_at", null: false
-    t.index ["center_id", "customer_profile_id"], name: "idx_waitlist_center_customer"
-    t.index ["center_id", "service_id", "desired_date", "status"], name: "idx_waitlist_lookup"
-    t.index ["center_id", "status", "created_at"], name: "idx_waitlist_center_status_created"
-    t.index ["center_id"], name: "index_waitlist_entries_on_center_id"
-    t.index ["customer_profile_id"], name: "index_waitlist_entries_on_customer_profile_id"
-    t.index ["employee_membership_id"], name: "index_waitlist_entries_on_employee_membership_id"
-    t.index ["released_appointment_id"], name: "index_waitlist_entries_on_released_appointment_id"
-    t.index ["service_id"], name: "index_waitlist_entries_on_service_id"
-    t.index ["token_seguro"], name: "index_waitlist_entries_on_token_seguro"
-  end
-
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
-  add_foreign_key "ai_api_usage_events", "businesses"
-  add_foreign_key "ai_chat_conversations", "businesses"
-  add_foreign_key "ai_chat_messages", "ai_chat_conversations"
-  add_foreign_key "ai_context_imports", "businesses"
   add_foreign_key "appointment_addons", "appointments"
   add_foreign_key "appointment_addons", "services"
   add_foreign_key "appointment_extras", "appointments"
@@ -1525,7 +1388,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_17_150000) do
   add_foreign_key "appointments", "users", column: "completed_by_id"
   add_foreign_key "appointments", "users", column: "deposit_reviewed_by_id"
   add_foreign_key "appointments", "users", column: "remaining_balance_paid_by_id"
-  add_foreign_key "appointments", "waitlist_entries"
   add_foreign_key "availability_blocks", "bookable_resources"
   add_foreign_key "availability_blocks", "businesses"
   add_foreign_key "availability_blocks", "employee_memberships"
@@ -1567,8 +1429,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_17_150000) do
   add_foreign_key "customer_packs", "businesses"
   add_foreign_key "customer_packs", "customer_profiles"
   add_foreign_key "customer_packs", "service_packs"
-  add_foreign_key "customer_portal_access_tokens", "businesses"
-  add_foreign_key "customer_portal_access_tokens", "customer_profiles"
   add_foreign_key "customer_profiles", "businesses"
   add_foreign_key "customer_reminders", "appointments"
   add_foreign_key "customer_reminders", "businesses"
@@ -1663,8 +1523,4 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_17_150000) do
   add_foreign_key "subscription_payment_proofs", "users", column: "uploaded_by_id"
   add_foreign_key "subscriptions", "businesses"
   add_foreign_key "super_admin_tasks", "businesses"
-  add_foreign_key "waitlist_entries", "businesses", column: "center_id"
-  add_foreign_key "waitlist_entries", "customer_profiles"
-  add_foreign_key "waitlist_entries", "employee_memberships"
-  add_foreign_key "waitlist_entries", "services"
 end

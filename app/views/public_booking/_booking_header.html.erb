@@ -24,7 +24,9 @@
     <% end %>
 
     <div class="flex shrink-0 items-center gap-2">
-      <%= link_to "Ver mis turnos", customer_portal_entry_path(business.slug), class: "inline-flex h-10 items-center justify-center rounded-full border border-white bg-white/80 px-3.5 text-xs font-bold text-zinc-700 shadow-sm transition hover:bg-white", data: { turbo_frame: "_top" } %>
+      <% if business.contact_phone.present? %>
+        <%= link_to "Contactar por WhatsApp", "https://wa.me/#{business.contact_phone.to_s.gsub(/\D/, '')}", class: "inline-flex h-10 items-center justify-center rounded-full border border-white bg-white/80 px-3.5 text-xs font-bold text-zinc-700 shadow-sm transition hover:bg-white", target: "_blank", rel: "noopener" %>
+      <% end %>
       <div class="hidden items-center gap-2 rounded-full border border-white bg-white/80 px-3.5 py-2 text-xs font-bold text-zinc-600 shadow-sm sm:flex">
         <%= public_icon("shield", css: "h-4 w-4 text-emerald-600") %>
         Reserva en línea segura

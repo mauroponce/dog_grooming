@@ -168,6 +168,7 @@ export function renderAppointmentDetail(appointment, { actions = {}, variant = "
     actionButton("Aprobar seña", "approve", actions.approveDeposit),
     actionButton("Rechazar seña", "secondary-danger", actions.rejectDeposit),
     actionButton("Marcar como pagado", "primary", actions.markPaid),
+    actionButton("Reprogramar turno", "primary", actions.reschedule),
     actionButton("Cancelar turno", "danger", actions.cancel),
     actionButton("Eliminar turno", "secondary-danger", actions.destroy)
   ].filter(Boolean).join("")
@@ -299,7 +300,7 @@ export function renderAppointmentDetail(appointment, { actions = {}, variant = "
   `
 }
 
-export function bindAppointmentDetailPanel(root, { onSaveNotes, onCancel, onChangeServiceVariant } = {}) {
+export function bindAppointmentDetailPanel(root, { onSaveNotes, onCancel, onReschedule, onChangeServiceVariant } = {}) {
   const dialog = root.querySelector("[data-appointment-detail-receipt-dialog]")
   const previewButton = root.querySelector("[data-appointment-detail-receipt-preview]")
   const closeButton = root.querySelector("[data-appointment-detail-receipt-close]")
@@ -329,6 +330,13 @@ export function bindAppointmentDetailPanel(root, { onSaveNotes, onCancel, onChan
       })
     })
   }
+
+  const rescheduleButton = root.querySelector("[data-appointment-detail-reschedule]")
+  rescheduleButton?.addEventListener("click", async () => {
+    const startsAt = window.prompt("Nueva fecha y hora (AAAA-MM-DD HH:MM)")?.trim()
+    if (!startsAt) return
+    await onReschedule?.(startsAt)
+  })
 
   const variantSelect = root.querySelector("[data-appointment-detail-service-variant]")
   const variantError = root.querySelector("[data-appointment-detail-service-variant-error]")

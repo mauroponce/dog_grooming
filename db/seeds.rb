@@ -21,7 +21,6 @@ class DemoSeeds
       longitude: -58.4567000,
       cancellation_notice_hours: 24,
       preferences: {
-        chatbot_enabled: true,
         deposits_enabled: true,
         deposit_percentage: 50,
         deposit_alias: "patitas.grooming",
@@ -31,15 +30,6 @@ class DemoSeeds
         deposit_instructions: "Para reservar, transferí la seña y subí el comprobante. La peluquería canina confirma luego de revisarlo.",
         deposit_payment_link: "https://www.mercadopago.com.ar"
       },
-      ai_context: [
-        "Patitas Cita.pet usa la suscripción Cita.pet: precio fijo mensual para operar reservas, equipo y pagos.",
-        "La cuenta admin administra el negocio, la facturación, los permisos y la configuración sensible.",
-        "La peluquería trabaja con bañeras, mesas de grooming, secadores y caniles que no pueden superponerse.",
-        "Las groomers tienen permisos operativos distintos para turnos, comprobantes, tutores, mascotas, servicios y recursos.",
-        "El tutor puede reservar online para su mascota y la peluquería confirma o revisa señas desde el panel.",
-        "Para el baño y corte, confirmar antes el tamaño, tipo de manto, estado de la piel y cualquier cuidado veterinario indicado por el tutor.",
-        "Si una agenda está completa, la lista de espera permite llenar huecos por cancelaciones."
-      ],
       weekly_hours: {
         1 => [ true, "09:00", "19:00" ],
         2 => [ true, "09:00", "19:00" ],
@@ -361,16 +351,13 @@ class DemoSeeds
       resources = seed_resources(business, demo.fetch(:resources))
       services = seed_services(business, demo.fetch(:services), resources, employees)
       seed_recommendations(services, demo.fetch(:recommendations))
-      seed_dynamic_pricing(business, demo.fetch(:dynamic_pricing_rules))
       customers = seed_customers(business, admin, demo.fetch(:customers))
       appointments = seed_appointments(business, demo.fetch(:appointments), branches:, employees:, resources:, services:, customers:)
       seed_full_day_blocks(business, demo.fetch(:full_day_blocks, []), branches:, employees:, resources:, services:, customers:)
       seed_resource_blocks(business, demo.fetch(:resource_blocks, []), resources:)
       seed_availability_blocks(business, demo.fetch(:availability_blocks, []), employees:, resources:)
       seed_holidays(business, demo.fetch(:holidays, []))
-      seed_waitlist_entries(business, demo.fetch(:waitlist_entries, []), services:)
       seed_provider_events(business, admin, demo.fetch(:provider_events, []), appointments:)
-      seed_conversations(business, demo.fetch(:conversations, []))
 
       puts "Demo creada: #{business.slug} - #{business.name}"
     end
@@ -398,8 +385,6 @@ class DemoSeeds
         longitude: demo.fetch(:longitude),
         cancellation_notice_hours: demo.fetch(:cancellation_notice_hours),
         preferences: demo.fetch(:preferences),
-        ai_chat_enabled: true,
-        ai_context: demo.fetch(:ai_context).join("\n"),
         onboarding_completed_at: Time.current,
         trial_started_at: Time.current,
         trial_ends_at: 14.days.from_now,
@@ -771,18 +756,6 @@ class DemoSeeds
       appointment
     end
 
-    def seed_waitlist_entries(business, entry_definitions, services:)
-      entry_definitions.each do |attributes|
-        business.waitlist_entries.create!(
-          service: services.fetch(attributes.fetch(:service_name)),
-          client_name: attributes.fetch(:client_name),
-          client_phone: attributes.fetch(:client_phone),
-          desired_date: date_for(attributes.fetch(:desired_date)),
-          status: attributes.fetch(:status, "waiting")
-        )
-      end
-    end
-
     def default_deposit_status(status, business)
       return "not_required" unless business.deposits_enabled?
 
@@ -809,30 +782,6 @@ class DemoSeeds
           body: attributes.fetch(:body),
           metadata: metadata
         )
-      end
-    end
-
-    def seed_conversations(business, conversation_definitions)
-      conversation_definitions.each do |attributes|
-        conversation = business.ai_chat_conversations.create!(
-          visitor_token: attributes.fetch(:visitor_token),
-          customer_name: attributes.fetch(:customer_name),
-          customer_phone: attributes.fetch(:customer_phone),
-          last_intent: attributes.fetch(:last_intent),
-          status: attributes.fetch(:status),
-          summary_status: attributes.fetch(:summary_status),
-          summary: attributes[:summary],
-          summarized_at: attributes[:summary].present? ? 30.minutes.ago : nil,
-          metadata: { seed: true }
-        )
-
-        attributes.fetch(:messages).each_with_index do |(role, content), index|
-          conversation.ai_chat_messages.create!(
-            role: role,
-            content: content,
-            metadata: { seed_index: index + 1 }
-          )
-        end
       end
     end
 

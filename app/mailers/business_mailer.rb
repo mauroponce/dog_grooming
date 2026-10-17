@@ -7,14 +7,6 @@ class BusinessMailer < ApplicationMailer
     mail subject: "Nuevo comprobante de seña para revisar", to: @business.owner.email_address
   end
 
-  def new_waitlist_entry(entry)
-    @entry = entry
-    @business = entry.center
-    @url = admin_root_url(host: app_host, protocol: app_protocol)
-
-    mail subject: "Nueva clienta en lista de espera", to: @business.owner.email_address
-  end
-
   def booking_cancelled(appointment)
     @appointment = appointment
     @business = appointment.business
@@ -46,7 +38,6 @@ class BusinessMailer < ApplicationMailer
     @appointments = business.appointments.includes(:service).where(starts_at: @today.beginning_of_day..@today.end_of_day).order(:starts_at)
     @pending_proofs = business.appointments.awaiting_deposit_review.includes(:service).order(:starts_at).limit(5)
     @follow_ups = business.customer_reminders.pending.where(reminder_type: "service_follow_up").includes(:customer_profile, :service).order(:remind_at).limit(5)
-    @waitlist_entries = business.waitlist_entries.visible.includes(:service).order(:created_at).limit(5)
     @gaps = Availability::FillableGaps.new(business: business, date: @today).call.first(5)
     @url = admin_root_url(host: app_host, protocol: app_protocol)
 

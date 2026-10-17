@@ -65,12 +65,6 @@ Opcionales:
 ```sh
 ACTIVE_STORAGE_SERVICE
 APP_PROTOCOL
-GEMINI_API_KEY
-GEMINI_MODEL
-GEMINI_RECEIPT_MODEL
-GEMINI_INPUT_USD_PER_1M_TOKENS
-GEMINI_OUTPUT_USD_PER_1M_TOKENS
-GEMINI_MONTHLY_BUDGET_USD
 MERCADO_PAGO_CLIENT_ID
 MERCADO_PAGO_CLIENT_SECRET
 MERCADO_PAGO_ENV
@@ -117,14 +111,10 @@ Para Mercado Pago configurá `MERCADO_PAGO_CLIENT_ID` y `MERCADO_PAGO_CLIENT_SEC
 
 Planes comerciales:
 
-- Plan Profesional: $30.000 ARS/mes, 1 agenda activa, reservas online, señas manuales, comprobantes y chatbot.
+- Plan Profesional: $30.000 ARS/mes, 1 agenda activa, reservas online, señas y comprobantes.
 - Plan Centro: $50.000 ARS/mes, varias profesionales, roles, recursos compartidos, agenda por profesional, reportes, huecos libres y gestion avanzada.
 
 La suscripción de Cita.pet se cobra con Checkout Pro de Mercado Pago: cada período genera un checkout nuevo para que el negocio elija cómo pagar, sin adherir una tarjeta a un débito automático. La cuenta receptora se vincula desde `/super_admin/cobros` y es distinta de las cuentas Mercado Pago que cada negocio conecta para cobrar sus señas.
-
-## Chat IA
-
-El chat publico aparece para negocios con chat activo y contexto cargado. Requiere `GEMINI_API_KEY`; el modelo por defecto es `gemini-flash-lite-latest` y puede cambiarse con `GEMINI_MODEL`. La revision inteligente de comprobantes usa el mismo API key y permite elegir un modelo multimodal especifico con `GEMINI_RECEIPT_MODEL`.
 
 Funciones incluidas:
 

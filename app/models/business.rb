@@ -15,7 +15,6 @@ class Business < ApplicationRecord
       "Clientes ilimitados",
       "Comprobantes y Mercado Pago",
       "Recordatorios",
-      "Asistente con IA",
       "Configuración inicial",
       "Usuarios administrativos"
     ]
@@ -23,7 +22,6 @@ class Business < ApplicationRecord
   TRIAL_GRACE_DAYS = 3
   BILLING_GRACE_DAYS = 3
   BOOLEAN = ActiveModel::Type::Boolean.new
-  AI_CHAT_PUBLICLY_ENABLED = false
   DEPOSIT_PERCENTAGE_OPTIONS = (10..100).step(10).to_a.freeze
   PUBLIC_FONT_STYLES = %w[system editorial rounded].freeze
   PUBLIC_SITE_MODES = {
@@ -42,13 +40,9 @@ class Business < ApplicationRecord
     "habitual_professional" => "Priorizar profesional habitual del cliente"
   }.freeze
   PREFERENCE_DEFAULTS = {
-    "chatbot_enabled" => true,
     "deposits_enabled" => false,
     "deposit_percentage" => 50,
     "enabled_payment_methods" => [ "manual_transfer" ],
-    "public_booking_allow_professional_selection" => false,
-    "public_booking_show_team_members" => false,
-    "public_booking_assignment_strategy" => PUBLIC_BOOKING_ASSIGNMENT_STRATEGY_DEFAULT,
     "deposit_alias" => "",
     "deposit_account" => "",
     "deposit_holder" => "",
@@ -296,38 +290,16 @@ class Business < ApplicationRecord
   has_many :booking_notes, dependent: :destroy
   has_many :booking_attachments, dependent: :destroy
   has_many :customer_reminders, dependent: :destroy
-  has_many :waitlist_entries, foreign_key: :center_id, dependent: :destroy, inverse_of: :center
-  has_many :sales_opportunities, dependent: :destroy
-  has_many :sales_campaigns, dependent: :destroy
-  has_many :sales_campaign_recipients, dependent: :destroy
-  has_many :campaign_links, dependent: :destroy
-  has_many :campaign_visits, dependent: :destroy
-  has_many :booking_attributions, dependent: :destroy
-  has_many :service_packs, dependent: :destroy
-  has_many :customer_packs, dependent: :destroy
-  has_many :pack_sessions, dependent: :destroy
-  has_many :referrals, dependent: :destroy
-  has_many :booking_intents, dependent: :destroy
-  has_many :gift_cards, dependent: :destroy
-  has_many :service_forms, dependent: :destroy
-  has_many :service_form_questions, dependent: :destroy
-  has_many :service_form_responses, dependent: :destroy
   has_many :content_templates, dependent: :destroy
-  has_many :promotions, dependent: :destroy
   has_many :subscription_invoices, dependent: :destroy
   has_many :pet_size_bands, dependent: :destroy
   has_many :subscription_payment_proofs, dependent: :destroy
   has_many :subscription_checkout_payments, dependent: :destroy
   has_many :billing_reminders, dependent: :destroy
   has_many :super_admin_tasks, dependent: :destroy
-  has_many :dynamic_pricing_rules, foreign_key: :center_id, dependent: :destroy, inverse_of: :center
   has_many :availability_rules, dependent: :destroy
   has_many :customer_profiles, dependent: :destroy
-  has_many :customer_portal_access_tokens, dependent: :destroy
   has_many :provider_events, dependent: :destroy
-  has_many :ai_api_usage_events, dependent: :nullify
-  has_many :ai_chat_conversations, dependent: :destroy
-  has_many :ai_context_imports, dependent: :destroy
   has_many :email_delivery_logs, dependent: :nullify
   has_one :subscription, dependent: :destroy
   validates :simultaneous_capacity, numericality: { only_integer: true, in: 1..10 }, allow_nil: true
@@ -381,7 +353,7 @@ class Business < ApplicationRecord
     numericality: { only_integer: true, greater_than_or_equal_to: 0, less_than_or_equal_to: 168 }
   validate :logo_file_is_valid
   validate :preferences_are_valid
-  normalizes :city, :province, :neighborhood, :address, :address_details, :contact_phone, :phone, :legal_name, :slogan, :public_headline, :public_email, :instagram_url, :website_url, :ai_context, :public_primary_color, :public_secondary_color, :public_accent_color, :public_font_style, :public_custom_css, :public_custom_html, :public_category_custom_html, with: ->(value) { value.to_s.strip.presence }
+  normalizes :city, :province, :neighborhood, :address, :address_details, :contact_phone, :phone, :legal_name, :slogan, :public_headline, :public_email, :instagram_url, :website_url, :public_primary_color, :public_secondary_color, :public_accent_color, :public_font_style, :public_custom_css, :public_custom_html, :public_category_custom_html, with: ->(value) { value.to_s.strip.presence }
   normalizes :custom_domain, with: ->(value) { Business.normalize_custom_domain(value) }
 
   def self.slug_for(name)
@@ -527,15 +499,6 @@ class Business < ApplicationRecord
     industry_details.fetch(:service_templates)
   end
 
-  def ai_industry_context
-    <<~TEXT.squish
-      Cuenta: #{business_kind_label}.
-      Rubro: #{industry_label}.
-      Tono recomendado: #{industry_tone}
-      Reglas de rubro: #{industry_guidance}
-    TEXT
-  end
-
   def monthly_amount_cents
     billing_amount.total_amount_cents
   end
@@ -581,18 +544,8 @@ class Business < ApplicationRecord
     "suspended"
   end
 
-  def ai_chat_available?
-    return false unless AI_CHAT_PUBLICLY_ENABLED
-
-    access_active? && chatbot_enabled? && ai_context.present? && Ai::GeminiClient.available?
-  end
-
   def preferences_with_defaults
     PREFERENCE_DEFAULTS.merge(preferences.to_h)
-  end
-
-  def chatbot_enabled?
-    BOOLEAN.cast(preferences_with_defaults.fetch("chatbot_enabled"))
   end
 
   def deposits_enabled?
@@ -625,15 +578,15 @@ class Business < ApplicationRecord
   end
 
   def public_booking_allow_professional_selection?
-    BOOLEAN.cast(preferences_with_defaults.fetch("public_booking_allow_professional_selection"))
+    false
   end
 
   def public_booking_show_team_members?
-    BOOLEAN.cast(preferences_with_defaults.fetch("public_booking_show_team_members"))
+    false
   end
 
   def public_booking_assignment_strategy
-    self.class.normalize_public_booking_assignment_strategy(preferences_with_defaults.fetch("public_booking_assignment_strategy"))
+    PUBLIC_BOOKING_ASSIGNMENT_STRATEGY_DEFAULT
   end
 
   def public_booking_assignment_strategy_label
@@ -895,13 +848,9 @@ class Business < ApplicationRecord
     def normalize_preferences
       raw_preferences = preferences.to_h
       self.preferences = PREFERENCE_DEFAULTS.merge(
-        "chatbot_enabled" => BOOLEAN.cast(raw_preferences.fetch("chatbot_enabled", PREFERENCE_DEFAULTS.fetch("chatbot_enabled"))),
         "deposits_enabled" => BOOLEAN.cast(raw_preferences.fetch("deposits_enabled", PREFERENCE_DEFAULTS.fetch("deposits_enabled"))),
         "deposit_percentage" => raw_preferences.fetch("deposit_percentage", PREFERENCE_DEFAULTS.fetch("deposit_percentage")).to_i,
         "enabled_payment_methods" => self.class.normalize_enabled_payment_methods(raw_preferences["enabled_payment_methods"]).presence || inferred_enabled_payment_methods(raw_preferences),
-        "public_booking_allow_professional_selection" => BOOLEAN.cast(raw_preferences.fetch("public_booking_allow_professional_selection", PREFERENCE_DEFAULTS.fetch("public_booking_allow_professional_selection"))),
-        "public_booking_show_team_members" => BOOLEAN.cast(raw_preferences.fetch("public_booking_show_team_members", PREFERENCE_DEFAULTS.fetch("public_booking_show_team_members"))),
-        "public_booking_assignment_strategy" => self.class.normalize_public_booking_assignment_strategy(raw_preferences.fetch("public_booking_assignment_strategy", PREFERENCE_DEFAULTS.fetch("public_booking_assignment_strategy"))),
         "deposit_alias" => raw_preferences.fetch("deposit_alias", PREFERENCE_DEFAULTS.fetch("deposit_alias")).to_s.strip,
         "deposit_account" => raw_preferences.fetch("deposit_account", PREFERENCE_DEFAULTS.fetch("deposit_account")).to_s.strip,
         "deposit_holder" => raw_preferences.fetch("deposit_holder", PREFERENCE_DEFAULTS.fetch("deposit_holder")).to_s.strip,
@@ -935,12 +884,8 @@ class Business < ApplicationRecord
     end
 
     def preferences_are_valid
-      errors.add(:preferences, "debe tener chatbot_enabled booleano") unless preferences.fetch("chatbot_enabled").in?([ true, false ])
       errors.add(:preferences, "debe tener deposits_enabled booleano") unless preferences.fetch("deposits_enabled").in?([ true, false ])
-      errors.add(:preferences, "debe tener public_booking_allow_professional_selection booleano") unless preferences.fetch("public_booking_allow_professional_selection").in?([ true, false ])
-      errors.add(:preferences, "debe tener public_booking_show_team_members booleano") unless preferences.fetch("public_booking_show_team_members").in?([ true, false ])
       errors.add(:preferences, "debe tener métodos de pago válidos") if enabled_payment_methods.blank?
-      errors.add(:preferences, "debe tener una estrategia de asignación válida") unless PUBLIC_BOOKING_ASSIGNMENT_STRATEGIES.include?(public_booking_assignment_strategy)
       return if DEPOSIT_PERCENTAGE_OPTIONS.include?(deposit_percentage)
 
       errors.add(:preferences, "debe usar un porcentaje de seña entre 10 y 100")
@@ -1055,7 +1000,7 @@ class Business < ApplicationRecord
         name slug business_kind industry contact_phone phone public_email instagram_url website_url
         address city province neighborhood slogan public_headline cancellation_notice_hours rescheduling_notice_hours preferences
         public_site_mode public_custom_css public_custom_html public_category_custom_html public_primary_color public_secondary_color public_accent_color public_font_style
-        ai_chat_enabled disabled_at
+        disabled_at
       ]).any?
     end
 

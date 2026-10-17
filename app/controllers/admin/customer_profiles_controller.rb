@@ -155,22 +155,6 @@ module Admin
       redirect_back fallback_location: admin_customer_profiles_path, notice: "Cliente desbloqueado."
     end
 
-    def send_portal_access
-      selected_customer = customer
-      contact = selected_customer.email
-      if contact.blank?
-        redirect_back fallback_location: edit_admin_customer_profile_path(selected_customer), alert: "El cliente no tiene email cargado."
-        return
-      end
-
-      CustomerPortal::MagicLinks::CreateService.call(
-        business: @business,
-        contact: contact,
-        request: request
-      )
-      redirect_back fallback_location: edit_admin_customer_profile_path(selected_customer), notice: "Si el contacto tiene reservas asociadas, enviamos el acceso al portal."
-    end
-
     private
       def customer_scope
         return @business.customer_profiles if current_user.admin? || current_user.super_admin?
@@ -363,9 +347,7 @@ module Admin
           totalSales: total_sales_cents / 100,
           canceledCount: canceled_count,
           noShowCount: no_show_count,
-          profileUrl: edit_admin_customer_profile_path(profile),
-          portalUrl: profile.customer_portal_url,
-          phone: profile.phone
+          profileUrl: edit_admin_customer_profile_path(profile)
         }
       end
 

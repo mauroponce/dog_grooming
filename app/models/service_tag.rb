@@ -1,5 +1,5 @@
 class ServiceTag < ApplicationRecord
-  TAG_TYPES = %w[keyword synonym chatbot].freeze
+  TAG_TYPES = %w[keyword synonym].freeze
 
   belongs_to :service, touch: true
 

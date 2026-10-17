@@ -419,24 +419,6 @@
               </div>
             </header>
             <div class="customer-profile-editor__card-body">
-              <div class="customer-profile-editor__portal-access" data-controller="copy-text" data-copy-text-preserve-content-value="true">
-                <div class="customer-profile-editor__portal-access-copy">
-                  <strong>Portal del cliente</strong>
-                  <p>Compartile este link al cliente para que pueda acceder a sus turnos, reprogramarlos o cancelarlos.</p>
-                </div>
-                <div class="customer-profile-editor__portal-url-group">
-                  <%= link_to customer.customer_portal_url,
-                    customer.customer_portal_url,
-                    class: "customer-profile-editor__portal-url",
-                    target: "_blank",
-                    rel: "noopener",
-                    data: { copy_text_target: "source" } %>
-                  <button type="button" class="customer-profile-editor__portal-copy" data-copy-text-target="button" data-action="copy-text#copy" title="Copiar" aria-label="Copiar link del portal">
-                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 8V5.8C8 4.8 8.8 4 9.8 4h8.4c1 0 1.8.8 1.8 1.8v8.4c0 1-.8 1.8-1.8 1.8H16" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M4 9.8C4 8.8 4.8 8 5.8 8h8.4c1 0 1.8.8 1.8 1.8v8.4c0 1-.8 1.8-1.8 1.8H5.8C4.8 20 4 19.2 4 18.2V9.8Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
-                  </button>
-                </div>
-              </div>
-
               <div
                 data-controller="customers-results-loader customer-appointments"
                 data-customers-results-loader-frame-id-value="customer_appointment_history"

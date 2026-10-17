@@ -34,17 +34,12 @@ module SuperAdmin
           setup_status: "completed",
           onboarding_completed_at: Time.current,
           preferences: Business::PREFERENCE_DEFAULTS.merge(
-            "chatbot_enabled" => true,
             "deposits_enabled" => true,
             "deposit_percentage" => 50,
             "deposit_alias" => "demo.dog.grooming",
             "deposit_holder" => "Demo Cita.pet",
             "deposit_instructions" => "Transferí la seña y subí el comprobante desde el link de tu reserva."
-          ),
-          ai_context: [
-            "Cuenta demo de Cita.pet para probar agenda, servicios, tutores, mascotas y comprobantes.",
-            "El tutor puede reservar online para su mascota y el negocio confirma desde el panel."
-          ].join("\n")
+          )
         }
       end
 

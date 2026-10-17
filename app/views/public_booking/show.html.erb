@@ -1,5 +1,6 @@
 <% content_for :title, "#{@business.name} | Reservá tu turno online" %>
 <% content_for :full_width, true %>
+<% whatsapp_url = @business.contact_phone.present? ? "https://wa.me/#{@business.contact_phone.to_s.gsub(/\D/, '')}" : nil %>
 
 <% if @confirmation.present? || !@business.booking_available? %>
 <div class="relative min-h-screen overflow-hidden bg-[#F7F7FA] text-ink antialiased">
@@ -28,7 +29,7 @@
           </h1>
           <p class="mx-auto mt-3 max-w-lg text-sm leading-6 text-zinc-500 sm:text-base">
             <% if @confirmation.confirmed? %>
-              El turno está confirmado. Si necesitás cancelarlo o reprogramarlo, entrá a tu portal de turnos.
+              El turno está confirmado. Si necesitás cancelarlo o reprogramarlo, contactanos por WhatsApp.
             <% elsif @confirmation.pending_payment? %>
               Si ya pagaste con Mercado Pago, la confirmación puede demorar unos instantes. Actualizá esta página para ver el estado final.
             <% elsif @confirmation.pending_deposit_review? %>
@@ -39,13 +40,6 @@
               <%= @business.name %> revisará la solicitud y te confirmará por email.
             <% end %>
           </p>
-          <% if @confirmation.customer_email.blank? %>
-            <div class="mx-auto mt-3 max-w-lg rounded-2xl bg-brand-50 px-4 py-3 text-sm font-semibold leading-6 text-brand-800">
-              <p>Guardá este link para consultar el estado de tus turnos:</p>
-              <%= link_to @confirmation.customer_portal_booking_url, @confirmation.customer_portal_booking_url, class: "mt-1 block break-all font-bold underline decoration-brand-300 underline-offset-4 hover:text-brand-950" %>
-            </div>
-          <% end %>
-
           <div class="mt-7 overflow-hidden rounded-3xl border border-zinc-200 bg-white text-left shadow-sm">
             <div class="flex items-start gap-4 border-b border-zinc-100 p-5 sm:p-6">
               <span class="grid h-12 w-12 shrink-0 place-items-center rounded-2xl <%= @confirmation.service.accent_classes %>">
@@ -106,11 +100,15 @@
               <%= link_to "Subir comprobante", @confirmation.deposit_upload_url, class: "flex h-12 items-center justify-center rounded-2xl border border-zinc-200 bg-white px-5 text-sm font-bold text-zinc-700 transition hover:bg-zinc-50" %>
             <% else %>
             <% end %>
-            <%= link_to "Ver mi reserva", @confirmation.customer_portal_booking_url, class: "flex h-12 items-center justify-center rounded-2xl border border-brand-200 bg-brand-50 px-5 text-sm font-bold text-brand-700 transition hover:bg-brand-100" %>
+            <% if whatsapp_url.present? %>
+              <%= link_to "Contactar por WhatsApp", whatsapp_url, target: "_blank", rel: "noopener", class: "flex h-12 items-center justify-center rounded-2xl border border-brand-200 bg-brand-50 px-5 text-sm font-bold text-brand-700 transition hover:bg-brand-100" %>
+            <% end %>
             <%= link_to "Reservar otro turno", public_business_path(@business.slug), class: "flex h-12 items-center justify-center rounded-2xl bg-ink px-5 text-sm font-bold text-white transition hover:bg-zinc-800" %>
           </div>
 
-          <%= link_to "Cancelar o reprogramar este turno", @confirmation.customer_portal_booking_url, class: "mt-5 inline-block text-xs font-bold text-zinc-400 underline decoration-zinc-300 underline-offset-4 transition hover:text-zinc-700" %>
+          <% if whatsapp_url.present? %>
+            <%= link_to "Para cancelar o reprogramar, escribinos por WhatsApp", whatsapp_url, target: "_blank", rel: "noopener", class: "mt-5 inline-block text-xs font-bold text-zinc-400 underline decoration-zinc-300 underline-offset-4 transition hover:text-zinc-700" %>
+          <% end %>
         </div>
       </section>
     <% else %>
@@ -136,7 +134,6 @@
   <% if @business.full_website_mode? %>
     <% content_for :head, landing_head_tags(@landing) %>
     <%= render "public_booking/full_website", landing: @landing, business: @business %>
-    <%= render "public_booking/chat_widget" if @business.chatbot_enabled? && @business.ai_chat_available? %>
   <% else %>
     <%= render "public_booking/public_profile", business: @business, services: @services, categories: @categories, service_detail: @service_detail %>
   <% end %>

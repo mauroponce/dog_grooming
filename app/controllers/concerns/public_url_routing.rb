@@ -4,26 +4,11 @@ module PublicUrlRouting
     booking: [],
     bookings: [],
     calendar: [],
-    chat: [],
-    waitlist: [],
     services: [],
     service: [ :service_slug ],
-    promos: [],
     category: [ :category_slug ],
     category_service: [ :category_slug, :service_slug ],
-    short_service: [ :service_slug ],
-    customer_portal_entry: [],
-    customer_portal_access: [ :token ],
-    customer_portal_dashboard: [],
-    customer_portal_dashboard_update: [],
-    customer_portal_logout: [],
-    customer_portal_profile_access: [ :token ],
-    customer_portal_short_booking: [ :token ],
-    customer_portal_booking: [ :token ],
-    customer_portal_booking_reschedule_availability: [ :token ],
-    customer_portal_booking_receipt: [ :token ],
-    customer_portal_booking_reschedule: [ :token ],
-    customer_portal_booking_cancel: [ :token ]
+    short_service: [ :service_slug ]
   }.freeze
 
   PublicUrls::ROUTES.each_key do |kind|

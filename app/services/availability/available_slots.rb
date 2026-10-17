@@ -60,13 +60,7 @@ module Availability
       def candidates
         return @candidates if defined?(@candidates)
 
-        return @candidates = [ employee_membership ] if employee_membership.present?
-        return @candidates = [ nil ] unless business.team_features_available?
-
-        relation = business.employee_memberships.available_for_booking.includes(:employee_availability_rules).order(:sort_order, :name)
-        relation = relation.where(id: service_employee_membership_ids) if service_employee_membership_ids.any?
-        professionals = relation.to_a
-        @candidates = professionals.presence || [ nil ]
+        @candidates = [ nil ]
       end
 
       def slots_for_candidate(candidate)

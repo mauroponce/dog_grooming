@@ -13,27 +13,10 @@ Rails.application.routes.draw do
   constraints CustomDomainConstraint.new do
     get "/" => "public_booking#show", as: :custom_public_business
     get "calendar.ics" => "public_booking#calendar", as: :custom_public_booking_calendar, defaults: { format: :ics }
-    post "chat" => "chats#create", as: :custom_center_chat
-    post "lista-de-espera" => "waitlist_entries#create", as: :custom_public_waitlist_entries
     get "servicios" => "public_service_pages#index", as: :custom_public_services
     get "servicios/:service_slug" => "public_service_pages#show", as: :custom_public_service
-    get "promos" => "public_service_pages#promos", as: :custom_public_promos
     get "reservar" => "public_booking#new", as: :new_custom_public_booking
     post "reservar" => "public_booking#create", as: :custom_public_bookings
-
-    get "mis-turnos" => "customer_portal/sessions#new", as: :custom_customer_portal_entry
-    post "mis-turnos" => "customer_portal/sessions#create"
-    get "mis-turnos/acceder/:token" => "customer_portal/sessions#show", as: :custom_customer_portal_access
-    get "mis-turnos/panel" => "customer_portal/dashboard#show", as: :custom_customer_portal_dashboard
-    patch "mis-turnos/panel" => "customer_portal/dashboard#update", as: :custom_customer_portal_dashboard_update
-    delete "mis-turnos/salir" => "customer_portal/sessions#destroy", as: :custom_customer_portal_logout
-    get "mis-turnos/:token" => "customer_portal/sessions#profile", as: :custom_customer_portal_profile_access
-    get "turno/:token" => "customer_portal/bookings#show", as: :custom_customer_portal_short_booking
-    get "mis-turnos/reserva/:token" => "customer_portal/bookings#show", as: :custom_customer_portal_booking
-    get "mis-turnos/reserva/:token/reprogramar/disponibilidad" => "customer_portal/bookings#reschedule_availability", as: :custom_customer_portal_booking_reschedule_availability
-    post "mis-turnos/reserva/:token/comprobante" => "customer_portal/bookings#upload_receipt", as: :custom_customer_portal_booking_receipt
-    post "mis-turnos/reserva/:token/reprogramar" => "customer_portal/bookings#request_reschedule", as: :custom_customer_portal_booking_reschedule
-    post "mis-turnos/reserva/:token/cancelar" => "customer_portal/bookings#cancel", as: :custom_customer_portal_booking_cancel
 
     get ":category_slug/:service_slug" => "public_booking#new", as: :custom_public_category_service
     get ":category_slug" => "public_service_pages#category", as: :custom_public_category, constraints: PublicCategoryConstraint.new(custom_domain: true)
@@ -63,11 +46,7 @@ Rails.application.routes.draw do
 
   namespace :admin do
     scope path_names: { new: "nuevo", edit: "editar" } do
-      root "home#show"
-      get "inicio" => "home#show", as: :home
-      post "inicio/oportunidades/contactos" => "home_opportunities#create", as: :home_opportunity_contacts
-      get "asistente" => "dashboard#show", as: :dashboard
-      resources :assistant_messages, only: :create, path: "asistente/mensajes"
+      root "calendar#show"
       resource :billing, only: :show, path: "suscripcion", controller: "billing" do
         patch :select_plan, path: "elegir-plan"
         post :upload_proof, path: "comprobantes"
@@ -95,7 +74,6 @@ Rails.application.routes.draw do
       end
       get "calendario" => "calendar#show", as: :calendar
       get "turnos" => redirect("/admin/calendario", status: 302)
-      get "lista-de-espera" => redirect("/admin/calendario?waitlist=1", status: 302)
       get "calendario/reservas/:short_uuid/detalle" => "appointments#details", as: :appointment_details
       resources :availability_blocks, only: %i[create destroy], path: "calendario/horarios-no-disponibles"
       delete "calendario/reservas/:short_uuid/eliminar" => "appointments#destroy", as: :destroy_appointment
@@ -103,8 +81,7 @@ Rails.application.routes.draw do
         member do
           patch :confirm, path: "confirmar"
           patch :approve_deposit, path: "aprobar-comprobante"
-          get :available_professionals, path: "profesionales-disponibles"
-          patch :change_professional, path: "cambiar-profesional"
+          patch :reschedule, path: "reprogramar"
           patch :update_service_variant, path: "cambiar-tamano"
           patch :mark_remaining_balance_paid, path: "marcar-saldo-pagado"
           patch :update_notes, path: "notas"
@@ -119,10 +96,6 @@ Rails.application.routes.draw do
         end
       end
       resources :services, path: "servicios" do
-        collection do
-          post :generate_description, path: "generar-descripcion"
-        end
-
         member do
           post :duplicate, path: "duplicar"
           delete :destroy_image, path: "imagenes/:attachment_id"
@@ -132,11 +105,9 @@ Rails.application.routes.draw do
       resource :pet_size_bands, only: %i[edit update], path: "configuracion/rangos-de-mascota"
       post "servicios/extras", to: "extras#create", as: :service_extras
       patch "servicios/extras/:id", to: "extras#update", as: :service_extra
-      resources :waitlist_entries, only: %i[create update destroy], path: "calendario/lista-de-espera"
       resources :service_categories, only: %i[create update destroy], path: "categorias-servicios"
       resources :employee_memberships, only: %i[index new create edit update destroy], path: "equipo", path_names: { new: "nuevo-miembro" } do
         member do
-          patch :update_role, path: "rol"
           post :resend, path: "reenviar"
           patch :reactivate, path: "reactivar"
           delete :permanently_destroy, path: "eliminar"
@@ -150,7 +121,6 @@ Rails.application.routes.draw do
           get :panel, path: "panel"
           patch :block, path: "bloquear"
           patch :unblock, path: "desbloquear"
-          post :send_portal_access, path: "enviar-acceso"
           delete :destroy_photo, path: "fotos/:attachment_id"
           delete "mascotas/:pet_id/foto-referencia", to: "customer_profiles#destroy_pet_reference_photo", as: :destroy_pet_reference_photo
         end
@@ -232,9 +202,6 @@ Rails.application.routes.draw do
     post "mercado-pago" => "mercado_pago#create", as: :mercado_pago
   end
 
-  get "t/:token" => "appointment_actions#show", as: :appointment_action
-  post "t/:token/confirmar" => "appointment_actions#confirm", as: :confirm_appointment_action
-  post "t/:token/cancelar" => "appointment_actions#cancel", as: :cancel_appointment_action
   get "comprobantes/:token" => "deposit_receipts#show", as: :deposit_receipt
   post "comprobantes/:token" => "deposit_receipts#update"
   get "d/:token" => "deposit_reviews#show", as: :deposit_review
@@ -244,26 +211,6 @@ Rails.application.routes.draw do
   post "depositos/:token/confirmar" => "deposit_reviews#confirm", as: :confirm_legacy_deposit_review
   post "depositos/:token/rechazar" => "deposit_reviews#reject", as: :reject_legacy_deposit_review
   get "invitaciones/empleado/:token" => "employee_invitations#show", as: :employee_invitation
-  get "w/:token" => "waitlist_confirmations#show", as: :waitlist_confirmation
-  post "w/:token/confirmar" => "waitlist_confirmations#confirm", as: :confirm_waitlist_confirmation
-  get "l/:slug" => "campaign_links#show", as: :campaign_link
-
-  scope ":slug", as: :customer_portal do
-    get "mis-turnos" => "customer_portal/sessions#new", as: :entry
-    post "mis-turnos" => "customer_portal/sessions#create"
-    get "mis-turnos/acceder/:token" => "customer_portal/sessions#show", as: :access
-    get "mis-turnos/panel" => "customer_portal/dashboard#show", as: :dashboard
-    patch "mis-turnos/panel" => "customer_portal/dashboard#update", as: :dashboard_update
-    delete "mis-turnos/salir" => "customer_portal/sessions#destroy", as: :logout
-    get "mis-turnos/:token" => "customer_portal/sessions#profile", as: :profile_access
-    get "turno/:token" => "customer_portal/bookings#show", as: :short_booking
-    get "mis-turnos/reserva/:token" => "customer_portal/bookings#show", as: :booking
-    get "mis-turnos/reserva/:token/reprogramar/disponibilidad" => "customer_portal/bookings#reschedule_availability", as: :booking_reschedule_availability
-    post "mis-turnos/reserva/:token/comprobante" => "customer_portal/bookings#upload_receipt", as: :booking_receipt
-    post "mis-turnos/reserva/:token/reprogramar" => "customer_portal/bookings#request_reschedule", as: :booking_reschedule
-    post "mis-turnos/reserva/:token/cancelar" => "customer_portal/bookings#cancel", as: :booking_cancel
-  end
-
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   # Can be used by load balancers and uptime monitors to verify that the app is live.
   get "up" => "rails/health#show", as: :rails_health_check
@@ -275,11 +222,8 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   # root "posts#index"
   get ":slug/calendar.ics" => "public_booking#calendar", as: :public_booking_calendar, defaults: { format: :ics }
-  post ":slug/chat" => "chats#create", as: :center_chat
-  post ":slug/lista-de-espera" => "waitlist_entries#create", as: :public_waitlist_entries
   get ":slug/servicios" => "public_service_pages#index", as: :public_services
   get ":slug/servicios/:service_slug" => "public_service_pages#show", as: :public_service
-  get ":slug/promos" => "public_service_pages#promos", as: :public_promos
   get ":slug" => "public_booking#show", as: :public_business
   get ":slug/reservar" => "public_booking#new", as: :new_public_booking
   post ":slug/reservar" => "public_booking#create", as: :public_bookings

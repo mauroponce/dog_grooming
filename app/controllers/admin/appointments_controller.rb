@@ -15,7 +15,6 @@ module Admin
         next false unless @appointment.save
 
         sync_manual_appointment_addons!(@appointment)
-        mark_waitlist_entry_booked!(@appointment)
         true
       end
 
@@ -144,38 +143,29 @@ module Admin
       render json: { errors: [ error.message ] }, status: :unprocessable_entity
     end
 
-    def available_professionals
+    def reschedule
       authorize appointment, :update?
+      raise ArgumentError, "Sólo se pueden reprogramar turnos futuros activos." unless appointment.starts_at.future? && !appointment.terminal_status?
 
-      render json: {
-        professionals: assignable_professionals(appointment).map do |professional|
-          {
-            id: professional.id.to_s,
-            name: professional.display_name,
-            initials: professional.initials,
-            specialty: professional.specialty_label,
-            branchName: professional.branch&.name
-          }
-        end
-      }
-    end
+      starts_at = Time.zone.parse(params.require(:starts_at).to_s)
+      raise ArgumentError, "Elegí una fecha y hora válidas." if starts_at.blank?
 
-    def change_professional
-      authorize appointment, :update?
-      professional = assignable_professionals(appointment).find_by(id: params.require(:employee_membership_id))
-      raise ActiveRecord::RecordNotFound if professional.blank?
-
-      appointment.with_lock do
-        appointment.update!(employee_membership: professional)
+      @business.with_lock do
+        appointment.lock!
+        previous_starts_at = appointment.starts_at
+        appointment.update!(
+          starts_at: starts_at,
+          ends_at: starts_at + (appointment.ends_at - appointment.starts_at),
+          employee_membership: nil,
+          internal_notes: [ appointment.internal_notes, "Reprogramado por #{current_user.email_address} desde #{previous_starts_at.in_time_zone.strftime('%d/%m/%Y %H:%M')}." ].compact_blank.join("\n")
+        )
       end
 
       render json: calendar_appointment_payload(appointment.reload)
-    rescue ActionController::ParameterMissing
-      render json: { errors: [ "Seleccioná un profesional." ] }, status: :unprocessable_entity
+    rescue ActionController::ParameterMissing, ArgumentError => error
+      render json: { errors: [ error.message ] }, status: :unprocessable_entity
     rescue ActiveRecord::RecordInvalid => error
       render json: { errors: error.record.errors.full_messages }, status: :unprocessable_entity
-    rescue ActiveRecord::RecordNotFound
-      render json: { errors: [ "Ese profesional no puede realizar este servicio." ] }, status: :unprocessable_entity
     end
 
     def reject_deposit
@@ -359,7 +349,6 @@ module Admin
           :branch_id,
           :employee_membership_id,
           :customer_profile_id,
-          :waitlist_entry_id,
           :create_customer_profile,
           :customer_name,
           :customer_phone,
@@ -412,7 +401,6 @@ module Admin
         booking_service = Bookings::ServiceSelection.new(service: service, variant: service_variant)
         branch = branch_for(attrs)
         employee_membership = employee_membership_for(attrs)
-        waitlist_entry = waitlist_entry_for(attrs)
         create_customer_profile = ActiveModel::Type::Boolean.new.cast(attrs.delete(:create_customer_profile))
         profile = selected_customer_profile(attrs)
         if profile
@@ -426,13 +414,12 @@ module Admin
         pet = pet_for_manual_appointment(attrs, profile, pet_size_band: service_variant&.pet_size_band)
 
         starts_at = Time.zone.parse(attrs[:starts_at].to_s)
-        employee_membership ||= assign_professional_for(booking_service, starts_at)
+        employee_membership = nil
         resource = resource_for(attrs, booking_service, starts_at)
         @business.appointments.new(attrs.merge(
           service: service,
           service_variant: service_variant,
           branch: branch,
-          waitlist_entry: waitlist_entry,
           employee_membership: employee_membership,
           bookable_resource: resource,
           customer_profile: profile,
@@ -465,28 +452,11 @@ module Admin
         end
       end
 
-      def mark_waitlist_entry_booked!(appointment)
-        return unless appointment.waitlist_entry
-
-        appointment.waitlist_entry.update!(
-          status: "booked",
-          accepted_at: Time.current,
-          released_appointment: appointment
-        )
-      end
-
       def selected_customer_profile(attrs)
         customer_profile_id = attrs.delete(:customer_profile_id)
         return if customer_profile_id.blank?
 
         @business.customer_profiles.find(customer_profile_id)
-      end
-
-      def waitlist_entry_for(attrs)
-        waitlist_entry_id = attrs.delete(:waitlist_entry_id)
-        return if waitlist_entry_id.blank?
-
-        @business.waitlist_entries.visible.find(waitlist_entry_id)
       end
 
       def customer_profile_for_manual_appointment(attrs, normalized_phone, create_customer_profile: false)
@@ -555,13 +525,6 @@ module Admin
         status == :pending_deposit ? service.expected_deposit_amount_cents : 0
       end
 
-      def assignable_professionals(appointment)
-        relation = @business.employee_memberships.available_for_booking.includes(:branch).order(:sort_order, :name)
-        assigned_ids = appointment.service.employee_membership_ids
-        relation = relation.where(id: assigned_ids) if assigned_ids.any?
-        relation
-      end
-
       def calendar_appointment_payload(appointment)
         customer_profile = appointment.customer_profile
         status = calendar_status(appointment)
@@ -601,7 +564,6 @@ module Admin
           careUrl: policy(appointment).care? ? care_admin_appointment_path(appointment) : nil,
           customerProfileUrl: appointment.customer_profile_id.present? ? edit_admin_customer_profile_path(appointment.customer_profile_id, section: "pets", anchor: "pet_#{appointment.pet_id}", return_to: admin_calendar_path(date: appointment.starts_at.to_date.iso8601, t: appointment.short_uuid)) : nil,
           customerProfilePanelUrl: appointment.customer_profile_id.present? ? panel_admin_customer_profile_path(appointment.customer_profile_id, format: :json) : nil,
-          customerPortalUrl: customer_portal_url_for(customer_profile),
           customerCreatedAt: customer_profile&.created_at&.to_date&.iso8601,
           customerSummary: customer_summary_payload_for(customer_profile),
           status: status,
@@ -622,10 +584,7 @@ module Admin
           payload[:destroyUrl] = admin_destroy_appointment_path(appointment, format: :json) if actions_available && policy(appointment).destroy?
           payload[:approveDepositUrl] = approve_deposit_admin_appointment_path(appointment, format: :json) if actions_available && appointment.pending_deposit_review? && policy(appointment).approve_deposit?
           payload[:rejectDepositUrl] = reject_deposit_admin_appointment_path(appointment, format: :json) if actions_available && appointment.pending_deposit_review? && policy(appointment).reject_deposit?
-          if actions_available && professional_change_available?(appointment)
-            payload[:availableProfessionalsUrl] = available_professionals_admin_appointment_path(appointment, format: :json)
-            payload[:changeProfessionalUrl] = change_professional_admin_appointment_path(appointment, format: :json)
-          end
+          payload[:rescheduleUrl] = reschedule_admin_appointment_path(appointment, format: :json) if actions_available && appointment.starts_at.future? && policy(appointment).update?
           payload[:cancelUrl] = cancel_admin_appointment_path(appointment, format: :json) if actions_available && !appointment.pending_deposit_review? && policy(appointment).cancel? && appointment.starts_at.future?
           payload[:markRemainingBalancePaidUrl] = mark_remaining_balance_paid_admin_appointment_path(appointment, format: :json) if actions_available && policy(appointment).update? && appointment.remaining_balance_payable?
         end
@@ -697,16 +656,5 @@ module Admin
         Resources::Availability.new(business: @business, service: service, starts_at: starts_at, ends_at: ends_at).first_available(lock: true)
       end
 
-      def assign_professional_for(service, starts_at)
-        return unless @business.team_features_available?
-
-        Bookings::AssignProfessionalService.call(
-          business: @business,
-          service: service,
-          starts_at: starts_at
-        )
-      rescue Bookings::AssignProfessionalService::UnavailableProfessional
-        nil
-      end
   end
 end

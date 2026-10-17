@@ -39,8 +39,7 @@ module Appointments
         profile_for_assignment = customer_profile_for_assignment
         raise BlockedCustomer, "Este teléfono está bloqueado para reservas en línea" if profile_for_assignment&.blocked?
 
-        assigned_employee = assign_professional!(customer_profile: profile_for_assignment)
-        raise UnavailableSlot, "El turno ya no está disponible" unless slot_available_for_source?(assigned_employee)
+        raise UnavailableSlot, "El turno ya no está disponible" unless slot_available_for_source?(nil)
 
         profile = find_or_update_customer_profile!
         raise BlockedCustomer, "Este teléfono está bloqueado para reservas en línea" if profile.blocked?
@@ -55,7 +54,7 @@ module Appointments
           pet: pet,
           bookable_resource: resource,
           branch: branch,
-          employee_membership: assigned_employee,
+          employee_membership: nil,
           customer_name: customer_name,
           customer_phone: customer_phone,
           customer_email: customer_email,
@@ -184,36 +183,6 @@ module Appointments
         return unless availability.required?
 
         availability.first_available(lock: true) || raise(UnavailableSlot, "No hay recursos disponibles para ese horario")
-      end
-
-      def assign_professional!(customer_profile: nil)
-        raise UnavailableSlot, "Ese profesional no realiza este servicio" unless employee_allowed_for_service?
-
-        Bookings::AssignProfessionalService.call(
-          business: business,
-          service: booking_service,
-          starts_at: starts_at,
-          preferred_professional: employee_membership,
-          assignment_strategy: assignment_strategy,
-          customer_profile: customer_profile,
-          online_booking: source.to_s == "public_booking"
-        )
-      rescue Bookings::AssignProfessionalService::UnavailableProfessional => error
-        raise UnavailableSlot, "El turno ya no está disponible"
-      end
-
-      def assignment_strategy
-        return unless source.to_s == "public_booking"
-        return Business::PUBLIC_BOOKING_ASSIGNMENT_STRATEGY_DEFAULT if business.public_booking_allow_professional_selection?
-
-        business.public_booking_assignment_strategy
-      end
-
-      def employee_allowed_for_service?
-        return true if employee_membership.blank?
-        return true if service.employee_membership_ids.blank?
-
-        service.employee_membership_ids.include?(employee_membership.id)
       end
 
       def slot_available_for_source?(assigned_employee)

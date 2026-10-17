@@ -65,11 +65,7 @@ module SuperAdmin
           setup_status: "in_progress",
           onboarding_completed_at: Time.current,
           slogan: slogan,
-          preferences: Business::PREFERENCE_DEFAULTS.merge(
-            "chatbot_enabled" => false,
-            "setup_warnings" => setup_warnings
-          ),
-          ai_context: ai_context
+          preferences: Business::PREFERENCE_DEFAULTS.merge("setup_warnings" => setup_warnings)
         }
       end
 
@@ -212,16 +208,6 @@ module SuperAdmin
         BigDecimal(raw_value)
       rescue ArgumentError
         nil
-      end
-
-      def ai_context
-        [
-          "Cuenta comercial de Cita.pet creada desde superadmin.",
-          "El catálogo de servicios se administra desde el workspace del negocio.",
-          instagram_url.present? ? "Instagram del negocio: #{instagram_url}." : nil,
-          "Las alertas operativas se envían por email al dueño.",
-          "Los mensajes a clientes se siguen enviando manualmente con enlaces prearmados."
-        ].compact.join("\n")
       end
 
       def requested_slug

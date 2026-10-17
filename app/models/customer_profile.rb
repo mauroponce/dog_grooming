@@ -1,6 +1,4 @@
 class CustomerProfile < ApplicationRecord
-  CUSTOMER_PORTAL_TOKEN_BYTES = 24
-  CUSTOMER_PORTAL_SHORT_TOKEN_BYTES = 9
   CUSTOMER_PHOTO_CONTENT_TYPES = %w[image/png image/jpeg image/jpg image/webp].freeze
   CUSTOMER_PHOTO_MAX_SIZE = 10.megabytes
   CUSTOMER_PHOTO_LIMIT = 6
@@ -18,14 +16,6 @@ class CustomerProfile < ApplicationRecord
   has_many :booking_notes, dependent: :destroy
   has_many :booking_attachments, dependent: :destroy
   has_many :customer_reminders, dependent: :destroy
-  has_many :sales_opportunities, dependent: :nullify
-  has_many :sales_campaign_recipients, dependent: :destroy
-  has_many :customer_packs, dependent: :destroy
-  has_many :booking_intents, dependent: :nullify
-  has_many :service_form_responses, dependent: :destroy
-  has_many :referrals_made, class_name: "Referral", foreign_key: :referrer_customer_id, dependent: :destroy, inverse_of: :referrer_customer
-  has_many :referrals_received, class_name: "Referral", foreign_key: :referred_customer_id, dependent: :nullify, inverse_of: :referred_customer
-  has_many :customer_portal_access_tokens, dependent: :destroy
   has_many_attached :customer_photos
 
   scope :kept, -> { where(deleted_at: nil) }
@@ -35,14 +25,10 @@ class CustomerProfile < ApplicationRecord
   before_validation :normalize_profile_fields
   before_validation :normalize_phone
   before_validation :normalize_email
-  before_validation :ensure_customer_portal_token
-  before_validation :ensure_customer_portal_short_token
 
   validate :phone_must_be_present
   validates :normalized_phone, uniqueness: { scope: :business_id }, allow_blank: true
   validates :gender, inclusion: { in: GENDER_OPTIONS.keys }, allow_blank: true
-  validates :customer_portal_token, presence: true, uniqueness: true
-  validates :customer_portal_short_token, presence: true, uniqueness: true
 
   def blocked?
     blocked_at.present?
@@ -66,14 +52,6 @@ class CustomerProfile < ApplicationRecord
 
   def gender_label
     GENDER_OPTIONS[gender]
-  end
-
-  def customer_portal_url
-    PublicUrls.url(
-      :customer_portal_profile_access,
-      business,
-      customer_portal_short_token.presence || customer_portal_token
-    )
   end
 
   def register_cancellation!(appointment)
@@ -117,32 +95,6 @@ class CustomerProfile < ApplicationRecord
     def normalize_email
       self.email = email.to_s.strip.downcase.presence
       self.normalized_email = email
-    end
-
-    def ensure_customer_portal_token
-      return if customer_portal_token.present?
-
-      self.customer_portal_token = self.class.unique_customer_portal_token
-    end
-
-    def ensure_customer_portal_short_token
-      return if customer_portal_short_token.present?
-
-      self.customer_portal_short_token = self.class.unique_customer_portal_short_token
-    end
-
-    def self.unique_customer_portal_token
-      loop do
-        token = SecureRandom.urlsafe_base64(CUSTOMER_PORTAL_TOKEN_BYTES)
-        break token unless exists?(customer_portal_token: token)
-      end
-    end
-
-    def self.unique_customer_portal_short_token
-      loop do
-        token = SecureRandom.urlsafe_base64(CUSTOMER_PORTAL_SHORT_TOKEN_BYTES)
-        break token unless exists?(customer_portal_short_token: token)
-      end
     end
 
     def create_late_cancellation_alert!

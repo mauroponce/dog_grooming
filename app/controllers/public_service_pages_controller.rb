@@ -2,7 +2,6 @@ class PublicServicePagesController < ApplicationController
   allow_unauthenticated_access
 
   before_action :set_business
-  before_action :track_campaign_visit
 
   def index
     @services = @business.services.publicly_bookable.includes(:service_category).order(:category, :sort_order, :name)
@@ -40,11 +39,6 @@ class PublicServicePagesController < ApplicationController
     redirect_to public_business_path(@business.slug), alert: "La categoría no está disponible."
   end
 
-  def promos
-    @promotions = @business.promotions.active.includes(:service, :campaign_link).order(:ends_at)
-    @landing = ::Public::BusinessLandingPresenter.new(business: @business, params: params, host: request.host)
-  end
-
   private
     def set_business
       @business = Business.find_by_custom_domain(request.host) || Business.find_by(slug: params[:slug])
@@ -52,10 +46,4 @@ class PublicServicePagesController < ApplicationController
       redirect_to root_path, alert: "La página que buscás no está disponible." if @business.present? && !@business.access_active?
     end
 
-    def track_campaign_visit
-      return if @business.blank?
-      return if params[:src].blank? && params[:clid].blank?
-
-      Sales::TrackVisit.new(controller: self, business: @business).call
-    end
 end

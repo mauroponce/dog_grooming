@@ -4,10 +4,6 @@ module Admin
       "calendar" => :appointments?,
       "availability_blocks" => :availability?,
       "appointments" => :appointments?,
-      "home" => :dashboard?,
-      "home_opportunities" => :dashboard?,
-      "dashboard" => :dashboard?,
-      "assistant_messages" => :dashboard?,
       "billing" => :billing?,
       "services" => :services?,
       "pet_size_bands" => :services?,
@@ -16,7 +12,6 @@ module Admin
       "client_notes" => :customers?,
       "customer_reminders" => :customers?,
       "service_categories" => :services?,
-      "waitlist_entries" => :waitlist?,
       "employee_memberships" => :employees?,
       "settings" => :settings?,
       "tutorials" => :tutorials?,
@@ -60,18 +55,6 @@ module Admin
         return unless current_user&.employee? && @business
 
         @current_employee_membership ||= current_user.employee_membership_for(@business)
-      end
-
-      def customer_portal_url_for(customer_profile)
-        return if customer_profile.blank? || @business&.slug.blank?
-
-        PublicUrls.url(
-          :customer_portal_profile_access,
-          @business,
-          customer_profile.customer_portal_short_token.presence || customer_profile.customer_portal_token,
-          host: current_public_link_host,
-          protocol: current_public_link_protocol
-        )
       end
 
       def current_public_link_host
