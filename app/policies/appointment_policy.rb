@@ -25,6 +25,18 @@ class AppointmentPolicy < ApplicationPolicy
     owner_admin? || employee_can_finalize_record?
   end
 
+  def care?
+    owner_admin? || update? || finalize?
+  end
+
+  def save_treatment?
+    finalize?
+  end
+
+  def link_customer?
+    owner_admin? || (update? && employee_can?("can_edit_customers"))
+  end
+
   def review_deposit?
     return true if owner_admin?
 

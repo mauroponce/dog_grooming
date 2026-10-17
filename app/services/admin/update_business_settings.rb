@@ -52,6 +52,7 @@ module Admin
           slug: requested_slug,
           contact_phone: contact_phone,
           phone: contact_phone,
+          mobile_area_code: params[:mobile_area_code].presence || business.mobile_area_code,
           instagram_url: instagram_url,
           address: address,
           address_details: address_details,

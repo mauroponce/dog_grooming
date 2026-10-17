@@ -455,6 +455,9 @@ class PublicBookingController < ApplicationController
     def validate_customer_details!
       raise ArgumentError, "Completá tu nombre y apellido." if booking_submission_params[:customer_name].blank?
       raise ArgumentError, "Completá tu teléfono." if booking_submission_params[:customer_phone].blank?
+      mobile = PhoneNumber.normalize(booking_submission_params[:customer_phone], area_code: @business.mobile_area_code, strict: true)
+      raise ArgumentError, "Ingresá un celular argentino completo, con código de área." if mobile.blank?
+      @booking_submission_params[:customer_phone] = mobile
       if booking_submission_params[:customer_email].present? && !booking_submission_params[:customer_email].to_s.match?(URI::MailTo::EMAIL_REGEXP)
         raise ArgumentError, "Ingresá un email válido."
       end

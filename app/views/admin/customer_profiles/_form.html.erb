@@ -546,12 +546,11 @@
           </label>
 
           <label>
-            <span class="customer-field-label">Apellido <span class="customer-required-dot">*</span></span>
+            <span class="customer-field-label">Apellido (opcional)</span>
             <div class="customer-field-shell">
               <%= icon.call(:user, "customer-field-icon") %>
               <%= form.text_field :last_name,
                 value: last_name_value,
-                required: true,
                 autocomplete: "family-name",
                 placeholder: "Apellido",
                 class: "customer-input" %>
@@ -559,7 +558,7 @@
           </label>
 
           <label>
-            <span class="customer-field-label">Teléfono <span class="customer-required-dot">*</span></span>
+            <span class="customer-field-label">Celular <span class="customer-required-dot">*</span></span>
             <div class="customer-field-shell">
               <%= icon.call(:message, "customer-field-icon") %>
               <%= form.telephone_field :phone,
@@ -575,22 +574,22 @@
           </label>
 
           <label>
-            <span class="customer-field-label">Email <span class="customer-required-dot">*</span></span>
+            <span class="customer-field-label">Email (opcional)</span>
             <div class="customer-field-shell">
               <%= icon.call(:mail, "customer-field-icon") %>
               <%= form.email_field :email,
-                required: true,
                 autocomplete: "email",
                 placeholder: "cliente@email.com",
                 class: "customer-input" %>
             </div>
             <p class="customer-field-hint">
               <%= icon.call(:mail_check) %>
-              <span>Permite enviar confirmaciones y recordatorios.</span>
+              <span>Permite enviar recordatorios del turno.</span>
             </p>
           </label>
         </div>
 
+        <details class="mt-5"><summary class="cursor-pointer font-bold">Otros datos opcionales</summary>
         <section class="customer-panel-section">
           <div class="customer-section-heading">
             <span class="customer-birth-icon"><%= icon.call(:cake) %></span>
@@ -664,6 +663,7 @@
             </button>
           </div>
         </section>
+        </details>
       </div>
 
       <div class="customer-editor-footer">

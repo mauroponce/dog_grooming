@@ -1,10 +1,10 @@
 class PhoneNumber
-  def self.normalize(value)
-    PhoneNormalizer.normalize(value).to_s
+  def self.normalize(value, area_code: "11", strict: false)
+    PhoneNormalizer.normalize(value, area_code: area_code, strict: strict).to_s
   end
 
-  def self.lookup_values(value)
-    normalized = normalize(value)
+  def self.lookup_values(value, area_code: "11")
+    normalized = normalize(value, area_code: area_code)
     original = value.to_s.strip.gsub(/[^\d+]/, "")
     original_digits = original.delete_prefix("+")
     values = [ normalized, normalized.present? ? "+#{normalized}" : nil, original, original_digits ]
@@ -21,5 +21,4 @@ class PhoneNumber
 
     values.compact_blank.uniq
   end
-
 end

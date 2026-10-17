@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_17_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_17_150000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -482,6 +482,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_17_130000) do
     t.decimal "latitude", precision: 10, scale: 7
     t.string "legal_name"
     t.decimal "longitude", precision: 10, scale: 7
+    t.string "mobile_area_code", default: "11", null: false
     t.string "name", null: false
     t.string "neighborhood"
     t.datetime "onboarding_completed_at"

@@ -206,6 +206,10 @@ RSpec.describe "Admin customer profiles", type: :request do
     expect(response.body).to include("Fecha de nacimiento")
     expect(response.body).to include("Masculino")
     expect(response.body).to include("Femenino")
+    document = Nokogiri::HTML(response.body)
+    expect(document.at_css("#customer_profile_email")["required"]).to be_nil
+    expect(document.at_css("#customer_profile_last_name")["required"]).to be_nil
+    expect(document.at_css("#customer_profile_phone")["required"]).to be_present
   end
 
   it "renders the edit customer form with existing values" do

@@ -113,6 +113,9 @@ Rails.application.routes.draw do
           get :download_receipt, path: "descargar-comprobante"
           patch :upload_receipt, path: "subir-comprobante"
           patch :finalize, path: "finalizar"
+          get :care, path: "ficha"
+          patch :save_treatment, path: "atencion"
+          patch :link_customer, path: "vincular-cliente"
         end
       end
       resources :services, path: "servicios" do

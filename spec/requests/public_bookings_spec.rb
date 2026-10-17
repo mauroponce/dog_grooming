@@ -132,7 +132,7 @@ RSpec.describe "Public bookings", type: :request do
     expect(response.body).to include("$25.000")
   end
 
-  it "collects the coat type but never exposes internal pet alerts in the public details step" do
+  it "asks only the pet name and keeps grooming data internal" do
     business = create_business
     service = create_service(business)
     starts_at = enable_availability_for(business, start_time: "09:00", end_time: "12:00")
@@ -145,8 +145,8 @@ RSpec.describe "Public bookings", type: :request do
     ), headers: browser_headers
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("Tipo de manto")
-    expect(response.body).to include('name="booking[pet_coat_type]"')
+    expect(response.body).to include('name="booking[pet_name]"', "Celular", "recordatorio 24 horas")
+    expect(response.body).not_to include('name="booking[pet_coat_type]"', 'name="booking[pet_breed]"', 'name="booking[pet_sex]"')
     expect(response.body).not_to include("Cuidados o información importante")
     expect(response.body).not_to include('name="booking[pet_notes]"')
   end
@@ -1139,7 +1139,7 @@ RSpec.describe "Public bookings", type: :request do
 
     details_document = Nokogiri::HTML(response.body)
     expect(details_document.at_css("input[name='booking[customer_name]']")["value"]).to eq("Julieta Perez")
-    expect(details_document.at_css("input[name='booking[customer_phone]']")["value"]).to eq("+54 9 11 1111-1111")
+    expect(details_document.at_css("input[name='booking[customer_phone]']")["value"]).to eq("5491111111111")
     expect(details_document.at_css("input[name='booking[customer_email]']")["value"]).to eq("julieta@example.com")
     expect(details_document.at_css("textarea[name='booking[notes]']")).to be_nil
   end

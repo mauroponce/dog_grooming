@@ -1,4 +1,12 @@
 class AppointmentMailer < ApplicationMailer
+  def customer_reminder(appointment)
+    @appointment = appointment
+    @business = appointment.business
+    @google_calendar_url = appointment.google_calendar_url
+    @booking_url = appointment.customer_portal_booking_url
+    mail subject: "Recordatorio de tu turno en #{@business.name}", to: appointment.customer_email
+  end
+
   def new_booking(appointment)
     @appointment = appointment
     @business = appointment.business

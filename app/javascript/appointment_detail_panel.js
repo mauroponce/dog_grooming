@@ -164,6 +164,7 @@ export function renderAppointmentDetail(appointment, { actions = {}, variant = "
   const remainingMethod = appointment.remainingBalancePaymentMethod || paymentMethod
   const location = [appointment.branchName, appointment.resourceName].filter(Boolean).join(" · ")
   const actionMarkup = [
+    appointment.careUrl ? `<a class="appointment-detail-panel__action is-primary" href="${escapeAttribute(appointment.careUrl)}">Ficha y atención</a>` : "",
     actionButton("Aprobar seña", "approve", actions.approveDeposit),
     actionButton("Rechazar seña", "secondary-danger", actions.rejectDeposit),
     actionButton("Marcar como pagado", "primary", actions.markPaid),
@@ -227,6 +228,8 @@ export function renderAppointmentDetail(appointment, { actions = {}, variant = "
               ${appointment.petBreed ? detailRow("Raza", appointment.petBreed) : ""}
               ${appointment.petSex ? detailRow("Sexo", appointment.petSex) : ""}
               ${appointment.petNotes ? detailRow("Cuidados", appointment.petNotes) : ""}
+              ${appointment.petAlerts ? detailRow("Alertas", appointment.petAlerts) : ""}
+              ${appointment.petGroomingReference ? detailRow("Preferencia de corte", appointment.petGroomingReference) : ""}
             </div>
           </section>` : ""}
 

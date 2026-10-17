@@ -191,6 +191,9 @@ module Admin
         @customer_editor_section = editor_section
         @customer_editor_return_to = customer_editor_return_to
         @customer.pets.build unless @customer.pets.any?(&:new_record?)
+        pet_appointments = appointment_scope.where(customer_profile: @customer).where.not(pet_id: nil)
+        @pet_appointment_counts = pet_appointments.group(:pet_id).count
+        @pet_latest_appointments = pet_appointments.select("DISTINCT ON (pet_id) appointments.*").order(:pet_id, starts_at: :desc, id: :desc).index_by(&:pet_id)
         @customer_appointments_pagy, appointments = pagy_collection(
           appointment_scope
           .where(customer_profile: @customer)

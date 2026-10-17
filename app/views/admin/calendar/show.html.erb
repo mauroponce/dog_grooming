@@ -2212,10 +2212,10 @@ import { bindAppointmentDetailPanel, openProfessionalPicker, renderAppointmentDe
       <div class="customer-picker-header"><button type="button" onclick="openCustomerPicker()" class="mb-3 text-xs font-bold text-brand-700">← Volver</button><h3 class="customer-picker-title">Nuevo responsable</h3></div>
       <div class="grid gap-4 p-5">
         <div><label class="team-label">Nombre *</label><input id="newAppointmentCustomerName" class="customer-picker-search" type="text" placeholder="Ej: Sofía Gómez"></div>
-        <div><label class="team-label">Teléfono *</label><input id="newAppointmentCustomerPhone" class="customer-picker-search" type="tel" placeholder="+54 9 11 1234-5678"></div>
-        <div><label class="team-label">Email *</label><input id="newAppointmentCustomerEmail" class="customer-picker-search" type="email" required></div>
+        <div><label class="team-label">Celular *</label><input id="newAppointmentCustomerPhone" class="customer-picker-search" type="tel" placeholder="+54 9 11 1234-5678"></div>
+        <div><label class="team-label">Email (opcional)</label><input id="newAppointmentCustomerEmail" class="customer-picker-search" type="email"></div>
         <button type="button" onclick="chooseNewCustomer()" class="h-12 rounded-full bg-zinc-950 text-sm font-bold text-white">Usar este cliente</button>
-        <p id="newAppointmentCustomerError" class="hidden text-xs font-bold text-red-600">Ingresá nombre, teléfono y email para guardar el cliente.</p>
+        <p id="newAppointmentCustomerError" class="hidden text-xs font-bold text-red-600">Ingresá nombre y celular para guardar el cliente.</p>
       </div>
     `;
   }
@@ -2224,7 +2224,7 @@ import { bindAppointmentDetailPanel, openProfessionalPicker, renderAppointmentDe
     const name = document.getElementById("newAppointmentCustomerName")?.value.trim();
     const phone = document.getElementById("newAppointmentCustomerPhone")?.value.trim();
     const email = document.getElementById("newAppointmentCustomerEmail")?.value.trim();
-    if (!name || !phone || !email) {
+    if (!name || !phone) {
       document.getElementById("newAppointmentCustomerError")?.classList.remove("hidden");
       return;
     }
@@ -2256,8 +2256,8 @@ import { bindAppointmentDetailPanel, openProfessionalPicker, renderAppointmentDe
 
     errorBox.classList.add("hidden");
     errorBox.textContent = "";
-    if (!phone || !email) {
-      errorBox.textContent = "El cliente debe tener teléfono y email para crear el turno.";
+    if (!phone) {
+      errorBox.textContent = "El cliente debe tener celular para crear el turno.";
       errorBox.classList.remove("hidden");
       return;
     }

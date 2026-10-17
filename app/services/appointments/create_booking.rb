@@ -267,7 +267,9 @@ module Appointments
       end
 
       def pet_for_profile(profile)
-        selected_pet = if pet.present?
+        selected_pet = if source.to_s == "public_booking"
+          nil
+        elsif pet.present?
           pet
         elsif pet_id.present?
           profile.pets.find(pet_id)
@@ -279,6 +281,7 @@ module Appointments
           business: business,
           customer_profile: profile,
           pet: selected_pet,
+          preserve_existing: source.to_s == "public_booking",
           name: pet_name,
           breed: pet_breed,
           sex: pet_sex,
@@ -291,7 +294,7 @@ module Appointments
       end
 
       def customer_profile_for_assignment
-        normalized_phone = PhoneNumber.normalize(customer_phone)
+        normalized_phone = PhoneNumber.normalize(customer_phone, area_code: business.mobile_area_code)
         return if normalized_phone.blank?
 
         business.customer_profiles.find_by(normalized_phone: normalized_phone)

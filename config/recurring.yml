@@ -10,6 +10,9 @@
 #     schedule: at 5am every day
 
 production:
+  send_due_appointment_reminders:
+    class: SendDueAppointmentRemindersJob
+    schedule: every minute
   expire_pending_booking_payments:
     class: ExpirePendingDepositBookingsJob
     schedule: every minute

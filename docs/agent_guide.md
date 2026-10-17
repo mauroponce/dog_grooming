@@ -1,6 +1,6 @@
 # Guía de trabajo para agentes
 
-Esta guía complementa `AGENTS.md`. Es el punto de partida para cambios no triviales: aporta contexto estable del producto, límites técnicos y comandos de verificación. No reemplaza la inspección del código y de las pruebas cercanas al cambio.
+Esta guía complementa `AGENTS.md`. Es el punto de partida operativo para cambios no triviales. El comportamiento funcional estable vive en `docs/product_context.md`, las fronteras técnicas en `docs/architecture.md` y las decisiones duraderas en `docs/decisions/`. Estos documentos reducen la exploración inicial, pero no reemplazan la inspección focalizada del código y de las pruebas cercanas al cambio.
 
 ## Producto y límites del dominio
 
@@ -35,11 +35,12 @@ Las rutas en `config/routes.rb` tienen precedencia significativa: las rutas est�
 
 ## Flujo de trabajo recomendado
 
-1. Revisar `AGENTS.md`, esta guía, `git status --short`, la ruta/controlador/modelo/servicio y las pruebas más cercanas.
+1. Revisar `AGENTS.md`, esta guía, `docs/product_context.md`, `docs/architecture.md`, las decisiones relevantes, `git status --short` y luego sólo la ruta/controlador/modelo/servicio y pruebas cercanas.
 2. Delimitar el cambio verticalmente: contrato observable, autorización, persistencia, trabajo asíncrono/integración y vista, según aplique.
 3. Hacer el cambio mínimo coherente. No mezclar refactors ni formateos ajenos.
 4. Añadir o actualizar la prueba RSpec más próxima para cada cambio de comportamiento.
 5. Ejecutar primero la prueba focalizada y luego las comprobaciones proporcionales al riesgo.
+6. Comprobar si cambió un contrato funcional, una frontera de arquitectura, una decisión duradera o una operación; si cambió, actualizar su fuente canónica en el mismo trabajo.
 
 Para tareas amplias, usar el flujo de skills configurado: `dev-discovery` → `dev-plan` → `dev-implement` → revisión independiente con `dev-review`. Los planes de trabajo entre chats pertenecen al espacio personal de Codex, no a `PLAN.md` o `SPEC.md` del repositorio.
 
@@ -78,6 +79,10 @@ docker compose exec -T web bash -lc 'bin/importmap audit'
 
 ## Documentación a mantener
 
-- Actualizar esta guía sólo si cambia un límite estable, un comando de verificación o una convención transversal.
+- `docs/product_context.md`: producto, actores, vocabulario, flujos y reglas funcionales vigentes.
+- `docs/architecture.md`: límites, invariantes, integraciones y puntos de extensión estables.
+- `docs/decisions/`: motivo y consecuencias de decisiones duraderas y no obvias. Marcar una decisión anterior como reemplazada en vez de reescribir su historia.
+- Actualizar esta guía sólo si cambia un límite operativo, un comando de verificación o una convención transversal.
 - Mantener el README orientado a instalación y producto; mantener `docs/production_operations.md` para operación y despliegue.
-- No documentar secretos, valores reales de producción ni notas temporales de una tarea. El contexto temporal de planificación y progreso se conserva fuera del repositorio.
+- No duplicar la misma regla completa en varios archivos: usar enlaces y mantener una sola fuente canónica.
+- No documentar secretos, valores reales de producción ni notas temporales de una tarea. El contexto temporal de planificación y progreso se conserva fuera del repositorio, como establecen las skills globales.

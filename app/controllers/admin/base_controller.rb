@@ -130,6 +130,9 @@ module Admin
           petBreed: appointment.pet&.breed,
           petSex: appointment.pet&.sex_label,
           petNotes: appointment.pet&.notes,
+          careUrl: policy(appointment).care? ? care_admin_appointment_path(appointment) : nil,
+          petAlerts: Array(appointment.pet&.behavioral_alerts).filter_map { |key| Pet::BEHAVIORAL_ALERTS[key] }.join(" · "),
+          petGroomingReference: appointment.pet&.grooming_reference_note,
           endsAt: appointment.ends_at&.iso8601,
           totalPrice: appointment.current_total_price_cents / 100,
           branchName: appointment.branch&.name,
@@ -186,7 +189,7 @@ module Admin
 
       def billing_restricted_action_allowed?
         allowed = {
-          "appointments" => %w[create confirm approve_deposit cancel reject_deposit download_receipt upload_receipt finalize],
+          "appointments" => %w[create confirm approve_deposit cancel reject_deposit download_receipt upload_receipt finalize care save_treatment link_customer],
           "customer_profiles" => %w[index show autocomplete],
           "client_notes" => %w[create],
           "customer_reminders" => %w[create resolve],

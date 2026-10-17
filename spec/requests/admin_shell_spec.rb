@@ -1157,6 +1157,8 @@ RSpec.describe "Admin shell", type: :request do
     expect(response.parsed_body.fetch("customerProfileUrl")).to eq(
       edit_admin_customer_profile_path(
         customer,
+        section: "pets",
+        anchor: "pet_#{pet.id}",
         return_to: admin_calendar_path(date: appointment.starts_at.to_date.iso8601, t: appointment.short_uuid)
       )
     )
@@ -1211,7 +1213,8 @@ RSpec.describe "Admin shell", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include(%("id":"#{public_appointment.short_uuid}"))
-    expect(response.body).not_to include(%("id":"#{public_appointment.id}"))
+    calendar_appointments = JSON.parse(response.body.match(/let appointments = (.+?);/)[1])
+    expect(calendar_appointments.map { |item| item.fetch("id") }).not_to include(public_appointment.id.to_s)
     expect(response.body).to include(%("depositAmount":2000))
     expect(response.body).to include(%("remainingBalance":3000))
     expect(response.body).not_to include(admin_destroy_appointment_path(public_appointment, format: :json))

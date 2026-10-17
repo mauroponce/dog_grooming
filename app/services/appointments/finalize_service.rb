@@ -16,6 +16,9 @@ module Appointments
 
       appointment.business.with_lock do
         appointment.reload
+        return appointment if appointment.status == terminal_status_for_outcome
+        raise Error, "Este turno ya está cerrado." if appointment.terminal_status?
+        raise Error, "El turno todavía no se puede finalizar." if outcome == "completed" && !appointment.finalizable?
         validate_payload!
 
         case outcome
@@ -33,8 +36,25 @@ module Appointments
       appointment
     end
 
+    # Adding information after completion must never repeat completion side effects.
+    def append_treatment
+      appointment.business.with_lock do
+        appointment.reload
+        raise Error, "Primero finalizá el turno." unless appointment.completed?
+        raise Error, "El turno no tiene un cliente asociado." if appointment.customer_profile.blank?
+        validate_payload!
+        create_note!("post_appointment")
+        attach_post_appointment_photos!
+      end
+      appointment
+    end
+
     private
       attr_reader :appointment, :actor, :params
+
+      def terminal_status_for_outcome
+        outcome == "cancelled" ? "canceled" : outcome
+      end
 
       def outcome
         @outcome ||= params[:outcome].presence_in(OUTCOMES) || "completed"
@@ -80,9 +100,7 @@ module Appointments
       end
 
       def validate_payload!
-        if outcome == "completed" && note_body.blank? && photos.blank?
-          raise Error, "Agregá una nota interna o al menos una foto para guardar el tratamiento."
-        end
+        raise Error, "La nota no puede superar 10.000 caracteres." if note_body.length > 10_000
 
         if photos.any?
           existing_count = appointment.booking_attachments.post_appointment_photos.count
@@ -112,7 +130,7 @@ module Appointments
         create_provider_event!(
           event_type: "appointment_completed",
           title: "Turno guardado en historial",
-          body: "#{appointment.customer_name} quedó registrada con nota interna#{photos.any? ? " y fotos" : ""}."
+          body: "Atención finalizada y guardada en el historial."
         )
       end
 
@@ -154,6 +172,8 @@ module Appointments
       end
 
       def create_note!(note_type)
+        return if note_body.blank? && cancellation_reason.blank? && follow_up_at.blank?
+
         appointment.booking_notes.create!(
           business: appointment.business,
           customer_profile: appointment.customer_profile,

@@ -99,11 +99,11 @@ module CustomerPortal
       end
 
       def normalize_phone(value)
-        PhoneNumber.normalize(value).presence
+        PhoneNumber.normalize(value, area_code: @business.mobile_area_code).presence
       end
 
       def phone_lookup_values(value)
-        normalized = PhoneNormalizer.normalize(value)
+        normalized = PhoneNormalizer.normalize(value, area_code: @business.mobile_area_code)
         [ normalize_phone(value), normalized, normalized.present? ? "+#{normalized}" : nil ].compact_blank.uniq
       end
 

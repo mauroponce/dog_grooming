@@ -135,10 +135,13 @@ class Appointment < ApplicationRecord
   before_validation :ensure_customer_portal_token
   before_validation :ensure_deposit_review_token
   before_validation :set_ends_at
+  before_update :reset_customer_reminder_for_reschedule
   around_save :serialize_salon_booking
   after_create_commit :broadcast_admin_appointments_refresh_after_create, if: :confirmed?
   after_update_commit :broadcast_admin_appointments_refresh_after_confirmation, if: :confirmed_in_latest_commit?
   after_update_commit :notify_waitlist_for_cancellation, if: :waitlist_relevant_cancellation?
+  after_create_commit :enqueue_customer_reminder_if_due
+  after_update_commit :enqueue_customer_reminder_if_due, if: -> { saved_change_to_status? || saved_change_to_starts_at? || saved_change_to_customer_email? }
 
   validates :customer_name, :starts_at, :ends_at, presence: true
   validates :short_uuid, presence: true, uniqueness: true, format: { with: /\A[A-Za-z0-9_-]{12}\z/ }
@@ -623,7 +626,18 @@ class Appointment < ApplicationRecord
     end
 
     def normalize_customer_phone
-      self.customer_phone = PhoneNumber.normalize(customer_phone)
+      self.customer_phone = PhoneNumber.normalize(customer_phone, area_code: business&.mobile_area_code || "11")
+    end
+
+    def enqueue_customer_reminder_if_due
+      return unless confirmed? && starts_at.future? && starts_at <= 24.hours.from_now
+      return if customer_email.blank? || reminder_sent_at.present?
+
+      SendAppointmentReminderJob.perform_later(self)
+    end
+
+    def reset_customer_reminder_for_reschedule
+      self.reminder_sent_at = nil if will_save_change_to_starts_at?
     end
 
     def ensure_short_uuid

@@ -260,9 +260,51 @@ module Admin
       end
     end
 
+    def care
+      authorize appointment, :care?
+      @appointment = appointment
+      @pet = appointment.pet
+      if @pet
+        @pet_history_pagy, visits = pagy_collection(
+          policy_scope(@business.appointments).where(pet: @pet).includes(:service, :employee_membership, :completed_by, booking_notes: :created_by, booking_attachments: { file_attachment: :blob }).order(starts_at: :desc, id: :desc),
+          limit: 20
+        )
+        @pet_history = visits.to_a
+      end
+      if policy(appointment).link_customer?
+        candidates = linkable_customers
+        query = params[:customer_query].to_s.strip
+        if query.present?
+          pattern = "%#{CustomerProfile.sanitize_sql_like(query)}%"
+          candidates = candidates.where("name ILIKE :q OR email ILIKE :q OR phone ILIKE :q OR normalized_phone = :phone", q: pattern, phone: PhoneNumber.normalize(query, area_code: @business.mobile_area_code))
+        else
+          candidates = candidates.where(normalized_email: appointment.customer_email.to_s.strip.downcase.presence)
+          candidates = candidates.none if appointment.customer_email.blank?
+        end
+        candidates = candidates.where.not(id: appointment.customer_profile_id) if query.blank?
+        @matching_customers = candidates.includes(:pets).limit(20)
+      end
+    end
+
+    def save_treatment
+      authorize appointment, :save_treatment?
+      ::Appointments::FinalizeService.new(appointment: appointment, actor: current_user, params: finalization_params).append_treatment
+      redirect_to care_admin_appointment_path(appointment), notice: "Información agregada a la atención."
+    rescue ::Appointments::FinalizeService::Error, ActiveRecord::RecordInvalid => error
+      redirect_to care_admin_appointment_path(appointment), alert: finalization_error_message(error)
+    end
+
+    def link_customer
+      authorize appointment, :link_customer?
+      customer = linkable_customers.find(params.require(:customer_profile_id))
+      pet = customer.pets.find(params.require(:pet_id))
+      ::Appointments::LinkCustomer.call(appointment: appointment, customer: customer, pet: pet, actor: current_user)
+      redirect_to care_admin_appointment_path(appointment), notice: "Turno vinculado al cliente y mascota seleccionados."
+    end
+
     def finalize
       authorize appointment, :finalize?
-      Appointments::FinalizeService.new(
+      ::Appointments::FinalizeService.new(
         appointment: appointment,
         actor: current_user,
         params: finalization_params
@@ -273,11 +315,17 @@ module Admin
       else
         redirect_back fallback_location: admin_calendar_path, notice: finalization_notice(finalization_params[:outcome])
       end
-    rescue Appointments::FinalizeService::Error, ActiveRecord::RecordInvalid, ActiveRecord::RecordNotFound => error
+    rescue ::Appointments::FinalizeService::Error, ActiveRecord::RecordInvalid, ActiveRecord::RecordNotFound => error
       redirect_back fallback_location: admin_calendar_path, alert: finalization_error_message(error)
     end
 
     private
+      def linkable_customers
+        return @business.customer_profiles if current_user.admin? || current_employee_membership&.can?("can_view_all_customers")
+
+        @business.customer_profiles.where(id: policy_scope(@business.appointments).select(:customer_profile_id))
+      end
+
       def appointment
         @appointment ||= appointment_scope_with_details.find_by!(short_uuid: params[:short_uuid])
       end
@@ -373,7 +421,7 @@ module Admin
           attrs[:customer_email] = profile.email
         end
         validate_customer_contact_details!(attrs)
-        phone = PhoneNumber.normalize(attrs[:customer_phone])
+        phone = PhoneNumber.normalize(attrs[:customer_phone], area_code: @business.mobile_area_code)
         profile ||= customer_profile_for_manual_appointment(attrs, phone, create_customer_profile: create_customer_profile)
         pet = pet_for_manual_appointment(attrs, profile, pet_size_band: service_variant&.pet_size_band)
 
@@ -485,8 +533,7 @@ module Admin
 
       def validate_customer_contact_details!(attrs)
         raise ArgumentError, "Completá el teléfono del cliente." if attrs[:customer_phone].blank?
-        raise ArgumentError, "Completá el email del cliente." if attrs[:customer_email].blank?
-        raise ArgumentError, "Ingresá un email válido." unless attrs[:customer_email].to_s.match?(URI::MailTo::EMAIL_REGEXP)
+        raise ArgumentError, "Ingresá un email válido." if attrs[:customer_email].present? && !attrs[:customer_email].to_s.match?(URI::MailTo::EMAIL_REGEXP)
       end
 
       def manual_appointment_status(value)
@@ -551,7 +598,8 @@ module Admin
           remainingBalancePaidAmount: appointment.remaining_balance_paid_cents.to_i / 100,
           remainingBalancePaymentMethod: appointment.remaining_balance_payment_method_label,
           customerProfileId: appointment.customer_profile_id&.to_s,
-          customerProfileUrl: appointment.customer_profile_id.present? ? edit_admin_customer_profile_path(appointment.customer_profile_id, return_to: admin_calendar_path(date: appointment.starts_at.to_date.iso8601, t: appointment.short_uuid)) : nil,
+          careUrl: policy(appointment).care? ? care_admin_appointment_path(appointment) : nil,
+          customerProfileUrl: appointment.customer_profile_id.present? ? edit_admin_customer_profile_path(appointment.customer_profile_id, section: "pets", anchor: "pet_#{appointment.pet_id}", return_to: admin_calendar_path(date: appointment.starts_at.to_date.iso8601, t: appointment.short_uuid)) : nil,
           customerProfilePanelUrl: appointment.customer_profile_id.present? ? panel_admin_customer_profile_path(appointment.customer_profile_id, format: :json) : nil,
           customerPortalUrl: customer_portal_url_for(customer_profile),
           customerCreatedAt: customer_profile&.created_at&.to_date&.iso8601,

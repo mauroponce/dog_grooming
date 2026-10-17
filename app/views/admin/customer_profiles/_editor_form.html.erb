@@ -272,7 +272,7 @@
                   <%= form.text_field :last_name, value: last_name_value, class: "customer-profile-editor__input", autocomplete: "family-name" %>
                 </div>
                 <div class="customer-profile-editor__field">
-                  <%= form.label :phone do %>Teléfono <span class="customer-profile-editor__required">*</span><% end %>
+                  <%= form.label :phone do %>Celular <span class="customer-profile-editor__required">*</span><% end %>
                   <%= form.telephone_field :phone,
                     class: "customer-profile-editor__input",
                     autocomplete: "tel",
@@ -280,9 +280,10 @@
                     data: { customer_editor_tabs_target: "phone" } %>
                 </div>
                 <div class="customer-profile-editor__field">
-                  <%= form.label :email do %>Email <span class="customer-profile-editor__required">*</span><% end %>
-                  <%= form.email_field :email, class: "customer-profile-editor__input", required: true, autocomplete: "email" %>
+                  <%= form.label :email do %>Email (opcional)<% end %>
+                  <%= form.email_field :email, class: "customer-profile-editor__input", autocomplete: "email" %>
                 </div>
+                <details class="customer-profile-editor__field--wide"><summary class="cursor-pointer font-bold">Otros datos opcionales</summary><div class="customer-profile-editor__field-grid">
                 <div class="customer-profile-editor__field">
                   <%= form.label :birth_date, "Fecha de nacimiento" %>
                   <%= form.text_field :birth_date,
@@ -314,6 +315,7 @@
                     </label>
                   </div>
                 </div>
+                </div></details>
               </div>
             </div>
           </div>
@@ -331,14 +333,16 @@
             <div class="customer-profile-editor__card-body space-y-5">
               <% form.fields_for :pets do |pet_form| %>
                 <% pet = pet_form.object %>
-                <article class="rounded-2xl border border-zinc-200 bg-zinc-50/70 p-5">
+                <article id="pet_<%= pet.id %>" class="rounded-2xl border border-zinc-200 bg-zinc-50/70 p-5">
                   <div class="mb-5 flex items-start justify-between gap-4">
                     <div>
                       <h3 class="text-lg font-bold text-zinc-950"><%= pet.name.presence || "Nueva mascota" %></h3>
                       <p class="mt-1 text-sm font-semibold text-zinc-500"><%= pet.persisted? ? "Actualizá sus datos y cuidados." : "Completá los datos para agregar otra mascota." %></p>
                     </div>
                     <% if pet.persisted? %>
-                      <span class="rounded-full bg-white px-3 py-1 text-xs font-bold text-zinc-600"><%= pet.bookings.count %> <%= pet.bookings.count == 1 ? "turno" : "turnos" %></span>
+                      <span class="rounded-full bg-white px-3 py-1 text-xs font-bold text-zinc-600"><%= @pet_appointment_counts.fetch(pet.id, 0) %> turnos</span>
+                      <% latest_visit = @pet_latest_appointments[pet.id] %>
+                      <%= link_to "Ver historial y atención", care_admin_appointment_path(latest_visit), class: "text-sm font-bold underline" if latest_visit && policy(latest_visit).care? %>
                     <% end %>
                   </div>
                   <%= pet_form.hidden_field :id if pet.persisted? %>

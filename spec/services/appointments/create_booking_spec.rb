@@ -29,6 +29,40 @@ RSpec.describe Appointments::CreateBooking do
     expect(appointment.customer_email).to be_blank
   end
 
+  it "recognizes a returning pet by mobile and normalized name without overwriting grooming care" do
+    business = create_business
+    starts_at = enable_availability_for(business)
+    service = create_service(business, price_cents: 20_000_00)
+    service.update!(pricing_mode: "by_pet_size")
+    band = business.ensure_default_pet_size_bands!.last
+    variant = service.service_variants.create!(pet_size_band: band, price_cents: 20_000_00, duration_minutes: 30)
+    customer = business.customer_profiles.create!(name: "Ana", phone: "+54 11 6034-7665", email: "original@example.com")
+    pet = customer.pets.create!(name: "Coco", notes: "Cuidados privados", coat_type: "curly", behavioral_alerts: [ "blower_fear" ])
+    expect do
+      booking = described_class.call(business: business, service: service, service_variant: variant, starts_at: starts_at, customer_name: "Anita", customer_phone: "1560347665", customer_email: "new@example.com", pet_name: "  COCO ", pet_coat_type: "short", pet_notes: "Overwrite attempt")
+      expect(booking.customer_profile).to eq(customer)
+      expect(booking.pet).to eq(pet)
+      expect(booking.customer_email).to eq("new@example.com")
+    end.not_to change(Pet, :count)
+    expect(pet.reload.notes).to eq("Cuidados privados")
+    expect(pet.coat_type).to eq("curly")
+    expect(pet.pet_size_band).to eq(band)
+    expect(customer.reload.email).to eq("original@example.com")
+  end
+
+  it "does not join customers solely by email or choose a homonymous pet" do
+    business = create_business
+    starts_at = enable_availability_for(business)
+    service = create_service(business, price_cents: 20_000_00)
+    existing = business.customer_profiles.create!(name: "Ana", phone: "1160347665", email: "shared@example.com")
+    booking = described_class.call(business: business, service: service, starts_at: starts_at, customer_name: "Ana", customer_phone: "1177777777", customer_email: "shared@example.com", pet_name: "Coco")
+    expect(booking.customer_profile).not_to eq(existing)
+    profile = booking.customer_profile
+    other = profile.pets.create!(name: "COCO")
+    ambiguous = Pets::Upsert.call(business: business, customer_profile: profile, name: "Coco", preserve_existing: true)
+    expect(ambiguous.id).not_to be_in([ booking.pet_id, other.id ])
+  end
+
   it "reuses an existing customer by normalized phone without overwriting their canonical name" do
     business = create_business
     starts_at = enable_availability_for(business)

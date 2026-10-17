@@ -12,7 +12,7 @@ module Customers
     end
 
     def call
-      normalized_phone = PhoneNumber.normalize(phone)
+      normalized_phone = PhoneNumber.normalize(phone, area_code: business.mobile_area_code)
       profile = find_profile(normalized_phone) || business.customer_profiles.new
 
       assign_profile_attributes(profile)
@@ -26,13 +26,13 @@ module Customers
       def find_profile(normalized_phone)
         return if normalized_phone.blank?
 
-        profiles = business.customer_profiles.where(normalized_phone: PhoneNumber.lookup_values(phone)).order(:id).to_a
+        profiles = business.customer_profiles.where(normalized_phone: PhoneNumber.lookup_values(phone, area_code: business.mobile_area_code)).order(:id).to_a
         profiles.find { |profile| profile.normalized_phone == normalized_phone } || profiles.first
       end
 
       def assign_profile_attributes(profile)
         profile.phone = phone if phone.present? && (profile.new_record? || profile.phone.blank?)
-        profile.email = email if email.present? && profile.email.blank?
+        profile.email = email if email.present? && profile.new_record?
         return if name.blank?
         return if profile.persisted? && profile.name.present?
 

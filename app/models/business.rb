@@ -1,4 +1,5 @@
 class Business < ApplicationRecord
+  validates :mobile_area_code, inclusion: { in: PhoneNormalizer::AREA_CODES }
   include PurgesReplacedAttachedBlobs
 
   SUBSCRIPTION_DETAILS = {

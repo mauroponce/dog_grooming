@@ -2,9 +2,20 @@
 
 ## Start here
 
-- For any non-trivial change, read [`docs/agent_guide.md`](docs/agent_guide.md) before editing. It maps the application boundaries, authorization/tenancy rules, test strategy, and task-specific verification.
+- For any non-trivial change, read [`docs/agent_guide.md`](docs/agent_guide.md), [`docs/product_context.md`](docs/product_context.md), and [`docs/architecture.md`](docs/architecture.md) before editing. Then read only the relevant entries from [`docs/decisions/README.md`](docs/decisions/README.md). These are the project-owned sources for stable functional and architectural decisions.
+- Use those documents to avoid broad repository archaeology. Verify only the code, schema, tests, and history near the requested change. Documentation does not replace targeted verification.
+- If current code and project documentation conflict, do not silently choose one. Establish the intended behavior from tests, recent history, and the user's instruction, then update the affected documentation in the same change.
 - Treat the existing working tree as user-owned. Inspect `git status --short` before edits; do not revert, reformat, or fold unrelated changes into your work.
 - Keep changes narrowly scoped. For a behavioral change, update the closest RSpec coverage and run the focused command from the agent guide.
+
+## Keep project knowledge current
+
+- Update [`docs/product_context.md`](docs/product_context.md) when externally visible behavior, roles, lifecycle, billing rules, onboarding, or domain terminology changes.
+- Update [`docs/architecture.md`](docs/architecture.md) when ownership boundaries, data invariants, tenancy, integrations, persistence, async flows, or important implementation seams change.
+- Add or supersede a record under [`docs/decisions`](docs/decisions/README.md) only for durable, non-obvious decisions that affect future implementation. Do not create an ADR for routine local implementation details.
+- Update [`docs/production_operations.md`](docs/production_operations.md) when deployment, backups, runtime configuration, monitoring, or recovery procedures change.
+- Keep temporary discovery notes, implementation plans, debugging notes, progress logs, and personal Codex memory outside the repository according to the global skills. Do not add repository `PLAN.md`, `SPEC.md`, workflow-state files, or secrets.
+- Before finishing a non-trivial implementation, explicitly check whether product, architecture, decision, and operations documentation remains accurate. Documentation updates are part of the definition of done when one of those contracts changed.
 
 ## Docker is mandatory
 

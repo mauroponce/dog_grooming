@@ -1748,6 +1748,11 @@
                   <%= telephone_field_tag "business_account[contact_phone]", business_values[:contact_phone], id: "business_account_contact_phone", required: true, autocomplete: "tel", class: "settings-input" %>
                   <p class="settings-field-hint">Se usa como contacto público y para las alertas operativas del negocio.</p>
                 </div>
+                <div>
+                  <label class="settings-field-label" for="business_account_mobile_area_code">Código de área para celulares locales</label>
+                  <%= text_field_tag "business_account[mobile_area_code]", business_values[:mobile_area_code], id: "business_account_mobile_area_code", required: true, inputmode: "numeric", pattern: "[0-9]{2,4}", class: "settings-input" %>
+                  <p class="settings-field-hint">Sin 0. Ej.: 11 para AMBA, 351 para Córdoba. Se usa si quien reserva omite el área.</p>
+                </div>
                 </div>
               </section>
 

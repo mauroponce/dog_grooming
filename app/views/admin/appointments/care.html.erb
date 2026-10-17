@@ -1,0 +1,90 @@
+<% content_for :title, "Ficha y atención · Cita.pet" %>
+<div class="mx-auto max-w-4xl space-y-6 p-6">
+  <%= link_to "← Calendario", admin_calendar_path(date: @appointment.starts_at.to_date, t: @appointment.short_uuid), class: "text-sm font-bold underline" %>
+  <header>
+    <h1 class="text-3xl font-bold"><%= @pet&.name || "Mascota sin asociar" %></h1>
+    <p class="mt-2 text-zinc-600"><%= @appointment.customer_name %> · <%= @appointment.customer_phone %></p>
+    <p class="text-zinc-600"><%= @appointment.service.name %> · <%= CustomerDateFormatter.datetime_label(@appointment.starts_at) %> · <%= @appointment.status_label %></p>
+  </header>
+
+  <% if @pet %>
+    <section class="space-y-3 rounded-2xl border border-zinc-200 bg-white p-5">
+      <h2 class="text-xl font-bold">Cuidados para esta mascota</h2>
+      <% @pet.behavioral_alerts.each do |alert| %>
+        <span class="inline-block rounded-full bg-amber-100 px-3 py-1 text-sm font-bold"><%= Pet::BEHAVIORAL_ALERTS[alert] %></span>
+      <% end %>
+      <p class="whitespace-pre-wrap"><%= @pet.notes.presence || "Sin cuidados especiales registrados." %></p>
+      <% if @pet.grooming_reference_note.present? %><p class="whitespace-pre-wrap"><strong>Preferencia de corte:</strong> <%= @pet.grooming_reference_note %></p><% end %>
+      <% if @pet.grooming_reference_photo.attached? %>
+        <%= image_tag @pet.grooming_reference_photo, class: "h-40 rounded-xl", alt: "Referencia de corte de #{@pet.name}" %>
+      <% end %>
+      <% if current_user.admin? || current_employee_membership&.can?("can_edit_customers") %>
+        <%= link_to "Actualizar ficha y cuidados", edit_admin_customer_profile_path(@appointment.customer_profile, section: "pets", anchor: "pet_#{@pet.id}"), class: "inline-block font-bold underline" %>
+      <% end %>
+    </section>
+  <% end %>
+
+  <% if policy(@appointment).finalize? && (@appointment.finalizable? || @appointment.completed?) %>
+    <section class="rounded-2xl border border-zinc-200 bg-white p-5">
+      <h2 class="text-xl font-bold"><%= @appointment.completed? ? "Completar atención" : "Finalizar atención" %></h2>
+      <p class="mt-2 text-sm text-zinc-500">La nota y las fotos son opcionales. Podés agregarlas después.</p>
+      <%= form_with url: @appointment.completed? ? save_treatment_admin_appointment_path(@appointment) : finalize_admin_appointment_path(@appointment), method: :patch, multipart: true, class: "mt-4 space-y-4" do %>
+        <%= hidden_field_tag "finalization[outcome]", "completed" %>
+        <div>
+          <%= label_tag "finalization_body", "Nota de esta atención (opcional)", class: "block font-bold" %>
+          <%= text_area_tag "finalization[body]", nil, id: "finalization_body", rows: 3, maxlength: 10000, class: "mt-2 w-full rounded-xl border border-zinc-300 p-3", placeholder: "Qué se hizo y qué conviene recordar para la próxima visita." %>
+        </div>
+        <div>
+          <%= label_tag "finalization_photos", "Fotos (opcional, hasta 3 por turno)", class: "block font-bold" %>
+          <%= file_field_tag "finalization[photos][]", id: "finalization_photos", multiple: true, accept: BookingAttachment::PHOTO_CONTENT_TYPES.join(","), class: "mt-2 block w-full" %>
+        </div>
+        <%= submit_tag @appointment.completed? ? "Agregar información" : "Finalizar", class: "rounded-full bg-zinc-950 px-6 py-3 font-bold text-white" %>
+      <% end %>
+    </section>
+  <% end %>
+
+  <% if policy(@appointment).link_customer? %>
+    <details class="rounded-2xl border border-zinc-200 bg-white p-5" <%= "open" if @matching_customers&.any? %>>
+      <summary class="cursor-pointer font-bold">Vincular a cliente existente<%= " · Hay coincidencias por email" if @matching_customers&.any? %></summary>
+      <p class="mt-3 text-sm text-zinc-500">Verificá el contacto con el cliente antes de cambiar la asociación. Las fichas no se fusionan.</p>
+      <%= form_with url: care_admin_appointment_path(@appointment), method: :get, class: "my-4 flex gap-2" do %>
+        <%= search_field_tag :customer_query, params[:customer_query], placeholder: "Nombre, celular o email", aria: { label: "Buscar cliente para vincular" }, class: "w-full rounded-xl border p-3" %>
+        <%= submit_tag "Buscar", class: "rounded-xl border px-4 font-bold" %>
+      <% end %>
+      <% ([@appointment.customer_profile].compact + Array(@matching_customers)).uniq.each do |customer| %>
+        <div class="my-3 rounded-xl border border-zinc-200 p-3">
+          <p class="font-bold"><%= customer.name %> · <%= customer.phone %> · <%= customer.email %></p>
+          <% if customer.pets.any? %>
+            <%= form_with url: link_customer_admin_appointment_path(@appointment), method: :patch, class: "mt-2 flex flex-wrap gap-3" do %>
+              <%= hidden_field_tag :customer_profile_id, customer.id %>
+              <%= select_tag :pet_id, options_from_collection_for_select(customer.pets, :id, :name), prompt: "Elegí la mascota", required: true, aria: { label: "Mascota de #{customer.name}" }, class: "rounded-xl border p-2" %>
+              <%= submit_tag "Vincular este turno", class: "rounded-xl border px-4 font-bold", data: { turbo_confirm: "¿Confirmás que esta reserva pertenece al cliente y mascota seleccionados?" } %>
+            <% end %>
+          <% else %>
+            <p class="text-sm text-zinc-500">Este cliente todavía no tiene mascotas registradas.</p>
+          <% end %>
+        </div>
+      <% end %>
+    </details>
+  <% end %>
+
+  <section class="space-y-4">
+    <h2 class="text-xl font-bold">Historial de <%= @pet&.name || "la mascota" %></h2>
+    <% Array(@pet_history).each do |visit| %>
+      <article class="space-y-2 rounded-2xl border border-zinc-200 bg-white p-5">
+        <h3 class="font-bold"><%= CustomerDateFormatter.datetime_label(visit.starts_at) %> · <%= visit.service.name %></h3>
+        <p class="text-sm text-zinc-500"><%= visit.status_label %> · <%= visit.employee_membership&.display_name || @business.name %><%= " · Finalizado por #{visit.completed_by.name.presence || visit.completed_by.email_address}" if visit.completed_by %></p>
+        <% visit.booking_notes.each do |note| %>
+          <p class="whitespace-pre-wrap"><%= note.body %></p>
+        <% end %>
+        <div class="flex flex-wrap gap-3">
+          <% visit.booking_attachments.select(&:post_appointment_photo?).each do |attachment| %>
+            <%= image_tag attachment.file, class: "h-32 rounded-xl", alt: "Foto de la atención de #{@pet.name}" if attachment.file.attached? %>
+          <% end %>
+        </div>
+        <%= link_to "Abrir atención", care_admin_appointment_path(visit), class: "text-sm font-bold underline" if visit != @appointment && policy(visit).care? %>
+      </article>
+    <% end %>
+    <%= render "admin/shared/pagination", pagy: @pet_history_pagy, item_name: "atenciones", aria_label: "Historial de la mascota" if @pet_history_pagy %>
+  </section>
+</div>

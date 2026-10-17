@@ -42,7 +42,7 @@
           <% if @confirmation.customer_email.blank? %>
             <div class="mx-auto mt-3 max-w-lg rounded-2xl bg-brand-50 px-4 py-3 text-sm font-semibold leading-6 text-brand-800">
               <p>Guardá este link para consultar el estado de tus turnos:</p>
-              <%= link_to @confirmation.customer_portal_profile_url, @confirmation.customer_portal_profile_url, class: "mt-1 block break-all font-bold underline decoration-brand-300 underline-offset-4 hover:text-brand-950" %>
+              <%= link_to @confirmation.customer_portal_booking_url, @confirmation.customer_portal_booking_url, class: "mt-1 block break-all font-bold underline decoration-brand-300 underline-offset-4 hover:text-brand-950" %>
             </div>
           <% end %>
 

@@ -33,7 +33,8 @@ RSpec.describe "Customer portal bookings", type: :request do
     expect(response.body).to include("Agregar a Google Calendar")
     expect(response.body).to include("Gestionar mis turnos")
     expect(response.body).to include("calendar.google.com/calendar/u/0/r/eventedit")
-    expect(response.body).to include(customer_portal_profile_access_path(business.slug, gmail_customer.customer_portal_short_token))
+    expect(response.body).to include(customer_portal_entry_path(business.slug))
+    expect(response.body).not_to include(gmail_customer.customer_portal_short_token, gmail_customer.customer_portal_token)
     expect(response.body).not_to include("Pedir reprogramación")
     expect(response.body).not_to include("Consultar por teléfono")
 

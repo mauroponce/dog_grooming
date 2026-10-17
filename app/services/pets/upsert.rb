@@ -6,10 +6,11 @@ module Pets
       new(...).call
     end
 
-    def initialize(business:, customer_profile:, pet: nil, attributes: nil, **pet_attributes)
+    def initialize(business:, customer_profile:, pet: nil, attributes: nil, preserve_existing: false, **pet_attributes)
       @business = business
       @customer_profile = customer_profile
       @pet = pet
+      @preserve_existing = preserve_existing
       @attributes = extract_attributes(attributes).merge(extract_attributes(pet_attributes))
     end
 
@@ -18,6 +19,11 @@ module Pets
 
       record = find_or_build_pet
       ensure_pet_belongs_to_scope!(record) if record.persisted?
+      if record.persisted? && @preserve_existing
+        # The selected size is explicitly reconfirmed on every booking.
+        record.update!(pet_size_band: attributes[:pet_size_band]) if attributes[:pet_size_band].present?
+        return record
+      end
       # Selection flows often submit only a pet id. Do not erase profile data
       # already saved for that pet when optional fields are omitted.
       assignable_attributes = attributes.compact_blank
@@ -42,7 +48,9 @@ module Pets
         name = attributes[:name].to_s.squish.presence
         return customer_profile.pets.build if name.blank?
 
-        customer_profile.pets.where("LOWER(name) = ?", name.downcase).first || customer_profile.pets.build
+        matches = customer_profile.pets.where("LOWER(name) = ?", name.downcase).limit(2).to_a
+        # Homonyms need staff selection. Do not choose one pet's history arbitrarily.
+        matches.one? ? matches.first : customer_profile.pets.build
       end
 
       def ensure_customer_profile_belongs_to_business!

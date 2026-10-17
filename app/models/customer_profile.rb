@@ -111,7 +111,7 @@ class CustomerProfile < ApplicationRecord
     end
 
     def normalize_phone
-      self.normalized_phone = PhoneNumber.normalize(phone)
+      self.normalized_phone = PhoneNumber.normalize(phone, area_code: business&.mobile_area_code || "11")
     end
 
     def normalize_email
