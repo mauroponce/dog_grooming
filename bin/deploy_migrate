@@ -17,9 +17,9 @@ while [ "$attempt" -le "$max_attempts" ]; do
     cat "$output_file"
     rm -f "$output_file"
     exit 0
+  else
+    status=$?
   fi
-
-  status=$?
 
   if grep -q "ActiveRecord::ConcurrentMigrationError" "$output_file"; then
     rm -f "$output_file"
