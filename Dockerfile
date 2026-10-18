@@ -51,8 +51,14 @@ COPY . .
 # -j 1 disable parallel compilation to avoid a QEMU bug: https://github.com/rails/bootsnap/issues/495
 RUN bundle exec bootsnap precompile -j 1 app/ lib/
 
-# Precompiling assets for production without requiring secret RAILS_MASTER_KEY
-RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
+# Precompile assets without injecting runtime secrets into the image build.
+# OmniAuth still requires non-empty credentials while Rails boots in production;
+# these build-only placeholders are replaced by real values at container runtime.
+RUN SECRET_KEY_BASE_DUMMY=1 \
+    GOOGLE_CLIENT_ID=assets-precompile-placeholder \
+    GOOGLE_CLIENT_SECRET=assets-precompile-placeholder \
+    ./bin/rails assets:precompile
+
 # Final stage for app image
 FROM base
 
