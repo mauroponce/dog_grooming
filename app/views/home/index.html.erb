@@ -1,792 +1,92 @@
-<% content_for :title, "Cita.pet - Reservas online" %>
+<% content_for :title, "Cita.pet — Más mimos, menos mensajes" %>
 <% content_for :full_width, true %>
 <% content_for :head do %>
-  <meta name="description" content="Publicá tu página de reservas, cobrá señas con Mercado Pago y administrá turnos. 14 días gratis, sin tarjeta.">
-  <meta name="theme-color" content="#ffded4">
-  <meta property="og:title" content="Cita.pet - Reservas online">
-  <meta property="og:description" content="Tu cliente reserva y paga la seña por Mercado Pago automáticamente.">
+  <meta name="description" content="Cita.pet: reservas online, señas y agenda para peluquerías caninas. Probalo gratis durante 14 días.">
+  <meta name="theme-color" content="#f6d2e2">
+  <meta property="og:title" content="Cita.pet — Más mimos, menos mensajes">
+  <meta property="og:description" content="Reservas online, señas y agenda para peluquerías caninas.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://cita.pet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
   <style>
-    [data-landing-page] {
-      color: #0f172a;
-      scroll-behavior: smooth;
-    }
-
-    [data-landing-page] .landing-glass {
-      background: rgba(255, 255, 255, .86);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-    }
-
-    [data-landing-page] .landing-gradient-text {
-      color: #bf482f;
-    }
-
-    [data-landing-page] .landing-hero-grid {
-      position: relative;
-      isolation: isolate;
-      background:
-        radial-gradient(circle at 88% 8%, rgba(255, 222, 212, .13), transparent 30rem),
-        radial-gradient(circle at 7% 78%, rgba(255, 222, 212, .16), transparent 34rem),
-        linear-gradient(180deg, #fcfbfd 0%, #f8f7fb 100%);
-    }
-
-    [data-landing-page] .landing-hero-grid::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      z-index: -1;
-      pointer-events: none;
-      background-image:
-        linear-gradient(rgba(255, 222, 212, .045) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 222, 212, .045) 1px, transparent 1px);
-      background-size: 34px 34px;
-      opacity: .72;
-      -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 1) 78%, rgba(0, 0, 0, 0) 100%);
-      mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 1) 78%, rgba(0, 0, 0, 0) 100%);
-    }
-
-    [data-landing-page] .landing-feature-card {
-      transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease;
-    }
-
-    [data-landing-page] .landing-feature-card:hover {
-      transform: translateY(-5px);
-      border-color: #A63826;
-      box-shadow: 0 22px 58px rgba(255, 222, 212, .10);
-    }
-
-    [data-landing-page] .landing-faq-panel {
-      max-height: 0;
-      overflow: hidden;
-      opacity: 0;
-      transition: max-height .28s ease, opacity .22s ease, padding-top .22s ease;
-    }
-
-    [data-landing-page] .landing-faq-item.is-open .landing-faq-panel {
-      max-height: 240px;
-      opacity: 1;
-      padding-top: .85rem;
-    }
-
-    [data-landing-page] .landing-faq-chevron {
-      transition: transform .22s ease;
-    }
-
-    [data-landing-page] .landing-faq-item.is-open .landing-faq-chevron {
-      transform: rotate(180deg);
-    }
+    .cp-landing{--navy:#182754;--pink:#e58daf;--cream:#fbf7ed;--mint:#c7e9db;--lilac:#e3d8f6;--text:#5d6278;min-height:100vh;padding:40px 0 56px;color:var(--navy);background:#f5cfe3;font:500 16px/1.55 "DM Sans",sans-serif;position:relative;isolation:isolate;overflow:hidden;-webkit-font-smoothing:antialiased}
+    .cp-landing *{box-sizing:border-box}.cp-landing a{color:inherit;text-decoration:none}.cp-landing button,.cp-landing input,.cp-landing select,.cp-landing textarea{font:inherit}.cp-landing button{cursor:pointer}.cp-landing h1,.cp-landing h2,.cp-landing h3,.cp-landing p{margin-top:0}.cp-landing h1,.cp-landing h2,.cp-landing h3{font-family:"Nunito",sans-serif;letter-spacing:-.042em}.cp-landing section{scroll-margin-top:30px}.cp-landing a:focus-visible,.cp-landing button:focus-visible,.cp-landing summary:focus-visible,.cp-landing input:focus-visible,.cp-landing select:focus-visible,.cp-landing textarea:focus-visible{outline:3px solid #ce80b3;outline-offset:4px}
+    .cp-icon{width:22px;height:22px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.cp-icon-fill{fill:currentColor;stroke:none}.cp-defs{position:absolute;width:0;height:0;overflow:hidden}.cp-ambient{position:absolute;inset:0;z-index:-1;width:100%;height:100%;pointer-events:none;opacity:.8}.cp-page{width:min(1200px,calc(100% - 80px));margin:auto;overflow:hidden;border-radius:34px;background:#fff;box-shadow:0 40px 90px rgba(65,26,67,.13)}
+    .cp-header{min-height:93px;display:flex;align-items:center;gap:25px;padding:0 64px;background:var(--cream);position:relative;z-index:20}.cp-brand{display:inline-flex;align-items:center;gap:9px;white-space:nowrap}.cp-brand-mark{width:42px;height:42px;display:grid;place-items:center;border-radius:14px;background:#f7d8e6;transform:rotate(-9deg)}.cp-brand-mark .cp-icon{width:26px;height:26px;transform:rotate(9deg)}.cp-brand-text{font:900 24px/1 "Nunito",sans-serif;letter-spacing:-1.1px}.cp-brand-text span{color:var(--pink)}.cp-nav{display:flex;align-items:center;gap:29px;margin:auto}.cp-nav a,.cp-login{font:800 12px/1.2 "Nunito",sans-serif;white-space:nowrap}.cp-nav a:hover,.cp-login:hover,.cp-footer-links a:hover{color:#d276a2}.cp-header-actions{display:flex;align-items:center;gap:20px}.cp-menu-button{display:none;width:43px;height:43px;align-items:center;justify-content:center;border:0;border-radius:13px;color:var(--navy);background:#fff}.cp-mobile-menu{display:none}
+    .cp-btn{min-height:47px;display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:13px 24px;border:1px solid transparent;border-radius:999px;font:900 13px/1.2 "Nunito",sans-serif;white-space:nowrap;transition:.2s}.cp-btn:hover{transform:translateY(-2px)}.cp-btn .cp-icon{width:16px;height:16px}.cp-btn-dark{color:#fff!important;background:var(--navy);box-shadow:0 10px 20px rgba(24,39,84,.12)}.cp-btn-dark:hover{background:#304074}.cp-btn-light{border-color:#dedee6;background:#fff}.cp-btn-light:hover{background:#fcf0f5}.cp-btn-pink{background:#ffc9db}.cp-btn-pink:hover{background:#ffb4cf}.cp-header .cp-btn{min-height:40px;padding:11px 21px}
+    .cp-hero{min-height:619px;display:grid;grid-template-columns:54% 46%;padding:64px 63px 118px;background:var(--cream);position:relative;isolation:isolate}.cp-hero-copy{padding-top:22px;position:relative;z-index:3}.cp-eyebrow{display:inline-flex;align-items:center;gap:8px;color:#d479a1;text-transform:uppercase;letter-spacing:2.1px;font:900 10px/1.4 "Nunito",sans-serif}.cp-eyebrow .cp-icon{width:16px;height:16px}.cp-hero h1{max-width:595px;margin:22px 0 24px;font-size:clamp(49px,5.1vw,72px);line-height:1.02;font-weight:900}.cp-hero h1 span{color:var(--pink)}.cp-intro{max-width:450px;margin-bottom:24px;color:var(--text);font-size:15px;line-height:1.82}.cp-hero-ctas,.cp-hero-note{display:flex;align-items:center;flex-wrap:wrap}.cp-hero-ctas{gap:11px}.cp-hero-note{gap:9px 14px;margin-top:23px;color:#7c8193;font-size:11px;font-weight:700}.cp-hero-note span{display:inline-flex;align-items:center;gap:4px}.cp-hero-note .cp-icon{width:13px;height:13px;color:#4f9d81;stroke-width:2.8}
+    .cp-hero-visual{min-height:462px;position:relative;z-index:2}.cp-blob{width:455px;height:410px;position:absolute;right:-42px;top:1px;border-radius:51% 49% 56% 44%/46% 44% 56% 54%;background:var(--mint);transform:rotate(-14deg)}.cp-blob:before{content:"";width:80px;height:80px;position:absolute;right:39px;top:17px;border-radius:50%;background:#ecbad0}.cp-hero-photo{width:388px;height:386px;position:absolute;right:10px;top:28px;overflow:hidden;border:9px solid rgba(255,255,255,.82);border-radius:48% 52% 46% 54%/52% 44% 56% 48%;background:#f4d0dc;transform:rotate(5deg);box-shadow:0 23px 55px rgba(28,55,65,.11)}.cp-hero-photo img{width:100%;height:100%;object-fit:cover;transform:scale(1.045) rotate(-5deg)}.cp-paw-doodle{position:absolute;right:-38px;top:17px;color:#f6bed3;opacity:.8;transform:rotate(18deg)}.cp-paw-doodle .cp-icon{width:94px;height:94px}.cp-float{display:flex;align-items:center;gap:11px;position:absolute;z-index:4;padding:12px 16px;border-radius:17px;background:#fff;box-shadow:0 15px 35px rgba(34,31,52,.12)}.cp-float strong{display:block;font:900 12px "Nunito",sans-serif}.cp-float small{display:block;margin-top:2px;color:#7b8090;font-size:10px;white-space:nowrap}.cp-float-proof{top:34px;left:-51px;transform:rotate(6deg)}.cp-float-booking{bottom:13px;left:-35px;transform:rotate(-4deg)}.cp-float-icon{width:38px;height:38px;display:grid;place-items:center;border-radius:12px;color:#2d9970;background:#def3e8}.cp-float-proof .cp-float-icon{color:#df6d9f;background:#ffe4ee}.cp-float-icon .cp-icon{width:20px;height:20px}
+    .cp-quick{position:absolute;left:64px;right:64px;bottom:-56px;z-index:5;display:grid;grid-template-columns:repeat(3,1fr);padding:18px 20px;border-radius:19px;background:#fff;box-shadow:0 14px 35px rgba(30,35,55,.12)}.cp-quick-item{display:flex;align-items:center;gap:12px;padding:7px 22px}.cp-quick-item+.cp-quick-item{border-left:1px solid #eeeaf0}.cp-quick-icon{width:52px;height:52px;display:grid;place-items:center;flex:none;border-radius:17px;background:#fbe0ea}.cp-quick-item:nth-child(2) .cp-quick-icon{background:#d9f3e8}.cp-quick-item:nth-child(3) .cp-quick-icon{background:var(--lilac)}.cp-quick-item strong{display:block;font:900 14px/1.2 "Nunito",sans-serif}.cp-quick-item small{display:block;margin-top:3px;color:#818397;font-size:11px;line-height:1.4}
+    .cp-section-label{color:#db86aa;font:900 10px "Nunito",sans-serif;text-transform:uppercase;letter-spacing:2px}.cp-landing h2{font-size:clamp(34px,3.5vw,46px);font-weight:900;line-height:1.14}.cp-description{color:var(--text);font-size:14px;line-height:1.85}.cp-booking{display:grid;grid-template-columns:.93fr 1.07fr;align-items:center;gap:58px;padding:155px 78px 102px}.cp-booking-copy h2{max-width:420px;margin:16px 0 18px}.cp-booking-copy>.cp-description{max-width:400px}.cp-steps{display:grid;gap:19px;margin:27px 0 30px}.cp-step{display:flex;gap:15px}.cp-step-number{width:34px;height:34px;display:grid;place-items:center;flex:none;border:1px solid #f1cfdf;border-radius:50%;color:#d4779e;background:#fff1f7;font:900 13px "Nunito",sans-serif}.cp-step strong{font:900 13px "Nunito",sans-serif}.cp-step p{margin:3px 0 0;color:#73798b;font-size:12px}.cp-text-link{display:inline-flex;align-items:center;gap:10px;padding-bottom:6px;border-bottom:2px solid #efabc9;font:900 13px "Nunito",sans-serif}
+    .cp-browser-wrap{position:relative}.cp-browser-wrap:before{content:"";width:125px;height:125px;position:absolute;right:-32px;top:-28px;border-radius:44% 56% 36% 64%;background:#d8f1e9;transform:rotate(30deg)}.cp-browser{position:relative;overflow:hidden;border:1px solid #ebe7ea;border-radius:23px;background:#fff;box-shadow:0 20px 55px rgba(32,39,77,.13);transform:rotate(1.2deg)}.cp-browser-top{height:45px;display:flex;align-items:center;gap:5px;padding:0 16px;border-bottom:1px solid #ece9e9;background:#f9f7f7}.cp-browser-top i{width:8px;height:8px;border-radius:50%;background:#eeadb9}.cp-browser-top i:nth-child(2){background:#f6d895}.cp-browser-top i:nth-child(3){background:#abdbc6}.cp-browser-address{margin:auto;padding:5px 12px;border:1px solid #efedee;border-radius:7px;background:#fff;color:#80839a;font:700 10px "Nunito",sans-serif}.cp-browser-content{padding:24px 28px 30px;background:linear-gradient(135deg,#fffdfa,#fffbfc)}.cp-business{display:flex;align-items:center;gap:10px;padding-bottom:19px;border-bottom:1px solid #eee9e9}.cp-shop{width:37px;height:37px;display:grid;place-items:center;border-radius:11px;color:#d06a99;background:#f7d8e5}.cp-business strong{display:block;font:900 14px "Nunito",sans-serif}.cp-business small,.cp-service small{display:block;color:#8c8a95;font-size:10px}.cp-tag{margin-left:auto;padding:6px 8px;border-radius:99px;color:#579a79;background:#eef8f2;font-size:9px;font-weight:800}.cp-browser h3{margin:19px 0 10px;font:900 19px "Nunito",sans-serif}.cp-service{display:flex;align-items:center;gap:12px;padding:11px;border:1px solid #eee5e9;border-radius:14px;background:#fff}.cp-service-emoji{width:52px;height:51px;display:grid;place-items:center;border-radius:11px;background:#e8f3e7;font-size:25px}.cp-service strong{display:block;font:900 12px "Nunito",sans-serif}.cp-service-meta{margin-left:auto;text-align:right}.cp-demo-label{margin:19px 0 9px;font:900 12px "Nunito",sans-serif}.cp-days,.cp-times{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.cp-day,.cp-time{padding:8px 3px;border:1px solid #e9e5e9;border-radius:11px;color:#5c6177;background:#fff;font-size:11px;text-align:center}.cp-day span{display:block;font:900 16px "Nunito",sans-serif}.cp-day.is-selected,.cp-time.is-selected{border-color:#eca4c1;background:#f6d9e6;font-weight:900}.cp-demo-bottom{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:23px}.cp-demo-bottom small{display:block;color:#9798a6;font-size:9px}.cp-demo-bottom strong{font:900 12px "Nunito",sans-serif}.cp-demo-bottom .cp-btn{min-height:38px;padding:9px 15px;font-size:11px}
+    .cp-features,.cp-faq{padding:82px 65px 88px;background:#faf6ef}.cp-heading{max-width:580px;margin:0 auto 42px;text-align:center}.cp-heading h2{margin:12px 0 13px}.cp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.cp-feature{min-height:185px;padding:26px 24px;border-radius:20px;background:#fff;transition:.2s}.cp-feature:hover{transform:translateY(-3px);box-shadow:0 15px 25px rgba(31,31,57,.07)}.cp-feature-icon{width:48px;height:48px;display:grid;place-items:center;margin-bottom:16px;border-radius:16px;color:#4d8e7b;background:#e1f4e9}.cp-feature:nth-child(2) .cp-feature-icon,.cp-feature:nth-child(5) .cp-feature-icon{color:#d477a1;background:#ffebf1}.cp-feature:nth-child(3) .cp-feature-icon,.cp-feature:nth-child(6) .cp-feature-icon{color:#8b76b6;background:#f0eaf9}.cp-feature h3{margin:0 0 6px;font:900 16px "Nunito",sans-serif}.cp-feature p{margin:0;color:#7e8290;font-size:12px}
+    .cp-story{display:grid;grid-template-columns:43% 57%;align-items:center;gap:22px;padding:85px 90px}.cp-story-visual{height:310px;position:relative}.cp-story-visual:before{content:"";width:300px;height:300px;position:absolute;left:16px;top:1px;border-radius:52% 48% 56% 44%;background:#f7c7d7;transform:rotate(14deg)}.cp-story-img{width:268px;height:268px;position:absolute;left:32px;top:18px;border:8px solid #fff;border-radius:50%;object-fit:cover;box-shadow:0 12px 26px rgba(67,38,68,.07)}.cp-story-copy h2{max-width:450px;margin:15px 0}.cp-story-copy .cp-description{max-width:460px}.cp-pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}.cp-pills span{padding:8px 11px;border:1px solid #e9e7e8;border-radius:50px;font:800 11px "Nunito",sans-serif}
+    .cp-plans{padding:65px 75px 94px;background:#fffbfc}.cp-plans-top{display:flex;align-items:flex-end;justify-content:space-between;gap:30px;margin-bottom:26px}.cp-plans-top h2{max-width:480px;margin:10px 0 0}.cp-plans-top p{max-width:295px;margin:0}.cp-plans-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}.cp-plan{display:flex;flex-direction:column;padding:30px;border:1px solid #eadfe6;border-radius:23px;background:#fff}.cp-plan-pro{border-color:var(--navy);color:#fff;background:var(--navy)}.cp-plan-label{color:#da8eaa;text-transform:uppercase;letter-spacing:1.6px;font:900 11px "Nunito",sans-serif}.cp-plan-price{margin:8px 0;font:900 39px "Nunito",sans-serif}.cp-plan-price small{color:#828699;font-size:12px}.cp-plan-pro .cp-plan-price small,.cp-plan-pro .cp-plan-description{color:#d2d7e9}.cp-plan-description{color:#74798e;font-size:12px}.cp-benefits{display:grid;gap:9px;flex:1;margin:0;padding:17px 0 23px;border-top:1px solid #efe8ed;list-style:none}.cp-benefits li{display:flex;align-items:center;gap:9px;font-size:12px;font-weight:700}.cp-benefits .cp-icon{width:15px;height:15px;color:#40aa81;stroke-width:2.6}.cp-plan .cp-btn{width:100%}.cp-disclaimer{margin:17px 0 0;color:#8b8a97;font-size:11px;text-align:center}
+    .cp-faq .cp-heading{text-align:left;margin:0 0 34px}.cp-faq-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.cp-faq details{padding:4px 20px;border:1px solid #eee5e9;border-radius:17px;background:#fff}.cp-faq summary{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:15px 0;cursor:pointer;list-style:none;font:900 13px "Nunito",sans-serif}.cp-faq summary::-webkit-details-marker{display:none}.cp-faq summary:after{content:"+";width:25px;height:25px;display:grid;place-items:center;flex:none;border-radius:50%;color:#d4779e;background:#fff1f7;font-size:17px}.cp-faq details[open] summary:after{content:"−"}.cp-faq details p{margin:0 0 17px;color:#73798b;font-size:12px}
+    .cp-contact{display:grid;grid-template-columns:.85fr 1.15fr;align-items:center;gap:48px;padding:68px 78px;color:#fff;background:var(--navy);position:relative}.cp-contact h2{margin:10px 0 14px;color:#fff}.cp-contact-copy>p{color:#cad1e3;font-size:13px}.cp-contact .cp-section-label{color:#f4bdd4}.cp-trial{display:flex;flex-wrap:wrap;gap:9px 14px;margin:22px 0 26px;color:#bec5dc;font-size:11px;font-weight:700}.cp-trial span{display:flex;align-items:center;gap:5px}.cp-trial .cp-icon{width:13px;height:13px;color:#a6e5cb}.cp-contact-card{padding:24px;border-radius:22px;color:var(--navy);background:#fff;box-shadow:0 23px 64px rgba(8,15,43,.24)}.cp-contact-card h3{margin:0 0 6px;font:900 18px "Nunito",sans-serif}.cp-contact-card>p{margin-bottom:18px;color:#74798e;font-size:12px}.cp-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}.cp-field-full{grid-column:1/-1}.cp-field label{display:block;margin-bottom:5px;font:800 11px "Nunito",sans-serif}.cp-field input,.cp-field select,.cp-field textarea{width:100%;border:1px solid #e6e2e6;border-radius:12px;color:var(--navy);background:#fffdfd;font-size:12px}.cp-field input,.cp-field select{height:43px;padding:0 12px}.cp-field textarea{min-height:86px;padding:11px 12px}.cp-contact-card .cp-btn{width:100%;margin-top:14px}.cp-form-status{margin:12px 0 0;padding:10px;border-radius:11px;font-size:11px;font-weight:800}.cp-form-status[hidden]{display:none}.cp-success{color:#2c785d;background:#e8f6f0}.cp-error{color:#a44664;background:#fff0f4}
+    .cp-footer{display:flex;align-items:center;justify-content:space-between;gap:25px;padding:34px 64px}.cp-footer .cp-brand-mark{width:35px;height:35px}.cp-footer small{display:block;margin-top:7px;color:#9193a2;font-size:11px}.cp-footer-links{display:flex;flex-wrap:wrap;gap:23px;font:800 11px "Nunito",sans-serif}
+    @media(max-width:840px){.cp-landing{padding:14px 0 28px}.cp-page{width:calc(100% - 28px)}.cp-header{min-height:78px;padding:0 31px}.cp-nav,.cp-header-actions{display:none}.cp-menu-button{display:flex;margin-left:auto}.cp-mobile-menu{position:absolute;left:0;right:0;top:78px;padding:15px 30px 25px;background:#fff;box-shadow:0 25px 35px rgba(27,31,64,.09)}.cp-mobile-menu.is-open{display:grid;gap:9px}.cp-mobile-menu a{padding:10px 5px;font:900 13px "Nunito",sans-serif}.cp-hero{display:flex;flex-direction:column;padding:47px 44px 0}.cp-hero-copy{padding:0}.cp-hero-visual{height:425px;min-height:425px}.cp-blob{right:10%}.cp-hero-photo{right:14%;width:345px;height:345px}.cp-float-proof{left:18%}.cp-float-booking{left:23%}.cp-quick{position:relative;left:auto;right:auto;bottom:auto;margin:4px -14px -48px}.cp-booking{grid-template-columns:1fr;padding:116px 55px 85px}.cp-grid{grid-template-columns:1fr 1fr}.cp-story{padding:75px 55px;grid-template-columns:42% 58%}.cp-story-visual{transform:scale(.82);transform-origin:left}.cp-faq-grid{grid-template-columns:1fr}.cp-contact{grid-template-columns:1fr;padding:60px 55px}}
+    @media(max-width:580px){.cp-landing{padding:7px 0 13px}.cp-page{width:calc(100% - 14px);border-radius:22px}.cp-header{min-height:72px;padding:0 21px}.cp-mobile-menu{top:72px}.cp-hero{padding:39px 23px 0}.cp-hero h1{font-size:clamp(42px,11.3vw,58px)}.cp-hero-visual{height:360px;min-height:360px}.cp-blob{width:340px;height:320px;right:-38px}.cp-hero-photo{width:280px;height:280px;right:1%}.cp-float{padding:9px 11px}.cp-float-proof{left:-1%;top:7px}.cp-float-booking{left:0;bottom:12px}.cp-paw-doodle{right:-7%}.cp-quick{grid-template-columns:1fr;margin:3px 0 -44px;padding:7px 15px}.cp-quick-item{padding:9px 0}.cp-quick-item+.cp-quick-item{border-left:0;border-top:1px solid #efecf1}.cp-booking{padding:106px 23px 69px}.cp-browser{transform:none}.cp-browser-content{padding:17px 15px}.cp-grid{gap:9px}.cp-features,.cp-faq{padding:64px 22px 72px}.cp-feature{min-height:180px;padding:19px 14px}.cp-story{display:flex;flex-direction:column;padding:46px 23px 70px}.cp-story-visual{width:300px;height:276px;margin:auto;transform:none}.cp-story-visual:before{width:272px;height:260px;left:9px}.cp-story-img{width:242px;height:242px;left:23px;top:12px}.cp-plans{padding:60px 23px 75px}.cp-plans-top{display:block}.cp-plans-grid{grid-template-columns:1fr}.cp-contact{padding:55px 23px}.cp-fields{grid-template-columns:1fr}.cp-field-full{grid-column:auto}.cp-footer{align-items:flex-start;flex-direction:column;padding:30px 23px}}
+    @media(prefers-reduced-motion:reduce){.cp-landing *{transition:none!important}}
   </style>
 <% end %>
 
-<%
-  landing_icons = {
-    calendar: '<path d="M7 3v3M17 3v3M4.5 9.5h15"/><path d="M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/><path d="m9 14 2 2 4-4"/>',
-    calendar_range: '<path d="M7 3v3M17 3v3M4 9h16"/><path d="M6 5h12a2 2 0 0 1 2 2v12H4V7a2 2 0 0 1 2-2Z"/><path d="M8 14h3M14 14h2M8 17h2"/>',
-    calendar_search: '<path d="M7 3v3M17 3v3M4 9h16"/><rect x="4" y="5" width="16" height="16" rx="2"/><circle cx="11" cy="14" r="2.5"/><path d="m13 16 2.5 2.5"/>',
-    calendar_sync: '<path d="M7 3v3M17 3v3M4 9h16"/><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M10 14a3 3 0 0 1 5-2.2l1 .9"/><path d="M16 10v2.7h-2.7"/><path d="M14 17a3 3 0 0 1-5 2.2l-1-.9"/><path d="M8 21v-2.7h2.7"/>',
-    menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
-    arrow_right: '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
-    chevron_down: '<path d="m6 9 6 6 6-6"/>',
-    sparkles: '<path d="m12 3 1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3Z"/><path d="m19 16 .8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8L19 16Z"/>',
-    message_off: '<path d="M4 5h16v11H8l-4 4V5Z"/><path d="m8 8 8 5M16 8l-8 5"/>',
-    message_more: '<path d="M4 5h16v11H8l-4 4V5Z"/><path d="M8 11h.01M12 11h.01M16 11h.01"/>',
-    dollar: '<circle cx="12" cy="12" r="9"/><path d="M12 6v12M15 8.5c-.8-.7-2.2-1-3.2-.7-1.2.3-1.8 1.1-1.8 2 0 1.1 1 1.6 2.8 2.1 1.8.5 2.7 1.1 2.7 2.4 0 1.4-1.2 2.3-3.1 2.3-1.3 0-2.5-.4-3.4-1.2"/>',
-    bot: '<path d="M12 8V4"/><rect x="5" y="8" width="14" height="11" rx="3"/><path d="M8.5 13h.01M15.5 13h.01M9 17h6"/>',
-    badge_check: '<path d="M12 3 14.7 5.1 18 5.6l.5 3.3L21 12l-2.5 3.1L18 18.4l-3.3.5L12 21l-2.7-2.1-3.3-.5-.5-3.3L3 12l2.5-3.1L6 5.6l3.3-.5L12 3Z"/><path d="m8.7 12.2 2.1 2.1 4.7-4.8"/>',
-    workflow: '<circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="12" cy="18" r="2.5"/><path d="M8.3 7.3 11 10a4 4 0 0 1 1 2.8V15M15.7 7.3 13 10a4 4 0 0 0-1 2.8V15"/>',
-    wallet: '<path d="M4 7a2 2 0 0 1 2-2h12v14H6a2 2 0 0 1-2-2V7Z"/><path d="M4 8h14a2 2 0 0 1 2 2v7"/><path d="M16 13h.01"/>',
-    user: '<path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="8" r="4"/>',
-    users_round: '<path d="M16 21a6 6 0 0 0-12 0"/><circle cx="10" cy="8" r="4"/><path d="M22 21a5 5 0 0 0-4-4.9"/><path d="M18 4.2a4 4 0 0 1 0 7.6"/>',
-    chart_up: '<path d="M3 3v18h18"/><path d="m7 14 4-4 3 3 5-6"/><path d="M19 7v5h-5"/>',
-    repeat_2: '<path d="m17 2 4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15"/><path d="m7 22-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/>',
-    check_circle: '<circle cx="12" cy="12" r="9"/><path d="m8.5 12.5 2.5 2.5 5-6"/>',
-    check: '<path d="m5 12 4 4L19 6"/>',
-    scan: '<path d="M7 3H5a2 2 0 0 0-2 2v2M17 3h2a2 2 0 0 1 2 2v2M7 21H5a2 2 0 0 1-2-2v-2M17 21h2a2 2 0 0 0 2-2v-2"/><circle cx="11" cy="11" r="3"/><path d="m15 15 3 3"/>',
-    wand: '<path d="M15 4 20 9"/><path d="M14 5 5 14a2 2 0 0 0 0 3l2 2a2 2 0 0 0 3 0l9-9"/><path d="M6 4v3M4.5 5.5h3M19 16v3M17.5 17.5h3"/>',
-    calendar_heart: '<path d="M7 3v3M17 3v3M4 9h16"/><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M12 17s-3-1.7-3-3.6A1.8 1.8 0 0 1 12 12a1.8 1.8 0 0 1 3 1.4c0 1.9-3 3.6-3 3.6Z"/>',
-    mail_check: '<path d="M4 6h16v12H4z"/><path d="m4 7 8 6 8-6"/><path d="m9 15 1.6 1.6L14 13"/>',
-    history: '<path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 7v5l3 2"/>',
-    instagram: '<rect x="4" y="4" width="16" height="16" rx="5"/><circle cx="12" cy="12" r="3.2"/><path d="M17 7.2h.01"/>'
-  }
+<% basic_plan = Subscription::PLANS.fetch("basic") %>
+<% pro_plan = Subscription::PLANS.fetch("pro") %>
+<% price = ->(plan) { number_to_currency(plan.fetch(:amount_cents) / 100, unit: "$", precision: 0, delimiter: ".") } %>
 
-  landing_icon = lambda do |name, classes: "h-5 w-5"|
-    raw(%(<svg viewBox="0 0 24 24" class="#{classes}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">#{landing_icons.fetch(name)}</svg>))
-  end
-%>
+<div class="cp-landing" data-landing-page>
+  <svg class="cp-defs" aria-hidden="true">
+    <symbol id="cp-paw" viewBox="0 0 24 24"><ellipse cx="5.3" cy="8.3" rx="1.85" ry="2.8"/><ellipse cx="10" cy="5.4" rx="1.85" ry="2.8"/><ellipse cx="15.7" cy="5.5" rx="1.85" ry="2.8"/><ellipse cx="20" cy="8.6" rx="1.65" ry="2.6"/><path d="M7 15c1.2-2 2.6-4 5-4s4 2 5 4 2 2.5 2 3.7c0 1.8-1.4 3-3.2 3-1.6 0-2.2-.8-3.8-.8s-2.5.8-4.2.8c-1.8 0-3-1.3-3-2.9 0-1.3.8-2.4 2.2-3.8z"/></symbol>
+    <symbol id="cp-arrow" viewBox="0 0 24 24"><path d="M4 12h16m-6-6 6 6-6 6"/></symbol><symbol id="cp-check" viewBox="0 0 24 24"><path d="m5 12 4.5 4.5L19 7"/></symbol><symbol id="cp-calendar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="16" rx="2"/><path d="M7.5 3v4M16.5 3v4M3.5 10h17m-12 4h3m-3 3h6"/></symbol><symbol id="cp-link" viewBox="0 0 24 24"><path d="M9.5 14.5a5 5 0 0 0 7.1 0l2-2a5 5 0 0 0-7.1-7.1l-1 1M14.5 9.5a5 5 0 0 0-7.1 0l-2 2a5 5 0 0 0 7.1 7.1l1-1"/></symbol><symbol id="cp-card" viewBox="0 0 24 24"><rect x="2.5" y="5.5" width="19" height="13" rx="2.5"/><path d="M2.5 10h19M6.5 15h4"/></symbol><symbol id="cp-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol><symbol id="cp-scissors" viewBox="0 0 24 24"><circle cx="5.8" cy="7" r="3.2"/><circle cx="5.8" cy="17" r="3.2"/><path d="M8.4 9 20 20M8.4 15 20 4"/></symbol><symbol id="cp-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20a6 6 0 0 1 12 0M17 5a3 3 0 0 1 0 6M16 14a6 6 0 0 1 5 6"/></symbol><symbol id="cp-heart" viewBox="0 0 24 24"><path d="M20.5 5.5a5.3 5.3 0 0 0-7.5 0L12 6.6l-1.1-1.1a5.3 5.3 0 0 0-7.4 7.5L12 21l8.5-8a5.3 5.3 0 0 0 0-7.5Z"/></symbol><symbol id="cp-upload" viewBox="0 0 24 24"><path d="M12 16V4m-5 5 5-5 5 5M5 14v5h14v-5"/></symbol><symbol id="cp-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol><symbol id="cp-close" viewBox="0 0 24 24"><path d="m5 5 14 14M19 5 5 19"/></symbol>
+  </svg>
+  <svg class="cp-ambient" viewBox="0 0 1500 1500" preserveAspectRatio="none" aria-hidden="true"><g fill="none" stroke="white" opacity=".77"><path d="M-60 360C60 58 268 106 330 59S545 29 487 162s-29 159 134 96 220-143 309-135 111 170 16 235-9 184 170 68 250-25 274 67"/><path d="M-70 1055C170 780 285 1014 345 1244s191 148 255-55 135-282 238-123 208 246 336 69"/></g></svg>
 
-<div data-landing-page class="min-h-screen bg-[#fbfafc] text-slate-900 antialiased">
-  <header class="landing-glass sticky top-0 z-50 border-b border-white/80">
-    <div class="mx-auto flex h-[74px] max-w-7xl items-center gap-4 px-4 sm:px-6 lg:px-8">
-      <a href="#inicio" class="flex items-center gap-3" aria-label="Cita.pet">
-        <span class="block h-11 w-11 overflow-hidden rounded-2xl shadow-lg shadow-brand-600/25">
-          <%= image_tag "/icon.png?v=4", alt: "", class: "h-full w-full object-cover" %>
-        </span>
-        <span>
-          <span class="block text-[17px] font-bold tracking-tight">Cita.pet</span>
-          <span class="block text-[10px] font-bold text-brand-700">Reservas online para peluquerías</span>
-        </span>
-      </a>
+  <div class="cp-page">
+    <header class="cp-header">
+      <a class="cp-brand" href="#inicio" aria-label="Cita.pet, ir al inicio"><span class="cp-brand-mark"><svg class="cp-icon cp-icon-fill"><use href="#cp-paw"/></svg></span><span class="cp-brand-text">Cita<span>.</span>pet</span></a>
+      <nav class="cp-nav" aria-label="Navegación principal"><a href="#como-funciona">Cómo funciona</a><a href="#funciones">Funciones</a><a href="#planes">Planes</a><a href="#contacto">Contacto</a></nav>
+      <div class="cp-header-actions"><%= link_to "Ingresar", new_session_path, class: "cp-login" %><%= link_to registro_path, class: "cp-btn cp-btn-dark" do %>Empezar gratis <svg class="cp-icon"><use href="#cp-arrow"/></svg><% end %></div>
+      <button class="cp-menu-button" id="cpMenuButton" type="button" aria-expanded="false" aria-controls="cpMobileMenu" aria-label="Abrir menú"><svg class="cp-icon" id="cpMenuIcon"><use href="#cp-menu"/></svg></button>
+      <nav class="cp-mobile-menu" id="cpMobileMenu" aria-label="Menú móvil"><a href="#como-funciona">Cómo funciona</a><a href="#funciones">Funciones</a><a href="#planes">Planes</a><a href="#contacto">Contacto</a><%= link_to "Ingresar", new_session_path %><%= link_to "Empezar 14 días gratis", registro_path, class: "cp-btn cp-btn-dark" %></nav>
+    </header>
 
-      <nav class="mx-auto hidden items-center gap-7 text-sm font-bold text-slate-500 lg:flex">
-        <a href="#que-resuelve" class="transition hover:text-brand-700">El recorrido</a>
-        <a href="#como-funciona" class="transition hover:text-brand-700">Cómo funciona</a>
-        <a href="#ia" class="transition hover:text-brand-700">Automatización</a>
-        <a href="#precio" class="transition hover:text-brand-700">Precio</a>
-        <a href="#preguntas" class="transition hover:text-brand-700">Preguntas</a>
-      </nav>
+    <main>
+      <section class="cp-hero" id="inicio">
+        <div class="cp-hero-copy"><span class="cp-eyebrow"><svg class="cp-icon cp-icon-fill"><use href="#cp-paw"/></svg> Para peluquerías caninas</span><h1>Más mimos.<br><span>Menos mensajes.</span><br>Más turnos.</h1><p class="cp-intro">Tus clientes reservan online y envían el comprobante de la seña. Vos atendés a las mascotas, con toda la agenda organizada en un solo lugar.</p><div class="cp-hero-ctas"><%= link_to registro_path, class: "cp-btn cp-btn-dark" do %>Empezar 14 días gratis <svg class="cp-icon"><use href="#cp-arrow"/></svg><% end %><a class="cp-btn cp-btn-light" href="#como-funciona">Ver cómo funciona</a></div><div class="cp-hero-note"><span><svg class="cp-icon"><use href="#cp-check"/></svg> Sin tarjeta</span><span><svg class="cp-icon"><use href="#cp-check"/></svg> Tu propio link</span><span><svg class="cp-icon"><use href="#cp-check"/></svg> Sin conectar WhatsApp</span></div></div>
+        <div class="cp-hero-visual" aria-label="Perrito y ejemplo de una reserva recibida"><div class="cp-blob"></div><div class="cp-hero-photo"><img src="https://images.unsplash.com/photo-1638292857210-e8cbb0e58316?w=1000&auto=format&fit=crop&q=85" alt="Perrito caniche marrón" width="388" height="388" fetchpriority="high"></div><div class="cp-paw-doodle"><svg class="cp-icon cp-icon-fill"><use href="#cp-paw"/></svg></div><div class="cp-float cp-float-proof"><span class="cp-float-icon"><svg class="cp-icon"><use href="#cp-upload"/></svg></span><span><strong>Comprobante recibido</strong><small>Listo para revisar</small></span></div><div class="cp-float cp-float-booking"><span class="cp-float-icon"><svg class="cp-icon"><use href="#cp-calendar"/></svg></span><span><strong>¡Nuevo turno!</strong><small>Lola · Baño + corte · 11:30</small></span></div></div>
+        <div class="cp-quick"><div class="cp-quick-item"><span class="cp-quick-icon"><svg class="cp-icon"><use href="#cp-link"/></svg></span><span><strong>Tu propio enlace</strong><small>Compartilo en Instagram o WhatsApp.</small></span></div><div class="cp-quick-item"><span class="cp-quick-icon"><svg class="cp-icon"><use href="#cp-clock"/></svg></span><span><strong>Reservas 24/7</strong><small>Incluso cuando estás atendiendo.</small></span></div><div class="cp-quick-item"><span class="cp-quick-icon"><svg class="cp-icon"><use href="#cp-card"/></svg></span><span><strong>Señas ordenadas</strong><small>Revisá cada transferencia.</small></span></div></div>
+      </section>
 
-      <div class="ml-auto hidden items-center gap-2 sm:flex">
-        <%= link_to "Acceso", new_session_path, class: "rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm hover:border-brand-200 hover:text-brand-700" %>
-        <a href="#contacto" class="rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm hover:border-brand-200 hover:text-brand-700">
-          Contacto
-        </a>
-        <%= link_to "Empezar prueba", registro_path, class: "rounded-2xl bg-slate-950 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-slate-950/15 transition hover:-translate-y-0.5 hover:bg-brand-700" %>
-      </div>
+      <section class="cp-booking" id="como-funciona">
+        <div class="cp-booking-copy"><span class="cp-section-label">Así de simple</span><h2>De tu link a la agenda, sin idas y vueltas.</h2><p class="cp-description">Tus clientes reservan sin crear una cuenta. Y vos tenés todo listo para organizar tu día.</p><div class="cp-steps"><div class="cp-step"><span class="cp-step-number">01</span><div><strong>Compartís tu link</strong><p>En Instagram, WhatsApp Business o donde quieras.</p></div></div><div class="cp-step"><span class="cp-step-number">02</span><div><strong>Eligen servicio y horario</strong><p>Con precio y duración según el tamaño.</p></div></div><div class="cp-step"><span class="cp-step-number">03</span><div><strong>Envían el comprobante</strong><p>Revisás la transferencia y confirmás el turno.</p></div></div></div><%= link_to registro_path, class: "cp-text-link" do %>Quiero mi página de reservas <svg class="cp-icon"><use href="#cp-arrow"/></svg><% end %></div>
+        <div class="cp-browser-wrap"><div class="cp-browser"><div class="cp-browser-top"><i></i><i></i><i></i><div class="cp-browser-address">cita.pet/patitas-grooming</div></div><div class="cp-browser-content"><div class="cp-business"><span class="cp-shop"><svg class="cp-icon cp-icon-fill"><use href="#cp-paw"/></svg></span><div><strong>Patitas Grooming</strong><small>Un mimo para cada mascota</small></div><span class="cp-tag">Vista de ejemplo</span></div><h3>Reservá su próximo mimo 🐾</h3><div class="cp-service"><span class="cp-service-emoji">🐩</span><div><strong>Baño + corte</strong><small>Perro mediano · 60 min</small></div><div class="cp-service-meta"><strong>Turno online</strong><small>Sin registrarse</small></div></div><div class="cp-demo-label">Elegí un día</div><div class="cp-days" role="group" aria-label="Días de muestra"><button class="cp-day" type="button" data-day="Lun 19" aria-pressed="false">Lun <span>19</span></button><button class="cp-day is-selected" type="button" data-day="Mar 20" aria-pressed="true">Mar <span>20</span></button><button class="cp-day" type="button" data-day="Mié 21" aria-pressed="false">Mié <span>21</span></button><button class="cp-day" type="button" data-day="Jue 22" aria-pressed="false">Jue <span>22</span></button></div><div class="cp-demo-label">Horarios disponibles</div><div class="cp-times" role="group" aria-label="Horarios de muestra"><button class="cp-time" type="button" data-hour="09:00" aria-pressed="false">09:00</button><button class="cp-time is-selected" type="button" data-hour="11:30" aria-pressed="true">11:30</button><button class="cp-time" type="button" data-hour="15:00" aria-pressed="false">15:00</button><button class="cp-time" type="button" data-hour="17:30" aria-pressed="false">17:30</button></div><div class="cp-demo-bottom"><div><small>Turno seleccionado</small><strong id="cpSelectedTurn">Mar 20 · 11:30</strong></div><%= link_to "Crear mi página", registro_path, class: "cp-btn cp-btn-dark" %></div></div></div></div>
+      </section>
 
-      <button id="landingMenuButton" type="button" class="ml-auto grid h-11 w-11 place-items-center rounded-2xl border border-slate-200 bg-white text-slate-600 shadow-sm sm:hidden" aria-label="Abrir menú" aria-expanded="false">
-        <%= landing_icon.call(:menu, classes: "h-5 w-5") %>
-      </button>
-    </div>
+      <section class="cp-features" id="funciones"><div class="cp-heading"><span class="cp-section-label">Todo en un solo lugar</span><h2>Tu peluquería, más organizada.</h2><p class="cp-description">Las herramientas que necesitás. Sin complicarte el día.</p></div><div class="cp-grid"><article class="cp-feature"><span class="cp-feature-icon"><svg class="cp-icon"><use href="#cp-calendar"/></svg></span><h3>Agenda clara</h3><p>Turnos y disponibilidad siempre a mano.</p></article><article class="cp-feature"><span class="cp-feature-icon"><svg class="cp-icon"><use href="#cp-upload"/></svg></span><h3>Señas por transferencia</h3><p>Recibí comprobantes y revisalos desde el negocio.</p></article><article class="cp-feature"><span class="cp-feature-icon"><svg class="cp-icon"><use href="#cp-scissors"/></svg></span><h3>Servicios por tamaño</h3><p>Definí precios y duración para cada mascota.</p></article><article class="cp-feature"><span class="cp-feature-icon"><svg class="cp-icon"><use href="#cp-heart"/></svg></span><h3>Fichas de mascotas</h3><p>Historial, cuidados y datos de responsables.</p></article><article class="cp-feature"><span class="cp-feature-icon"><svg class="cp-icon"><use href="#cp-users"/></svg></span><h3>Trabajo en equipo</h3><p>Todos organizados con la misma agenda.</p></article><article class="cp-feature"><span class="cp-feature-icon"><svg class="cp-icon"><use href="#cp-link"/></svg></span><h3>Tu link, tu negocio</h3><p>Una página propia para recibir reservas.</p></article></div></section>
 
-    <div id="landingMobileMenu" class="hidden border-t border-slate-100 bg-white px-4 py-4 sm:hidden">
-      <div class="grid gap-2">
-        <a href="#que-resuelve" class="landing-mobile-link rounded-xl px-3 py-2.5 text-sm font-bold hover:bg-brand-50">El recorrido</a>
-        <a href="#como-funciona" class="landing-mobile-link rounded-xl px-3 py-2.5 text-sm font-bold hover:bg-brand-50">Cómo funciona</a>
-        <a href="#ia" class="landing-mobile-link rounded-xl px-3 py-2.5 text-sm font-bold hover:bg-brand-50">Automatización</a>
-        <a href="#precio" class="landing-mobile-link rounded-xl px-3 py-2.5 text-sm font-bold hover:bg-brand-50">Precio</a>
-        <a href="#preguntas" class="landing-mobile-link rounded-xl px-3 py-2.5 text-sm font-bold hover:bg-brand-50">Preguntas</a>
-        <%= link_to "Acceso", new_session_path, class: "landing-mobile-link rounded-xl px-3 py-2.5 text-sm font-bold hover:bg-brand-50" %>
-        <%= link_to "Empezar prueba", registro_path, class: "landing-mobile-link mt-2 rounded-xl bg-slate-950 px-3 py-3 text-center text-sm font-bold text-white" %>
-      </div>
-    </div>
-  </header>
+      <section class="cp-story"><div class="cp-story-visual"><img class="cp-story-img" src="https://images.unsplash.com/photo-1552053831-71594a27632d?w=800&auto=format&fit=crop&q=85" alt="Perrito feliz" width="268" height="268" loading="lazy"></div><div class="cp-story-copy"><span class="cp-section-label">Más tiempo para lo que importa</span><h2>Tu WhatsApp para conversar. Tu link para reservar.</h2><p class="cp-description">Pegá tu enlace de Cita.pet en la bio de Instagram o en la respuesta automática de WhatsApp Business. Tus clientes eligen cuándo venir, sin que tengas que responder cada mensaje.</p><div class="cp-pills"><span>Sin bot</span><span>Sin conectar tu número</span><span>Sin pedir que descarguen una app</span></div></div></section>
 
-  <main id="inicio">
-    <section class="landing-hero-grid overflow-hidden">
-      <div class="mx-auto grid min-h-[760px] max-w-7xl items-center gap-14 px-4 py-20 sm:px-6 lg:grid-cols-[.95fr_1.05fr] lg:px-8">
-        <div>
-          <span class="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-white/90 px-3 py-1.5 text-xs font-bold text-brand-700 shadow-sm">
-            <%= landing_icon.call(:sparkles, classes: "h-3.5 w-3.5") %>
-            Reservas 24/7, sin responder cada mensaje
-          </span>
+      <section class="cp-plans" id="planes"><div class="cp-plans-top"><div><span class="cp-section-label">14 días gratis, sin tarjeta</span><h2>Un plan para empezar. Otro para crecer.</h2></div><p class="cp-description">Elegí el que mejor vaya con tu peluquería.</p></div><div class="cp-plans-grid"><article class="cp-plan"><span class="cp-plan-label">Plan <%= basic_plan.fetch(:name) %></span><div class="cp-plan-price"><%= price.call(basic_plan) %> <small>ARS/mes</small></div><p class="cp-plan-description">Todo para recibir reservas y ordenar tu agenda.</p><ul class="cp-benefits"><li><svg class="cp-icon"><use href="#cp-check"/></svg>Página de reservas 24/7</li><li><svg class="cp-icon"><use href="#cp-check"/></svg>Señas por transferencia</li><li><svg class="cp-icon"><use href="#cp-check"/></svg>Agenda, clientes y mascotas</li></ul><%= link_to "Probar Básico gratis", registro_path, class: "cp-btn cp-btn-light" %></article><article class="cp-plan cp-plan-pro"><span class="cp-plan-label">Plan <%= pro_plan.fetch(:name) %></span><div class="cp-plan-price"><%= price.call(pro_plan) %> <small>ARS/mes</small></div><p class="cp-plan-description">Más herramientas para acompañar tu crecimiento.</p><ul class="cp-benefits"><li><svg class="cp-icon"><use href="#cp-check"/></svg>Todo lo incluido en Básico</li><li><svg class="cp-icon"><use href="#cp-check"/></svg>Gestión operativa avanzada</li><li><svg class="cp-icon"><use href="#cp-check"/></svg>Seguimientos y reportes</li></ul><%= link_to "Probar PRO gratis", registro_path, class: "cp-btn cp-btn-pink" %></article></div><p class="cp-disclaimer">Los planes son mensuales. La prueba de 14 días no requiere tarjeta.</p></section>
 
-          <h1 class="mt-7 max-w-2xl text-5xl font-bold leading-[.98] tracking-[-.055em] text-slate-950 sm:text-6xl lg:text-[72px]">
-            Tu página toma turnos.
-            <span class="landing-gradient-text block">Vos cuidás mascotas.</span>
-          </h1>
+      <section class="cp-faq" id="preguntas"><div class="cp-heading"><span class="cp-section-label">Preguntas frecuentes</span><h2>Lo importante antes de empezar.</h2><p class="cp-description">Pensado para peluquerías caninas que buscan ordenar sus reservas.</p></div><div class="cp-faq-grid"><details open><summary>¿Cómo comparto mi página de reservas?</summary><p>Cada negocio tiene un enlace propio para publicar en Instagram, Google o WhatsApp.</p></details><details><summary>¿Cómo se cobran las señas?</summary><p>El cliente transfiere y carga su comprobante. El negocio lo revisa y aprueba desde Cita.pet.</p></details><details><summary>¿El cliente necesita registrarse?</summary><p>No. Puede reservar desde la página pública del negocio sin crear una cuenta.</p></details><details><summary>¿Qué pasa si necesita cambiar el turno?</summary><p>La peluquería puede reprogramarlo desde la agenda; el cliente coordina el cambio por WhatsApp.</p></details></div></section>
 
-          <p class="mt-7 max-w-2xl text-lg leading-8 text-slate-600 [text-shadow:0_1px_0_rgba(255,255,255,.75)]">
-            Compartí tu enlace de reservas donde quieras. Tus clientes eligen un servicio, reservan en una web rápida y pagan la seña con Mercado Pago.
-          </p>
+      <section class="cp-contact" id="contacto"><div class="cp-contact-copy"><span class="cp-section-label">Cuidá más, organizá mejor</span><h2>Tu próxima reserva puede llegar sola.</h2><p>Creá tu cuenta y empezá a recibir turnos desde tu propio enlace, o escribinos si querés conversar antes.</p><div class="cp-trial"><span><svg class="cp-icon"><use href="#cp-check"/></svg>14 días gratis</span><span><svg class="cp-icon"><use href="#cp-check"/></svg>Sin tarjeta</span><span><svg class="cp-icon"><use href="#cp-check"/></svg>Configuración sencilla</span></div><%= link_to "Empezar ahora", registro_path, class: "cp-btn cp-btn-pink" %></div><form id="cpContactForm" class="cp-contact-card" action="https://formspree.io/f/maqgegwn" method="POST" data-turbo="false"><input type="hidden" name="_subject" value="Nuevo contacto desde Cita.pet"><input type="hidden" name="_language" value="es"><input type="text" name="_gotcha" hidden tabindex="-1"><h3>¿Querés que te ayudemos?</h3><p>Contanos un poco de tu peluquería y te respondemos.</p><div class="cp-fields"><div class="cp-field"><label for="cpName">Nombre</label><input id="cpName" name="name" required autocomplete="name" placeholder="Tu nombre"></div><div class="cp-field"><label for="cpEmail">Email</label><input id="cpEmail" name="email" type="email" required autocomplete="email" placeholder="nombre@email.com"></div><div class="cp-field cp-field-full"><label for="cpBusinessType">Tipo de peluquería</label><select id="cpBusinessType" name="business_type" required><option value="">Seleccionar una opción</option><option>Peluquería canina integral</option><option>Baño y secado</option><option>Corte y grooming de raza</option><option>Groomer a domicilio</option><option>Otro servicio para mascotas</option></select></div><div class="cp-field cp-field-full"><label for="cpMessage">¿Qué querés ordenar primero?</label><textarea id="cpMessage" name="message" placeholder="Por ejemplo: mensajes, ausencias, cambios o señas."></textarea></div></div><button class="cp-btn cp-btn-dark" id="cpContactSubmit" type="submit"><span>Enviar consulta</span><svg class="cp-icon"><use href="#cp-arrow"/></svg></button><p class="cp-form-status" id="cpContactStatus" hidden></p></form></section>
+    </main>
 
-          <div class="mt-8 flex flex-col gap-3 sm:flex-row">
-            <%= link_to registro_path, class: "inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-950 px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-slate-950/15 transition hover:-translate-y-0.5 hover:bg-brand-700" do %>
-              Empezar mi prueba gratis
-              <%= landing_icon.call(:arrow_right, classes: "h-4 w-4") %>
-            <% end %>
-            <a href="#que-resuelve" class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3.5 text-sm font-bold text-slate-700 shadow-sm hover:border-brand-200 hover:text-brand-700">
-              Ver cómo funciona
-              <%= landing_icon.call(:chevron_down, classes: "h-4 w-4") %>
-            </a>
-          </div>
-
-          <div class="mt-9 grid max-w-2xl gap-3 sm:grid-cols-3">
-            <div class="rounded-2xl border border-white bg-white/80 p-4 shadow-sm">
-              <%= landing_icon.call(:message_off, classes: "h-5 w-5 text-brand-700") %>
-              <p class="mt-3 text-sm font-bold">Un enlace propio</p>
-              <p class="mt-1 text-xs leading-5 text-slate-500">Para compartir en tus canales.</p>
-            </div>
-            <div class="rounded-2xl border border-white bg-white/80 p-4 shadow-sm">
-              <%= landing_icon.call(:dollar, classes: "h-5 w-5 text-emerald-700") %>
-              <p class="mt-3 text-sm font-bold">Señas acreditadas</p>
-              <p class="mt-1 text-xs leading-5 text-slate-500">Mercado Pago confirma el turno.</p>
-            </div>
-            <div class="rounded-2xl border border-white bg-white/80 p-4 shadow-sm">
-              <%= landing_icon.call(:bot, classes: "h-5 w-5 text-blue-700") %>
-              <p class="mt-3 text-sm font-bold">Huecos que se recuperan</p>
-              <p class="mt-1 text-xs leading-5 text-slate-500">Tutores compatibles y mensajes listos.</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="relative">
-          <div class="overflow-hidden rounded-[34px] border border-white bg-white p-3 shadow-soft">
-            <div class="overflow-hidden rounded-[26px] border border-slate-200 bg-[#f8f7fa]">
-              <div class="flex h-12 items-center border-b border-slate-200 bg-white px-4">
-                <div class="flex gap-1.5">
-                  <span class="h-2.5 w-2.5 rounded-full bg-rose-300"></span>
-                  <span class="h-2.5 w-2.5 rounded-full bg-amber-300"></span>
-                  <span class="h-2.5 w-2.5 rounded-full bg-emerald-300"></span>
-                </div>
-                <div class="mx-auto rounded-full bg-slate-100 px-4 py-1.5 text-[10px] font-bold text-slate-500">cita.pet/patitas-grooming</div>
-              </div>
-
-              <div class="grid min-h-[470px] sm:grid-cols-[205px_1fr]">
-                <aside class="hidden border-r border-slate-200 bg-white p-4 sm:block">
-                  <p class="text-[9px] font-bold uppercase tracking-[.15em] text-slate-400">Patitas Grooming</p>
-                  <h3 class="mt-2 text-xl font-bold leading-tight">Todo el local, conectado</h3>
-
-                  <div class="mt-5 space-y-2">
-                    <div class="rounded-2xl border border-brand-200 bg-brand-50 p-3">
-                      <p class="text-xs font-bold text-brand-800">Turnos</p>
-                      <p class="mt-1 text-[10px] text-brand-600">Agenda de hoy</p>
-                    </div>
-                    <div class="rounded-2xl border border-slate-200 p-3">
-                      <p class="text-xs font-bold">Comprobantes</p>
-                      <p class="mt-1 text-[10px] text-slate-500">2 pendientes</p>
-                    </div>
-                    <div class="rounded-2xl border border-slate-200 p-3">
-                      <p class="text-xs font-bold">Tutores y mascotas</p>
-                      <p class="mt-1 text-[10px] text-slate-500">Historial y seguimiento</p>
-                    </div>
-                    <div class="rounded-2xl border border-slate-200 p-3">
-                      <p class="text-xs font-bold">Asistente IA</p>
-                      <p class="mt-1 text-[10px] text-slate-500">Qué atender hoy</p>
-                    </div>
-                  </div>
-                </aside>
-
-                <div class="p-4 sm:p-5">
-                  <div class="flex items-start justify-between">
-                    <div>
-                      <p class="text-[9px] font-bold uppercase tracking-[.14em] text-brand-700">Resumen del día</p>
-                      <h3 class="mt-1 text-xl font-bold">Lo importante, primero</h3>
-                    </div>
-                    <span class="rounded-full bg-emerald-50 px-2.5 py-1 text-[9px] font-bold text-emerald-700">En orden</span>
-                  </div>
-
-                  <div class="mt-4 grid grid-cols-3 gap-2">
-                    <div class="rounded-2xl bg-white p-3 shadow-sm">
-                      <p class="text-[9px] font-bold text-slate-400">Turnos</p>
-                      <p class="mt-1 text-xl font-bold">14</p>
-                    </div>
-                    <div class="rounded-2xl bg-white p-3 shadow-sm">
-                      <p class="text-[9px] font-bold text-slate-400">Ocupación</p>
-                      <p class="mt-1 text-xl font-bold">82%</p>
-                    </div>
-                    <div class="rounded-2xl bg-white p-3 shadow-sm">
-                      <p class="text-[9px] font-bold text-slate-400">Pendientes</p>
-                      <p class="mt-1 text-xl font-bold">3</p>
-                    </div>
-                  </div>
-
-                  <div class="mt-4 rounded-[22px] bg-slate-950 p-4 text-white">
-                    <div class="flex items-center gap-3">
-                      <span class="grid h-10 w-10 place-items-center rounded-2xl bg-white/10">
-                        <%= landing_icon.call(:sparkles, classes: "h-5 w-5") %>
-                      </span>
-                      <div>
-                        <p class="text-xs font-bold">Cita.pet IA</p>
-                        <p class="mt-1 text-[10px] text-slate-300">Encontró 3 oportunidades</p>
-                      </div>
-                    </div>
-
-                    <div class="mt-4 space-y-2">
-                      <div class="rounded-xl bg-white/10 p-3">
-                        <p class="text-[10px] font-bold">Revisar una seña urgente</p>
-                        <p class="mt-1 text-[9px] text-slate-300">El turno es hoy a las 18:30.</p>
-                      </div>
-                      <div class="rounded-xl bg-white/10 p-3">
-                        <p class="text-[10px] font-bold">Cubrir un hueco de 90 min</p>
-                        <p class="mt-1 text-[9px] text-slate-300">Hay 8 tutores compatibles.</p>
-                      </div>
-                      <div class="rounded-xl bg-white/10 p-3">
-                        <p class="text-[10px] font-bold">Recuperar mascotas</p>
-                        <p class="mt-1 text-[9px] text-slate-300">7 tutores podrían volver.</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="mt-4 flex items-center justify-between rounded-2xl border border-brand-100 bg-brand-50 p-3">
-                    <div>
-                      <p class="text-[10px] font-bold text-brand-800">Todo conectado</p>
-                      <p class="mt-1 text-[9px] text-brand-600">Agenda, cobros, mascotas y equipo.</p>
-                    </div>
-                    <%= landing_icon.call(:workflow, classes: "h-5 w-5 text-brand-700") %>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="absolute -bottom-5 right-2 hidden rounded-2xl border border-white bg-white p-4 shadow-card sm:block">
-            <div class="flex items-center gap-3">
-              <%= landing_icon.call(:badge_check, classes: "h-5 w-5 text-emerald-700") %>
-              <div>
-                <p class="text-[10px] font-bold uppercase tracking-wide text-slate-400">Pago aprobado</p>
-                <p class="mt-1 text-sm font-bold">Turno confirmado</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section id="que-resuelve" class="border-y border-slate-100 bg-white py-24">
-      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div class="mx-auto max-w-3xl text-center">
-          <p class="text-xs font-bold uppercase tracking-[.18em] text-brand-700">Mucho más que turnos</p>
-          <h2 class="mt-4 text-4xl font-bold tracking-[-.045em] sm:text-5xl">
-            Un mensaje activa la reserva.
-            <span class="landing-gradient-text block">Cita.pet completa el recorrido.</span>
-          </h2>
-          <p class="mx-auto mt-5 max-w-2xl text-base leading-7 text-slate-500">
-            Dentro de la ventana de 24 horas, el cliente elige un servicio y sigue a una reserva web personalizada, sin crear una cuenta.
-          </p>
-        </div>
-
-        <div class="mt-14 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-          <article class="landing-feature-card rounded-[26px] border border-slate-200 bg-white p-5">
-            <span class="grid h-12 w-12 place-items-center rounded-2xl bg-brand-50 text-brand-700">
-              <%= landing_icon.call(:calendar_range, classes: "h-5 w-5") %>
-            </span>
-            <h3 class="mt-5 text-lg font-bold">Lista interactiva</h3>
-            <p class="mt-2 text-sm leading-6 text-slate-500">El cliente encuentra catálogo, horarios o la opción de hablar con una persona.</p>
-          </article>
-
-          <article class="landing-feature-card rounded-[26px] border border-slate-200 bg-white p-5">
-            <span class="grid h-12 w-12 place-items-center rounded-2xl bg-emerald-50 text-emerald-700">
-              <%= landing_icon.call(:wallet, classes: "h-5 w-5") %>
-            </span>
-            <h3 class="mt-5 text-lg font-bold">Señas y pagos</h3>
-            <p class="mt-2 text-sm leading-6 text-slate-500">Mercado Pago cobra la seña; su webhook confirma el turno automáticamente.</p>
-          </article>
-
-          <article class="landing-feature-card rounded-[26px] border border-slate-200 bg-white p-5">
-            <span class="grid h-12 w-12 place-items-center rounded-2xl bg-pink-50 text-pink-700">
-              <%= landing_icon.call(:user, classes: "h-5 w-5") %>
-            </span>
-            <h3 class="mt-5 text-lg font-bold">Reserva sin fricción</h3>
-            <p class="mt-2 text-sm leading-6 text-slate-500">Solo pide el nombre de la mascota, día y horario disponible.</p>
-          </article>
-
-          <article class="landing-feature-card rounded-[26px] border border-slate-200 bg-white p-5">
-            <span class="grid h-12 w-12 place-items-center rounded-2xl bg-blue-50 text-blue-700">
-              <%= landing_icon.call(:bot, classes: "h-5 w-5") %>
-            </span>
-            <h3 class="mt-5 text-lg font-bold">Confirmación inmediata</h3>
-            <p class="mt-2 text-sm leading-6 text-slate-500">El pago exitoso genera el turno y lo registra en tu agenda.</p>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <section id="como-funciona" class="py-24">
-      <div class="mx-auto grid max-w-7xl items-center gap-14 px-4 sm:px-6 lg:grid-cols-[.9fr_1.1fr] lg:px-8">
-        <div>
-          <p class="text-xs font-bold uppercase tracking-[.18em] text-brand-700">Antes, durante y después</p>
-          <h2 class="mt-4 text-4xl font-bold tracking-[-.045em] sm:text-5xl">Un turno completo, desde tu enlace.</h2>
-          <p class="mt-5 text-base leading-7 text-slate-500">
-            El flujo empieza cuando el cliente abre la página de reservas de tu peluquería.
-          </p>
-
-          <div class="mt-8 space-y-5">
-            <div class="flex gap-4">
-              <span class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-slate-950 text-sm font-bold text-white">1</span>
-              <div>
-                <h3 class="font-bold">Abre tu página de reservas</h3>
-                <p class="mt-1 text-sm leading-6 text-slate-500">Podés compartir el enlace en Instagram, tu perfil de Google o un mensaje manual.</p>
-              </div>
-            </div>
-
-            <div class="flex gap-4">
-              <span class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-brand-600 text-sm font-bold text-white">2</span>
-              <div>
-                <h3 class="font-bold">Reserva y paga la seña</h3>
-                <p class="mt-1 text-sm leading-6 text-slate-500">En la web anónima escribe el nombre de la mascota, elige día y horario, y paga con Mercado Pago.</p>
-              </div>
-            </div>
-
-            <div class="flex gap-4">
-              <span class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-emerald-600 text-sm font-bold text-white">3</span>
-              <div>
-                <h3 class="font-bold">El webhook cierra el ciclo</h3>
-                <p class="mt-1 text-sm leading-6 text-slate-500">Al acreditarse el pago, el turno se crea en tu agenda y el administrador recibe un email.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="rounded-[32px] bg-slate-950 p-6 text-white shadow-[0_24px_70px_rgba(10,10,14,.18)] sm:p-8">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-xs font-bold uppercase tracking-[.16em] text-brand-300">Operación de la peluquería</p>
-              <h3 class="mt-2 text-2xl font-bold">Todo alrededor del turno</h3>
-            </div>
-            <%= landing_icon.call(:workflow, classes: "h-7 w-7 text-brand-300") %>
-          </div>
-
-          <div class="mt-7 grid gap-3 sm:grid-cols-2">
-            <div class="rounded-[22px] bg-white/10 p-4">
-              <%= landing_icon.call(:calendar, classes: "h-5 w-5 text-brand-200") %>
-              <p class="mt-3 text-sm font-bold">Reserva creada</p>
-              <p class="mt-1 text-xs text-slate-400">Horario bloqueado</p>
-            </div>
-            <div class="rounded-[22px] bg-white/10 p-4">
-              <%= landing_icon.call(:badge_check, classes: "h-5 w-5 text-emerald-200") %>
-              <p class="mt-3 text-sm font-bold">Seña aprobada</p>
-              <p class="mt-1 text-xs text-slate-400">Confirmación automática</p>
-            </div>
-            <div class="rounded-[22px] bg-white/10 p-4">
-              <%= landing_icon.call(:mail_check, classes: "h-5 w-5 text-blue-200") %>
-              <p class="mt-3 text-sm font-bold">Recordatorio enviado</p>
-              <p class="mt-1 text-xs text-slate-400">Menos ausencias</p>
-            </div>
-            <div class="rounded-[22px] bg-white/10 p-4">
-              <%= landing_icon.call(:history, classes: "h-5 w-5 text-pink-200") %>
-              <p class="mt-3 text-sm font-bold">Historial actualizado</p>
-              <p class="mt-1 text-xs text-slate-400">Seguimiento futuro</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section id="ia" class="bg-slate-950 py-24 text-white">
-      <div class="mx-auto grid max-w-7xl items-center gap-14 px-4 sm:px-6 lg:grid-cols-2 lg:px-8">
-        <div class="rounded-[32px] border border-white/10 bg-white/5 p-5 shadow-[0_24px_70px_rgba(10,10,14,.18)]">
-          <div class="flex items-center gap-3 border-b border-white/10 pb-4">
-            <span class="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-500">
-              <%= landing_icon.call(:sparkles, classes: "h-5 w-5") %>
-            </span>
-            <div>
-              <p class="text-sm font-bold">Asistente Cita.pet</p>
-              <p class="mt-1 text-xs text-emerald-300">Conectado a la información de tu peluquería</p>
-            </div>
-          </div>
-
-          <div class="mt-5 space-y-4">
-            <div class="ml-auto max-w-[78%] rounded-2xl rounded-br-md bg-brand-600 px-4 py-3 text-sm">
-              ¿Qué necesita mi atención hoy?
-            </div>
-            <div class="max-w-[88%] rounded-2xl rounded-tl-md bg-white/10 px-4 py-4 text-sm leading-6 text-slate-200">
-              <p class="font-bold text-white">Tenés 3 prioridades:</p>
-              <ol class="mt-3 space-y-2">
-                <li>1. Revisar un comprobante de un turno de hoy.</li>
-                <li>2. Cubrir un hueco de 90 minutos con Camila.</li>
-                <li>3. Reforzar 3 confirmaciones sin seña.</li>
-              </ol>
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <p class="text-xs font-bold uppercase tracking-[.18em] text-brand-300">Inteligencia aplicada al negocio</p>
-          <h2 class="mt-4 text-4xl font-bold tracking-[-.045em] sm:text-5xl">
-            No te muestra datos.
-            <span class="block text-brand-300">Te dice qué hacer con ellos.</span>
-          </h2>
-          <p class="mt-5 text-base leading-7 text-slate-300">
-            Consulta agenda, tutores, mascotas, comprobantes y facturación para convertir información en acciones concretas.
-          </p>
-
-          <div class="mt-8 space-y-4">
-            <p class="flex gap-3 text-sm leading-6 text-slate-300"><%= landing_icon.call(:check_circle, classes: "mt-0.5 h-5 w-5 shrink-0 text-emerald-300") %>Detecta qué requiere atención.</p>
-            <p class="flex gap-3 text-sm leading-6 text-slate-300"><%= landing_icon.call(:check_circle, classes: "mt-0.5 h-5 w-5 shrink-0 text-emerald-300") %>Encuentra huecos y tutores compatibles.</p>
-            <p class="flex gap-3 text-sm leading-6 text-slate-300"><%= landing_icon.call(:check_circle, classes: "mt-0.5 h-5 w-5 shrink-0 text-emerald-300") %>Prioriza tareas y seguimientos internos.</p>
-            <p class="flex gap-3 text-sm leading-6 text-slate-300"><%= landing_icon.call(:check_circle, classes: "mt-0.5 h-5 w-5 shrink-0 text-emerald-300") %>Muestra dónde se pierden turnos o ingresos.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section id="precio" class="border-b border-slate-100 bg-white py-24">
-      <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        <div class="mx-auto max-w-3xl text-center">
-          <p class="text-xs font-bold uppercase tracking-[.18em] text-brand-700">Precios claros, alta instantánea</p>
-          <h2 class="mt-4 text-4xl font-bold tracking-[-.045em] sm:text-5xl">Un plan para empezar. <span class="landing-gradient-text">Otro para ir por más.</span></h2>
-          <p class="mt-5 text-base leading-7 text-slate-500">Página de reservas y señas con Mercado Pago desde el primer plan.</p>
-        </div>
-
-        <div class="mt-12 grid gap-6 lg:grid-cols-2">
-          <article class="rounded-[30px] border border-slate-200 bg-[#fffdfa] p-7 shadow-sm sm:p-8">
-            <p class="text-xs font-bold uppercase tracking-[.16em] text-brand-700">Plan Básico</p>
-            <p class="mt-4 text-5xl font-bold tracking-tight">$35.000</p>
-            <p class="mt-1 text-sm font-bold text-slate-500">ARS / mes</p>
-            <p class="mt-5 text-sm leading-6 text-slate-600">Para tomar turnos y cobrar señas sin responder mensajes.</p>
-            <ul class="mt-7 space-y-3 text-sm font-semibold text-slate-700">
-              <% ["Página de reservas disponible 24/7", "Catálogo interactivo de servicios", "Página de reservas rápida y sin registro", "Seña obligatoria con Mercado Pago", "Registro instantáneo tras el pago", "Agenda y clientes centralizados"].each do |feature| %>
-                <li class="flex gap-3"><%= landing_icon.call(:check, classes: "mt-0.5 h-4 w-4 shrink-0 text-emerald-600") %><span><%= feature %></span></li>
-              <% end %>
-            </ul>
-            <%= link_to "Empezar 14 días gratis", registro_path, class: "mt-7 flex w-full items-center justify-center rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-sm font-bold text-slate-800 hover:border-brand-300 hover:text-brand-700" %>
-          </article>
-
-          <article class="relative rounded-[30px] bg-slate-950 p-7 text-white shadow-[0_24px_70px_rgba(10,10,14,.18)] sm:p-8">
-            <span class="absolute right-6 top-0 -translate-y-1/2 rounded-full bg-brand-500 px-3 py-1 text-[10px] font-bold uppercase tracking-[.14em] text-white">Más completo</span>
-            <p class="text-xs font-bold uppercase tracking-[.16em] text-brand-200">Plan PRO</p>
-            <p class="mt-4 text-5xl font-bold tracking-tight">$45.000</p>
-            <p class="mt-1 text-sm font-bold text-slate-400">ARS / mes</p>
-            <p class="mt-5 text-sm leading-6 text-slate-300">Todo lo del Plan Básico, más herramientas avanzadas para administrar tu operación.</p>
-            <ul class="mt-7 space-y-3 text-sm font-semibold text-slate-100">
-              <% ["Todo lo incluido en el Plan Básico", "Gestión avanzada de agenda", "Seguimientos internos", "Reportes operativos", "Asistente con IA"].each do |feature| %>
-                <li class="flex gap-3"><%= landing_icon.call(:check, classes: "mt-0.5 h-4 w-4 shrink-0 text-emerald-300") %><span><%= feature %></span></li>
-              <% end %>
-            </ul>
-            <%= link_to "Empezar 14 días gratis", registro_path, class: "mt-7 flex w-full items-center justify-center rounded-2xl bg-brand-500 px-4 py-3.5 text-sm font-bold text-white hover:bg-brand-600" %>
-          </article>
-        </div>
-        <p class="mx-auto mt-7 max-w-4xl text-center text-xs leading-5 text-slate-500">Precios mensuales en pesos argentinos. La prueba de 14 días no requiere tarjeta. Las comisiones de Mercado Pago se rigen por las condiciones del proveedor.</p>
-      </div>
-    </section>
-
-    <section id="preguntas" class="py-24">
-      <div class="mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-[.8fr_1.2fr] lg:px-8">
-        <div>
-          <p class="text-xs font-bold uppercase tracking-[.18em] text-brand-700">Preguntas frecuentes</p>
-          <h2 class="mt-4 text-4xl font-bold tracking-[-.045em] sm:text-5xl">Lo importante antes de empezar.</h2>
-          <p class="mt-5 max-w-md text-base leading-7 text-slate-500">
-            Pensado para peluquerías caninas que buscan ordenar sus reservas.
-          </p>
-        </div>
-
-        <div class="space-y-3">
-          <article class="landing-faq-item is-open rounded-[22px] border border-slate-200 bg-white px-5 py-4 shadow-sm">
-            <button type="button" class="landing-faq-toggle flex w-full items-center justify-between gap-4 text-left">
-              <span class="text-sm font-bold">¿Cómo comparto mi página de reservas?</span>
-              <%= landing_icon.call(:chevron_down, classes: "landing-faq-chevron h-4 w-4 text-slate-400") %>
-            </button>
-            <div class="landing-faq-panel">
-              <p class="text-sm leading-6 text-slate-500">Cada negocio tiene un enlace propio que puede compartir en Instagram, su perfil de Google o cualquier mensaje que envíe manualmente.</p>
-            </div>
-          </article>
-
-          <article class="landing-faq-item rounded-[22px] border border-slate-200 bg-white px-5 py-4 shadow-sm">
-            <button type="button" class="landing-faq-toggle flex w-full items-center justify-between gap-4 text-left">
-              <span class="text-sm font-bold">¿Cómo se cobran las señas?</span>
-              <%= landing_icon.call(:chevron_down, classes: "landing-faq-chevron h-4 w-4 text-slate-400") %>
-            </button>
-            <div class="landing-faq-panel">
-              <p class="text-sm leading-6 text-slate-500">La seña es obligatoria y se cobra con Mercado Pago. Cuando el webhook informa el pago exitoso, Cita.pet crea el turno en la agenda.</p>
-            </div>
-          </article>
-
-          <article class="landing-faq-item rounded-[22px] border border-slate-200 bg-white px-5 py-4 shadow-sm">
-            <button type="button" class="landing-faq-toggle flex w-full items-center justify-between gap-4 text-left">
-              <span class="text-sm font-bold">¿El tutor necesita registrarse?</span>
-              <%= landing_icon.call(:chevron_down, classes: "landing-faq-chevron h-4 w-4 text-slate-400") %>
-            </button>
-            <div class="landing-faq-panel">
-              <p class="text-sm leading-6 text-slate-500">No. En el checkout web solo escribe el nombre de la mascota, elige un día y un horario disponible, y paga la seña.</p>
-            </div>
-          </article>
-
-          <article class="landing-faq-item rounded-[22px] border border-slate-200 bg-white px-5 py-4 shadow-sm">
-            <button type="button" class="landing-faq-toggle flex w-full items-center justify-between gap-4 text-left">
-              <span class="text-sm font-bold">¿Qué diferencia hay entre Básico y PRO?</span>
-              <%= landing_icon.call(:chevron_down, classes: "landing-faq-chevron h-4 w-4 text-slate-400") %>
-            </button>
-            <div class="landing-faq-panel">
-              <p class="text-sm leading-6 text-slate-500">Los dos planes incluyen página de reservas, catálogo, checkout web y señas por Mercado Pago. PRO agrega herramientas avanzadas de operación.</p>
-            </div>
-          </article>
-
-          <article class="landing-faq-item rounded-[22px] border border-slate-200 bg-white px-5 py-4 shadow-sm">
-            <button type="button" class="landing-faq-toggle flex w-full items-center justify-between gap-4 text-left">
-              <span class="text-sm font-bold">¿El tutor necesita registrarse?</span>
-              <%= landing_icon.call(:chevron_down, classes: "landing-faq-chevron h-4 w-4 text-slate-400") %>
-            </button>
-            <div class="landing-faq-panel">
-              <p class="text-sm leading-6 text-slate-500">No. Puede reservar desde la página pública del negocio sin crear una cuenta.</p>
-            </div>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <section id="contacto" class="border-t border-slate-100 bg-[#f8f7fa] py-24">
-      <div class="mx-auto grid max-w-7xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-[.8fr_1.2fr] lg:px-8">
-        <div>
-          <p class="text-xs font-bold uppercase tracking-[.18em] text-brand-700">Probalo hoy, sin esperas</p>
-          <h2 class="mt-4 max-w-xl text-4xl font-bold tracking-[-.045em] sm:text-5xl">Tu próximo turno puede reservarse solo.</h2>
-          <p class="mt-5 max-w-lg text-base leading-7 text-slate-500">
-            Creá tu cuenta, cargá tus servicios y publicá tu página de reservas. Durante 14 días probás Cita.pet gratis, sin tarjeta.
-          </p>
-
-          <div class="mt-8 space-y-5">
-            <div class="flex gap-4">
-              <span class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white text-brand-700 shadow-sm"><%= landing_icon.call(:scan, classes: "h-5 w-5") %></span>
-              <div>
-                <h3 class="font-bold">Miramos tu caso</h3>
-                <p class="mt-1 text-sm leading-6 text-slate-500">Reservas, señas, ausencias, cambios y seguimiento.</p>
-              </div>
-            </div>
-
-            <div class="flex gap-4">
-              <span class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white text-emerald-700 shadow-sm"><%= landing_icon.call(:wand, classes: "h-5 w-5") %></span>
-              <div>
-                <h3 class="font-bold">Te lo dejamos armado</h3>
-                <p class="mt-1 text-sm leading-6 text-slate-500">No tenés que aprender un sistema complejo para probarlo.</p>
-              </div>
-            </div>
-
-            <div class="flex gap-4">
-              <span class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white text-blue-700 shadow-sm"><%= landing_icon.call(:calendar_heart, classes: "h-5 w-5") %></span>
-              <div>
-                <h3 class="font-bold">Lo usás con tu peluquería real</h3>
-                <p class="mt-1 text-sm leading-6 text-slate-500">14 días de prueba sin compromiso.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="rounded-[32px] border border-white bg-white p-5 shadow-soft sm:p-7">
-          <form id="contactForm" action="https://formspree.io/f/maqgegwn" method="POST" data-turbo="false" class="space-y-5">
-            <input type="hidden" name="_subject" value="Nuevo contacto desde Cita.pet">
-            <input type="hidden" name="_language" value="es">
-            <input type="text" name="_gotcha" class="hidden" tabindex="-1" autocomplete="off">
-
-            <div class="grid gap-5 sm:grid-cols-2">
-              <div>
-                <label for="name" class="mb-2 block text-sm font-bold text-slate-800">Nombre</label>
-                <input id="name" name="name" type="text" autocomplete="name" required class="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50/65 px-4 text-sm font-semibold outline-none transition placeholder:text-slate-400 focus:border-brand-300 focus:bg-white focus:ring-4 focus:ring-brand-100" placeholder="Tu nombre">
-              </div>
-              <div>
-                <label for="email" class="mb-2 block text-sm font-bold text-slate-800">Email</label>
-                <input id="email" name="email" type="email" autocomplete="email" required class="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50/65 px-4 text-sm font-semibold outline-none transition placeholder:text-slate-400 focus:border-brand-300 focus:bg-white focus:ring-4 focus:ring-brand-100" placeholder="nombre@email.com">
-              </div>
-              <div class="sm:col-span-2">
-                <label for="phone" class="mb-2 block text-sm font-bold text-slate-800">Teléfono</label>
-                <input id="phone" name="phone" type="tel" autocomplete="tel" class="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50/65 px-4 text-sm font-semibold outline-none transition placeholder:text-slate-400 focus:border-brand-300 focus:bg-white focus:ring-4 focus:ring-brand-100" placeholder="+54 11 5555 5555">
-              </div>
-
-              <div class="sm:col-span-2">
-                <label for="businessType" class="mb-2 block text-sm font-bold text-slate-800">¿Qué tipo de peluquería canina tenés?</label>
-                <div class="relative">
-                  <select id="businessType" name="business_type" required class="h-12 w-full appearance-none rounded-2xl border border-slate-200 bg-slate-50/65 px-4 pr-11 text-sm font-semibold text-slate-700 outline-none transition focus:border-brand-300 focus:bg-white focus:ring-4 focus:ring-brand-100">
-                    <option value="">Seleccionar una opción</option>
-                    <option>Peluquería canina integral</option>
-                    <option>Baño y secado</option>
-                    <option>Corte y grooming de raza</option>
-                    <option>Higiene y bienestar</option>
-                    <option>Groomer a domicilio</option>
-                    <option>Otro servicio para mascotas</option>
-                  </select>
-                  <%= landing_icon.call(:chevron_down, classes: "pointer-events-none absolute right-4 top-4 h-4 w-4 text-slate-400") %>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <label for="message" class="mb-2 block text-sm font-bold text-slate-800">¿Qué problema querés ordenar primero?</label>
-              <textarea id="message" name="message" rows="5" class="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50/65 px-4 py-3 text-sm font-semibold leading-6 outline-none transition placeholder:font-medium placeholder:text-slate-400 focus:border-brand-300 focus:bg-white focus:ring-4 focus:ring-brand-100" placeholder="Por ejemplo: muchos mensajes, mascotas que no llegan, horarios cruzados, cambios de último momento o señas difíciles de controlar."></textarea>
-            </div>
-
-            <div id="formStatus" class="hidden rounded-2xl px-4 py-3 text-sm font-bold"></div>
-
-            <button id="submitButton" type="submit" class="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-brand-600 to-brand-600 px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-brand-600/20 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60">
-              <span id="submitButtonText">Enviar y ver cómo quedaría</span>
-              <%= landing_icon.call(:arrow_right, classes: "h-4 w-4") %>
-            </button>
-
-            <p class="mt-4 text-center text-[10px] leading-5 text-slate-400">
-              Este formulario utiliza Formspree para procesar el envío.
-            </p>
-          </form>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <footer class="border-t border-slate-100 bg-white">
-    <div class="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6 md:flex-row md:items-center lg:px-8">
-      <a href="#inicio" class="flex items-center gap-3">
-        <span class="block h-10 w-10 overflow-hidden rounded-2xl shadow-sm shadow-brand-600/20">
-          <%= image_tag "/icon.png?v=4", alt: "", class: "h-full w-full object-cover" %>
-        </span>
-        <span>
-          <span class="block text-sm font-bold">Cita.pet</span>
-          <span class="block text-[10px] font-semibold text-slate-400">Menos mensajes. Más turnos. Más orden.</span>
-        </span>
-      </a>
-
-      <nav class="flex flex-wrap gap-x-5 gap-y-2 text-xs font-bold text-slate-500 md:ml-auto">
-        <a href="#inicio" class="hover:text-brand-700">Inicio</a>
-        <a href="#que-resuelve" class="hover:text-brand-700">Qué resuelve</a>
-        <a href="#ia" class="hover:text-brand-700">IA</a>
-        <a href="#preguntas" class="hover:text-brand-700">Preguntas</a>
-        <a href="#contacto" class="hover:text-brand-700">Contacto</a>
-        <%= link_to "Acceso", new_session_path, class: "hover:text-brand-700" %>
-        <%= link_to "Privacidad", privacy_policy_path, class: "hover:text-brand-700" %>
-        <%= link_to "Eliminación de datos", data_deletion_path, class: "hover:text-brand-700" %>
-        <a href="https://www.instagram.com/cita_pet" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 hover:text-brand-700" aria-label="Instagram de Cita.pet">
-          <%= landing_icon.call(:instagram, classes: "h-3.5 w-3.5") %>
-          @cita_pet
-        </a>
-      </nav>
-
-      <p class="text-xs font-semibold text-slate-400 md:ml-6">© 2026 Cita.pet</p>
-    </div>
-  </footer>
+    <footer class="cp-footer"><div><a class="cp-brand" href="#inicio"><span class="cp-brand-mark"><svg class="cp-icon cp-icon-fill"><use href="#cp-paw"/></svg></span><span class="cp-brand-text">Cita<span>.</span>pet</span></a><small>© <%= Time.zone.today.year %> Cita.pet · Hecho para peluquerías caninas.</small></div><nav class="cp-footer-links" aria-label="Enlaces del pie"><a href="#como-funciona">Cómo funciona</a><a href="#planes">Planes</a><%= link_to "Ingresar", new_session_path %><a href="https://www.instagram.com/cita_pet" target="_blank" rel="noopener noreferrer">Instagram</a><%= link_to "Privacidad", privacy_policy_path %><%= link_to "Eliminación de datos", data_deletion_path %></nav></footer>
+  </div>
 </div>
 
 <script>
   (() => {
-    const root = document.querySelector("[data-landing-page]");
-    if (!root) return;
-
-    const menuButton = root.querySelector("#landingMenuButton");
-    const mobileMenu = root.querySelector("#landingMobileMenu");
-
-    if (menuButton && mobileMenu) {
-      menuButton.addEventListener("click", () => {
-        const isOpen = menuButton.getAttribute("aria-expanded") === "true";
-        menuButton.setAttribute("aria-expanded", String(!isOpen));
-        mobileMenu.classList.toggle("hidden", isOpen);
-      });
-
-      root.querySelectorAll(".landing-mobile-link").forEach((link) => {
-        link.addEventListener("click", () => {
-          mobileMenu.classList.add("hidden");
-          menuButton.setAttribute("aria-expanded", "false");
-        });
-      });
-    }
-
-    root.querySelectorAll(".landing-faq-toggle").forEach((button) => {
-      button.addEventListener("click", () => {
-        const item = button.closest(".landing-faq-item");
-        if (!item) return;
-
-        item.classList.toggle("is-open");
-      });
-    });
-
-    const contactForm = root.querySelector("#contactForm");
-    const formStatus = root.querySelector("#formStatus");
-    const submitButton = root.querySelector("#submitButton");
-    const submitButtonText = root.querySelector("#submitButtonText");
-
-    if (!contactForm || !formStatus || !submitButton || !submitButtonText) return;
-
-    contactForm.addEventListener("submit", async (event) => {
-      event.preventDefault();
-
-      submitButton.disabled = true;
-      submitButtonText.textContent = "Enviando...";
-      formStatus.classList.add("hidden");
-
-      try {
-        const response = await fetch(contactForm.getAttribute("action"), {
-          method: "POST",
-          body: new FormData(contactForm),
-          headers: { Accept: "application/json" }
-        });
-
-        if (!response.ok) throw new Error("Formspree rejected the request.");
-
-        contactForm.reset();
-        formStatus.className = "rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700";
-        formStatus.textContent = "Gracias. Recibimos tu consulta y te responderemos pronto.";
-      } catch (error) {
-        formStatus.className = "rounded-2xl bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700";
-        formStatus.textContent = "No pudimos enviar la consulta. Revisá tu conexión o intentá nuevamente.";
-      } finally {
-        submitButton.disabled = false;
-        submitButtonText.textContent = "Enviar y ver cómo quedaría";
-      }
-    });
+    const root=document.querySelector("[data-landing-page]");if(!root)return;
+    const menuButton=root.querySelector("#cpMenuButton"),menu=root.querySelector("#cpMobileMenu"),menuUse=root.querySelector("#cpMenuIcon use");
+    const setMenu=(open)=>{menu.classList.toggle("is-open",open);menuButton.setAttribute("aria-expanded",String(open));menuButton.setAttribute("aria-label",open?"Cerrar menú":"Abrir menú");menuUse.setAttribute("href",open?"#cp-close":"#cp-menu")};
+    menuButton.addEventListener("click",()=>setMenu(!menu.classList.contains("is-open")));menu.querySelectorAll("a").forEach((link)=>link.addEventListener("click",()=>setMenu(false)));
+    const selected=root.querySelector("#cpSelectedTurn");let day="Mar 20",hour="11:30";const activate=(selector,clicked)=>{root.querySelectorAll(selector).forEach((item)=>{const active=item===clicked;item.classList.toggle("is-selected",active);item.setAttribute("aria-pressed",String(active))});selected.textContent=`${day} · ${hour}`};root.querySelectorAll("[data-day]").forEach((button)=>button.addEventListener("click",()=>{day=button.dataset.day;activate("[data-day]",button)}));root.querySelectorAll("[data-hour]").forEach((button)=>button.addEventListener("click",()=>{hour=button.dataset.hour;activate("[data-hour]",button)}));
+    const form=root.querySelector("#cpContactForm"),submit=root.querySelector("#cpContactSubmit"),status=root.querySelector("#cpContactStatus"),submitText=submit.querySelector("span");form.addEventListener("submit",async(event)=>{event.preventDefault();submit.disabled=true;submitText.textContent="Enviando...";status.hidden=true;try{const response=await fetch(form.action,{method:"POST",body:new FormData(form),headers:{Accept:"application/json"}});if(!response.ok)throw new Error();form.reset();status.className="cp-form-status cp-success";status.textContent="Gracias. Recibimos tu consulta y te responderemos pronto."}catch(_error){status.className="cp-form-status cp-error";status.textContent="No pudimos enviar la consulta. Revisá tu conexión e intentá nuevamente."}finally{status.hidden=false;submit.disabled=false;submitText.textContent="Enviar consulta"}});
   })();
 </script>
