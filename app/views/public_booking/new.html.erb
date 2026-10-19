@@ -595,7 +595,7 @@
             </div>
             <div>
               <%= label_tag "booking[customer_phone]", "Celular", class: "mb-2 block text-sm font-bold text-zinc-800" %>
-              <%= telephone_field_tag "booking[customer_phone]", booking_draft[:customer_phone], required: true, autocomplete: "tel", inputmode: "numeric", pattern: "[0-9]+", data: { controller: "mobile-input", action: "input->mobile-input#clean" }, placeholder: "1160347665", class: "h-12 w-full rounded-2xl border border-zinc-200 bg-white px-4 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100" %>
+              <%= telephone_field_tag "booking[customer_phone]", booking_draft[:customer_phone], required: true, autocomplete: "tel", inputmode: "numeric", pattern: "[0-9]+", data: { controller: "mobile-input", action: "input->mobile-input#clean" }, placeholder: "1199999999", class: "h-12 w-full rounded-2xl border border-zinc-200 bg-white px-4 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100" %>
               <p class="mt-2 text-xs text-zinc-500">Argentina (+54). Si omitís el código de área, usaremos <%= @business.mobile_area_code %>.</p>
             </div>
           </div>

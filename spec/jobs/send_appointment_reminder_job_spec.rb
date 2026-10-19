@@ -51,7 +51,7 @@ RSpec.describe SendAppointmentReminderJob do
 
   it "renders an email with booking-only access and no internal profile information" do
     appointment = create_appointment
-    customer = appointment.business.customer_profiles.create!(name: "Ana", phone: "1160347665", internal_notes: "Secret internal note")
+    customer = appointment.business.customer_profiles.create!(name: "Ana", phone: "1199999999", internal_notes: "Secret internal note")
     appointment.update!(customer_profile: customer)
     mail = AppointmentMailer.customer_reminder(appointment)
     expect(mail.to).to eq([ appointment.customer_email ])
