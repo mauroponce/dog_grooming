@@ -19,6 +19,7 @@ RSpec.describe "Sessions", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(google_form).to be_present
+    expect(google_form["data-turbo"]).to eq("false")
     expect(response.body).to include("Ingresar con Google")
     expect(document.at_css("input[name='password']")).to be_nil
     expect(document.at_css("input[name='email_address']")).to be_nil

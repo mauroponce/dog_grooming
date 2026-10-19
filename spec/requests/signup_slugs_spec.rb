@@ -33,9 +33,13 @@ RSpec.describe "Registro", type: :request do
   it "does not expose the registration form until Google returned a verified identity" do
     get registro_path, headers: browser_headers
 
+    document = Nokogiri::HTML(response.body)
+    google_form = document.at_css(%(form[action="/auth/google_oauth2?origin=registration"][method="post"]))
+
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Continuar con Google")
     expect(response.body).not_to include("name=\"registration[business_name]\"")
+    expect(google_form["data-turbo"]).to eq("false")
   end
 
   it "keeps the selected PRO plan after Google authentication" do

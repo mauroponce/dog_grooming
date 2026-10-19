@@ -18,6 +18,22 @@ RSpec.describe "Admin employee memberships", type: :request do
     expect(response.body).not_to include("Permisos")
   end
 
+  it "renders the Google invitation form without Turbo" do
+    owner = User.create!(email_address: "invitation-owner-#{SecureRandom.hex(4)}@example.com", password: "password123", role: :admin)
+    business = Business.create!(owner:, name: "Invitaciones", slug: "invitaciones-#{SecureRandom.hex(4)}", contact_phone: "+54 9 11 5555-5555", onboarding_completed_at: Time.current)
+    membership = business.employee_memberships.create!(name: "Ada Lovelace", first_name: "Ada", last_name: "Lovelace", email_address: "ada-#{SecureRandom.hex(4)}@example.com")
+    membership.invite!(invited_by: owner)
+
+    get employee_invitation_path(membership.raw_invitation_token), headers: browser_headers
+
+    document = Nokogiri::HTML(response.body)
+    google_form = document.at_css("form.button_to")
+    expect(response).to have_http_status(:ok)
+    expect(google_form["action"]).to eq("/auth/google_oauth2?origin=employee_invitation:#{membership.raw_invitation_token}")
+    expect(google_form["method"]).to eq("post")
+    expect(google_form["data-turbo"]).to eq("false")
+  end
+
   private
 
     def sign_in(user)
