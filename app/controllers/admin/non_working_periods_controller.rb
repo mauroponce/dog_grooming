@@ -48,7 +48,7 @@ module Admin
       end
 
       def settings_section_path
-        admin_settings_path(settings_tab: "fechas-no-laborables", anchor: "fechas-no-laborables")
+        admin_settings_path(settings_tab: "agenda-y-disponibilidad", anchor: "agenda-y-disponibilidad")
       end
   end
 end

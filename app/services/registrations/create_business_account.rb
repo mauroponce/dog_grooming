@@ -16,7 +16,7 @@ module Registrations
           role: :admin
         )
         business = owner.create_business!(name: business_name, slug: slug, business_kind: "business", industry: "dog_grooming", contact_phone: contact_phone, phone: contact_phone, setup_status: "not_started")
-        business.update!(simultaneous_capacity: 1, arrival_mode: "continuous", arrival_times: {}, preferences: business.preferences.merge("deposits_enabled" => true, "enabled_payment_methods" => [ "manual_transfer" ]))
+        business.update!(simultaneous_capacity: 1, arrival_mode: "continuous", arrival_times: {}, preferences: business.preferences.merge("deposits_enabled" => true, "enabled_payment_methods" => [ "mercado_pago" ]))
         business.subscription.update!(plan_selected: plan_selected, amount_cents: Subscription::PLANS.fetch(plan_selected).fetch(:amount_cents))
         Grooming::Catalog.install!(business)
         business.employee_memberships.create!(user: owner, name: owner_name, first_name: owner_name.split.first, last_name: owner_name.split.drop(1).join(" ").presence || "Principal", email_address: owner.email_address, phone: contact_phone, specialty: business.industry_label, branch: business.branches.first, status: "active", invitation_accepted_at: Time.current, invited_by: owner, permissions: EmployeeMembership::PERMISSIONS.keys.index_with { true })

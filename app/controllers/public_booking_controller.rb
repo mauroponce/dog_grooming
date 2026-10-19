@@ -81,23 +81,8 @@ class PublicBookingController < ApplicationController
       mercado_pago_payment = create_mercado_pago_payment_for!(appointments)
       clear_booking_draft(@booking_draft_token)
       redirect_to mercado_pago_payment.checkout_url, allow_other_host: true, notice: "Te llevamos a Mercado Pago para completar el pago."
-    when "start_manual_transfer"
-      appointment = active_manual_payment_appointment_from_draft
-      if appointment.blank?
-        appointments = create_appointments_from_submission!(starts_at: starts_at, payment_method: "manual_transfer")
-        remember_draft_appointments(appointments)
-        appointment = appointments.first
-      end
-      redirect_to reserve_booking_path_for_draft(manual_transfer: 1), notice: "El turno queda bloqueado por #{appointment.service.deposit_payment_deadline_minutes} minutos mientras subís el comprobante."
-    when "upload_manual_transfer"
-      appointment = appointment_from_upload_token!(@booking_submission_params[:appointment_token])
-      expire_pending_deposit_if_deadline_passed!(appointment)
-      redirect_to public_business_path(@business.slug), alert: "Venció el plazo para subir el comprobante. El horario volvió a estar disponible." and return if appointment.expired?
-
-      DepositProofs::ReplaceService.new(booking: appointment, file: @booking_submission_params[:deposit_receipt]).call
-      clear_booking_draft(@booking_draft_token)
-      session.delete(:booking_intent_id)
-      redirect_to public_business_path(@business.slug, confirmation: confirmation_token(appointment)), notice: "Recibimos tu comprobante. El turno queda pendiente de revisión."
+    when "start_manual_transfer", "upload_manual_transfer"
+      raise ArgumentError, "Las señas se abonan únicamente con Mercado Pago."
     else
       handle_legacy_booking_submission(starts_at)
     end

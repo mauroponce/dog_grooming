@@ -1,33 +1,33 @@
 require "rails_helper"
 
 RSpec.describe Admin::UpdatePaymentPreferences do
-  it "persists only one enabled payment method" do
+  it "persists Mercado Pago as the only enabled payment method" do
     business = create_business
 
     described_class.call(business, {
-      "enabled_payment_methods" => [ "", "manual_transfer", "mercado_pago" ]
+      "enabled_payment_methods" => [ "", "mercado_pago" ]
     })
 
     expect(business.reload.enabled_payment_methods).to eq([ "mercado_pago" ])
     expect(business.preferences.fetch("enabled_payment_methods")).to eq([ "mercado_pago" ])
   end
 
-  it "ignores unknown payment methods" do
+  it "falls back to Mercado Pago when unsupported methods are submitted" do
     business = create_business
 
     described_class.call(business, {
       "enabled_payment_methods" => [ "manual_transfer", "cash" ]
     })
 
-    expect(business.reload.enabled_payment_methods).to eq([ "manual_transfer" ])
+    expect(business.reload.enabled_payment_methods).to eq([ "mercado_pago" ])
   end
 
-  it "requires at least one enabled payment method" do
+  it "keeps Mercado Pago enabled when an empty selection is submitted" do
     business = create_business
 
-    expect {
-      described_class.call(business, { "enabled_payment_methods" => [ "" ] })
-    }.to raise_error(ArgumentError, "Elegí al menos un método de pago habilitado.")
+    described_class.call(business, { "enabled_payment_methods" => [ "" ] })
+
+    expect(business.reload.enabled_payment_methods).to eq([ "mercado_pago" ])
   end
 
   def create_business

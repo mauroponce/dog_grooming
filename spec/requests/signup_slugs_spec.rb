@@ -27,7 +27,7 @@ RSpec.describe "Registro", type: :request do
     expect(business.services.count).to eq(9)
     expect(business.services.pluck(:name)).to include("Baño y secado (Chico)", "Baño + corte (Grande)")
     expect(business.simultaneous_capacity).to eq(1)
-    expect(business.enabled_payment_methods).to eq([ "manual_transfer" ])
+    expect(business.enabled_payment_methods).to eq([ "mercado_pago" ])
     expect(business.employee_memberships.available_for_booking).to be_empty
   end
 

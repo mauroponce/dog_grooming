@@ -40,11 +40,13 @@ Decisión detallada: [`0006-independent-services-by-pet-size.md`](decisions/0006
 
 ## Reservas y señas de clientes
 
-- Cada peluquería puede cobrar señas por transferencia manual con comprobante o vincular su propia cuenta de Mercado Pago mediante OAuth para acreditarlas automáticamente.
+- Cada peluquería vincula su propia cuenta de Mercado Pago mediante OAuth; es el único canal habilitado para cobrar señas de clientes.
 - Una reserva usa el precio y la duración efectivos seleccionados para validar disponibilidad y capacidad global de la peluquería. No se asigna ni se elige un profesional durante la reserva pública.
 - Los pagos, webhooks y cambios de estado deben ser idempotentes. Un turno no se confirma por un retorno del navegador sin validar el pago correspondiente.
-- Cuando una empresa habilita transferencia manual para sus clientes, el comprobante de la seña se revisa dentro del negocio; este flujo sigue separado del pago de la suscripción a Cita.pet.
+- Si un servicio requiere seña y Mercado Pago no está conectado, el cliente puede consultar la disponibilidad pero no finalizar la reserva. Los servicios sin seña conservan la confirmación directa.
 - La confirmación pública sólo muestra el estado de esa reserva. No ofrece portal, lista de espera, cancelación ni reprogramación autoservicio; estos pedidos se canalizan por WhatsApp.
+
+Decisión detallada: [`0007-customer-deposits-by-mercado-pago.md`](decisions/0007-customer-deposits-by-mercado-pago.md).
 
 ## Clientes, mascotas y atención
 

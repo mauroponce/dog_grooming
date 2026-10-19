@@ -36,9 +36,7 @@ module SuperAdmin
           preferences: Business::PREFERENCE_DEFAULTS.merge(
             "deposits_enabled" => true,
             "deposit_percentage" => 50,
-            "deposit_alias" => "demo.dog.grooming",
-            "deposit_holder" => "Demo Cita.pet",
-            "deposit_instructions" => "Transferí la seña y subí el comprobante desde el link de tu reserva."
+            "enabled_payment_methods" => [ "mercado_pago" ]
           )
         }
       end

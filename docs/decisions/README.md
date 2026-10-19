@@ -12,6 +12,7 @@ Este directorio conserva decisiones funcionales o arquitectónicas duraderas que
 | [0004](0004-customer-recognition-without-login.md) | Aceptada | Reconocimiento por celular sin login y ficha interna por mascota |
 | [0005](0005-minimal-booking-and-operations.md) | Aceptada | Reserva pública y operación mínima sin IA ni autoservicio |
 | [0006](0006-independent-services-by-pet-size.md) | Aceptada | Servicios independientes con precio único por tamaño de mascota |
+| [0007](0007-customer-deposits-by-mercado-pago.md) | Aceptada | Señas de clientes cobradas exclusivamente mediante Mercado Pago |
 
 ## Cuándo crear una decisión
 

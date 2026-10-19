@@ -38,7 +38,7 @@ RSpec.describe "Admin Mercado Pago connections", type: :request do
       params: { code: "oauth-code", state: oauth_state },
       headers: browser_headers
 
-    expect(response).to redirect_to(admin_settings_path(settings_tab: "cuentas-de-cobro", anchor: "cuentas-de-cobro"))
+    expect(response).to redirect_to(admin_settings_path(settings_tab: "cobros-y-senas", anchor: "cobros-y-senas"))
     expect(business.reload.mercado_pago_connection).to be_connected
   end
 

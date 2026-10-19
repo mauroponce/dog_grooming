@@ -1,26 +1,13 @@
 <% content_for :admin_full_bleed, true %>
 <% content_for :title, "Configuración · Cita.pet" %>
-<%= render "salon" %>
-
 <% business_values = @settings_business_values || {} %>
 <% business_search_address = Business.new(address: business_values[:address], neighborhood: business_values[:neighborhood], city: business_values[:city], province: business_values[:province]).location_search_address %>
 <% instagram_handle = business_values[:instagram_url].to_s.sub(/\Ahttps?:\/\/(www\.)?instagram\.com\//i, "").sub(/\A@/, "").sub(/\/+\z/, "") %>
 <% availability_rules = @settings_availability_rules || [] %>
 <% non_working_periods = @settings_non_working_periods || [] %>
 <% time_options = @settings_time_options || [] %>
-<% payment_accounts = @settings_payment_accounts || [] %>
-<% primary_payment_account = payment_accounts.find(&:primary_account?) || payment_accounts.first %>
-<% payment_preferences = (@settings_payment_preferences || { "enabled_payment_methods" => @business.enabled_payment_methods }).with_indifferent_access %>
-<% booking_page_preferences = (@settings_booking_page_preferences || { "allow_professional_selection" => @business.public_booking_allow_professional_selection?, "show_team_members" => @business.public_booking_show_team_members?, "assignment_strategy" => @business.public_booking_assignment_strategy, "rescheduling_notice_hours" => @business.rescheduling_notice_hours }).with_indifferent_access %>
 <% mercado_pago_connection = @settings_mercado_pago_connection || @business.mercado_pago_connection %>
 <% mercado_pago_configured = MercadoPago::OAuthClient.configured? %>
-<% enabled_payment_methods = payment_preferences.key?(:enabled_payment_methods) ? Business.normalize_enabled_payment_methods(payment_preferences[:enabled_payment_methods]) : @business.enabled_payment_methods %>
-<% mercado_pago_method_enabled = enabled_payment_methods.include?("mercado_pago") %>
-<% manual_transfer_method_enabled = enabled_payment_methods.include?("manual_transfer") %>
-<% allow_professional_selection = ActiveModel::Type::Boolean.new.cast(booking_page_preferences[:allow_professional_selection]) %>
-<% show_team_members = ActiveModel::Type::Boolean.new.cast(booking_page_preferences[:show_team_members]) %>
-<% booking_assignment_strategy = Business.normalize_public_booking_assignment_strategy(booking_page_preferences[:assignment_strategy]) %>
-<% rescheduling_notice_hours = booking_page_preferences[:rescheduling_notice_hours].presence || @business.rescheduling_notice_hours %>
 <% public_site_mode = business_values[:public_site_mode].presence_in(Business::PUBLIC_SITE_MODES.keys) || @business.public_site_mode %>
 <% public_custom_html = business_values[:public_custom_html] %>
 <% public_category_custom_html = business_values[:public_category_custom_html] %>
@@ -1227,6 +1214,12 @@
     margin-top: 0;
   }
 
+  .settings-divider {
+    background: #e4e4e7;
+    height: 1px;
+    margin: 30px 0;
+  }
+
   .settings-block-header {
     align-items: flex-start;
     display: flex;
@@ -1616,8 +1609,8 @@
       <header class="settings-header">
         <div>
           <p class="settings-eyebrow">Configuración</p>
-          <h1 class="settings-title">Preferencias del centro</h1>
-          <p class="settings-copy">Administrá la información pública, cuentas de cobro y horarios desde un solo lugar.</p>
+          <h1 class="settings-title">Preferencias del negocio</h1>
+          <p class="settings-copy">Centralizá la información pública, la página de reservas, la disponibilidad y el cobro de señas.</p>
         </div>
         <button type="submit" class="settings-button settings-button-primary">
           Guardar cambios
@@ -1628,10 +1621,8 @@
         <div class="settings-mobile-tabs-inner">
           <a href="#datos-generales" class="settings-mobile-tab is-active" data-settings-nav-link data-settings-panel-link="datos-generales">Datos</a>
           <a href="#pagina-de-reservas" class="settings-mobile-tab" data-settings-nav-link data-settings-panel-link="pagina-de-reservas">Reservas</a>
-          <a href="#diseno-web" class="settings-mobile-tab" data-settings-nav-link data-settings-panel-link="diseno-web" data-web-design-navigation <%= "hidden" unless public_site_mode == "full_website" %>>Diseño web</a>
-          <a href="#cuentas-de-cobro" class="settings-mobile-tab" data-settings-nav-link data-settings-panel-link="cuentas-de-cobro">Cobros</a>
-          <a href="#horarios-de-atencion" class="settings-mobile-tab" data-settings-nav-link data-settings-panel-link="horarios-de-atencion">Horarios</a>
-          <a href="#fechas-no-laborables" class="settings-mobile-tab" data-settings-nav-link data-settings-panel-link="fechas-no-laborables">No laborales</a>
+          <a href="#agenda-y-disponibilidad" class="settings-mobile-tab" data-settings-nav-link data-settings-panel-link="agenda-y-disponibilidad">Agenda</a>
+          <a href="#cobros-y-senas" class="settings-mobile-tab" data-settings-nav-link data-settings-panel-link="cobros-y-senas">Cobros</a>
         </div>
       </nav>
 
@@ -1650,40 +1641,23 @@
               <span class="settings-tab-icon"><%= settings_icons.fetch(:globe).html_safe %></span>
               <span class="settings-tab-copy">
                 <span class="settings-tab-title">Página de reservas</span>
-                <span class="settings-tab-description">Asignación de turnos</span>
+                <span class="settings-tab-description">Flujo y diseño público</span>
               </span>
             </a>
 
-            <a href="#diseno-web" class="settings-tab" data-settings-nav-link data-settings-panel-link="diseno-web" data-web-design-navigation <%= "hidden" unless public_site_mode == "full_website" %>>
-              <span class="settings-tab-icon"><%= settings_icons.fetch(:image).html_safe %></span>
+            <a href="#agenda-y-disponibilidad" class="settings-tab" data-settings-nav-link data-settings-panel-link="agenda-y-disponibilidad">
+              <span class="settings-tab-icon"><%= settings_icons.fetch(:clock).html_safe %></span>
               <span class="settings-tab-copy">
-                <span class="settings-tab-title">Diseño web</span>
-                <span class="settings-tab-description">Plantilla y ajustes visuales</span>
+                <span class="settings-tab-title">Agenda y disponibilidad</span>
+                <span class="settings-tab-description">Horarios, cupos y cierres</span>
               </span>
             </a>
 
-            <a href="#cuentas-de-cobro" class="settings-tab" data-settings-nav-link data-settings-panel-link="cuentas-de-cobro">
+            <a href="#cobros-y-senas" class="settings-tab" data-settings-nav-link data-settings-panel-link="cobros-y-senas">
               <span class="settings-tab-icon"><%= settings_icons.fetch(:landmark).html_safe %></span>
               <span class="settings-tab-copy">
-                <span class="settings-tab-title">Cuentas de cobro</span>
-                <span class="settings-tab-description">Mercado Pago, Alias y CBU</span>
-              </span>
-              <span class="settings-tab-badge" data-payment-account-count-badge><%= payment_accounts.size %></span>
-            </a>
-
-            <a href="#horarios-de-atencion" class="settings-tab" data-settings-nav-link data-settings-panel-link="horarios-de-atencion">
-              <span class="settings-tab-icon"><%= settings_icons.fetch(:clock).html_safe %></span>
-              <span class="settings-tab-copy">
-                <span class="settings-tab-title">Horarios de atención</span>
-                <span class="settings-tab-description">Disponibilidad general</span>
-              </span>
-            </a>
-
-            <a href="#fechas-no-laborables" class="settings-tab" data-settings-nav-link data-settings-panel-link="fechas-no-laborables">
-              <span class="settings-tab-icon"><%= settings_icons.fetch(:clock).html_safe %></span>
-              <span class="settings-tab-copy">
-                <span class="settings-tab-title">Fechas no laborables</span>
-                <span class="settings-tab-description">Cierres y pausas de reservas</span>
+                <span class="settings-tab-title">Cobros y señas</span>
+                <span class="settings-tab-description">Mercado Pago automático</span>
               </span>
             </a>
           </nav>
@@ -1917,97 +1891,23 @@
 
                 <div class="settings-booking-notice mt-4" data-full-website-notice <%= "hidden" unless public_site_mode == "full_website" %>>
                   <%= settings_icons.fetch(:info).html_safe %>
-                  <p class="m-0 text-sm font-bold leading-6">Al activar este modo aparece la pestaña Diseño web. Cada categoría tendrá una URL propia y los servicios abrirán directamente el paso de día y horario.</p>
-                </div>
-              </section>
-
-              <section class="settings-block" data-booking-assignment-settings>
-                <div class="settings-block-header">
-                  <span class="settings-block-icon is-purple"><%= settings_icons.fetch(:clock).html_safe %></span>
-                  <div>
-                    <h3 class="settings-block-title">Asignación de turnos</h3>
-                    <p class="settings-block-copy">Elegí si el tutor puede seleccionar profesional o si Cita.pet asigna automáticamente el mejor disponible.</p>
-                  </div>
-                </div>
-
-                <%= hidden_field_tag "booking_page_preferences[allow_professional_selection]", "0" %>
-                <label class="settings-payment-toggle-option">
-                  <%= check_box_tag "booking_page_preferences[allow_professional_selection]", "1", allow_professional_selection, id: "booking_page_preferences_allow_professional_selection", data: { booking_professional_selection_toggle: true } %>
-                  <span>
-                    <span class="settings-payment-toggle-title">Permitir que el cliente elija profesional</span>
-                    <span class="settings-payment-toggle-copy">Si está activo, la página pública muestra el paso Profesional antes de elegir día y hora.</span>
-                  </span>
-                </label>
-
-                <div class="settings-booking-notice" data-booking-professional-selection-notice <%= "hidden" unless allow_professional_selection %>>
-                  <%= settings_icons.fetch(:info).html_safe %>
-                  <p class="m-0 text-sm font-bold leading-6">
-                    El cliente va a poder seleccionar qué profesional lo atiende. Por defecto, la opción seleccionada será "primer profesional libre".
-                  </p>
-                </div>
-
-                <div class="settings-payment-toggle-options settings-assignment-options mt-4" data-booking-assignment-strategies <%= "hidden" if allow_professional_selection %>>
-                  <% Business::PUBLIC_BOOKING_ASSIGNMENT_STRATEGY_LABELS.each do |strategy, label| %>
-                    <label class="settings-payment-toggle-option">
-                      <%= radio_button_tag "booking_page_preferences[assignment_strategy]", strategy, booking_assignment_strategy == strategy, id: "booking_page_preferences_assignment_strategy_#{strategy}" %>
-                      <span>
-                        <span class="settings-payment-toggle-title"><%= label %></span>
-                        <span class="settings-payment-toggle-copy">
-                          <% case strategy %>
-                          <% when "first_available" %>
-                            Asigna el primer profesional libre según el orden configurado del equipo.
-                          <% when "balanced_rotation" %>
-                            Reparte turnos priorizando a quienes tienen menos reservas asignadas.
-                          <% when "least_daily_load" %>
-                            Elige al profesional disponible con menos turnos en ese día.
-                          <% when "habitual_professional" %>
-                            Si el cliente ya tuvo turnos, intenta asignarle su profesional habitual.
-                          <% end %>
-                        </span>
-                      </span>
-                    </label>
-                  <% end %>
+                  <p class="m-0 text-sm font-bold leading-6">La configuración de diseño aparece más abajo. Cada categoría tendrá una URL propia y los servicios abrirán directamente el paso de día y horario.</p>
                 </div>
               </section>
 
               <section class="settings-block">
                 <div class="settings-block-header">
-                  <span class="settings-block-icon is-purple"><%= settings_icons.fetch(:id_card).html_safe %></span>
+                  <span class="settings-block-icon is-purple"><%= settings_icons.fetch(:info).html_safe %></span>
                   <div>
-                    <h3 class="settings-block-title">Equipo en la web pública</h3>
-                    <p class="settings-block-copy">Definí si la página pública muestra el menú y la sección de miembros del equipo.</p>
+                    <h3 class="settings-block-title">Experiencia de reserva</h3>
+                    <p class="settings-block-copy">El flujo público se mantiene corto: servicio, día y hora, datos del responsable y la mascota, seña cuando corresponde y confirmación.</p>
                   </div>
-                </div>
-
-                <%= hidden_field_tag "booking_page_preferences[show_team_members]", "0" %>
-                <label class="settings-payment-toggle-option">
-                  <%= check_box_tag "booking_page_preferences[show_team_members]", "1", show_team_members, id: "booking_page_preferences_show_team_members" %>
-                  <span>
-                    <span class="settings-payment-toggle-title">Mostrar miembros del equipo</span>
-                    <span class="settings-payment-toggle-copy">Si está activo, la web pública muestra la pestaña Equipo y las tarjetas de profesionales. Por defecto queda oculto.</span>
-                  </span>
-                </label>
-              </section>
-
-              <section class="settings-block">
-                <div class="settings-block-header">
-                  <span class="settings-block-icon is-purple"><%= settings_icons.fetch(:clock).html_safe %></span>
-                  <div>
-                    <h3 class="settings-block-title">Reprogramaciones</h3>
-                    <p class="settings-block-copy">Definí hasta cuántas horas antes del turno el cliente puede reprogramar online desde su portal.</p>
-                  </div>
-                </div>
-
-                <div class="max-w-sm">
-                  <label class="settings-field-label" for="booking_page_preferences_rescheduling_notice_hours">Anticipación mínima</label>
-                  <%= number_field_tag "booking_page_preferences[rescheduling_notice_hours]", rescheduling_notice_hours, id: "booking_page_preferences_rescheduling_notice_hours", min: 0, max: 168, step: 1, required: true, class: "settings-input" %>
-                  <p class="settings-field-hint">Horas antes del turno para permitir reprogramaciones online. El valor predeterminado es 24 hs.</p>
                 </div>
               </section>
             </div>
           </section>
 
-          <section class="settings-card settings-section-panel" id="diseno-web" data-settings-panel="diseno-web" data-web-design-panel <%= "hidden" unless @settings_active_tab == "diseno-web" %>>
+          <section class="settings-card settings-section-panel" id="diseno-web" data-settings-panel="diseno-web" data-settings-panel-group="pagina-de-reservas" data-web-design-panel <%= "hidden" unless @settings_active_tab == "pagina-de-reservas" && public_site_mode == "full_website" %>>
             <div class="settings-panel-header">
               <span class="settings-panel-header-icon is-purple"><%= settings_icons.fetch(:image).html_safe %></span>
               <div>
@@ -2098,48 +1998,20 @@
             </div>
           </section>
 
-          <section class="settings-card settings-section-panel" id="cuentas-de-cobro" data-settings-panel="cuentas-de-cobro" data-payment-accounts <%= "hidden" unless @settings_active_tab == "cuentas-de-cobro" %>>
+          <section class="settings-card settings-section-panel" id="cobros-y-senas" data-settings-panel="cobros-y-senas" <%= "hidden" unless @settings_active_tab == "cobros-y-senas" %>>
             <div class="settings-panel-header">
               <span class="settings-panel-header-icon is-green"><%= settings_icons.fetch(:landmark).html_safe %></span>
               <div>
                 <p class="settings-content-eyebrow">Pagos</p>
-                <h2 class="settings-panel-title">Cuentas de cobro</h2>
+                <h2 class="settings-panel-title">Cobros y señas</h2>
                 <p class="settings-panel-copy">
-                  Configurá Mercado Pago o los datos bancarios para abonar la seña o el el total de un servicio que requiera pago previo.
+                  Conectá Mercado Pago para acreditar las señas y confirmar los turnos automáticamente.
                 </p>
               </div>
             </div>
 
             <div class="settings-card-body is-spacious">
-              <section class="settings-block" data-payment-method-toggles>
-                <div class="settings-block-header">
-                  <div>
-                    <h3 class="settings-block-title">Métodos de pago habilitados</h3>
-                    <p class="settings-block-copy">Elegí como se puede abonar la seña o el total al reservar un turno. Luego podés configurarlo por cada servicio.</p>
-                  </div>
-                </div>
-
-                <div class="settings-payment-toggle-options">
-                  <%= hidden_field_tag "payment_preferences[enabled_payment_methods][]", "" %>
-                  <label class="settings-payment-toggle-option">
-                    <%= check_box_tag "payment_preferences[enabled_payment_methods][]", "mercado_pago", mercado_pago_method_enabled, id: "payment_preferences_enabled_payment_methods_mercado_pago", data: { payment_method_toggle: "mercado-pago" } %>
-                    <span>
-                      <span class="settings-payment-toggle-title">MercadoPago</span>
-                      <span class="settings-payment-toggle-copy">Permite cobrar señas o pagos completos con confirmación automática.</span>
-                    </span>
-                  </label>
-
-                  <label class="settings-payment-toggle-option">
-                    <%= check_box_tag "payment_preferences[enabled_payment_methods][]", "manual_transfer", manual_transfer_method_enabled, id: "payment_preferences_enabled_payment_methods_manual_transfer", data: { payment_method_toggle: "manual-transfer" } %>
-                    <span>
-                      <span class="settings-payment-toggle-title">Transferencia por Alias / CBU</span>
-                      <span class="settings-payment-toggle-copy">El cliente sube el comprobante y vos lo aprobás.</span>
-                    </span>
-                  </label>
-                </div>
-              </section>
-
-              <section class="settings-block" data-payment-method-section="mercado-pago" <%= "hidden" unless mercado_pago_method_enabled %>>
+              <section class="settings-block">
                 <div class="settings-block-header">
                   <span class="settings-mercado-pago-logo" aria-hidden="true">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="120 105 315 220">
@@ -2181,7 +2053,7 @@
                     <% else %>
                       <span class="settings-status-pill is-disconnected">Sin conectar</span>
                       <p class="mt-3 text-sm font-bold text-zinc-950">Conectá Mercado Pago antes de usarlo como método de cobro.</p>
-                      <p class="mt-1 text-xs font-semibold text-zinc-500">Sin conexión, los servicios pueden seguir usando comprobante manual.</p>
+                      <p class="mt-1 text-xs font-semibold text-zinc-500">Mientras no haya una cuenta conectada, los clientes no podrán finalizar reservas de servicios que requieran seña.</p>
                     <% end %>
                   </div>
 
@@ -2207,99 +2079,59 @@
                 <% end %>
               </section>
 
-              <section class="settings-block" data-payment-method-section="manual-transfer" <%= "hidden" unless manual_transfer_method_enabled %>>
+              <section class="settings-block">
                 <div class="settings-block-header">
-                  <span class="settings-block-icon is-green"><%= settings_icons.fetch(:landmark).html_safe %></span>
+                  <span class="settings-block-icon is-green"><%= settings_icons.fetch(:info).html_safe %></span>
                   <div>
-                    <h3 class="settings-block-title">Alias / CBU</h3>
-                    <p class="settings-block-copy">Pegá los datos tal como querés que los vea el cliente cuando tenga que subir un comprobante.</p>
+                    <h3 class="settings-block-title">Configuración de la seña</h3>
+                    <p class="settings-block-copy">El importe y el vencimiento se definen en cada servicio. Mercado Pago es el único canal de cobro y confirma el turno mediante webhook cuando acredita el pago.</p>
                   </div>
                 </div>
-
-              <div class="settings-payment-list" data-payment-account-list>
-                <% payment_accounts.each_with_index do |account, index| %>
-                  <% account_key = account.persisted? ? account.id.to_s : "new_#{index}" %>
-                  <% is_primary = primary_payment_account == account %>
-                  <article class="settings-payment-card" data-payment-account-row>
-                    <%= hidden_field_tag "payment_accounts[items][#{account_key}][id]", account.id if account.persisted? %>
-                    <%= hidden_field_tag "payment_accounts[items][#{account_key}][_destroy]", "0", data: { payment_account_destroy: true } %>
-
-                    <div class="settings-payment-card-header">
-                      <label class="settings-payment-primary">
-                        <%= radio_button_tag "payment_accounts[primary_key]", account_key, is_primary, data: { payment_account_primary: true } %>
-                        Usar como cuenta principal
-                        <span class="settings-payment-primary-badge" data-payment-account-primary-badge <%= "hidden" unless is_primary %>>Principal</span>
-                      </label>
-                      <button type="button" class="settings-payment-remove" data-payment-account-remove>Eliminar</button>
-                    </div>
-
-                    <div class="settings-payment-body">
-                      <div>
-                        <label class="settings-field-label" for="payment_account_<%= account_key %>_name">Nombre de la cuenta</label>
-                        <%= text_field_tag "payment_accounts[items][#{account_key}][name]", account.name, id: "payment_account_#{account_key}_name", class: "settings-input", placeholder: "Ej. BBVA principal" %>
-                        <p class="settings-field-hint">Este nombre lo verá el admin y ayuda a elegir la cuenta desde cada servicio.</p>
-                      </div>
-
-                      <div>
-                        <label class="settings-field-label" for="payment_account_<%= account_key %>_details">Datos de cuenta</label>
-                        <%= text_area_tag "payment_accounts[items][#{account_key}][details]", account.details, id: "payment_account_#{account_key}_details", rows: 8, class: "settings-textarea" %>
-                        <p class="settings-field-hint">Se muestra como texto en el link de comprobante. No subas imagen: pegá los datos completos acá.</p>
-                      </div>
-                    </div>
-                  </article>
-                <% end %>
-              </div>
-
-              <div class="settings-payment-empty <%= "hidden" if payment_accounts.any? %>" data-payment-account-empty>
-                Todavía no hay cuentas de cobro configuradas. Agregá la principal para que los servicios con seña puedan pedir comprobante.
-              </div>
-
-              <div class="settings-payment-actions">
-                <button type="button" class="settings-button settings-button-secondary settings-payment-add" data-payment-account-add>
-                  <%= settings_icons.fetch(:plus).html_safe %>
-                  Agregar cuenta
-                </button>
-              </div>
-
-              <template data-payment-account-template>
-                <article class="settings-payment-card" data-payment-account-row>
-                  <input type="hidden" name="payment_accounts[items][__KEY__][_destroy]" value="0" data-payment-account-destroy>
-
-                  <div class="settings-payment-card-header">
-                    <label class="settings-payment-primary">
-                      <input type="radio" name="payment_accounts[primary_key]" value="__KEY__" data-payment-account-primary>
-                      Usar como cuenta principal
-                      <span class="settings-payment-primary-badge" data-payment-account-primary-badge hidden>Principal</span>
-                    </label>
-                    <button type="button" class="settings-payment-remove" data-payment-account-remove>Eliminar</button>
-                  </div>
-
-                  <div class="settings-payment-body">
-                    <div>
-                      <label class="settings-field-label" for="payment_account___KEY___name">Nombre de la cuenta</label>
-                      <input type="text" name="payment_accounts[items][__KEY__][name]" id="payment_account___KEY___name" class="settings-input" placeholder="Ej. BBVA principal">
-                      <p class="settings-field-hint">Este nombre lo verá el admin y ayuda a elegir la cuenta desde cada servicio.</p>
-                    </div>
-
-                    <div>
-                      <label class="settings-field-label" for="payment_account___KEY___details">Datos de cuenta</label>
-                      <textarea name="payment_accounts[items][__KEY__][details]" id="payment_account___KEY___details" rows="8" class="settings-textarea" placeholder="Ej.&#10;Banco: BBVA&#10;Alias: XXX.XXX.XXX&#10;CBU: 999999999999999999&#10;Titular: Juan Pérez&#10;CUIT/CUIL: 2099999999-9"></textarea>
-                      <p class="settings-field-hint">Se muestra como texto en el link de comprobante. No subas imagen: pegá los datos completos acá.</p>
-                    </div>
-                  </div>
-                </article>
-              </template>
+                <%= link_to "Ir a Servicios", admin_services_path, class: "settings-button settings-button-secondary" %>
               </section>
             </div>
           </section>
 
-          <section class="settings-card settings-section-panel" id="horarios-de-atencion" data-settings-panel="horarios-de-atencion" data-settings-schedule <%= "hidden" unless @settings_active_tab == "horarios-de-atencion" %>>
+          <section class="settings-card settings-section-panel" id="agenda-y-disponibilidad" data-settings-panel="agenda-y-disponibilidad" data-settings-schedule <%= "hidden" unless @settings_active_tab == "agenda-y-disponibilidad" %>>
             <div class="settings-card-body">
-            <p class="settings-content-eyebrow">Horarios</p>
-            <h2 class="settings-schedule-heading">Horarios de atención</h2>
+            <p class="settings-content-eyebrow">Agenda</p>
+            <h2 class="settings-schedule-heading">Agenda y disponibilidad</h2>
             <p class="settings-schedule-copy">
-              Informá a los clientes el horario habitual del centro. Se mostrará en el perfil público y se usará como base para calcular disponibilidad.
+              Configurá los cupos simultáneos, los horarios de ingreso y la disponibilidad semanal del negocio.
             </p>
+
+            <div class="settings-form-grid">
+              <div>
+                <label class="settings-field-label" for="agenda_arrival_mode">Horarios de ingreso</label>
+                <%= select_tag "agenda[arrival_mode]", options_for_select([["Continuos cada 30 minutos", "continuous"], ["Tandas por día", "fixed"]], @business.arrival_mode), id: "agenda_arrival_mode", class: "settings-input", data: { arrival_mode: true } %>
+              </div>
+              <div>
+                <label class="settings-field-label" for="agenda_simultaneous_capacity">Mascotas en simultáneo</label>
+                <%= number_field_tag "agenda[simultaneous_capacity]", @business.simultaneous_capacity || 1, min: 1, max: 10, required: true, id: "agenda_simultaneous_capacity", class: "settings-input" %>
+              </div>
+            </div>
+
+            <div class="settings-block mt-6" data-arrival-times <%= "hidden" unless @business.arrival_mode == "fixed" %>>
+              <div class="settings-block-header">
+                <span class="settings-block-icon is-purple"><%= settings_icons.fetch(:clock).html_safe %></span>
+                <div>
+                  <h3 class="settings-block-title">Tandas de ingreso</h3>
+                  <p class="settings-block-copy">Separá los horarios con comas. Se aplicarán solamente cuando el modo sea Tandas por día.</p>
+                </div>
+              </div>
+              <div class="settings-form-grid">
+                <% Business::DAYS.each do |day, name| %>
+                  <div>
+                    <label class="settings-field-label" for="agenda_times_<%= day %>"><%= name %></label>
+                    <%= text_field_tag "agenda_times[#{day}]", Array(@business.arrival_times[day.to_s]).join(", "), id: "agenda_times_#{day}", placeholder: "09:00, 12:00, 15:00", class: "settings-input" %>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+
+            <div class="settings-divider"></div>
+            <h3 class="settings-block-title">Horarios de atención</h3>
+            <p class="settings-block-copy">Se muestran en el perfil público y son la base para calcular disponibilidad.</p>
 
             <div class="settings-schedule-day-pills">
               <% availability_rules.each do |rule| %>
@@ -2364,7 +2196,7 @@
             </div>
           </section>
 
-          <section class="settings-card settings-section-panel" id="fechas-no-laborables" data-settings-panel="fechas-no-laborables" <%= "hidden" unless @settings_active_tab == "fechas-no-laborables" %>>
+          <section class="settings-card settings-section-panel" id="fechas-no-laborables" data-settings-panel="fechas-no-laborables" data-settings-panel-group="agenda-y-disponibilidad" <%= "hidden" unless @settings_active_tab == "agenda-y-disponibilidad" %>>
             <div class="settings-card-body">
               <p class="settings-content-eyebrow">Disponibilidad</p>
               <h2 class="settings-schedule-heading">Fechas no laborables</h2>
@@ -2465,10 +2297,6 @@
     const logoPreviewImage = form?.querySelector("[data-logo-preview-image]");
     const logoPreviewTitle = form?.querySelector("[data-logo-preview-title]");
     const logoPreviewHint = form?.querySelector("[data-logo-preview-hint]");
-    const paymentMethodToggles = Array.from(document.querySelectorAll("[data-payment-method-toggle]"));
-    const bookingProfessionalSelectionToggle = form?.querySelector("[data-booking-professional-selection-toggle]");
-    const bookingProfessionalSelectionNotice = form?.querySelector("[data-booking-professional-selection-notice]");
-    const bookingAssignmentStrategies = form?.querySelector("[data-booking-assignment-strategies]");
     const publicSiteModeInputs = Array.from(document.querySelectorAll("[data-public-site-mode-input]"));
     const webDesignNavigation = Array.from(document.querySelectorAll("[data-web-design-navigation]"));
     const webDesignPanel = document.querySelector("[data-web-design-panel]");
@@ -2606,11 +2434,12 @@
     const panelIdForLink = (link) => link.dataset.settingsPanelLink || link.getAttribute("href")?.replace(/^#/, "");
 
     const showSettingsPanel = (panelId, updateHash = false) => {
-      if (!panelId || !settingsPanels.some((panel) => panel.id === panelId)) return;
+      if (!panelId || !settingsPanels.some((panel) => panel.id === panelId || panel.dataset.settingsPanelGroup === panelId)) return;
 
       if (activeSettingsTabInput) activeSettingsTabInput.value = panelId;
       settingsPanels.forEach((panel) => {
-        panel.hidden = panel.id !== panelId;
+        const matchesPanel = panel.id === panelId || panel.dataset.settingsPanelGroup === panelId;
+        panel.hidden = !matchesPanel || (panel === webDesignPanel && !fullWebsiteSelected());
       });
       navLinks.forEach((link) => {
         link.classList.toggle("is-active", panelIdForLink(link) === panelId);
@@ -2646,7 +2475,7 @@
       const fullWebsite = fullWebsiteSelected();
       webDesignNavigation.forEach((link) => { link.hidden = !fullWebsite; });
       if (fullWebsiteNotice) fullWebsiteNotice.hidden = !fullWebsite;
-      if (!fullWebsite && !webDesignPanel?.hidden) showSettingsPanel("pagina-de-reservas", true);
+      if (webDesignPanel && activeSettingsTabInput?.value === "pagina-de-reservas") webDesignPanel.hidden = !fullWebsite;
     };
 
     publicSiteModeInputs.forEach((input) => input.addEventListener("change", syncPublicSiteMode));
@@ -2756,30 +2585,13 @@
       if (logoPreviewHint) logoPreviewHint.textContent = "Vista previa antes de guardar los cambios.";
     });
 
-    const syncPaymentMethodSections = (changedToggle = null) => {
-      if (changedToggle?.checked) {
-        paymentMethodToggles.forEach((toggle) => {
-          if (toggle !== changedToggle) toggle.checked = false;
-        });
-      }
-
-      paymentMethodToggles.forEach((toggle) => {
-        const section = document.querySelector(`[data-payment-method-section="${toggle.dataset.paymentMethodToggle}"]`);
-        if (section) section.hidden = !toggle.checked;
-      });
+    const arrivalModeInput = form?.querySelector("[data-arrival-mode]");
+    const arrivalTimes = form?.querySelector("[data-arrival-times]");
+    const syncArrivalMode = () => {
+      if (arrivalTimes) arrivalTimes.hidden = arrivalModeInput?.value !== "fixed";
     };
-
-    paymentMethodToggles.forEach((toggle) => toggle.addEventListener("change", () => syncPaymentMethodSections(toggle)));
-    syncPaymentMethodSections();
-
-    const syncBookingAssignmentSettings = () => {
-      const allowSelection = Boolean(bookingProfessionalSelectionToggle?.checked);
-      if (bookingProfessionalSelectionNotice) bookingProfessionalSelectionNotice.hidden = !allowSelection;
-      if (bookingAssignmentStrategies) bookingAssignmentStrategies.hidden = allowSelection;
-    };
-
-    bookingProfessionalSelectionToggle?.addEventListener("change", syncBookingAssignmentSettings);
-    syncBookingAssignmentSettings();
+    arrivalModeInput?.addEventListener("change", syncArrivalMode);
+    syncArrivalMode();
 
     const scheduleRoot = document.querySelector("[data-settings-schedule]");
     const scheduleRows = scheduleRoot ? Array.from(scheduleRoot.querySelectorAll("[data-schedule-day-row]")) : [];
@@ -2887,63 +2699,6 @@
       });
       updateScheduleCopyPrompts();
     }));
-
-    const paymentAccountsRoot = document.querySelector("[data-payment-accounts]");
-    const paymentAccountList = paymentAccountsRoot?.querySelector("[data-payment-account-list]");
-    const paymentAccountTemplate = paymentAccountsRoot?.querySelector("[data-payment-account-template]");
-    const paymentAccountEmpty = paymentAccountsRoot?.querySelector("[data-payment-account-empty]");
-    const paymentAccountAdd = paymentAccountsRoot?.querySelector("[data-payment-account-add]");
-    const paymentAccountCountBadge = document.querySelector("[data-payment-account-count-badge]");
-
-    const visiblePaymentAccountRows = () => Array.from(paymentAccountList?.querySelectorAll("[data-payment-account-row]") || [])
-      .filter((row) => !row.classList.contains("is-destroyed"));
-
-    const syncPaymentAccountState = () => {
-      const rows = visiblePaymentAccountRows();
-      paymentAccountEmpty?.classList.toggle("hidden", rows.length > 0);
-      if (paymentAccountCountBadge) paymentAccountCountBadge.textContent = rows.length;
-
-      if (rows.length > 0 && !rows.some((row) => row.querySelector("[data-payment-account-primary]")?.checked)) {
-        const firstRadio = rows[0].querySelector("[data-payment-account-primary]");
-        if (firstRadio) firstRadio.checked = true;
-      }
-
-      rows.forEach((row) => {
-        const radio = row.querySelector("[data-payment-account-primary]");
-        row.querySelector("[data-payment-account-primary-badge]")?.toggleAttribute("hidden", !radio?.checked);
-      });
-    };
-
-    const setupPaymentAccountRow = (row) => {
-      row.querySelector("[data-payment-account-primary]")?.addEventListener("change", syncPaymentAccountState);
-      row.querySelector("[data-payment-account-remove]")?.addEventListener("click", () => {
-        const destroyField = row.querySelector("[data-payment-account-destroy]");
-        const radio = row.querySelector("[data-payment-account-primary]");
-
-        if (destroyField) destroyField.value = "1";
-        if (radio) radio.checked = false;
-        row.classList.add("is-destroyed");
-        syncPaymentAccountState();
-      });
-    };
-
-    paymentAccountList?.querySelectorAll("[data-payment-account-row]").forEach(setupPaymentAccountRow);
-    paymentAccountAdd?.addEventListener("click", () => {
-      if (!paymentAccountTemplate || !paymentAccountList) return;
-
-      const key = `new_${Date.now()}_${Math.random().toString(16).slice(2)}`;
-      const wrapper = document.createElement("div");
-      wrapper.innerHTML = paymentAccountTemplate.innerHTML.replaceAll("__KEY__", key);
-      const row = wrapper.firstElementChild;
-      if (!row) return;
-
-      paymentAccountList.appendChild(row);
-      setupPaymentAccountRow(row);
-      syncPaymentAccountState();
-      row.querySelector(".settings-input")?.focus();
-      row.scrollIntoView({ behavior: "smooth", block: "center" });
-    });
-    syncPaymentAccountState();
 
     form?.addEventListener("submit", () => {
       if (instagramInput) {

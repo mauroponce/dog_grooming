@@ -3,10 +3,8 @@ module Admin
     SETTINGS_TABS = %w[
       datos-generales
       pagina-de-reservas
-      diseno-web
-      cuentas-de-cobro
-      horarios-de-atencion
-      fechas-no-laborables
+      agenda-y-disponibilidad
+      cobros-y-senas
     ].freeze
 
     def show
@@ -24,9 +22,6 @@ module Admin
           @business.save!
         end
         Admin::UpdateBusinessSettings.call(@business, business_account_params) if params[:business_account].present?
-        Admin::UpdateBookingPagePreferences.call(@business, booking_page_preferences_params) if params[:booking_page_preferences].present?
-        Admin::UpdatePaymentPreferences.call(@business, payment_preferences_params) if params[:payment_preferences].present?
-        Admin::SyncPaymentAccounts.call(@business, payment_accounts_params) if params[:payment_accounts].present?
         SuperAdmin::SyncBusinessAvailability.call(@business, availability_rules_params)
       end
       active_tab = settings_tab || SETTINGS_TABS.first
@@ -41,9 +36,6 @@ module Admin
       def prepare_settings
         @settings_active_tab = settings_tab || SETTINGS_TABS.first
         @settings_business_values = settings_business_values
-        @settings_booking_page_preferences = settings_booking_page_preferences
-        @settings_payment_accounts = settings_payment_accounts
-        @settings_payment_preferences = settings_payment_preferences
         @settings_mercado_pago_connection = @business.mercado_pago_connection
         @settings_availability_rules = settings_availability_rules
         @settings_non_working_periods = @business.availability_blocks.non_working_periods.order(:starts_at).to_a
@@ -59,30 +51,6 @@ module Admin
         end
 
         params.fetch(:availability_rules, ActionController::Parameters.new).permit(*permitted_rules)
-      end
-
-      def payment_accounts_params
-        submitted = params.fetch(:payment_accounts, ActionController::Parameters.new)
-        submitted_items = submitted.fetch(:items, ActionController::Parameters.new)
-        permitted_items = {}
-        submitted_items.each_pair do |key, values|
-          next unless values.respond_to?(:permit)
-
-          permitted_items[key.to_s] = values.permit(:id, :name, :details, :_destroy).to_h
-        end
-
-        {
-          "primary_key" => submitted[:primary_key].to_s,
-          "items" => permitted_items
-        }
-      end
-
-      def payment_preferences_params
-        params.require(:payment_preferences).permit(enabled_payment_methods: [])
-      end
-
-      def booking_page_preferences_params
-        params.require(:booking_page_preferences).permit(:allow_professional_selection, :show_team_members, :assignment_strategy, :rescheduling_notice_hours)
       end
 
       def business_account_params
@@ -135,57 +103,6 @@ module Admin
           province: @business.province,
           neighborhood: @business.neighborhood
         }
-      end
-
-      def settings_payment_accounts
-        return normalize_submitted_payment_accounts(params[:payment_accounts]) if params[:payment_accounts].present?
-
-        @business.payment_accounts.ordered.to_a
-      end
-
-      def settings_payment_preferences
-        submitted = params[:payment_preferences]
-        return submitted.to_unsafe_h if submitted.respond_to?(:to_unsafe_h)
-        return submitted.to_h if submitted.respond_to?(:to_h)
-
-        { "enabled_payment_methods" => @business.enabled_payment_methods }
-      end
-
-      def settings_booking_page_preferences
-        submitted = params[:booking_page_preferences]
-        raw = if submitted.respond_to?(:to_unsafe_h)
-          submitted.to_unsafe_h
-        elsif submitted.respond_to?(:to_h)
-          submitted.to_h
-        else
-          {}
-        end
-        return raw if raw.present?
-
-        {
-          "allow_professional_selection" => @business.public_booking_allow_professional_selection?,
-          "show_team_members" => @business.public_booking_show_team_members?,
-          "assignment_strategy" => @business.public_booking_assignment_strategy,
-          "rescheduling_notice_hours" => @business.rescheduling_notice_hours
-        }
-      end
-
-      def normalize_submitted_payment_accounts(submitted)
-        raw = submitted.respond_to?(:to_unsafe_h) ? submitted.to_unsafe_h : submitted.to_h
-        primary_key = raw["primary_key"].to_s
-
-        raw.fetch("items", {}).map do |key, values|
-          next if ActiveModel::Type::Boolean.new.cast(values["_destroy"])
-          next if values["name"].to_s.blank? && values["details"].to_s.blank?
-
-          account = values["id"].present? ? @business.payment_accounts.find_by(id: values["id"]) || @business.payment_accounts.build : @business.payment_accounts.build
-          account.assign_attributes(
-            name: values["name"].to_s,
-            details: values["details"].to_s,
-            primary_account: key.to_s == primary_key
-          )
-          account
-        end.compact
       end
 
       def settings_availability_rules

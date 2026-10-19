@@ -27,13 +27,11 @@
 <% deposit_payment_services = @selected_services.select(&:deposit_required?) %>
 <% no_deposit_payment_required = @selected_services.any? && deposit_payment_services.empty? %>
 <% show_professional_details = @business.public_booking_allow_professional_selection? %>
-<% manual_transfer_payment_available = deposit_payment_services.any? && @business.manual_transfer_payment_enabled? && deposit_payment_services.all?(&:manual_payment_configured?) %>
 <% mercado_pago_payment_available = deposit_payment_services.any? && @business.mercado_pago_payment_enabled? && @business.mercado_pago_connected? %>
 <% deposit_payment_methods = [] %>
-<% deposit_payment_methods << "manual_transfer" if manual_transfer_payment_available %>
 <% deposit_payment_methods << "mercado_pago" if mercado_pago_payment_available %>
 <% deposit_payment_method = deposit_payment_methods.first %>
-<% deposit_payment_submission_step = { "mercado_pago" => "mercado_pago", "manual_transfer" => "start_manual_transfer" }[deposit_payment_method] %>
+<% deposit_payment_submission_step = "mercado_pago" if deposit_payment_method.present? %>
 <% deposit_payment_amount_cents = deposit_payment_services.sum { |service| service.deposit_amount_cents_for(service.price_cents) } %>
 <% remaining_balance_cents = [ @total_price_cents.to_i - deposit_payment_amount_cents.to_i, 0 ].max %>
 <% remaining_balance_label = number_to_currency(remaining_balance_cents.to_i / 100, unit: "$", precision: 0, delimiter: ".") %>

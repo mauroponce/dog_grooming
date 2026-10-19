@@ -40,7 +40,7 @@ RSpec.describe "Admin shell", type: :request do
     sign_in(user)
 
     patch admin_settings_path, params: {
-      settings_tab: "horarios-de-atencion",
+      settings_tab: "agenda-y-disponibilidad",
       availability_rules: {
         "1" => {
           active: "1",
@@ -54,7 +54,7 @@ RSpec.describe "Admin shell", type: :request do
       }
     }, headers: browser_headers
 
-    expect(response).to redirect_to(admin_settings_path(settings_tab: "horarios-de-atencion", anchor: "horarios-de-atencion"))
+    expect(response).to redirect_to(admin_settings_path(settings_tab: "agenda-y-disponibilidad", anchor: "agenda-y-disponibilidad"))
     monday = business.availability_rules.find_by!(weekday: 1)
     expect(monday).to have_attributes(active: true)
     expect(monday.start_time.strftime("%H:%M")).to eq("08:30")
@@ -62,30 +62,19 @@ RSpec.describe "Admin shell", type: :request do
     expect(monday.business_id).to eq(business.id)
   end
 
-  it "creates and chooses a manual-transfer account while ignoring extra attributes" do
+  it "shows the four configuration areas and Mercado Pago as the only deposit method" do
     user, business = create_admin_with_business
     sign_in(user)
 
-    patch admin_settings_path, params: {
-      settings_tab: "cuentas-de-cobro",
-      payment_accounts: {
-        primary_key: "new-account",
-        items: {
-          "new-account" => {
-            name: "Cuenta principal",
-            details: "Alias: PATITAS.DEMO",
-            active: "0",
-            business_id: -1
-          }
-        }
-      }
-    }, headers: browser_headers
+    get admin_settings_path(settings_tab: "cobros-y-senas"), headers: browser_headers
 
-    expect(response).to redirect_to(admin_settings_path(settings_tab: "cuentas-de-cobro", anchor: "cuentas-de-cobro"))
-    account = business.payment_accounts.find_by!(name: "Cuenta principal")
-    expect(account).to be_active
-    expect(account).to be_primary_account
-    expect(account.business_id).to eq(business.id)
+    expect(response).to have_http_status(:ok)
+    document = Nokogiri::HTML(response.body)
+    tabs = document.css(".settings-sidebar-nav .settings-tab-title").map { |node| node.text.strip }
+    expect(tabs).to eq([ "Datos generales", "Página de reservas", "Agenda y disponibilidad", "Cobros y señas" ])
+    expect(response.body).to include("Mercado Pago")
+    expect(response.body).not_to include("Transferencia por Alias / CBU")
+    expect(response.body).not_to include("Permitir que el cliente elija profesional")
   end
 
   it "stores the public website content selected in settings" do
@@ -93,7 +82,7 @@ RSpec.describe "Admin shell", type: :request do
     sign_in(user)
 
     patch admin_settings_path, params: {
-      settings_tab: "diseno-web",
+      settings_tab: "pagina-de-reservas",
       business_account: {
         business_name: business.name,
         owner_name: user.name,
@@ -106,7 +95,7 @@ RSpec.describe "Admin shell", type: :request do
       }
     }, headers: browser_headers
 
-    expect(response).to redirect_to(admin_settings_path(settings_tab: "diseno-web", anchor: "diseno-web"))
+    expect(response).to redirect_to(admin_settings_path(settings_tab: "pagina-de-reservas", anchor: "pagina-de-reservas"))
     expect(business.reload.public_site_mode).to eq("full_website")
     expect(business.public_custom_html).to include("Quiénes somos")
     expect(business.public_category_custom_html).to include("{{category_name}}")

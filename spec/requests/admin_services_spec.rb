@@ -115,33 +115,8 @@ RSpec.describe "Admin services", type: :request do
     expect(document.css('select[name^="service_availability_rules"]').map { |field| field["class"] }.uniq).to eq([ "service-custom-select-input" ])
   end
 
-  it "renders the manual receipt account selector only when manual transfer has multiple active accounts" do
+  it "never renders manual receipt accounts in the service editor" do
     user, business = create_admin_with_business
-    primary_account = business.payment_accounts.create!(name: "BBVA principal", details: "Alias: NAVAJA.CLUB", primary_account: true)
-    secondary_account = business.payment_accounts.create!(name: "Mercado Pago wallet", details: "Alias: NAVAJA.SEC")
-
-    sign_in(user)
-    get new_admin_service_path, headers: browser_headers
-
-    document = Nokogiri::HTML(response.body)
-    account_select = document.at_css('select[name="service[payment_account_id]"]')
-    account_options = account_select.css("option").map(&:text)
-
-    expect(response).to have_http_status(:ok)
-    expect(response.body).to include("Cuenta para comprobante manual")
-    expect(account_select).to be_present
-    expect(account_select["class"]).to include("service-custom-select-input")
-    expect(account_select["data-native-select"]).to eq("true")
-    expect(account_select["data-custom-select-target"]).to eq("input")
-    expect(account_select.ancestors.any? { |node| node["data-controller"].to_s.split.include?("custom-select") }).to eq(true)
-    expect(account_options).to include("Usar cuenta principal")
-    expect(account_options).to include(primary_account.display_name)
-    expect(account_options).to include(secondary_account.display_name)
-  end
-
-  it "hides the manual receipt account selector when only Mercado Pago is enabled" do
-    user, business = create_admin_with_business
-    business.update!(preferences: business.preferences.merge("enabled_payment_methods" => [ "mercado_pago" ]))
     business.payment_accounts.create!(name: "BBVA principal", details: "Alias: NAVAJA.CLUB", primary_account: true)
     business.payment_accounts.create!(name: "Cuenta secundaria", details: "Alias: NAVAJA.SEC")
 
@@ -149,21 +124,6 @@ RSpec.describe "Admin services", type: :request do
     get new_admin_service_path, headers: browser_headers
 
     document = Nokogiri::HTML(response.body)
-
-    expect(response).to have_http_status(:ok)
-    expect(response.body).not_to include("Cuenta para comprobante manual")
-    expect(document.at_css('select[name="service[payment_account_id]"]')).to be_nil
-  end
-
-  it "hides the manual receipt account selector when manual transfer has no active accounts" do
-    user, business = create_admin_with_business
-    business.update!(preferences: business.preferences.merge("enabled_payment_methods" => [ "manual_transfer" ]))
-
-    sign_in(user)
-    get new_admin_service_path, headers: browser_headers
-
-    document = Nokogiri::HTML(response.body)
-
     expect(response).to have_http_status(:ok)
     expect(response.body).not_to include("Cuenta para comprobante manual")
     expect(document.at_css('select[name="service[payment_account_id]"]')).to be_nil
@@ -189,16 +149,14 @@ RSpec.describe "Admin services", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(deposit_panel["hidden"]).to be_nil
-    expect(deposit_panel.text.squish).to include("Se cobrará la seña a través de Mercado Pago y el turno quedará confirmado automáticamente. Puedes cambiarlo en Configuración.")
+    expect(deposit_panel.text.squish).to include("Se cobrará la seña a través de Mercado Pago y el turno quedará confirmado automáticamente.")
     expect(deposit_panel.text).not_to include("Podés pedir una seña")
     expect(deposit_panel.text).not_to include("comprobante de transferencia")
     expect(document.at_css('select[name="service[payment_account_id]"]')).to be_nil
   end
 
-  it "explains manual receipt upload when only transfer is enabled and a payment account exists" do
+  it "explains that Mercado Pago must be connected before collecting a deposit" do
     user, business = create_admin_with_business
-    business.update!(preferences: business.preferences.merge("enabled_payment_methods" => [ "manual_transfer" ]))
-    business.payment_accounts.create!(name: "BBVA principal", details: "Alias: NAVAJA.CLUB", primary_account: true)
     service = create_service(business, name: "Corte clásico")
     service.update!(deposit_required: true, deposit_amount_cents: 3_000_00)
 
@@ -210,9 +168,8 @@ RSpec.describe "Admin services", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(deposit_panel["hidden"]).to be_nil
-    expect(deposit_panel.text.squish).to include("El cliente deberá subir una foto del comprobante de transferencia a la cuenta elegida en Configuración.")
-    expect(deposit_panel.text).not_to include("Podés pedir una seña")
-    expect(deposit_panel.text).not_to include("Mercado Pago y el turno quedará confirmado automáticamente")
+    expect(deposit_panel.text.squish).to include("Para recibir señas y confirmar estos turnos, conectá Mercado Pago en Configuración.")
+    expect(deposit_panel.text).not_to include("comprobante de transferencia")
     expect(document.at_css('select[name="service[payment_account_id]"]')).to be_nil
   end
 
@@ -540,9 +497,9 @@ RSpec.describe "Admin services", type: :request do
     expect(document.at_css('input[type="checkbox"][name="service[deposit_required]"]')).to be_present
     expect(document.css(".service-toggle-control .service-toggle-checkbox").size).to be >= 2
     expect(document.at_css('input[name="service[deposit_amount]"]')).to be_present
-    expect(document.css('a[href="/admin/configuracion#cuentas-de-cobro"]').map(&:text)).to include("Configuración")
-    expect(document.at_css(".service-switch-label a[href='/admin/configuracion#cuentas-de-cobro']")).to be_nil
-    expect(document.at_css("[data-service-deposit-target='amount'] a[href='/admin/configuracion#cuentas-de-cobro']")).to be_present
+    expect(document.css('a[href="/admin/configuracion#cobros-y-senas"]').map(&:text)).to include("Configuración")
+    expect(document.at_css(".service-switch-label a[href='/admin/configuracion#cobros-y-senas']")).to be_nil
+    expect(document.at_css("[data-service-deposit-target='amount'] a[href='/admin/configuracion#cobros-y-senas']")).to be_present
     expect(document.at_css('textarea[name="service[description]"]')).to be_present
     expect(response.body).not_to include("Página pública del servicio")
     expect(response.body).not_to include("Foto de portada")

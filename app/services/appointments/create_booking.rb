@@ -103,10 +103,8 @@ module Appointments
         case selected_payment_method
         when "mercado_pago"
           raise ArgumentError, "Mercado Pago no está disponible para esta reserva." unless mercado_pago_payment_available?
-        when "manual_transfer"
-          raise ArgumentError, "Este servicio pide comprobante, pero el negocio todavía no configuró una cuenta para cobrar." unless service.manual_payment_configured?
         else
-          raise ArgumentError, "Elegí un método de pago para reservar."
+          raise ArgumentError, "Mercado Pago no está disponible para esta reserva."
         end
       end
 
@@ -116,21 +114,12 @@ module Appointments
         payment_amount_cents = appointment.calculated_deposit_amount_cents
         raise ArgumentError, "El servicio requiere pago para reservar, pero no tiene monto configurado." if payment_amount_cents <= 0
 
-        if selected_payment_method == "mercado_pago"
-          raise ArgumentError, "Mercado Pago no está disponible para esta reserva." unless mercado_pago_payment_available?
+        raise ArgumentError, "Mercado Pago no está disponible para esta reserva." unless selected_payment_method == "mercado_pago" && mercado_pago_payment_available?
 
-          appointment.mark_mercado_pago_payment_pending!(
-            amount_cents: payment_amount_cents,
-            charge_mode: "deposit"
-          )
-          return
-        end
-
-        raise ArgumentError, "El negocio todavía no configuró una cuenta para cobrar señas." unless service.manual_payment_configured?
-
-        appointment.mark_manual_deposit_pending!(amount_cents: payment_amount_cents, charge_mode: "deposit")
-        return if deposit_receipt.blank?
-        DepositProofs::ReplaceService.new(booking: appointment, file: deposit_receipt).call
+        appointment.mark_mercado_pago_payment_pending!(
+          amount_cents: payment_amount_cents,
+          charge_mode: "deposit"
+        )
       end
 
       def schedule_pending_deposit_expiration!(appointment)
@@ -140,7 +129,6 @@ module Appointments
       def selected_payment_method
         @selected_payment_method ||= begin
           normalized = payment_method.to_s
-          normalized = "manual_transfer" if normalized == "manual_proof"
           normalized = nil unless normalized.in?(Business::PAYMENT_METHODS)
           normalized ||= available_payment_methods.first unless source.to_s == "public_booking"
           normalized
@@ -148,10 +136,7 @@ module Appointments
       end
 
       def available_payment_methods
-        methods = []
-        methods << "manual_transfer" if business.manual_transfer_payment_enabled? && service.manual_payment_configured?
-        methods << "mercado_pago" if mercado_pago_payment_available?
-        methods
+        mercado_pago_payment_available? ? [ "mercado_pago" ] : []
       end
 
       def mercado_pago_payment_available?

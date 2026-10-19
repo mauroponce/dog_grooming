@@ -12,7 +12,7 @@ RSpec.describe "Public landing", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("data-landing-page")
     expect(response.body).to include("Menos mensajes,")
-    expect(response.body).to include("Señas por transferencia")
+    expect(response.body).to include("Señas con Mercado Pago")
     expect(response.body).to include("14 días gratis")
     expect(response.body).to include(registro_path)
     expect(google_login_forms.size).to eq(3)
@@ -20,7 +20,7 @@ RSpec.describe "Public landing", type: :request do
     expect(document.at_css(%(a[href="#{new_session_path}"]))).to be_nil
     expect(response.body).to include(privacy_policy_path)
     expect(response.body).to include(data_deletion_path)
-    expect(response.body).not_to include("Mercado Pago")
+    expect(response.body).not_to include("comprobante de transferencia")
     expect(response.body).not_to include("Asistente IA")
   end
 end

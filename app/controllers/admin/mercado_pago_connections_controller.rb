@@ -36,15 +36,12 @@ module Admin
 
     def destroy
       @business.mercado_pago_connection&.disconnect!
-      enabled_payment_methods = @business.enabled_payment_methods - [ "mercado_pago" ]
-      @business.update!(preferences: @business.preferences.to_h.merge("enabled_payment_methods" => enabled_payment_methods.presence || [ "manual_transfer" ]))
-
       redirect_to payment_settings_path, notice: "Mercado Pago fue desconectado."
     end
 
     private
       def payment_settings_path
-        admin_settings_path(settings_tab: "cuentas-de-cobro", anchor: "cuentas-de-cobro")
+        admin_settings_path(settings_tab: "cobros-y-senas", anchor: "cobros-y-senas")
       end
 
       def state

@@ -28,15 +28,15 @@ RSpec.describe Appointments::CreateBooking do
     expect(appointment.employee_membership).to be_nil
   end
 
-  it "creates a manual-transfer deposit while simultaneous capacity is enabled" do
+  it "creates a Mercado Pago pending deposit while simultaneous capacity is enabled" do
     business = create_business(
       simultaneous_capacity: 3,
       preferences: {
         "deposits_enabled" => true,
-        "enabled_payment_methods" => [ "manual_transfer" ]
+        "enabled_payment_methods" => [ "mercado_pago" ]
       }
     )
-    business.payment_accounts.create!(name: "Cuenta principal", details: "Alias: DEMO.SEÑAS", primary_account: true)
+    allow(business).to receive(:mercado_pago_connected?).and_return(true)
     starts_at = enable_availability_for(business)
     service = create_service(business, deposit_required: true, deposit_amount_cents: 5_000_00)
 
@@ -46,49 +46,45 @@ RSpec.describe Appointments::CreateBooking do
       starts_at: starts_at,
       customer_name: "Julieta Pérez",
       customer_phone: "+54 9 11 1111-1111",
-      payment_method: "manual_transfer"
+      payment_method: "mercado_pago"
     )
 
-    expect(appointment).to be_pending_deposit
-    expect(appointment).to be_manual_payment_required
+    expect(appointment).to be_mercado_pago_payment_pending
     expect(appointment.deposit_amount_cents).to eq(5_000_00)
     expect(appointment.payment_charge_mode).to eq("deposit")
   end
 
-  it "keeps a manual-transfer booking under review when a receipt is attached" do
+  it "rejects manual transfer even when collection details are present" do
     business = create_business(
       preferences: {
         "deposits_enabled" => true,
-        "enabled_payment_methods" => [ "manual_transfer" ]
+        "enabled_payment_methods" => [ "mercado_pago" ]
       }
     )
     business.payment_accounts.create!(name: "Cuenta principal", details: "Alias: DEMO.SEÑAS", primary_account: true)
     starts_at = enable_availability_for(business)
     service = create_service(business, deposit_required: true, deposit_amount_cents: 5_000_00)
 
-    appointment = described_class.call(
-      business: business,
-      service: service,
-      starts_at: starts_at,
-      customer_name: "Julieta Pérez",
-      customer_phone: "+54 9 11 1111-1111",
-      payment_method: "manual_transfer",
-      deposit_receipt: pdf_upload
-    )
-
-    expect(appointment).to be_pending_deposit_review
-    expect(appointment.deposit_status).to eq("submitted")
-    expect(appointment.deposit_receipt).to be_attached
+    expect do
+      described_class.call(
+        business: business,
+        service: service,
+        starts_at: starts_at,
+        customer_name: "Julieta Pérez",
+        customer_phone: "+54 9 11 1111-1111",
+        payment_method: "manual_transfer",
+        deposit_receipt: pdf_upload
+      )
+    end.to raise_error(ArgumentError, "Mercado Pago no está disponible para esta reserva.")
   end
 
-  it "rejects a deposit booking when the customer did not choose a payment method" do
+  it "rejects a deposit booking while Mercado Pago is disconnected" do
     business = create_business(
       preferences: {
         "deposits_enabled" => true,
-        "enabled_payment_methods" => [ "manual_transfer" ]
+        "enabled_payment_methods" => [ "mercado_pago" ]
       }
     )
-    business.payment_accounts.create!(name: "Cuenta principal", details: "Alias: DEMO.SEÑAS", primary_account: true)
     starts_at = enable_availability_for(business)
     service = create_service(business, deposit_required: true, deposit_amount_cents: 5_000_00)
 
@@ -100,29 +96,7 @@ RSpec.describe Appointments::CreateBooking do
         customer_name: "Julieta Pérez",
         customer_phone: "+54 9 11 1111-1111"
       )
-    end.to raise_error(ArgumentError, "Elegí un método de pago para reservar.")
-  end
-
-  it "rejects manual transfer when the business has no collection account" do
-    business = create_business(
-      preferences: {
-        "deposits_enabled" => true,
-        "enabled_payment_methods" => [ "manual_transfer" ]
-      }
-    )
-    starts_at = enable_availability_for(business)
-    service = create_service(business, deposit_required: true, deposit_amount_cents: 5_000_00)
-
-    expect do
-      described_class.call(
-        business: business,
-        service: service,
-        starts_at: starts_at,
-        customer_name: "Julieta Pérez",
-        customer_phone: "+54 9 11 1111-1111",
-        payment_method: "manual_transfer"
-      )
-    end.to raise_error(ArgumentError, /no configuró una cuenta/)
+    end.to raise_error(ArgumentError, "Mercado Pago no está disponible para esta reserva.")
   end
 
   it "does not let a blocked customer reserve online" do

@@ -11,14 +11,6 @@
 <% service_availability_rules_by_weekday = service.service_availability_rules.active.order(:weekday, :start_time).group_by(&:weekday) %>
 <% service_availability_time_options = (0..23).flat_map { |hour| (0..55).step(5).map { |minute| time = format("%02d:%02d", hour, minute); [ time, time ] } } %>
 <% service_availability_time_value = ->(value) { value.respond_to?(:strftime) ? value.strftime("%H:%M") : value.to_s.presence } %>
-<% payment_accounts = service.business.payment_accounts.active.ordered.to_a %>
-<% payment_account_options = [ [ "Usar cuenta principal", "" ] ] + payment_accounts.map { |account| [ account.display_name, account.id ] } %>
-<% enabled_payment_methods = service.business.enabled_payment_methods %>
-<% mercado_pago_enabled = enabled_payment_methods.include?("mercado_pago") %>
-<% manual_transfer_enabled = enabled_payment_methods.include?("manual_transfer") %>
-<% only_mercado_pago_enabled = mercado_pago_enabled && enabled_payment_methods.one? %>
-<% show_manual_payment_account_selector = manual_transfer_enabled && payment_accounts.many? %>
-
 <style>
   .service-field-hidden {
     display: none;
@@ -2375,14 +2367,12 @@
                     </label>
                     <div class="mt-5" data-service-deposit-target="amount" <%= "hidden" unless service[:deposit_required] %>>
                       <p class="service-switch-copy">
-                        <% if only_mercado_pago_enabled && service.business.mercado_pago_connected? %>
-                          Se cobrará la seña a través de Mercado Pago y el turno quedará confirmado automáticamente. Puedes cambiarlo en
-                        <% elsif !mercado_pago_enabled && manual_transfer_enabled && payment_accounts.any? %>
-                          El cliente deberá subir una foto del comprobante de transferencia a la cuenta elegida en
+                        <% if service.business.mercado_pago_connected? %>
+                          Se cobrará la seña a través de Mercado Pago y el turno quedará confirmado automáticamente. Podés administrar la conexión en
                         <% else %>
-                          Podés pedir una seña. El cliente elegirá entre los métodos de pago habilitados en
+                          Para recibir señas y confirmar estos turnos, conectá Mercado Pago en
                         <% end %>
-                        <%= link_to "Configuración", admin_settings_path(anchor: "cuentas-de-cobro"), class: "font-bold text-brand-700 underline decoration-brand-200 underline-offset-4" %>.
+                        <%= link_to "Configuración", admin_settings_path(anchor: "cobros-y-senas"), class: "font-bold text-brand-700 underline decoration-brand-200 underline-offset-4" %>.
                       </p>
 
                       <div class="mt-5" data-service-deposit-target="depositAmount">
@@ -2399,29 +2389,6 @@
                         </div>
                       </div>
 
-                      <% if show_manual_payment_account_selector %>
-                        <div class="mt-5" data-service-deposit-target="manualAccount">
-                          <%= form.label :payment_account_id, "Cuenta para comprobante manual", class: "service-field-label" %>
-                          <%= render "admin/services/custom_select",
-                            choices: payment_account_options,
-                            selected_value: service.payment_account_id,
-                            aria_label: "Cuenta para comprobante manual",
-                            icon_html: '<svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M3 21h18M4 10h16M6 10v8M10 10v8M14 10v8M18 10v8M12 3l9 5H3l9-5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-                            select_html: form.select(
-                              :payment_account_id,
-                              payment_account_options,
-                              {},
-                              class: "service-custom-select-input",
-                              tabindex: -1,
-                              aria: { hidden: true },
-                              data: { native_select: true, custom_select_target: "input" }
-                            ) %>
-                          <p class="service-field-hint">
-                            Se muestra si el cliente elige transferencia. Si no elegís una cuenta, se usará la principal configurada en
-                            <%= link_to "Configuración", admin_settings_path(anchor: "cuentas-de-cobro"), class: "font-bold text-brand-700 underline decoration-brand-200 underline-offset-4" %>.
-                          </p>
-                        </div>
-                      <% end %>
                     </div>
                   </section>
                 </div>

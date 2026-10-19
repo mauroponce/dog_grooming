@@ -13,7 +13,7 @@ class Business < ApplicationRecord
       "Todos los servicios",
       "Reservas ilimitadas",
       "Clientes ilimitados",
-      "Comprobantes de transferencia",
+      "Señas automáticas con Mercado Pago",
       "Recordatorios",
       "Configuración inicial",
       "Usuarios administrativos"
@@ -42,7 +42,7 @@ class Business < ApplicationRecord
   PREFERENCE_DEFAULTS = {
     "deposits_enabled" => false,
     "deposit_percentage" => 50,
-    "enabled_payment_methods" => [ "manual_transfer" ],
+    "enabled_payment_methods" => [ "mercado_pago" ],
     "deposit_alias" => "",
     "deposit_account" => "",
     "deposit_holder" => "",
@@ -51,7 +51,7 @@ class Business < ApplicationRecord
     "deposit_payment_link" => "",
     "setup_warnings" => []
   }.freeze
-  PAYMENT_METHODS = %w[manual_transfer mercado_pago].freeze
+  PAYMENT_METHODS = %w[mercado_pago].freeze
 
   BUSINESS_KINDS = {
     "business" => "Cuenta Cita.pet"
@@ -549,12 +549,8 @@ class Business < ApplicationRecord
     inferred_enabled_payment_methods(raw_preferences)
   end
 
-  def manual_transfer_payment_enabled?
-    enabled_payment_methods.include?("manual_transfer")
-  end
-
   def mercado_pago_payment_enabled?
-    enabled_payment_methods.include?("mercado_pago")
+    true
   end
 
   def self.normalize_enabled_payment_methods(value)
@@ -800,12 +796,8 @@ class Business < ApplicationRecord
     PublicUrls.url(:business, self)
   end
 
-  def inferred_enabled_payment_methods(raw_preferences = preferences.to_h)
-    legacy_collection_method = raw_preferences["payment_collection_method"].to_s
-    return [ "mercado_pago" ] if legacy_collection_method == "mercado_pago" || mercado_pago_connected?
-    return [ "manual_transfer" ] if legacy_collection_method.blank? || legacy_collection_method == "manual_proof" || payment_accounts_configured?
-
-    [ "manual_transfer" ]
+  def inferred_enabled_payment_methods(_raw_preferences = preferences.to_h)
+    [ "mercado_pago" ]
   end
 
   private

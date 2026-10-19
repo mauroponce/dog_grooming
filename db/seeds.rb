@@ -74,8 +74,7 @@ class DevelopmentSeeds
         preferences: business.preferences.merge(
           "deposits_enabled" => true,
           "deposit_percentage" => 50,
-          "enabled_payment_methods" => [ "manual_transfer" ],
-          "deposit_instructions" => "Transferí la seña y adjuntá el comprobante."
+          "enabled_payment_methods" => [ "mercado_pago" ]
         )
       )
       configure_hours!(business)

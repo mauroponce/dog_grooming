@@ -20,10 +20,8 @@ module Admin
       def normalized_preferences
         enabled_payment_methods = Business.normalize_enabled_payment_methods(params["enabled_payment_methods"] || params[:enabled_payment_methods])
 
-        raise ArgumentError, "Elegí al menos un método de pago habilitado." if enabled_payment_methods.blank?
-
         {
-          "enabled_payment_methods" => enabled_payment_methods
+          "enabled_payment_methods" => enabled_payment_methods.presence || [ "mercado_pago" ]
         }
       end
   end
