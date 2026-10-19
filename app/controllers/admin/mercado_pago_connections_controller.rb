@@ -8,7 +8,7 @@ module Admin
 
       session[:mercado_pago_oauth_state] = state
       redirect_to MercadoPago::OAuthClient.new.authorization_url(
-        redirect_uri: callback_admin_mercado_pago_connection_url,
+        redirect_uri: MercadoPago::OAuthClient.redirect_uri,
         state: state
       ), allow_other_host: true
     end
@@ -21,7 +21,7 @@ module Admin
 
       payload = MercadoPago::OAuthClient.new.exchange_code!(
         code: params[:code].to_s,
-        redirect_uri: callback_admin_mercado_pago_connection_url
+        redirect_uri: MercadoPago::OAuthClient.redirect_uri
       )
       connection = @business.mercado_pago_connection || @business.build_mercado_pago_connection
       connection.assign_from_oauth_response!(payload)

@@ -40,7 +40,7 @@ Decisión detallada: [`0006-independent-services-by-pet-size.md`](decisions/0006
 
 ## Reservas y señas de clientes
 
-- El beta inicial cobra señas únicamente por transferencia manual con comprobante. Mercado Pago queda diferido y no requiere credenciales productivas.
+- Cada peluquería puede cobrar señas por transferencia manual con comprobante o vincular su propia cuenta de Mercado Pago mediante OAuth para acreditarlas automáticamente.
 - Una reserva usa el precio y la duración efectivos seleccionados para validar disponibilidad y capacidad global de la peluquería. No se asigna ni se elige un profesional durante la reserva pública.
 - Los pagos, webhooks y cambios de estado deben ser idempotentes. Un turno no se confirma por un retorno del navegador sin validar el pago correspondiente.
 - Cuando una empresa habilita transferencia manual para sus clientes, el comprobante de la seña se revisa dentro del negocio; este flujo sigue separado del pago de la suscripción a Cita.pet.

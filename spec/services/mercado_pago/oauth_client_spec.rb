@@ -38,4 +38,10 @@ RSpec.describe MercadoPago::OAuthClient do
     expect(url).to include("redirect_uri=https%3A%2F%2Fexample.com%2Fcallback")
     expect(url).to include("state=secure-state")
   end
+
+  it "uses the configured OAuth redirect URI independently of the request host" do
+    ENV["MERCADO_PAGO_REDIRECT_URI"] = "https://public.example.com/admin/configuracion/mercadopago/callback"
+
+    expect(described_class.redirect_uri).to eq("https://public.example.com/admin/configuracion/mercadopago/callback")
+  end
 end

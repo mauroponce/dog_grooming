@@ -54,7 +54,7 @@ Pruebas de referencia: `spec/services/grooming/booking_configuration_spec.rb`, `
 
 Existen dos contextos de pago independientes:
 
-1. **Seña de un cliente a una peluquería.** En el beta usa una cuenta de transferencia del `Business` y comprobante revisado manualmente. El agregado raíz es `Appointment` con `AppointmentPayment` y comprobantes relacionados. La integración histórica con Mercado Pago permanece fuera del rollout.
+1. **Seña de un cliente a una peluquería.** Puede usar una cuenta de transferencia del `Business` y comprobante revisado manualmente, o la cuenta de Mercado Pago que el negocio vincula mediante OAuth. El agregado raíz es `Appointment` con `AppointmentPayment` y comprobantes relacionados. El redirect OAuth usa una URL pública configurada por entorno y no depende del host de la request administrativa.
 2. **Suscripción de una peluquería a Cita.pet.** Usa `Subscription`, `SubscriptionInvoice`, `SubscriptionPaymentProof` y `BillingTransferAccount`. La empresa carga un comprobante y el superadmin lo revisa mediante servicios bajo `Billing::*`.
 
 No reutilizar cuentas, conexiones OAuth, webhooks, estados ni referencias externas entre ambos contextos. Una clase histórica de checkout de suscripción no convierte Mercado Pago en un canal aprobado para la plataforma.

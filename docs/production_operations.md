@@ -10,6 +10,7 @@ Preparar antes del primer deploy:
 
 - DNS de `cita.pet` hacia el servidor y puertos 80/443 libres para Caddy.
 - Una aplicación Google OAuth con callback productivo autorizado.
+- Una aplicación Mercado Pago con el redirect OAuth `https://cita.pet/admin/configuracion/mercadopago/callback` autorizado.
 - Un dominio remitente verificado en Resend.
 - Buckets R2 privados y exclusivos: uno general/backups y otro para imágenes de servicios.
 - Una credencial R2 capaz de leer, escribir y listar el bucket de backups.
@@ -41,9 +42,10 @@ APP_HOSTS=cita.pet,www.cita.pet
 RESEND_FROM=Cita.pet <notificaciones@cita.pet>
 MAIL_FROM=Cita.pet <notificaciones@cita.pet>
 FORCE_SSL=true
+MERCADO_PAGO_REDIRECT_URI=https://cita.pet/admin/configuracion/mercadopago/callback
 ```
 
-`CLOUDFLARE_ACCOUNT_ID` y `CLOUDFLARE_R2_ANALYTICS_TOKEN` son opcionales para métricas oficiales en `/super_admin/uso`. No configurar credenciales de Mercado Pago para el beta inicial.
+`CLOUDFLARE_ACCOUNT_ID` y `CLOUDFLARE_R2_ANALYTICS_TOKEN` son opcionales para métricas oficiales en `/super_admin/uso`. Para habilitar el cobro de señas por Mercado Pago también se configuran las credenciales OAuth productivas y `MERCADO_PAGO_WEBHOOK_SECRET`; la cuenta de cada peluquería se vincula luego desde su configuración.
 
 Validar la interpolación sin arrancar servicios:
 
@@ -119,6 +121,7 @@ Verificar manualmente:
 - alta/onboarding de un negocio de prueba controlado;
 - página pública `https://cita.pet/:slug` y reserva sin profesional;
 - seña manual, carga de comprobante, aprobación y email;
+- vinculación de una cuenta de Mercado Pago y cobro de una seña de prueba controlada;
 - agenda, cliente, mascota, reprogramación e invitación al equipo;
 - objeto privado visible por Active Storage y entrega de Resend;
 - ejecución del scheduler y workers de Solid Queue.

@@ -21,11 +21,11 @@ La web queda en <http://localhost:3003>, PostgreSQL en `localhost:5435` sólo pa
 - Sitio y reserva pública en `https://cita.pet/:slug`.
 - Agenda, clientes, mascotas, servicios y equipo.
 - Capacidad global del negocio; la reserva pública no elige ni asigna profesional.
-- Seña por transferencia con comprobante y revisión manual.
+- Seña por transferencia con comprobante o por la cuenta de Mercado Pago vinculada por la peluquería.
 - Recordatorios por email y archivos privados en R2.
 - Suscripción de la peluquería por transferencia, revisada por superadmin.
 
-Mercado Pago, dominios personalizados, portal de cliente, lista de espera e IA no forman parte del lanzamiento inicial. Cancelaciones y reprogramaciones públicas se coordinan por WhatsApp.
+Dominios personalizados, portal de cliente, lista de espera e IA no forman parte del lanzamiento inicial. Cancelaciones y reprogramaciones públicas se coordinan por WhatsApp.
 
 ## Producción
 

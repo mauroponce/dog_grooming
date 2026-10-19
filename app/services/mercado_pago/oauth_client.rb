@@ -21,6 +21,14 @@ module MercadoPago
       Credentials.client_secret
     end
 
+    def self.redirect_uri
+      ENV["MERCADO_PAGO_REDIRECT_URI"].presence ||
+        Rails.application.routes.url_helpers.callback_admin_mercado_pago_connection_url(
+          host: AppUrl.host,
+          protocol: AppUrl.protocol
+        )
+    end
+
     def authorization_url(redirect_uri:, state:)
       raise Error, "Mercado Pago OAuth no está configurado." unless self.class.configured?
 

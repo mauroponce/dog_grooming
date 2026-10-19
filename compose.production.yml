@@ -47,6 +47,7 @@ services:
       RAILS_ENV: production
       # No heredar el modo de .env local: producción siempre usa credenciales reales.
       MERCADO_PAGO_ENV: production
+      MERCADO_PAGO_REDIRECT_URI: ${MERCADO_PAGO_REDIRECT_URI:-https://cita.pet/admin/configuracion/mercadopago/callback}
       DB_HOST: db
       DB_PORT: 5432
       RAILS_MAX_THREADS: ${RAILS_MAX_THREADS:-5}
