@@ -349,6 +349,8 @@ body {
 .appointment-detail-panel__action.is-secondary-danger { background: #fff; border-color: #fecdd3; color: #e11d48; }
 .appointment-detail-panel__action.is-secondary { background: #fff; border-color: #d4d4d8; color: #18181b; }
 .appointment-detail-panel__section-heading { align-items: center; display: flex; gap: 12px; justify-content: space-between; }
+.appointment-detail-panel__notes-editor > summary { cursor: pointer; list-style: none; }
+.appointment-detail-panel__notes-editor > summary::-webkit-details-marker { display: none; }
 .appointment-detail-panel__notes-link { background: transparent; border: 0; color: #A63826; cursor: pointer; font-size: 12px; font-weight: 700; padding: 0; text-decoration: underline; text-underline-offset: 3px; }
 .appointment-detail-panel__notes-form { display: grid; gap: 10px; margin-top: 12px; }
 .appointment-detail-panel__notes-form textarea { background: #fafafa; border: 1px solid #ffded4; border-radius: 12px; box-sizing: border-box; color: #27272a; font: inherit; font-size: 13px; font-weight: 650; line-height: 1.5; min-height: 112px; outline: 0; padding: 11px; resize: vertical; width: 100%; }

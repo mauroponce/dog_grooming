@@ -1987,32 +1987,7 @@ import { bindAppointmentDetailPanel, openProfessionalPicker, renderAppointmentDe
 
   function selectService(serviceId) {
     const service = serviceById(serviceId);
-    if (service?.variants?.length) {
-      openDrawer(appointmentEditorShell(`
-        ${drawerHeader("Elegir tamaño", service.name)}
-        <div class="drawer-scroll min-h-0 flex-1 overflow-y-auto px-6 py-5">
-          <button type="button" onclick="openServicePanel()" class="mb-5 rounded-full border border-zinc-200 px-4 py-2 text-sm font-bold">← Volver</button>
-          <p class="mb-4 text-sm font-semibold text-zinc-600">Seleccioná el rango que corresponda al peso de la mascota.</p>
-          <div class="grid gap-3">
-            ${service.variants.map(variant => `
-              <button type="button" onclick="selectServiceVariant('${escapeAttribute(service.id)}', '${escapeAttribute(variant.id)}')" class="flex w-full items-center justify-between rounded-2xl border border-zinc-200 bg-white p-4 text-left hover:border-brand-500">
-                <span><span class="block text-sm font-bold">${escapeHTML(variant.name)}</span><span class="mt-1 block text-xs font-semibold text-zinc-500">${serviceDurationLabel(variant.duration)}</span></span>
-                <strong class="text-sm">${formatMoney(variant.price)}</strong>
-              </button>
-            `).join("")}
-          </div>
-        </div>
-      `), { wide: true });
-      return;
-    }
     commitSelectedService(service);
-  }
-
-  function selectServiceVariant(serviceId, variantId) {
-    const service = serviceById(serviceId);
-    const variant = service?.variants?.find(item => item.id === variantId);
-    if (!service || !variant) return;
-    commitSelectedService({ ...service, variantId: variant.id, variantName: variant.name, duration: variant.duration, price: variant.price });
   }
 
   function commitSelectedService(service) {
@@ -2280,7 +2255,6 @@ import { bindAppointmentDetailPanel, openProfessionalPicker, renderAppointmentDe
         body: JSON.stringify({
           appointment: {
             service_id: selectedServices[0].id,
-            service_variant_id: selectedServices[0].variantId || "",
             add_on_service_ids: selectedServices.slice(1).map(service => service.id),
             employee_membership_id: employee.id === "center" ? "" : employee.id,
             customer_profile_id: customer.id || "",
@@ -2495,8 +2469,7 @@ import { bindAppointmentDetailPanel, openProfessionalPicker, renderAppointmentDe
     bindAppointmentDetailPanel(document.getElementById("drawerContent"), {
       onSaveNotes: (internalNotes) => saveCalendarAppointmentNotes(appointment, internalNotes),
       onCancel: (reason) => cancelCalendarAppointment(appointment.id, reason),
-      onReschedule: (startsAt) => rescheduleCalendarAppointment(appointment, startsAt),
-      onChangeServiceVariant: (serviceVariantId) => changeCalendarAppointmentVariant(appointment, serviceVariantId)
+      onReschedule: (startsAt) => rescheduleCalendarAppointment(appointment, startsAt)
     });
   }
 
@@ -2516,21 +2489,6 @@ import { bindAppointmentDetailPanel, openProfessionalPicker, renderAppointmentDe
     renderAll();
     openAppointmentDetails(payload.id);
     showToast("Turno reprogramado");
-  }
-
-  async function changeCalendarAppointmentVariant(appointment, serviceVariantId) {
-    if (!appointment?.updateServiceVariantUrl) throw new Error("No se puede cambiar el tamaño de este turno.");
-    const response = await fetch(appointment.updateServiceVariantUrl, {
-      method: "PATCH",
-      headers: { "Accept": "application/json", "Content-Type": "application/json", "X-CSRF-Token": csrfToken },
-      body: JSON.stringify({ appointment: { service_variant_id: serviceVariantId } })
-    });
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(Array.isArray(payload.errors) ? payload.errors.join(". ") : "No se pudo cambiar el tamaño.");
-    appointments = appointments.map(item => String(item.id) === String(payload.id) ? payload : item);
-    renderAll();
-    openAppointmentDetails(payload.id);
-    showToast("Tamaño y precio del turno actualizados");
   }
 
   async function saveCalendarAppointmentNotes(appointment, internalNotes) {

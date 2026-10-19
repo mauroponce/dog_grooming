@@ -42,7 +42,6 @@ module Admin
         visibility_mode: "hidden",
         public_visible: false
       )
-      prepare_size_variants(@service)
     end
 
     def show
@@ -70,7 +69,6 @@ module Admin
         sync_service_availability_rules!(@service)
         redirect_to admin_services_path(service_category_id: @service.service_category_id, service_id: @service.id), notice: force_hidden_draft ? "Servicio creado para completar después." : "Servicio creado."
       else
-        prepare_size_variants(@service)
         if params[:minimal].present?
           @service_categories = business_service_categories
           @employee_memberships = service_employee_memberships
@@ -84,7 +82,6 @@ module Admin
 
     def edit
       @service = service
-      prepare_size_variants(@service)
       @service_categories = business_service_categories
       @employee_memberships = service_employee_memberships
     end
@@ -101,7 +98,6 @@ module Admin
         sync_service_availability_rules!(@service)
         redirect_to service_editor_redirect_path(@service), notice: "Servicio actualizado."
       else
-        prepare_size_variants(@service)
         @service_categories = business_service_categories
         @employee_memberships = service_employee_memberships
         flash.now[:alert] = @service.errors.full_messages.to_sentence
@@ -174,14 +170,12 @@ module Admin
           :cover_image,
           :duration_minutes,
           :price,
-          :pricing_mode,
           :active,
           :visibility_mode,
           :sort_order,
           :popular,
           :deposit_required,
           :deposit_amount,
-          :deposit_percentage,
           :payment_account_id,
           :deposit_payment_deadline_minutes,
           :external_payment_link,
@@ -198,28 +192,12 @@ module Admin
           bookable_resource_ids: [],
           recommended_service_ids: [],
           employee_membership_ids: [],
-          service_images: [],
-          service_variants_attributes: [ :id, :pet_size_band_id, :price, :duration_minutes, :active ]
+          service_images: []
         )
         if permitted.delete(:all_employee_memberships).to_s == "1"
           permitted[:employee_membership_ids] = []
         end
         permitted
-      end
-
-      def prepare_size_variants(target_service)
-        bands = @business.ensure_default_pet_size_bands!
-        existing_band_ids = target_service.service_variants.map(&:pet_size_band_id)
-        bands.each do |band|
-          next if existing_band_ids.include?(band.id)
-
-          target_service.service_variants.build(
-            pet_size_band: band,
-            price_cents: target_service.price_cents,
-            duration_minutes: target_service.duration_minutes,
-            active: true
-          )
-        end
       end
 
       def sync_public_listing_state!(attributes)

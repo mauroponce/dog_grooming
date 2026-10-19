@@ -70,7 +70,6 @@ module SuperAdmin
           price_cents: 30_000_00,
           deposit_required: true,
           deposit_amount_cents: 10_000_00,
-          deposit_percentage: 0,
           visibility_mode: "public",
           professional_selection_mode: "hidden",
           active: true,

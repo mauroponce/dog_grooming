@@ -5,16 +5,12 @@ class Service < ApplicationRecord
   PUBLIC_START_INTERVALS = [ 15, 30, 60 ].freeze
   VISIBILITY_MODES = %w[public hidden link_only].freeze
   PROFESSIONAL_SELECTION_MODES = %w[hidden optional required].freeze
-  PRICING_MODES = %w[fixed by_pet_size].freeze
 
   belongs_to :business, counter_cache: true, touch: true
   belongs_to :service_category, optional: true
   belongs_to :service_catalog_item, optional: true
   belongs_to :payment_account, optional: true
   has_many :appointments, dependent: :restrict_with_error
-  has_many :service_variants, dependent: :destroy
-  has_many :pet_size_bands, through: :service_variants
-  accepts_nested_attributes_for :service_variants, allow_destroy: true
   has_many :service_resources, dependent: :destroy
   has_many :bookable_resources, through: :service_resources
   has_many :service_availability_rules, dependent: :destroy
@@ -38,11 +34,9 @@ class Service < ApplicationRecord
   validates :public_start_interval_minutes, inclusion: { in: PUBLIC_START_INTERVALS }, allow_nil: true
   validates :price_cents, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
   validates :deposit_amount_cents, :deposit_payment_deadline_minutes, :sort_order, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
-  validates :deposit_percentage, numericality: { only_integer: true, greater_than_or_equal_to: 0, less_than_or_equal_to: 100 }
   validates :recommended_follow_up_days, numericality: { only_integer: true, greater_than: 0, less_than_or_equal_to: 365 }, allow_blank: true
   validates :visibility_mode, inclusion: { in: VISIBILITY_MODES }
   validates :professional_selection_mode, inclusion: { in: PROFESSIONAL_SELECTION_MODES }
-  validates :pricing_mode, inclusion: { in: PRICING_MODES }
   validate :availability_date_range_is_valid
   validate :payment_account_belongs_to_business
   validate :payment_amount_is_configured
@@ -89,10 +83,6 @@ class Service < ApplicationRecord
     price_cents.to_i / 100.0
   end
 
-  def tiered_pricing?
-    pricing_mode == "by_pet_size"
-  end
-
   def price=(value)
     self.price_cents = (BigDecimal(value.to_s.presence || "0") * 100).to_i
   end
@@ -106,11 +96,6 @@ class Service < ApplicationRecord
   end
 
   def display_price
-    if tiered_pricing?
-      minimum = service_variants.active.minimum(:price_cents)
-      return minimum.present? ? "Desde #{price_label_for_cents(minimum)}" : "Sin precio"
-    end
-
     return "Sin precio" if price_cents.zero?
 
     price_label_for_cents(price_cents)
@@ -139,8 +124,6 @@ class Service < ApplicationRecord
 
     total_cents = total_cents.to_i
     return deposit_amount_cents.to_i unless total_cents.positive?
-    return (total_cents * deposit_percentage / 100.0).round if tiered_pricing? && deposit_percentage.positive?
-
     [ deposit_amount_cents.to_i, total_cents ].min
   end
 
@@ -150,8 +133,6 @@ class Service < ApplicationRecord
 
   def deposit_summary
     return "Sin seña" unless deposit_required?
-    return "#{deposit_percentage}% de seña" if tiered_pricing? && deposit_percentage.positive?
-
     "#{price_label_for_cents(deposit_amount_cents)} de seña"
   end
 
@@ -190,11 +171,6 @@ class Service < ApplicationRecord
 
   def mercado_pago_payment_configured?
     business&.mercado_pago_connected?
-  end
-
-  def deposit_percentage
-    value = self[:deposit_percentage].to_i
-    value.positive? ? value : (business&.deposit_percentage || 0).to_i
   end
 
   def public?

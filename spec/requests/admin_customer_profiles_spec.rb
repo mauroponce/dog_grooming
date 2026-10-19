@@ -125,6 +125,7 @@ RSpec.describe "Admin customer profiles", type: :request do
     ])
     expect(document.at_css(".customers-sort-direction")).to be_nil
     expect(document.at_css("form.customers-toolbar-form")["data-turbo-frame"]).to eq("customers_results")
+    expect(document.at_css(".customers-sort-input")["data-native-select"]).to eq("true")
     expect(document.at_css(".customers-sort-input")["data-action"]).to include("auto-submit#submit")
     expect(document.at_css("form.customers-toolbar-form")["data-customers-results-loader-target"]).to eq("form")
     expect(document.css(".customers-sort-option").map { |option| option.text.strip }).to eq([

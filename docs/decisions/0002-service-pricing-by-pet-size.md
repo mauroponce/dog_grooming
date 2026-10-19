@@ -1,6 +1,6 @@
 # 0002 — Servicio base con variantes por tamaño de mascota
 
-- Estado: Aceptada
+- Estado: Reemplazada por [0006](0006-independent-services-by-pet-size.md)
 - Fecha: 2026-10-17
 
 ## Contexto

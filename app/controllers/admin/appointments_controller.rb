@@ -121,28 +121,6 @@ module Admin
       render json: { errors: error.record.errors.full_messages }, status: :unprocessable_entity
     end
 
-    def update_service_variant
-      authorize appointment, :update?
-      raise ArgumentError, "El tamaño sólo se puede corregir antes de que comience el turno." unless appointment.starts_at.future? && !appointment.terminal_status?
-
-      variant = appointment.service.service_variants.active.find(service_variant_params[:service_variant_id])
-      selected_service = Bookings::ServiceSelection.new(service: appointment.service, variant: variant)
-      addon_price = appointment.appointment_addons.sum(:price_cents)
-      appointment.update!(
-        service_variant: variant,
-        service_variant_name: variant.display_name,
-        service_variant_price_cents: variant.price_cents,
-        service_variant_duration_minutes: variant.duration_minutes,
-        ends_at: appointment.starts_at + variant.duration_minutes.minutes,
-        base_price_cents: variant.price_cents + addon_price,
-        final_price_cents: selected_service.price_cents_for_time(appointment.starts_at, @business) + addon_price
-      )
-      appointment.pet&.update!(pet_size_band: variant.pet_size_band)
-      render json: calendar_appointment_payload(appointment.reload)
-    rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotFound, ArgumentError => error
-      render json: { errors: [ error.message ] }, status: :unprocessable_entity
-    end
-
     def reschedule
       authorize appointment, :update?
       raise ArgumentError, "Sólo se pueden reprogramar turnos futuros activos." unless appointment.starts_at.future? && !appointment.terminal_status?
@@ -344,7 +322,6 @@ module Admin
       def appointment_params
         params.require(:appointment).permit(
           :service_id,
-          :service_variant_id,
           :bookable_resource_id,
           :branch_id,
           :employee_membership_id,
@@ -370,10 +347,6 @@ module Admin
         params.require(:appointment).permit(:internal_notes)
       end
 
-      def service_variant_params
-        params.require(:appointment).permit(:service_variant_id)
-      end
-
       def finalization_params
         params.require(:finalization).permit(:outcome, :body, :cancellation_reason, :follow_up_option, :follow_up_date, :employee_membership_id, photos: [])
       end
@@ -396,9 +369,7 @@ module Admin
         @manual_add_on_service_ids = Array(attrs.delete(:add_on_service_ids)).reject(&:blank?)
         requested_status = manual_appointment_status(attrs.delete(:status))
         service = @business.services.find(attrs[:service_id])
-        service_variant = service.service_variants.active.find_by(id: attrs.delete(:service_variant_id))
-        raise ArgumentError, "Elegí el tamaño de la mascota para este servicio." if service.tiered_pricing? && service_variant.blank?
-        booking_service = Bookings::ServiceSelection.new(service: service, variant: service_variant)
+        booking_service = service
         branch = branch_for(attrs)
         employee_membership = employee_membership_for(attrs)
         create_customer_profile = ActiveModel::Type::Boolean.new.cast(attrs.delete(:create_customer_profile))
@@ -411,13 +382,12 @@ module Admin
         validate_customer_contact_details!(attrs)
         phone = PhoneNumber.normalize(attrs[:customer_phone], area_code: @business.mobile_area_code)
         profile ||= customer_profile_for_manual_appointment(attrs, phone, create_customer_profile: create_customer_profile)
-        pet = pet_for_manual_appointment(attrs, profile, pet_size_band: service_variant&.pet_size_band)
+        pet = pet_for_manual_appointment(attrs, profile)
 
         starts_at = Time.zone.parse(attrs[:starts_at].to_s)
         resource = resource_for(attrs, booking_service, starts_at)
         @business.appointments.new(attrs.merge(
           service: service,
-          service_variant: service_variant,
           branch: branch,
           employee_membership: employee_membership,
           bookable_resource: resource,
@@ -431,9 +401,6 @@ module Admin
           ends_at: starts_at + (booking_service.duration_minutes + manual_add_on_services.sum(&:duration_minutes)).minutes,
           base_price_cents: booking_service.price_cents + manual_add_on_services.sum(&:price_cents),
           final_price_cents: booking_service.price_cents_for_time(starts_at, @business) + manual_add_on_services.sum { |add_on| add_on.price_cents_for_time(starts_at, @business) },
-          service_variant_name: service_variant&.display_name,
-          service_variant_price_cents: service_variant&.price_cents,
-          service_variant_duration_minutes: service_variant&.duration_minutes,
           discount_percentage: service.dynamic_discount_for_time(starts_at, @business)
         ))
       end
@@ -477,7 +444,7 @@ module Admin
         )
       end
 
-      def pet_for_manual_appointment(attrs, profile, pet_size_band: nil)
+      def pet_for_manual_appointment(attrs, profile)
         selected_pet_id = attrs.delete(:pet_id)
         attributes = {
           name: attrs.delete(:pet_name),
@@ -495,7 +462,6 @@ module Admin
           business: @business,
           customer_profile: profile,
           pet: selected_pet,
-          pet_size_band: pet_size_band,
           **attributes
         )
       end
@@ -529,7 +495,7 @@ module Admin
         status = calendar_status(appointment)
         appointment_addons = appointment.appointment_addons.includes(:service).to_a
         appointment_services = [
-          { id: appointment.service_id.to_s, name: appointment.service.name, duration: appointment.service_variant_duration_minutes || appointment.service.duration_minutes, price: (appointment.service_variant_price_cents || appointment.service.price_cents) / 100 }
+          { id: appointment.service_id.to_s, name: appointment.service.name, duration: appointment.service.duration_minutes, price: appointment.service.price_cents / 100 }
         ] + appointment_addons.map { |addon| { id: addon.service_id.to_s, name: addon.service.name, duration: addon.service.duration_minutes, price: addon.service.price_cents / 100 } }
         {
           id: appointment.short_uuid,
@@ -572,14 +538,6 @@ module Admin
         }.merge(appointment_detail_payload(appointment)).tap do |payload|
           actions_available = status != "completed"
           payload[:notesUrl] = update_notes_admin_appointment_path(appointment, format: :json) if policy(appointment).update?
-          if actions_available && appointment.starts_at.future? && appointment.service.tiered_pricing? && policy(appointment).update?
-            payload[:serviceVariantId] = appointment.service_variant_id&.to_s
-            payload[:serviceVariantName] = appointment.service_variant_name
-            payload[:serviceVariantOptions] = appointment.service.service_variants.active.ordered.map do |variant|
-              { id: variant.id.to_s, label: variant.display_name, price: variant.price_cents / 100, duration: variant.duration_minutes }
-            end
-            payload[:updateServiceVariantUrl] = update_service_variant_admin_appointment_path(appointment, format: :json)
-          end
           payload[:destroyUrl] = admin_destroy_appointment_path(appointment, format: :json) if actions_available && policy(appointment).destroy?
           payload[:approveDepositUrl] = approve_deposit_admin_appointment_path(appointment, format: :json) if actions_available && appointment.pending_deposit_review? && policy(appointment).approve_deposit?
           payload[:rejectDepositUrl] = reject_deposit_admin_appointment_path(appointment, format: :json) if actions_available && appointment.pending_deposit_review? && policy(appointment).reject_deposit?

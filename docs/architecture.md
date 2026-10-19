@@ -14,7 +14,7 @@ Esta es la fuente canónica de las fronteras técnicas e invariantes estables. S
 
 | Área | Entrada | Responsabilidad |
 | --- | --- | --- |
-| Sitio y reserva pública | `/:slug`, `PublicBookingController` | Presentación pública, selección de servicio/variante, disponibilidad global, reserva y señas |
+| Sitio y reserva pública | `/:slug`, `PublicBookingController` | Presentación pública, selección de servicio, disponibilidad global, reserva y señas |
 | Operación de empresa | `/admin`, `Admin::BaseController` | Agenda, servicios, clientes, mascotas, equipo, señas y suscripción |
 | Administración global | `/super_admin`, `SuperAdmin::BaseController` | Empresas, facturación de plataforma y tareas globales |
 | Integraciones | controladores bajo `Webhooks::*` y callbacks OAuth | Validación del proveedor, idempotencia y traducción a servicios de dominio |
@@ -30,16 +30,13 @@ Las rutas administrativas y estáticas deben permanecer antes de los comodines p
 - `/super_admin` usa su propia frontera y permisos; no comparte acciones administrativas de un tenant.
 - El registro de propietarios usa una identidad Google temporal en sesión y persiste el usuario sólo dentro de la transacción de alta.
 
-## Servicios, variantes y reservas
+## Servicios y reservas
 
-- `Service` es la entidad pública base. `pricing_mode` decide entre precio fijo y variantes por tamaño.
-- `PetSizeBand` pertenece a `Business`; define la taxonomía compartida de peso.
-- `ServiceVariant` pertenece a un `Service` y un `PetSizeBand`; aporta precio y duración. La validación impide cruzar empresas.
-- `Bookings::ServiceSelection` es el valor efectivo usado durante disponibilidad y precio. Delega el servicio base y reemplaza precio/duración con la variante elegida.
-- `Appointments::CreateBooking` valida que una variante activa pertenezca al servicio, usa la selección efectiva para disponibilidad/recursos/precio y persiste el `Service` base, la variante y sus snapshots.
+- `Service` es la entidad pública cotizable. Cada registro tiene un único precio y una única duración.
+- Las ofertas que varían por tamaño se representan mediante servicios independientes dentro de una categoría compartida. El tamaño forma parte del nombre y su límite de peso se comunica en la descripción.
+- `Appointments::CreateBooking` usa directamente el servicio para disponibilidad, recursos y precio, y persiste los snapshots generales del turno.
 - `Availability::AvailableSlots` y `Appointments::CreateBooking` usan capacidad global del `Business`; la reserva pública no asigna `EmployeeMembership` ni consulta su disponibilidad.
-- `Appointment` conserva `ends_at`, importes y datos de variante históricos. Los cambios posteriores del catálogo no los recalculan automáticamente.
-- `Pet#pet_size_band` es una preferencia recordada, no una fuente suficiente para cotizar una nueva reserva pública.
+- `Appointment` conserva `ends_at` e importes históricos. Los cambios posteriores del catálogo no los recalculan automáticamente.
 - `Admin::AppointmentsController#reschedule` bloquea el negocio y el turno antes de mover una reserva futura. La validación normal del turno protege el cupo y el pago, la mascota y el historial se conservan.
 
 Pruebas de referencia: `spec/services/grooming/booking_configuration_spec.rb`, `spec/requests/public_bookings_spec.rb` y los recorridos de agenda en `spec/requests/admin_shell_spec.rb`.

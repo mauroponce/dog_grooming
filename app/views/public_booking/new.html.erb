@@ -2,13 +2,12 @@
 <% content_for :full_width, true %>
 
 <% selected_service_slugs = @selected_services.map(&:slug) %>
-<% service_selection_complete = @selected_services.any? && @selected_services.all? { |service| !service.tiered_pricing? || @service_variant.present? } %>
+<% service_selection_complete = @selected_services.any? %>
 <% selected_service_category = @selected_services.first&.category_label %>
 <% active_service_category = params[:category].presence || selected_service_category %>
 <% professionals_params = @selected_professionals_by_service.to_h { |service, membership| [ service.slug, membership&.id ] }.compact_blank %>
 <% flow_params = {
   service_ids: selected_service_slugs,
-  service_variant_id: @service_variant&.id,
   extra_ids: @selected_extras.map(&:id),
   date: @date,
   month: @month_date,
@@ -122,17 +121,14 @@
           <% visible_services.each do |service| %>
             <% selected = selected_service_slugs.include?(service.slug) %>
             <% detail_service_params = flow_params.merge(step: "services", service_detail: service.slug, category: service.category_label).compact %>
-            <% service_selection_params = flow_params.merge(service_ids: [ service.slug ], step: "services", category: service.category_label, professional_mode: "any").except(:starts_at, :employee_membership_id, :professionals, :service_variant_id).compact %>
-            <% variant_paths = service.service_variants.active.ordered.to_h { |variant| [ variant.id, new_public_booking_path(@business.slug, service_selection_params.merge(service_variant_id: variant.id)) ] } %>
+            <% service_selection_params = flow_params.merge(service_ids: [ service.slug ], step: "services", category: service.category_label, professional_mode: "any").except(:starts_at, :employee_membership_id, :professionals).compact %>
             <%= render "public_booking/service_card",
               business: @business,
               service: service,
               detail_path: new_public_booking_path(@business.slug, detail_service_params),
               action_path: new_public_booking_path(@business.slug, service_selection_params),
               action_label: "Reservar",
-              selected: selected,
-              selected_variant: (selected ? @service_variant : nil),
-              variant_paths: variant_paths %>
+              selected: selected %>
           <% end %>
         </div>
 
@@ -169,12 +165,10 @@
               <footer class="flex shrink-0 flex-col gap-4 border-t border-zinc-100 px-6 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-7">
                 <div>
                   <p class="text-lg font-bold"><%= @service_detail.display_price %></p>
-                  <p class="mt-1 text-sm font-semibold text-zinc-500"><%= @service_detail.tiered_pricing? ? "Según tamaño" : public_service_duration_label(@service_detail.duration_minutes) %></p>
+                  <p class="mt-1 text-sm font-semibold text-zinc-500"><%= public_service_duration_label(@service_detail.duration_minutes) %></p>
                 </div>
                 <% service_selection_params = flow_params.merge(service_ids: [ @service_detail.slug ], step: "services", category: @service_detail.category_label, professional_mode: "any").except(:starts_at, :employee_membership_id, :professionals).compact %>
-                <% unless @service_detail.tiered_pricing? %>
-                  <%= link_to "Reservar", new_public_booking_path(@business.slug, service_selection_params), class: "inline-flex h-12 w-full items-center justify-center rounded-full bg-zinc-950 px-7 text-sm font-bold text-white sm:w-auto", aria: { label: "Reservar #{@service_detail.name}" } %>
-                <% end %>
+                <%= link_to "Reservar", new_public_booking_path(@business.slug, service_selection_params), class: "inline-flex h-12 w-full items-center justify-center rounded-full bg-zinc-950 px-7 text-sm font-bold text-white sm:w-auto", aria: { label: "Reservar #{@service_detail.name}" } %>
               </footer>
             </div>
 
@@ -586,7 +580,6 @@
           <% selected_service_slugs.each do |service_slug| %>
             <%= hidden_field_tag "booking[service_ids][]", service_slug %>
           <% end %>
-          <%= hidden_field_tag "booking[service_variant_id]", @service_variant&.id %>
           <%= hidden_field_tag "booking[starts_at]", @selected_starts_at&.iso8601 %>
           <%= hidden_field_tag "booking[professional_mode]", @professional_mode %>
           <%= hidden_field_tag "booking[employee_membership_id]", @selected_employee_membership&.id %>

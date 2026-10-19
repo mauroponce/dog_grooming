@@ -1,6 +1,20 @@
 require "rails_helper"
 
 RSpec.describe "Admin employee memberships", type: :request do
+  it "renders the team index without configurable role controls" do
+    owner = User.create!(email_address: "team-owner-#{SecureRandom.hex(4)}@example.com", password: "password123", role: :admin)
+    business = Business.create!(owner:, name: "Equipo", slug: "equipo-#{SecureRandom.hex(4)}", contact_phone: "+54 9 11 5555-5555", onboarding_completed_at: Time.current)
+    business.employee_memberships.create!(name: "Ada Lovelace", email_address: "ada-#{SecureRandom.hex(4)}@example.com", status: "active")
+    sign_in(owner)
+
+    get admin_employee_memberships_path, headers: browser_headers
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Ada Lovelace")
+    expect(response.body).not_to include("Gestionar permisos")
+    expect(response.body).not_to include("Editar rol de")
+  end
+
   it "sends an invitation and does not expose configurable permissions" do
     owner = User.create!(email_address: "owner-#{SecureRandom.hex(4)}@example.com", password: "password123", role: :admin)
     business = Business.create!(owner:, name: "Pichipurris", slug: "pichipurris-#{SecureRandom.hex(4)}", contact_phone: "+54 9 11 5555-5555", onboarding_completed_at: Time.current)

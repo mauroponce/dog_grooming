@@ -2,10 +2,7 @@
 <% action_path = local_assigns.fetch(:action_path) { local_assigns.fetch(:reserve_path, short_public_service_path(business.slug, service.slug)) } %>
 <% action_label = local_assigns.fetch(:action_label, "Reservar") %>
 <% selected = local_assigns.fetch(:selected, false) %>
-<% selected_variant = local_assigns[:selected_variant] %>
-<% variant_paths = local_assigns.fetch(:variant_paths, {}) %>
-
-<% cache [ :public_service_card, business, service, service.service_variants.maximum(:updated_at), detail_path, action_path, action_label, selected, selected_variant&.id ] do %>
+<% cache [ :public_service_card, business, service, detail_path, action_path, action_label, selected ] do %>
   <article
     id="service-<%= service.id %>"
     data-public-services-target="item"
@@ -19,7 +16,7 @@
     <div class="pointer-events-none relative z-10 flex items-center gap-3 sm:gap-5">
       <div class="pointer-events-none min-w-0 flex-1">
         <h3 class="text-base font-bold leading-6"><%= service.name %></h3>
-        <p class="mt-1 text-sm font-semibold text-zinc-500"><%= service.tiered_pricing? ? "Elegí el tamaño para ver precio y duración" : public_service_duration_label(service.duration_minutes) %></p>
+        <p class="mt-1 text-sm font-semibold text-zinc-500"><%= public_service_duration_label(service.duration_minutes) %></p>
         <% if service.description.present? %>
           <p class="mt-2 line-clamp-2 text-sm leading-5 text-zinc-500 sm:mt-3 sm:leading-6"><%= service.description %></p>
         <% end %>
@@ -27,24 +24,14 @@
       </div>
 
       <div class="pointer-events-auto shrink-0">
-        <% if selected && (!service.tiered_pricing? || selected_variant.present?) %>
+        <% if selected %>
           <span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand-600 text-sm font-bold text-white" aria-label="Servicio seleccionado">
             <%= public_icon("check", css: "h-5 w-5") %>
           </span>
-        <% elsif !service.tiered_pricing? %>
+        <% else %>
           <%= link_to action_label, action_path, class: "inline-flex h-10 items-center justify-center rounded-full border border-zinc-200 bg-white px-5 text-sm font-bold text-zinc-950 shadow-sm", aria: { label: "#{action_label} #{service.name}" } %>
         <% end %>
       </div>
     </div>
-    <% if service.tiered_pricing? %>
-      <div class="relative z-10 mt-4 grid gap-2 border-t border-zinc-100 pt-4 sm:grid-cols-3">
-        <% service.service_variants.active.ordered.each do |variant| %>
-          <%= link_to variant_paths.fetch(variant.id), class: "rounded-xl border px-3 py-3 text-left text-sm #{selected_variant == variant ? "border-brand-600 bg-brand-50 ring-1 ring-brand-600" : "border-zinc-200 hover:border-brand-500"}" do %>
-            <span class="block font-bold"><%= variant.display_name %></span>
-            <span class="mt-1 block font-semibold text-zinc-600"><%= service.price_label_for_cents(variant.price_cents) %> · <%= public_service_duration_label(variant.duration_minutes) %></span>
-          <% end %>
-        <% end %>
-      </div>
-    <% end %>
   </article>
 <% end %>

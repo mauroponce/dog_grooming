@@ -60,9 +60,8 @@ RSpec.describe "Admin services", type: :request do
     expect(response.body).to include("Seleccionar todos")
     expect(response.body).to include("Recomendación")
     expect(response.body).to include("Precio")
-    expect(response.body).to include("Cómo se calcula el precio")
-    expect(response.body).to include("Por tamaño de mascota")
-    expect(document.css('input[name*="service_variants_attributes"][name$="[pet_size_band_id]"]').size).to eq(3)
+    expect(response.body).not_to include("Cómo se calcula el precio")
+    expect(response.body).not_to include("Por tamaño de mascota")
     expect(response.body).to include("Requiere seña")
     expect(response.body).not_to include("Cómo cobrar este servicio")
     expect(response.body).not_to include("Usar configuración del negocio")
@@ -83,6 +82,7 @@ RSpec.describe "Admin services", type: :request do
     expect(price_input["type"]).to eq("text")
     expect(price_input["inputmode"]).to eq("numeric")
     expect(category_field["class"]).to include("service-custom-select-input")
+    expect(category_field["data-native-select"]).to eq("true")
     expect(category_field["data-custom-select-target"]).to eq("input")
     category_dropdown = category_field.ancestors.find { |node| node["data-controller"].to_s.split.include?("custom-select") }
     expect(category_dropdown.at_css(".service-custom-select-trigger")).to be_present
@@ -115,26 +115,6 @@ RSpec.describe "Admin services", type: :request do
     expect(document.css('select[name^="service_availability_rules"]').map { |field| field["class"] }.uniq).to eq([ "service-custom-select-input" ])
   end
 
-  it "updates the shared pet weight ranges" do
-    user, business = create_admin_with_business
-    bands = business.ensure_default_pet_size_bands!.to_a
-    sign_in(user)
-
-    patch admin_pet_size_bands_path, params: {
-      pet_size_bands: bands.to_h do |band|
-        [ band.id.to_s, {
-          name: band.name == "Chico" ? "Pequeño" : band.name,
-          minimum_weight_kg: band.minimum_weight_kg,
-          maximum_weight_kg: band.maximum_weight_kg,
-          position: band.position
-        } ]
-      end
-    }, headers: browser_headers
-
-    expect(response).to redirect_to(edit_admin_pet_size_bands_path)
-    expect(business.pet_size_bands.find_by!(position: 0).name).to eq("Pequeño")
-  end
-
   it "renders the manual receipt account selector only when manual transfer has multiple active accounts" do
     user, business = create_admin_with_business
     primary_account = business.payment_accounts.create!(name: "BBVA principal", details: "Alias: NAVAJA.CLUB", primary_account: true)
@@ -151,6 +131,7 @@ RSpec.describe "Admin services", type: :request do
     expect(response.body).to include("Cuenta para comprobante manual")
     expect(account_select).to be_present
     expect(account_select["class"]).to include("service-custom-select-input")
+    expect(account_select["data-native-select"]).to eq("true")
     expect(account_select["data-custom-select-target"]).to eq("input")
     expect(account_select.ancestors.any? { |node| node["data-controller"].to_s.split.include?("custom-select") }).to eq(true)
     expect(account_options).to include("Usar cuenta principal")

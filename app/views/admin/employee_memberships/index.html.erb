@@ -4,7 +4,6 @@
 
 <% team_count = @employees.size %>
 <% active_count = @employees.count { |employee| employee.active? && !employee.archived? } %>
-<% role_modals = @employees.reject(&:owner_profile?) %>
 <% team_icons = {
   search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
   plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>',
@@ -22,7 +21,6 @@
   refresh: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12a9 9 0 0 1-15 6.7L3 16M3 12a9 9 0 0 1 15-6.7L21 8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2" stroke-linecap="round"/></svg>',
   user_search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="9.5" cy="7" r="4"/><path d="m17 17 4 4M19 19a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/></svg>',
-  x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" stroke-linecap="round"/></svg>',
   arrow: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/></svg>'
 } %>
 
@@ -713,127 +711,6 @@
     line-height: 1.6;
   }
 
-  .team-modal {
-    width: min(760px, calc(100vw - 32px));
-    border: 1px solid #e2e8f0;
-    border-radius: 28px;
-    background: #fff;
-    color: #0f172a;
-    padding: 0;
-    box-shadow: 0 24px 80px rgba(15,23,42,.20);
-  }
-
-  .team-modal::backdrop {
-    background: rgba(15,23,42,.35);
-  }
-
-  .team-modal-inner {
-    padding: 28px;
-  }
-
-  .team-modal-header {
-    display: flex;
-    justify-content: space-between;
-    gap: 20px;
-  }
-
-  .team-modal h2 {
-    margin: 0;
-    color: #0f172a;
-    font-size: 24px;
-    font-weight: 700;
-    letter-spacing: -.035em;
-    line-height: 1.18;
-  }
-
-  .team-modal-subtitle {
-    margin: 8px 0 0;
-    color: #64748b;
-    font-size: 14px;
-    font-weight: 700;
-    line-height: 1.55;
-  }
-
-  .team-modal-close {
-    display: grid;
-    width: 42px;
-    height: 42px;
-    place-items: center;
-    flex: 0 0 auto;
-    border: 1px solid #e2e8f0;
-    border-radius: 999px;
-    background: #fff;
-    color: #475569;
-    cursor: pointer;
-    transition: .16s ease;
-  }
-
-  .team-modal-close:hover {
-    background: #f8fafc;
-    color: #0f172a;
-  }
-
-  .team-modal-close svg {
-    width: 20px;
-    height: 20px;
-  }
-
-  .team-role-list {
-    display: grid;
-    margin-top: 16px;
-    overflow: hidden;
-    border: 1px solid #e2e8f0;
-    border-radius: 20px;
-    background: #fff;
-  }
-
-  .team-role-option {
-    display: flex;
-    align-items: flex-start;
-    gap: 14px;
-    border-bottom: 1px solid #e2e8f0;
-    padding: 16px 18px;
-    cursor: pointer;
-  }
-
-  .team-role-option:last-child {
-    border-bottom: 0;
-  }
-
-  .team-role-option:hover {
-    background: #f8fafc;
-  }
-
-  .team-role-option input {
-    width: 18px;
-    height: 18px;
-    margin-top: 3px;
-    accent-color: var(--admin-brand-600);
-  }
-
-  .team-role-option strong {
-    display: block;
-    color: #0f172a;
-    font-size: 15px;
-    font-weight: 700;
-  }
-
-  .team-role-option span span {
-    display: block;
-    margin-top: 4px;
-    color: #64748b;
-    font-size: 13px;
-    font-weight: 650;
-    line-height: 1.45;
-  }
-
-  .team-modal-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    margin-top: 22px;
-  }
-
   @media (max-width: 1180px) {
     :root {
       --topbar-height: 64px;
@@ -954,44 +831,6 @@
     </section>
   </div>
 </div>
-
-<% role_modals.each do |employee| %>
-  <dialog id="team-role-modal-<%= employee.id %>" class="team-modal">
-    <div class="team-modal-inner">
-      <div class="team-modal-header">
-        <div>
-          <h2>Editar rol de <%= employee.display_name %></h2>
-          <p class="team-modal-subtitle">Elegí qué puede gestionar este miembro dentro de Cita.pet.</p>
-        </div>
-        <form method="dialog">
-          <button class="team-modal-close" aria-label="Cerrar">
-            <%= team_icons.fetch(:x).html_safe %>
-          </button>
-        </form>
-      </div>
-
-      <%= form_with model: [ :admin, employee ], url: update_role_admin_employee_membership_path(employee), method: :patch, style: "margin-top:24px" do |form| %>
-            <p style="margin:0 0 10px;color:#0f172a;font-size:14px;font-weight:700">Rol de permisos</p>
-        <div class="team-role-list">
-          <% EmployeeMembership::ACCESS_LEVELS.each do |level, config| %>
-            <label class="team-role-option">
-              <%= form.radio_button :access_level, level, checked: employee.access_level == level %>
-              <span>
-                <strong><%= config.fetch(:label) %></strong>
-                <span><%= config.fetch(:description) %></span>
-              </span>
-            </label>
-          <% end %>
-        </div>
-
-        <div class="team-modal-actions">
-          <button type="button" onclick="document.getElementById('team-role-modal-<%= employee.id %>').close()" class="team-secondary-button">Cancelar</button>
-          <%= form.submit "Guardar rol", class: "team-primary-button", style: "min-height:46px;box-shadow:none" %>
-        </div>
-      <% end %>
-    </div>
-  </dialog>
-<% end %>
 
 <script>
   (() => {

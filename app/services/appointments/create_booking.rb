@@ -4,7 +4,7 @@ module Appointments
       new(...).call
     end
 
-    def initialize(business:, service:, starts_at:, customer_name:, customer_phone:, customer_email: nil, pet: nil, pet_id: nil, pet_name: nil, pet_breed: nil, pet_sex: nil, pet_birth_date: nil, pet_notes: nil, pet_coat_type: nil, pet_coat_details: nil, service_variant: nil, source: :public_booking, notes: nil, add_on_service_ids: [], extra_ids: [], branch: nil, employee_membership: nil, deposit_receipt: nil, payment_method: nil)
+    def initialize(business:, service:, starts_at:, customer_name:, customer_phone:, customer_email: nil, pet: nil, pet_id: nil, pet_name: nil, pet_breed: nil, pet_sex: nil, pet_birth_date: nil, pet_notes: nil, pet_coat_type: nil, pet_coat_details: nil, source: :public_booking, notes: nil, add_on_service_ids: [], extra_ids: [], branch: nil, employee_membership: nil, deposit_receipt: nil, payment_method: nil)
       @business = business
       @service = service
       @starts_at = starts_at
@@ -20,7 +20,6 @@ module Appointments
       @pet_notes = pet_notes
       @pet_coat_type = pet_coat_type
       @pet_coat_details = pet_coat_details
-      @service_variant = service_variant
       @source = source
       @notes = notes
       @add_on_service_ids = Array(add_on_service_ids).reject(&:blank?)
@@ -32,7 +31,6 @@ module Appointments
     end
 
     def call
-      validate_service_variant!
       validate_payment_configuration!
 
       appointment = business.with_lock do
@@ -49,7 +47,6 @@ module Appointments
         pricing = pricing_for
         appointment = business.appointments.create!(
           service: service,
-          service_variant: service_variant,
           customer_profile: profile,
           pet: pet,
           bookable_resource: resource,
@@ -65,9 +62,6 @@ module Appointments
           customer_notes: notes,
           base_price_cents: pricing.fetch(:base_price_cents),
           final_price_cents: pricing.fetch(:final_price_cents),
-          service_variant_name: service_variant&.display_name,
-          service_variant_price_cents: service_variant&.price_cents,
-          service_variant_duration_minutes: service_variant&.duration_minutes,
           payment_expires_at: service.deposit_required? ? Time.current + service.deposit_payment_deadline_minutes.minutes : nil,
           discount_percentage: pricing.fetch(:discount_percentage)
         )
@@ -95,20 +89,10 @@ module Appointments
     end
 
     private
-      attr_reader :business, :service, :service_variant, :starts_at, :customer_name, :customer_phone, :customer_email, :pet, :pet_id, :pet_name, :pet_breed, :pet_sex, :pet_birth_date, :pet_notes, :pet_coat_type, :pet_coat_details, :source, :notes, :add_on_service_ids, :extra_ids, :branch, :employee_membership, :deposit_receipt, :payment_method
-
-      def validate_service_variant!
-        if service.tiered_pricing? && service_variant.blank?
-          raise ArgumentError, "Elegí el tamaño de la mascota para este servicio."
-        end
-        return if service_variant.blank?
-        return if service_variant.service_id == service.id && service_variant.active?
-
-        raise ArgumentError, "El tamaño elegido no está disponible para este servicio."
-      end
+      attr_reader :business, :service, :starts_at, :customer_name, :customer_phone, :customer_email, :pet, :pet_id, :pet_name, :pet_breed, :pet_sex, :pet_birth_date, :pet_notes, :pet_coat_type, :pet_coat_details, :source, :notes, :add_on_service_ids, :extra_ids, :branch, :employee_membership, :deposit_receipt, :payment_method
 
       def booking_service
-        @booking_service ||= Bookings::ServiceSelection.new(service: service, variant: service_variant)
+        service
       end
 
       def validate_payment_configuration!
@@ -254,8 +238,7 @@ module Appointments
           birth_date: pet_birth_date,
           notes: pet_notes,
           coat_type: pet_coat_type,
-          coat_details: pet_coat_details,
-          pet_size_band: service_variant&.pet_size_band
+          coat_details: pet_coat_details
         )
       end
 

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_17_160000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_19_121000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -135,10 +135,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_17_160000) do
     t.string "remaining_balance_payment_method"
     t.datetime "reminder_sent_at"
     t.bigint "service_id", null: false
-    t.integer "service_variant_duration_minutes"
-    t.bigint "service_variant_id"
-    t.string "service_variant_name"
-    t.integer "service_variant_price_cents"
     t.string "short_uuid", null: false
     t.integer "source", default: 0, null: false
     t.datetime "starts_at", null: false
@@ -165,7 +161,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_17_160000) do
     t.index ["pet_id"], name: "index_appointments_on_pet_id"
     t.index ["remaining_balance_paid_by_id"], name: "index_appointments_on_remaining_balance_paid_by_id"
     t.index ["service_id"], name: "index_appointments_on_service_id"
-    t.index ["service_variant_id"], name: "index_appointments_on_service_variant_id"
     t.index ["short_uuid"], name: "index_appointments_on_short_uuid", unique: true
   end
 
@@ -812,19 +807,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_17_160000) do
     t.index ["business_id"], name: "index_payment_accounts_on_business_id"
   end
 
-  create_table "pet_size_bands", force: :cascade do |t|
-    t.bigint "business_id", null: false
-    t.datetime "created_at", null: false
-    t.decimal "maximum_weight_kg", precision: 6, scale: 2
-    t.decimal "minimum_weight_kg", precision: 6, scale: 2, default: "0.0", null: false
-    t.string "name", null: false
-    t.integer "position", default: 0, null: false
-    t.datetime "updated_at", null: false
-    t.index ["business_id", "name"], name: "index_pet_size_bands_on_business_id_and_name", unique: true
-    t.index ["business_id", "position"], name: "index_pet_size_bands_on_business_id_and_position", unique: true
-    t.index ["business_id"], name: "index_pet_size_bands_on_business_id"
-  end
-
   create_table "pets", force: :cascade do |t|
     t.jsonb "behavioral_alerts", default: [], null: false
     t.date "birth_date"
@@ -837,14 +819,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_17_160000) do
     t.text "grooming_reference_note"
     t.string "name", null: false
     t.text "notes"
-    t.bigint "pet_size_band_id"
     t.string "sex"
     t.datetime "updated_at", null: false
     t.index ["business_id", "customer_profile_id"], name: "index_pets_on_business_id_and_customer_profile_id"
     t.index ["business_id"], name: "index_pets_on_business_id"
     t.index ["customer_profile_id", "name"], name: "index_pets_on_customer_profile_id_and_name"
     t.index ["customer_profile_id"], name: "index_pets_on_customer_profile_id"
-    t.index ["pet_size_band_id"], name: "index_pets_on_pet_size_band_id"
   end
 
   create_table "promotions", force: :cascade do |t|
@@ -1149,19 +1129,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_17_160000) do
     t.index ["service_id"], name: "index_service_tags_on_service_id"
   end
 
-  create_table "service_variants", force: :cascade do |t|
-    t.boolean "active", default: true, null: false
-    t.datetime "created_at", null: false
-    t.integer "duration_minutes", null: false
-    t.bigint "pet_size_band_id", null: false
-    t.integer "price_cents", null: false
-    t.bigint "service_id", null: false
-    t.datetime "updated_at", null: false
-    t.index ["pet_size_band_id"], name: "index_service_variants_on_pet_size_band_id"
-    t.index ["service_id", "pet_size_band_id"], name: "index_service_variants_on_service_id_and_pet_size_band_id", unique: true
-    t.index ["service_id"], name: "index_service_variants_on_service_id"
-  end
-
   create_table "services", force: :cascade do |t|
     t.boolean "active", default: true, null: false
     t.text "after_care"
@@ -1174,7 +1141,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_17_160000) do
     t.datetime "created_at", null: false
     t.integer "deposit_amount_cents", default: 0, null: false
     t.integer "deposit_payment_deadline_minutes", default: 30, null: false
-    t.integer "deposit_percentage", default: 0, null: false
     t.boolean "deposit_required", default: false, null: false
     t.text "description"
     t.integer "duration_minutes", null: false
@@ -1187,7 +1153,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_17_160000) do
     t.bigint "payment_account_id"
     t.boolean "popular", default: false, null: false
     t.integer "price_cents", default: 0, null: false
-    t.string "pricing_mode", default: "fixed", null: false
     t.string "professional_selection_mode", default: "optional", null: false
     t.integer "public_start_interval_minutes"
     t.boolean "public_visible", default: true, null: false
@@ -1382,7 +1347,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_17_160000) do
   add_foreign_key "appointments", "customer_profiles"
   add_foreign_key "appointments", "employee_memberships"
   add_foreign_key "appointments", "pets", on_delete: :nullify
-  add_foreign_key "appointments", "service_variants"
   add_foreign_key "appointments", "services"
   add_foreign_key "appointments", "users", column: "canceled_by_user_id"
   add_foreign_key "appointments", "users", column: "completed_by_id"
@@ -1457,10 +1421,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_17_160000) do
   add_foreign_key "pack_sessions", "customer_packs"
   add_foreign_key "pack_sessions", "users", column: "created_by_id"
   add_foreign_key "payment_accounts", "businesses"
-  add_foreign_key "pet_size_bands", "businesses"
   add_foreign_key "pets", "businesses"
   add_foreign_key "pets", "customer_profiles"
-  add_foreign_key "pets", "pet_size_bands"
   add_foreign_key "promotions", "businesses"
   add_foreign_key "promotions", "campaign_links"
   add_foreign_key "promotions", "services"
@@ -1506,8 +1468,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_17_160000) do
   add_foreign_key "service_resources", "bookable_resources"
   add_foreign_key "service_resources", "services"
   add_foreign_key "service_tags", "services"
-  add_foreign_key "service_variants", "pet_size_bands"
-  add_foreign_key "service_variants", "services"
   add_foreign_key "services", "businesses"
   add_foreign_key "services", "payment_accounts", on_delete: :nullify
   add_foreign_key "services", "service_catalog_items"

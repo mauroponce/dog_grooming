@@ -167,20 +167,16 @@ RSpec.describe Appointments::CreateBooking do
     expect(customer.email).to eq("jennifer@example.test")
   end
 
-  it "preserves grooming care for a returning pet and applies the selected size band" do
+  it "preserves grooming care for a returning pet" do
     business = create_business
     starts_at = enable_availability_for(business)
     service = create_service(business)
-    service.update!(pricing_mode: "by_pet_size", deposit_percentage: 50)
-    band = business.ensure_default_pet_size_bands!.second
-    variant = service.service_variants.create!(pet_size_band: band, price_cents: 25_000_00, duration_minutes: 90)
     customer = business.customer_profiles.create!(name: "Ana", phone: "+54 11 6034-7665")
     pet = customer.pets.create!(name: "Coco", notes: "Cuidado especial", coat_type: "curly")
 
     appointment = described_class.call(
       business: business,
       service: service,
-      service_variant: variant,
       starts_at: starts_at,
       customer_name: "Ana",
       customer_phone: "1560347665",
@@ -192,27 +188,6 @@ RSpec.describe Appointments::CreateBooking do
     expect(appointment.pet).to eq(pet)
     expect(pet.reload.notes).to eq("Cuidado especial")
     expect(pet.coat_type).to eq("curly")
-    expect(pet.pet_size_band).to eq(band)
-  end
-
-  it "rejects an inactive or foreign size variant" do
-    business = create_business
-    starts_at = enable_availability_for(business)
-    service = create_service(business)
-    service.update!(pricing_mode: "by_pet_size")
-    band = business.ensure_default_pet_size_bands!.first
-    variant = service.service_variants.create!(pet_size_band: band, price_cents: 20_000_00, duration_minutes: 60, active: false)
-
-    expect do
-      described_class.call(
-        business: business,
-        service: service,
-        service_variant: variant,
-        starts_at: starts_at,
-        customer_name: "Julieta Pérez",
-        customer_phone: "+54 9 11 1111-1111"
-      )
-    end.to raise_error(ArgumentError, /tamaño elegido no está disponible/)
   end
 
   def create_business(preferences: {}, simultaneous_capacity: nil)

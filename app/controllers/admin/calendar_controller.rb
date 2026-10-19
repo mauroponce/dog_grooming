@@ -90,7 +90,7 @@ module Admin
 
       def calendar_services
         employee_ids = @calendar_employee_ids.presence || [ "center" ]
-        services = @business.services.active.includes(:service_category, :employee_memberships, service_variants: :pet_size_band).order(:category, :sort_order, :name).to_a
+        services = @business.services.active.includes(:service_category, :employee_memberships).order(:category, :sort_order, :name).to_a
         services.map do |service|
           assigned_ids = service.employee_memberships.map { |employee| employee.id.to_s }
           {
@@ -99,14 +99,6 @@ module Admin
             category: service.category_label,
             duration: service.duration_minutes,
             price: service.price_cents / 100,
-            variants: service.tiered_pricing? ? service.service_variants.active.ordered.map { |variant|
-              {
-                id: variant.id.to_s,
-                name: variant.display_name,
-                duration: variant.duration_minutes,
-                price: variant.price_cents / 100
-              }
-            } : [],
             employees: assigned_ids.presence || employee_ids
           }
         end
@@ -115,7 +107,7 @@ module Admin
       def calendar_appointments(scoped_appointments)
         scoped_appointments
           .where.not(status: Appointment.statuses[:canceled])
-          .includes(:appointment_payment, :branch, :bookable_resource, :employee_membership, :customer_profile, :pet, deposit_receipt_attachment: :blob, service: [ :payment_account, { service_variants: :pet_size_band } ], appointment_addons: :service)
+          .includes(:appointment_payment, :branch, :bookable_resource, :employee_membership, :customer_profile, :pet, deposit_receipt_attachment: :blob, service: :payment_account, appointment_addons: :service)
           .where(starts_at: calendar_range)
           .order(:starts_at)
           .map { |appointment| appointment_payload(appointment) }
@@ -125,7 +117,7 @@ module Admin
         customer_profile = appointment.customer_profile
         status = calendar_status(appointment)
         appointment_services = [
-          { id: appointment.service_id.to_s, name: appointment.service.name, duration: appointment.service_variant_duration_minutes || appointment.service.duration_minutes, price: (appointment.service_variant_price_cents || appointment.service.price_cents) / 100 }
+          { id: appointment.service_id.to_s, name: appointment.service.name, duration: appointment.service.duration_minutes, price: appointment.service.price_cents / 100 }
         ] + appointment.appointment_addons.map { |addon| { id: addon.service_id.to_s, name: addon.service.name, duration: addon.service.duration_minutes, price: addon.service.price_cents / 100 } }
         {
           id: appointment.short_uuid,
@@ -166,14 +158,6 @@ module Admin
         }.merge(appointment_detail_payload(appointment)).tap do |payload|
           actions_available = status != "completed"
           payload[:notesUrl] = update_notes_admin_appointment_path(appointment, format: :json) if policy(appointment).update?
-          if actions_available && appointment.starts_at.future? && appointment.service.tiered_pricing? && policy(appointment).update?
-            payload[:serviceVariantId] = appointment.service_variant_id&.to_s
-            payload[:serviceVariantName] = appointment.service_variant_name
-            payload[:serviceVariantOptions] = appointment.service.service_variants.active.ordered.map do |variant|
-              { id: variant.id.to_s, label: variant.display_name, price: variant.price_cents / 100, duration: variant.duration_minutes }
-            end
-            payload[:updateServiceVariantUrl] = update_service_variant_admin_appointment_path(appointment, format: :json)
-          end
           payload[:destroyUrl] = admin_destroy_appointment_path(appointment, format: :json) if actions_available && policy(appointment).destroy?
           payload[:approveDepositUrl] = approve_deposit_admin_appointment_path(appointment, format: :json) if actions_available && appointment.pending_deposit_review? && policy(appointment).approve_deposit?
           payload[:rejectDepositUrl] = reject_deposit_admin_appointment_path(appointment, format: :json) if actions_available && appointment.pending_deposit_review? && policy(appointment).reject_deposit?

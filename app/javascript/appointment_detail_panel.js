@@ -93,27 +93,37 @@ const internalNotesSection = (appointment) => {
   const notes = String(appointment.internalNotes || "")
   const hasNotes = notes.trim().length > 0
   const editable = Boolean(appointment.notesUrl)
-  const formHidden = hasNotes ? "" : " hidden"
-  const addButton = editable && !hasNotes
-    ? '<button type="button" class="appointment-detail-panel__notes-link" data-appointment-detail-notes-edit>Añadir notas</button>'
-    : ""
+  const notesForm = editable ? `
+    <div class="appointment-detail-panel__notes-form" data-appointment-detail-notes-form data-has-notes="${hasNotes}" data-initial-notes="${escapeAttribute(notes)}">
+      <textarea rows="5" maxlength="5000" aria-label="Notas internas del turno" data-appointment-detail-notes-input>${escapeHTML(notes)}</textarea>
+      <p class="appointment-detail-panel__notes-error hidden" data-appointment-detail-notes-error></p>
+      <div>
+        <button type="button" data-appointment-detail-notes-save hidden>Guardar</button>
+        <button type="button" data-appointment-detail-notes-cancel>Cancelar</button>
+      </div>
+    </div>
+  ` : ""
+
+  if (editable && !hasNotes) {
+    return `
+      <section class="appointment-detail-panel__section appointment-detail-panel__notes-section">
+        <details class="appointment-detail-panel__notes-editor" data-appointment-detail-notes-editor>
+          <summary class="appointment-detail-panel__section-heading">
+            <h3>Notas del turno</h3>
+            <span class="appointment-detail-panel__notes-link">Añadir notas</span>
+          </summary>
+          ${notesForm}
+        </details>
+      </section>
+    `
+  }
 
   return `
     <section class="appointment-detail-panel__section appointment-detail-panel__notes-section">
       <div class="appointment-detail-panel__section-heading">
         <h3>Notas del turno</h3>
-        ${addButton}
       </div>
-      ${editable ? `
-        <div class="appointment-detail-panel__notes-form" data-appointment-detail-notes-form data-has-notes="${hasNotes}" data-initial-notes="${escapeAttribute(notes)}"${formHidden}>
-          <textarea rows="5" maxlength="5000" aria-label="Notas internas del turno" data-appointment-detail-notes-input>${escapeHTML(notes)}</textarea>
-          <p class="appointment-detail-panel__notes-error hidden" data-appointment-detail-notes-error></p>
-          <div>
-            <button type="button" data-appointment-detail-notes-save hidden>Guardar</button>
-            <button type="button" data-appointment-detail-notes-cancel>Cancelar</button>
-          </div>
-        </div>
-      ` : (hasNotes ? `<p class="appointment-detail-panel__note">${escapeHTML(notes)}</p>` : '<p class="appointment-detail-panel__note is-empty">Sin notas internas.</p>')}
+      ${editable ? notesForm : (hasNotes ? `<p class="appointment-detail-panel__note">${escapeHTML(notes)}</p>` : '<p class="appointment-detail-panel__note is-empty">Sin notas internas.</p>')}
     </section>
   `
 }
@@ -126,24 +136,6 @@ const customerCommentSection = (appointment) => {
     <section class="appointment-detail-panel__section appointment-detail-panel__customer-comment">
       <h3>Comentarios del cliente</h3>
       <p class="appointment-detail-panel__note">${escapeHTML(comment)}</p>
-    </section>
-  `
-}
-
-const serviceVariantSection = (appointment) => {
-  const options = Array.isArray(appointment.serviceVariantOptions) ? appointment.serviceVariantOptions : []
-  if (!appointment.updateServiceVariantUrl || !options.length) return ""
-
-  return `
-    <section class="appointment-detail-panel__section">
-      <h3>Tamaño de la mascota</h3>
-      <div class="appointment-detail-panel__row">
-        <span>Rango confirmado</span>
-        <select data-appointment-detail-service-variant aria-label="Tamaño de la mascota">
-          ${options.map((option) => `<option value="${escapeAttribute(option.id)}" ${String(option.id) === String(appointment.serviceVariantId || "") ? "selected" : ""}>${escapeHTML(option.label)} · ${money(option.price)} · ${durationLabel(option.duration)}</option>`).join("")}
-        </select>
-      </div>
-      <p class="appointment-detail-panel__notes-error hidden" data-appointment-detail-service-variant-error></p>
     </section>
   `
 }
@@ -247,8 +239,6 @@ export function renderAppointmentDetail(appointment, { actions = {}, variant = "
             </div>
           </section>`}
 
-          ${serviceVariantSection(appointment)}
-
           <section class="appointment-detail-panel__section">
             <h3>Pagos</h3>
             <div class="appointment-detail-panel__rows">
@@ -300,7 +290,7 @@ export function renderAppointmentDetail(appointment, { actions = {}, variant = "
   `
 }
 
-export function bindAppointmentDetailPanel(root, { onSaveNotes, onCancel, onReschedule, onChangeServiceVariant } = {}) {
+export function bindAppointmentDetailPanel(root, { onSaveNotes, onCancel, onReschedule } = {}) {
   const dialog = root.querySelector("[data-appointment-detail-receipt-dialog]")
   const previewButton = root.querySelector("[data-appointment-detail-receipt-preview]")
   const closeButton = root.querySelector("[data-appointment-detail-receipt-close]")
@@ -313,7 +303,7 @@ export function bindAppointmentDetailPanel(root, { onSaveNotes, onCancel, onResc
   }
 
   const notesForm = root.querySelector("[data-appointment-detail-notes-form]")
-  const notesEditButton = root.querySelector("[data-appointment-detail-notes-edit]")
+  const notesEditor = root.querySelector("[data-appointment-detail-notes-editor]")
   const notesCancelButton = root.querySelector("[data-appointment-detail-notes-cancel]")
   const notesInput = root.querySelector("[data-appointment-detail-notes-input]")
   const notesError = root.querySelector("[data-appointment-detail-notes-error]")
@@ -338,22 +328,6 @@ export function bindAppointmentDetailPanel(root, { onSaveNotes, onCancel, onResc
     await onReschedule?.(startsAt)
   })
 
-  const variantSelect = root.querySelector("[data-appointment-detail-service-variant]")
-  const variantError = root.querySelector("[data-appointment-detail-service-variant-error]")
-  variantSelect?.addEventListener("change", async () => {
-    variantSelect.disabled = true
-    variantError?.classList.add("hidden")
-    try {
-      await onChangeServiceVariant?.(variantSelect.value)
-    } catch (error) {
-      if (variantError) {
-        variantError.textContent = error.message || "No se pudo cambiar el tamaño."
-        variantError.classList.remove("hidden")
-      }
-      variantSelect.disabled = false
-    }
-  })
-
   if (!notesForm || !notesInput || !onSaveNotes) return
 
   const initialNotesValue = () => notesForm.dataset.initialNotes || ""
@@ -368,11 +342,11 @@ export function bindAppointmentDetailPanel(root, { onSaveNotes, onCancel, onResc
 
   syncNotesActions()
 
-  notesEditButton?.addEventListener("click", () => {
-    notesForm.hidden = false
-    notesEditButton.hidden = true
-    syncNotesActions()
-    notesInput.focus()
+  notesEditor?.addEventListener("toggle", () => {
+    if (!notesEditor.open) return
+
+    notesInput.focus({ preventScroll: true })
+    notesForm.scrollIntoView({ behavior: "smooth", block: "nearest" })
   })
 
   notesInput.addEventListener("input", () => {
@@ -386,8 +360,7 @@ export function bindAppointmentDetailPanel(root, { onSaveNotes, onCancel, onResc
   notesCancelButton?.addEventListener("click", () => {
     notesInput.value = initialNotesValue()
     if (notesForm.dataset.hasNotes !== "true") {
-      notesForm.hidden = true
-      if (notesEditButton) notesEditButton.hidden = false
+      notesEditor?.removeAttribute("open")
     }
     if (notesError) {
       notesError.textContent = ""

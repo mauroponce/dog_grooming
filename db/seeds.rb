@@ -153,8 +153,7 @@ class DevelopmentSeeds
         sex: "male",
         birth_date: 4.years.ago.to_date,
         coat_type: "curly",
-        behavioral_alerts: [ "blower_fear" ],
-        pet_size_band: business.pet_size_bands.order(:position).second
+        behavioral_alerts: [ "blower_fear" ]
       )
       blocked = create_customer!(business, name: "Cliente Bloqueado", phone: "+5491111111102", email: "bloqueado@example.test")
       blocked.block!("Dos ausencias sin aviso")
@@ -165,19 +164,17 @@ class DevelopmentSeeds
         name: "Lola",
         breed: "Golden retriever",
         sex: "female",
-        coat_type: "double",
-        pet_size_band: business.pet_size_bands.order(:position).last
+        coat_type: "double"
       )
 
-      variant = deposit_services.first.service_variants.active.order(:id).second
       appointments = [
         create_appointment!(business:, service: nail_service, customer: returning, pet: returning_pet, employee: owner_membership, starts_at: 14.days.ago.change(hour: 10), status: :completed),
         create_appointment!(business:, service: nail_service, customer: returning, pet: returning_pet, employee: owner_membership, starts_at: 7.days.ago.change(hour: 11), status: :no_show),
         create_appointment!(business:, service: nail_service, customer: newcomer, pet: newcomer_pet, employee:, starts_at: 2.days.from_now.change(hour: 9), status: :confirmed),
-        create_appointment!(business:, service: deposit_services.first, variant:, customer: returning, pet: returning_pet, employee:, starts_at: 3.days.from_now.change(hour: 11), status: :pending_deposit, deposit_status: "pending"),
-        create_appointment!(business:, service: deposit_services.first, variant:, customer: newcomer, pet: newcomer_pet, employee: owner_membership, starts_at: 4.days.from_now.change(hour: 13), status: :pending_deposit_review, deposit_status: "submitted"),
-        create_appointment!(business:, service: deposit_services.first, variant:, customer: returning, pet: returning_pet, employee:, starts_at: 5.days.from_now.change(hour: 15), status: :deposit_rejected, deposit_status: "rejected"),
-        create_appointment!(business:, service: deposit_services.first, variant:, customer: newcomer, pet: newcomer_pet, employee: owner_membership, starts_at: 6.days.from_now.change(hour: 10), status: :confirmed, deposit_status: "approved"),
+        create_appointment!(business:, service: deposit_services.first, customer: returning, pet: returning_pet, employee:, starts_at: 3.days.from_now.change(hour: 11), status: :pending_deposit, deposit_status: "pending"),
+        create_appointment!(business:, service: deposit_services.first, customer: newcomer, pet: newcomer_pet, employee: owner_membership, starts_at: 4.days.from_now.change(hour: 13), status: :pending_deposit_review, deposit_status: "submitted"),
+        create_appointment!(business:, service: deposit_services.first, customer: returning, pet: returning_pet, employee:, starts_at: 5.days.from_now.change(hour: 15), status: :deposit_rejected, deposit_status: "rejected"),
+        create_appointment!(business:, service: deposit_services.first, customer: newcomer, pet: newcomer_pet, employee: owner_membership, starts_at: 6.days.from_now.change(hour: 10), status: :confirmed, deposit_status: "approved"),
         create_appointment!(business:, service: nail_service, customer: returning, pet: returning_pet, employee:, starts_at: 8.days.from_now.change(hour: 12), status: :canceled)
       ]
 
@@ -275,13 +272,12 @@ class DevelopmentSeeds
       business.customer_profiles.create!(name:, first_name:, last_name:, phone:, email:)
     end
 
-    def create_appointment!(business:, service:, customer:, pet:, employee:, starts_at:, status:, variant: nil, deposit_status: "not_required")
-      duration = variant&.duration_minutes || service.duration_minutes
-      price = variant&.price_cents || service.price_cents
+    def create_appointment!(business:, service:, customer:, pet:, employee:, starts_at:, status:, deposit_status: "not_required")
+      duration = service.duration_minutes
+      price = service.price_cents
       deposit_amount = deposit_status == "not_required" ? 0 : service.deposit_amount_cents_for(price)
       business.appointments.create!(
         service: service,
-        service_variant: variant,
         customer_profile: customer,
         pet: pet,
         employee_membership: employee,
@@ -294,9 +290,6 @@ class DevelopmentSeeds
         source: :public_booking,
         base_price_cents: price,
         final_price_cents: price,
-        service_variant_name: variant&.display_name,
-        service_variant_price_cents: variant&.price_cents,
-        service_variant_duration_minutes: variant&.duration_minutes,
         deposit_status: deposit_status,
         deposit_amount_cents: deposit_amount,
         deposit_submitted_at: deposit_status == "submitted" ? 1.hour.ago : nil,

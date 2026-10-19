@@ -1,6 +1,6 @@
 module Pets
   class Upsert
-    ATTRIBUTES = %i[name breed sex birth_date notes coat_type coat_details behavioral_alerts grooming_reference_note pet_size_band].freeze
+    ATTRIBUTES = %i[name breed sex birth_date notes coat_type coat_details behavioral_alerts grooming_reference_note].freeze
 
     def self.call(...)
       new(...).call
@@ -21,7 +21,6 @@ module Pets
       ensure_pet_belongs_to_scope!(record) if record.persisted?
       if record.persisted? && @preserve_existing
         # The selected size is explicitly reconfirmed on every booking.
-        record.update!(pet_size_band: attributes[:pet_size_band]) if attributes[:pet_size_band].present?
         return record
       end
       # Selection flows often submit only a pet id. Do not erase profile data

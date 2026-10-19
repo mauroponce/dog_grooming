@@ -30,20 +30,13 @@ Decisión detallada: [`0001-registration-google-and-public-slug.md`](decisions/0
 
 ## Servicios y tamaño de mascota
 
-- Un servicio representa la oferta base y conserva nombre, descripción, categoría, imágenes, disponibilidad y reglas de cobro.
-- Un servicio puede tener **precio único** o **precio por tamaño de mascota**.
-- Los rangos de tamaño pertenecen a la empresa y se reutilizan en todos sus servicios. Los valores iniciales son:
-  - Chico: hasta 10 kg.
-  - Mediano: de 11 a 20 kg.
-  - Grande: más de 20 kg.
-- El catálogo inicial contiene tres servicios base: `Baño y secado`, `Sólo corte` y `Baño + corte`. Cada uno tiene una variante por rango, con precio y duración propios.
-- En una reserva pública de un servicio por tamaño, el cliente debe elegir el rango antes de ver horarios. La elección determina disponibilidad, duración, precio y seña.
-- La mascota recuerda el último rango confirmado para ayudar en operaciones futuras, pero cada nueva reserva debe confirmarlo porque el peso puede cambiar.
-- El turno guarda un snapshot del nombre de variante, precio y duración. Cambiar el catálogo después no reescribe turnos históricos.
-- En la agenda administrativa también se elige la variante para un turno manual. Un administrador puede corregirla antes del inicio; la corrección recalcula precio y duración y actualiza el rango recordado de la mascota.
-- Los servicios precargados por tamaño requieren una seña del 50% calculada sobre el precio efectivo de la variante.
+- Cada servicio tiene un único precio y una única duración. No existen variantes ni configuración de precios por tamaño.
+- Cuando una oferta cambia según el tamaño de la mascota, cada tamaño se publica como un servicio independiente dentro de la misma categoría; por ejemplo, `Baño + corte (Chico)`, `Baño + corte (Mediano)` y `Baño + corte (Grande)`.
+- El nombre diferencia los tamaños y la descripción informa el límite aplicable: hasta 10 kg, hasta 20 kg o más de 20 kg.
+- El catálogo inicial contiene nueve servicios: tres tamaños independientes para `Baño y secado`, `Sólo corte` y `Baño + corte`. Cada uno conserva su propio precio, duración y seña.
+- La reserva pública y la agenda administrativa seleccionan directamente el servicio. El turno conserva sus importes y duración históricos mediante los snapshots generales del turno.
 
-Decisión detallada: [`0002-service-pricing-by-pet-size.md`](decisions/0002-service-pricing-by-pet-size.md).
+Decisión detallada: [`0006-independent-services-by-pet-size.md`](decisions/0006-independent-services-by-pet-size.md).
 
 ## Reservas y señas de clientes
 
@@ -58,7 +51,7 @@ Decisión detallada: [`0002-service-pricing-by-pet-size.md`](decisions/0002-serv
 - Reservar no requiere cuenta. Se solicita nombre del responsable, celular argentino y nombre de mascota; el email es opcional. Raza, manto y cuidados se completan internamente.
 - El celular se normaliza incluyendo país y área. Si se omite el área, se usa la del negocio, configurable e inicialmente `11`; el número interpretado se muestra antes de confirmar.
 - Se reconoce al cliente por celular completo y a la mascota por nombre dentro de ese cliente. Una coincidencia por email sólo sugiere una revisión al equipo. Las ambigüedades se corrigen desde el turno sin fusionar fichas.
-- Los datos ingresados para reservar no habilitan acceso al perfil completo ni reemplazan los cuidados guardados. La elección explícita de tamaño sí actualiza el rango recordado.
+- Los datos ingresados para reservar no habilitan acceso al perfil completo ni reemplazan los cuidados guardados.
 - La ficha de mascota separa cuidados permanentes y preferencias del historial de atenciones, con servicio, fecha, autor del cierre y notas/fotos internas.
 - Finalizar no exige nota ni foto. Se pueden agregar después, sin repetir los efectos del cierre. Editar cuidados permanentes sigue requiriendo permiso de edición de clientes.
 - Con email se envía un recordatorio cuando faltan 24 horas; si se confirma con menos anticipación, se envía al confirmar. Sólo se recuerda un turno confirmado y futuro. El equipo puede reprogramar internamente un turno futuro y se habilita un nuevo recordatorio para el nuevo horario.
@@ -66,7 +59,7 @@ Decisión detallada: [`0002-service-pricing-by-pet-size.md`](decisions/0002-serv
 ## Agenda y equipo mínimos
 
 - La capacidad es global por peluquería; inicia en `1` y cada reserva consume un cupo del mismo calendario.
-- Los servicios y sus variantes inician con una duración de 60 minutos, que el responsable puede ajustar desde el catálogo.
+- Cada servicio inicia con una duración configurable por el responsable desde el catálogo.
 - El responsable administra servicios, configuración, capacidad, equipo y suscripción. Los empleados activos acceden a la operación diaria: agenda, clientes, mascotas y señas.
 - El responsable invita empleados por email. No hay interfaz de roles, permisos individuales ni configuración de agendas por profesional.
 - La reprogramación se realiza sólo desde la agenda administrativa, conserva la mascota, el pago y el historial, y vuelve a validar la capacidad de forma atómica.
