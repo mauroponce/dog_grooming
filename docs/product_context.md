@@ -23,6 +23,11 @@ Cita.pet es una plataforma para peluquerías caninas. Una empresa publica servic
 
 Decisión detallada: [`0001-registration-google-and-public-slug.md`](decisions/0001-registration-google-and-public-slug.md).
 
+## Acceso administrativo
+
+- Los botones **Ingresar** de la landing inician directamente la autenticación con Google, sin mostrar antes la pantalla `/acceder`.
+- `/acceder` se conserva como pantalla de acceso y destino de recuperación cuando Google no puede verificar la identidad o la cuenta no está habilitada.
+
 ## Servicios y tamaño de mascota
 
 - Un servicio representa la oferta base y conserva nombre, descripción, categoría, imágenes, disponibilidad y reglas de cobro.
