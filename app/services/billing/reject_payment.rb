@@ -11,7 +11,9 @@ module Billing
     end
 
     def call
-      invoice.transaction do
+      invoice.with_lock do
+        raise ArgumentError, "La factura ya no está pendiente de revisión." unless invoice.pending_review?
+
         proof&.update!(
           status: "rejected",
           reviewed_at: Time.current,

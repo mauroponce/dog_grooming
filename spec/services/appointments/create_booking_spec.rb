@@ -1,6 +1,8 @@
 require "rails_helper"
 
 RSpec.describe Appointments::CreateBooking do
+  include ActiveJob::TestHelper
+
   around do |example|
     previous_adapter = ActiveJob::Base.queue_adapter
     ActiveJob::Base.queue_adapter = :test
@@ -52,6 +54,8 @@ RSpec.describe Appointments::CreateBooking do
     expect(appointment).to be_mercado_pago_payment_pending
     expect(appointment.deposit_amount_cents).to eq(5_000_00)
     expect(appointment.payment_charge_mode).to eq("deposit")
+    expiration_job = enqueued_jobs.find { |job| job.fetch(:job) == ExpirePendingDepositBookingsJob }
+    expect(expiration_job.fetch(:args)).to eq([ appointment.id ])
   end
 
   it "rejects manual transfer even when collection details are present" do

@@ -29,6 +29,7 @@ Las rutas administrativas y estáticas deben permanecer antes de los comodines p
 - Los registros hijos se buscan desde la asociación del negocio actual. No se busca globalmente para filtrar después.
 - `/super_admin` usa su propia frontera y permisos; no comparte acciones administrativas de un tenant.
 - El registro de propietarios usa una identidad Google temporal en sesión y persiste el usuario sólo dentro de la transacción de alta.
+- Las sesiones persistidas tienen una vigencia máxima de 30 días; al reanudarlas se elimina cualquier sesión vencida o perteneciente a un usuario deshabilitado.
 
 ## Servicios y reservas
 
@@ -66,6 +67,8 @@ No reutilizar cuentas, conexiones OAuth, webhooks, estados ni referencias extern
 - Altas que crean usuario, negocio, suscripción, catálogo y membresía se ejecutan en una transacción.
 - Reservas y aprobación de pagos bloquean o transaccionan el agregado cuando un doble envío podría duplicar cupo, acreditación o estados.
 - Webhooks y aprobaciones deben identificar de forma única el pago externo/interno y tolerar reintentos.
+- Las llamadas HTTP a Mercado Pago tienen límites explícitos de conexión y lectura; los fallos del procesamiento asíncrono del webhook se reintentan de forma acotada.
+- La creación de una factura de suscripción se serializa por negocio y sus transiciones de comprobante se vuelven a validar bajo bloqueo de la factura.
 - Importes, períodos y atributos del servicio que explican una operación histórica se guardan en factura/turno; no se reconstruyen desde configuración mutable.
 - Los archivos de comprobantes usan Active Storage y validaciones de tipo/tamaño; no se exponen por claves o URLs sin la autorización correspondiente.
 
@@ -84,6 +87,7 @@ No reutilizar cuentas, conexiones OAuth, webhooks, estados ni referencias extern
 - Los avisos automáticos de facturación se persisten como `BillingReminder` antes de encolarse. Su identidad incluye factura, tipo, canal, destinatario y fecha del evento; sólo pasan a `sent` después de que el job procesa el correo, `pending` y `failed` permiten reintentos sin revertir una suspensión, y `skipped` conserva un aviso invalidado por cambios posteriores. Cada intento conserva el `active_job_id`: al vencer el lease, el procesador consulta Solid Queue y sólo reclama el recordatorio bajo bloqueo si no existe un job activo. El correo externo no comparte transacción con la marca `sent`, por lo que una caída posterior a la entrega todavía puede producir un duplicado al recuperar; la garantía es al menos una vez, no exactamente una vez.
 - Los jobs recurrentes se declaran en `config/recurring.yml`. `Billing::DailyJob` procesa vencimientos, suspensiones y recuperación de avisos cada quince minutos; `Billing::DailyNotificationsJob` crea los avisos ordinarios y envía el resumen a las 08:30 de Argentina. Un cambio de frecuencia o responsabilidad operativa también actualiza `docs/production_operations.md`.
 - `SendDueAppointmentRemindersJob` busca cada minuto turnos confirmados dentro de las próximas 24 horas; la confirmación de último momento también encola. `SendAppointmentReminderJob` vuelve a validar estado y fecha bajo bloqueo del turno, envía y registra `reminder_sent_at` y `NotificationDelivery`. Reprogramar reinicia la marca. El correo externo no participa de la transacción: un corte después de entregar y antes de persistir puede duplicarlo al reintentar.
+- Cada reserva con seña encola el vencimiento de su propio turno. La ejecución recurrente por minuto se conserva como red de seguridad para pendientes atrasados y evita depender de un único job diferido.
 
 ## Dónde extender
 

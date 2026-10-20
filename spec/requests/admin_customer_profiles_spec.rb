@@ -612,7 +612,7 @@ RSpec.describe "Admin customer profiles", type: :request do
       }, headers: browser_headers
     }.not_to change(CustomerProfile, :count)
 
-    expect(response).to have_http_status(:unprocessable_entity)
+    expect(response).to have_http_status(:unprocessable_content)
     expect(response.body).to include("Añadir cliente")
   end
 

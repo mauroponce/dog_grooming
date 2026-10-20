@@ -6,6 +6,8 @@ require "erb"
 module MercadoPago
   class Client
     BASE_URL = "https://api.mercadopago.com"
+    OPEN_TIMEOUT = 5
+    READ_TIMEOUT = 10
 
     class Error < StandardError; end
     class MissingAccessToken < Error; end
@@ -51,11 +53,19 @@ module MercadoPago
 
       def request(http_request)
         http_request["Authorization"] = "Bearer #{token}"
-        response = Net::HTTP.start(http_request.uri.hostname, http_request.uri.port, use_ssl: true) { |http| http.request(http_request) }
+        response = Net::HTTP.start(
+          http_request.uri.hostname,
+          http_request.uri.port,
+          use_ssl: true,
+          open_timeout: OPEN_TIMEOUT,
+          read_timeout: READ_TIMEOUT
+        ) { |http| http.request(http_request) }
         payload = parse_json(response.body)
         return payload if response.is_a?(Net::HTTPSuccess)
 
         raise Error, payload["message"].presence || payload.dig("error", "message").presence || payload["error"].presence || "Mercado Pago respondió #{response.code}."
+      rescue Net::OpenTimeout, Net::ReadTimeout, SocketError, EOFError, Errno::ECONNRESET, Errno::ECONNREFUSED => error
+        raise Error, "No pudimos comunicarnos con Mercado Pago (#{error.class.name.demodulize})."
       end
 
       def token

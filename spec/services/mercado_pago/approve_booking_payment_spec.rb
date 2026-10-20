@@ -42,8 +42,23 @@ RSpec.describe MercadoPago::ApproveBookingPayment do
 
   it "expires pending Mercado Pago bookings and frees capacity" do
     appointment.update!(payment_expires_at: 1.second.ago)
-    ExpirePendingDepositBookingsJob.perform_now
+    another_appointment = business.appointments.create!(
+      service: service,
+      customer_name: "Otra clienta",
+      customer_phone: "5491133333333",
+      source: :public_booking,
+      status: :pending_payment,
+      starts_at: 4.days.from_now,
+      payment_expires_at: 1.second.ago,
+      deposit_status: "pending",
+      payment_collection_method: "mercado_pago",
+      deposit_amount_cents: 750_000
+    )
+
+    ExpirePendingDepositBookingsJob.perform_now(appointment.id)
+
     expect(appointment.reload).to be_expired
+    expect(another_appointment.reload).to be_pending_payment
     expect(Availability::SalonCapacity.available?(business: business, starts_at: appointment.starts_at, ends_at: appointment.ends_at)).to eq(true)
   end
 end

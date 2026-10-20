@@ -12,10 +12,12 @@ module Billing
 
     def call
       validate_file!
-      replacing = invoice.current_proof&.pending_review? || invoice.current_proof&.rejected?
 
       proof = nil
-      invoice.transaction do
+      invoice.with_lock do
+        raise ArgumentError, "La factura ya no admite comprobantes." unless invoice.status.in?(%w[open pending_review rejected overdue])
+
+        replacing = invoice.current_proof&.pending_review? || invoice.current_proof&.rejected?
         replace_current_proof! if replacing
         proof = invoice.subscription_payment_proofs.create!(
           business: invoice.business,

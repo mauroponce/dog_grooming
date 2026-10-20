@@ -123,7 +123,9 @@ module Appointments
       end
 
       def schedule_pending_deposit_expiration!(appointment)
-        ExpirePendingDepositBookingsJob.set(wait: appointment.service.deposit_payment_deadline_minutes.minutes).perform_later
+        ExpirePendingDepositBookingsJob
+          .set(wait: appointment.service.deposit_payment_deadline_minutes.minutes)
+          .perform_later(appointment.id)
       end
 
       def selected_payment_method

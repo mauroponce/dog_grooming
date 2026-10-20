@@ -6,6 +6,8 @@ module MercadoPago
   class OAuthClient
     BASE_URL = "https://api.mercadopago.com"
     AUTHORIZATION_URL = "https://auth.mercadopago.com/authorization"
+    OPEN_TIMEOUT = 5
+    READ_TIMEOUT = 10
 
     class Error < StandardError; end
 
@@ -73,11 +75,19 @@ module MercadoPago
         request["Content-Type"] = "application/json"
         request.body = JSON.generate(body)
 
-        response = Net::HTTP.start(request.uri.hostname, request.uri.port, use_ssl: true) { |http| http.request(request) }
+        response = Net::HTTP.start(
+          request.uri.hostname,
+          request.uri.port,
+          use_ssl: true,
+          open_timeout: OPEN_TIMEOUT,
+          read_timeout: READ_TIMEOUT
+        ) { |http| http.request(request) }
         payload = parse_json(response.body)
         return payload if response.is_a?(Net::HTTPSuccess)
 
         raise Error, payload["message"].presence || payload["error"].presence || "Mercado Pago respondió #{response.code}."
+      rescue Net::OpenTimeout, Net::ReadTimeout, SocketError, EOFError, Errno::ECONNRESET, Errno::ECONNREFUSED => error
+        raise Error, "No pudimos comunicarnos con Mercado Pago (#{error.class.name.demodulize})."
       end
 
       def uri_for(path)

@@ -1,6 +1,8 @@
 module Authentication
   extend ActiveSupport::Concern
 
+  SESSION_MAX_AGE = 30.days
+
   included do
     before_action :require_authentication
     helper_method :authenticated?
@@ -26,7 +28,16 @@ module Authentication
     end
 
     def find_session_by_cookie
-      Session.find_by(id: cookies.signed[:session_id]) if cookies.signed[:session_id]
+      session_id = cookies.signed[:session_id]
+      return if session_id.blank?
+
+      session_record = Session.includes(:user).find_by(id: session_id)
+      return if session_record.blank?
+      return session_record unless session_record.user.disabled? || session_record.created_at <= SESSION_MAX_AGE.ago
+
+      session_record.destroy!
+      cookies.delete(:session_id)
+      nil
     end
 
     def request_authentication

@@ -146,7 +146,7 @@ RSpec.describe "Admin shell", type: :request do
 
     patch cancel_admin_appointment_path(appointment, format: :json), params: { reason: " " }, headers: browser_headers.merge("Accept" => "application/json")
 
-    expect(response).to have_http_status(:unprocessable_entity)
+    expect(response).to have_http_status(:unprocessable_content)
     expect(response.parsed_body.fetch("errors")).to include("Indicá el motivo de la cancelación.")
     expect(appointment.reload).to be_confirmed
   end

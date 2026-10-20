@@ -41,7 +41,7 @@ RSpec.describe "Super admin tutorials", type: :request do
       params: { tutorial: { title: "Video inválido", video_url: "javascript:alert(1)" } },
       headers: browser_headers
 
-    expect(response).to have_http_status(:unprocessable_entity)
+    expect(response).to have_http_status(:unprocessable_content)
     expect(response.body).to include("debe ser un enlace http:// o https:// válido")
   end
 

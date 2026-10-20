@@ -513,8 +513,8 @@ module Admin
           body: "Podés aprovechar para revisar servicios, clientes o disponibilidad.",
           tone: "emerald",
           icon: "check",
-          path: Rails.application.routes.url_helpers.admin_dashboard_path,
-          action_label: "Preguntar a la IA"
+          path: Rails.application.routes.url_helpers.admin_calendar_path,
+          action_label: "Ver calendario"
         )
       end
 

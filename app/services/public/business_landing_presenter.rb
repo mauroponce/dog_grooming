@@ -223,10 +223,10 @@ module Public
 
       def deposit_faq_answer(for_service)
         return "Este negocio no requiere seña para reservar." unless business.deposits_enabled?
-        return "#{for_service.deposit_summary}. Vas a poder subir el comprobante durante la reserva." if for_service&.deposit_required?
+        return "#{for_service.deposit_summary}. Vas a poder pagarla de forma segura con Mercado Pago durante la reserva." if for_service&.deposit_required?
         return "Este servicio no requiere seña para reservar." if for_service.present?
 
-        "Algunos servicios pueden requerir seña. Si corresponde, vas a poder subir el comprobante durante la reserva."
+        "Algunos servicios pueden requerir seña. Si corresponde, vas a poder pagarla con Mercado Pago durante la reserva."
       end
   end
 end

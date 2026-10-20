@@ -1,6 +1,8 @@
 require "rails_helper"
 
 RSpec.describe "Sessions", type: :request do
+  include ActiveSupport::Testing::TimeHelpers
+
   before do
     host! "localhost"
     OmniAuth.config.test_mode = true
@@ -69,6 +71,33 @@ RSpec.describe "Sessions", type: :request do
 
     expect(response).to redirect_to(new_session_url)
     expect(flash[:alert]).to include("deshabilitado")
+  end
+
+  it "revokes an existing session as soon as its user is disabled" do
+    user = create_user(role: :admin, email_prefix: "disabled-session", google_uid: "google-disabled-session")
+    Business.create!(owner: user, name: "Disabled Session", slug: "disabled-session-#{SecureRandom.hex(4)}", contact_phone: "+54 9 11 5555-5555", onboarding_completed_at: Time.current)
+    authenticate_with_google(uid: "google-disabled-session", email: user.email_address)
+    expect(user.sessions.count).to eq(1)
+
+    user.update!(disabled_at: Time.current)
+    get admin_root_path, headers: browser_headers
+
+    expect(response).to redirect_to(new_session_path)
+    expect(user.sessions.reload).to be_empty
+  end
+
+  it "expires administrative sessions after thirty days" do
+    user = create_user(role: :admin, email_prefix: "expired-session", google_uid: "google-expired-session")
+    Business.create!(owner: user, name: "Expired Session", slug: "expired-session-#{SecureRandom.hex(4)}", contact_phone: "+54 9 11 5555-5555", onboarding_completed_at: Time.current)
+    authenticate_with_google(uid: "google-expired-session", email: user.email_address)
+    expect(user.sessions.count).to eq(1)
+
+    travel 31.days do
+      get admin_root_path, headers: browser_headers
+
+      expect(response).to redirect_to(new_session_path)
+      expect(user.sessions.reload).to be_empty
+    end
   end
 
   def omniauth_env(uid:, email:, email_verified: true)

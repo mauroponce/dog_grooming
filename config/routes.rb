@@ -163,10 +163,6 @@ Rails.application.routes.draw do
       patch :approve_invoice, path: "aprobar-factura"
       patch :reject_invoice, path: "rechazar-factura"
     end
-    resource :mercado_pago_connection, only: :destroy, path: "cobros/mercado-pago", controller: "mercado_pago_connections" do
-      get :connect, path: "conectar"
-      get :callback
-    end
     resource :usage, only: :show, path: "uso", controller: "usage"
     resources :tutorials, path: "tutoriales" do
       collection do

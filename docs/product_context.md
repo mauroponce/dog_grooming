@@ -27,6 +27,7 @@ Decisión detallada: [`0001-registration-google-and-public-slug.md`](decisions/0
 
 - Los botones **Ingresar** de la landing inician directamente la autenticación con Google, sin mostrar antes la pantalla `/acceder`.
 - `/acceder` se conserva como pantalla de acceso y destino de recuperación cuando Google no puede verificar la identidad o la cuenta no está habilitada.
+- Una sesión administrativa dura como máximo 30 días y se invalida inmediatamente si el usuario queda deshabilitado.
 
 ## Servicios y tamaño de mascota
 

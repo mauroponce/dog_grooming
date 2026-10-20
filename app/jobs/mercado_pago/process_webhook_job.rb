@@ -1,6 +1,7 @@
 module MercadoPago
   class ProcessWebhookJob < ApplicationJob
     queue_as :default
+    retry_on MercadoPago::Client::Error, wait: :polynomially_longer, attempts: 8
 
     def perform(payload:, headers: {}, params: {})
       data = payload.to_h

@@ -120,7 +120,7 @@ Verificar manualmente:
 - acceso Google del superadmin y de un negocio;
 - alta/onboarding de un negocio de prueba controlado;
 - página pública `https://cita.pet/:slug` y reserva sin profesional;
-- seña manual, carga de comprobante, aprobación y email;
+- cobro de una seña de prueba mediante Mercado Pago, confirmación por webhook y email;
 - vinculación de una cuenta de Mercado Pago y cobro de una seña de prueba controlada;
 - agenda, cliente, mascota, reprogramación e invitación al equipo;
 - objeto privado visible por Active Storage y entrega de Resend;

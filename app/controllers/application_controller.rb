@@ -22,7 +22,6 @@ class ApplicationController < ActionController::Base
 
   private
     CUSTOM_DOMAIN_PUBLIC_CONTROLLERS = %w[
-      deposit_receipts
       public_booking
       public_service_pages
     ].freeze

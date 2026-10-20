@@ -14,6 +14,7 @@ RSpec.describe "Admin billing", type: :request do
     expect(response.body).to include("Transferencia bancaria")
     expect(response.body).to include("cita.pet")
     expect(response.body).not_to include("Pagar con Mercado Pago")
+    expect(response.body).not_to include("asistente con IA")
   end
 
   it "muestra el estado, los días restantes y el vencimiento durante el trial" do

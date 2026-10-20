@@ -1511,7 +1511,7 @@
     <div class="admin-home-summary-grid">
       <div>
         <div class="flex flex-wrap items-center gap-3">
-          <span class="admin-home-pill"><%= icons.fetch(:sparkles).html_safe %> Resumen de Cita.pet IA</span>
+          <span class="admin-home-pill"><%= icons.fetch(:sparkles).html_safe %> Resumen de Cita.pet</span>
           <span class="admin-home-updated">Actualizado ahora</span>
         </div>
 
@@ -1586,12 +1586,12 @@
   <section class="admin-home-assistant-strip">
     <span class="admin-home-assistant-icon"><%= icons.fetch(:sparkles).html_safe %></span>
     <div>
-      <p class="text-xs font-bold uppercase tracking-[.14em] text-brand-700">Asistente diario</p>
-      <h2 class="mt-1 text-xl font-bold tracking-tight text-slate-950">Preguntá qué debería hacer primero.</h2>
-      <p class="mt-1 text-sm font-bold leading-6 text-slate-500">El asistente consulta turnos, comprobantes, clientes y facturación de <%= @business.name %>.</p>
+      <p class="text-xs font-bold uppercase tracking-[.14em] text-brand-700">Resumen diario</p>
+      <h2 class="mt-1 text-xl font-bold tracking-tight text-slate-950">Revisá las prioridades de hoy.</h2>
+      <p class="mt-1 text-sm font-bold leading-6 text-slate-500">Consultá turnos, clientes y pendientes operativos de <%= @business.name %>.</p>
     </div>
-    <%= link_to admin_dashboard_path, class: "admin-home-dark-button" do %>
-      Abrir asistente
+    <%= link_to admin_calendar_path, class: "admin-home-dark-button" do %>
+      Ver calendario
       <%= icons.fetch(:arrow).html_safe %>
     <% end %>
   </section>

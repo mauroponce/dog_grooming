@@ -181,7 +181,7 @@ RSpec.describe "Super admin businesses", type: :request do
         headers: browser_headers
     }.not_to change(Business, :count)
 
-    expect(response).to have_http_status(:unprocessable_entity)
+    expect(response).to have_http_status(:unprocessable_content)
     expect(response.body).to include("Completá el email de acceso del dueño.")
 
     expect {
@@ -197,7 +197,7 @@ RSpec.describe "Super admin businesses", type: :request do
         headers: browser_headers
     }.not_to change(Business, :count)
 
-    expect(response).to have_http_status(:unprocessable_entity)
+    expect(response).to have_http_status(:unprocessable_content)
     expect(response.body).to include("Completá el teléfono del negocio.")
   end
 
