@@ -143,14 +143,18 @@ docker compose -f compose.production.yml --env-file .env.production exec -T web 
 
 La tarea no imprime contactos y omite números incompletos o colisiones.
 
-## 8. Auditoría de gracias de facturación
+## 8. Recuperación de recordatorios de facturación
 
-Antes del primer deploy que incluya `20261019130000_normalize_subscription_grace_period`, revisar los registros cuyo valor coincide exactamente con el valor legado automático de quince días:
+`Billing::DailyJob` corre cada quince minutos. Además de aplicar el ciclo de facturación, recupera recordatorios `pending` o `failed` cuyo lease de una hora venció. Antes de reencolar consulta el `active_job_id` en Solid Queue; si la cola no está disponible, conserva el recordatorio sin duplicarlo y registra el error para reintentar en la próxima ejecución.
+
+Los correos tienen semántica de entrega al menos una vez. Si el proveedor acepta un mensaje y el worker cae antes de persistir `sent`, una recuperación posterior puede repetirlo. Ante duplicados, revisar juntos el recordatorio, los jobs con ese `active_job_id` y los logs del proveedor; no cambiar manualmente una suscripción ni su suspensión para corregir el aviso.
+
+Antes del primer deploy desde una revisión anterior a `20261019140000_make_billing_reminders_retryable`, comprobar el estado de las migraciones y que no existan recordatorios históricos. La migración simplificada presupone la base vacía declarada para el lanzamiento:
 
 ```sh
+docker compose -f compose.production.yml --env-file .env.production exec -T web bash -lc 'bin/rails db:migrate:status'
 docker compose -f compose.production.yml --env-file .env.production exec -T db \
-  psql -U dog_grooming -d dog_grooming_production -c \
-  "SELECT id, business_id, next_due_on, grace_ends_on, updated_at FROM subscriptions WHERE next_due_on IS NOT NULL AND grace_ends_on = next_due_on + 15 ORDER BY business_id;"
+  psql -U dog_grooming -d dog_grooming_production -c 'SELECT COUNT(*) AS billing_reminders_count FROM billing_reminders;'
 ```
 
-La interfaz histórica extendía la gracia en bloques de siete días, por lo que esas extensiones quedan en `+22`, `+29` o valores posteriores y la migración no las reduce. Un valor `+15` cargado directamente en base es indistinguible del default legado: contrastarlo con el historial operativo y el backup predeploy antes de migrar. Si la migración ya fue aplicada, usar el backup y los registros operativos para auditar cualquier excepción; no ampliar masivamente fechas `+3`, porque también representan la regla válida actual.
+Si `20261019140000` todavía figura pendiente y el conteo no es cero, detener el despliegue. Eliminar esos datos o reiniciar una base requiere backup y autorización operativa explícita.

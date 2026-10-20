@@ -124,7 +124,7 @@ RSpec.describe Billing::DailyProcessor do
     due_on = 4.days.ago.to_date
     invoice = create_invoice(business, due_on: due_on)
     business.subscription.update!(status: "overdue", next_due_on: due_on, grace_ends_on: due_on + 3.days)
-    allow(Billing::SendReminderJob).to receive(:perform_later).and_raise(ActiveJob::EnqueueError, "queue unavailable")
+    allow(Billing::SendReminderJob).to receive(:new).and_raise(ActiveJob::EnqueueError, "queue unavailable")
 
     described_class.new(today: Time.zone.today).call
 
@@ -139,16 +139,100 @@ RSpec.describe Billing::DailyProcessor do
     due_on = 4.days.ago.to_date
     invoice = create_invoice(business, due_on: due_on)
     business.subscription.update!(status: "overdue", next_due_on: due_on, grace_ends_on: due_on + 3.days)
-    allow(Billing::SendReminderJob).to receive(:perform_later).and_raise(ActiveJob::EnqueueError, "queue unavailable")
+    allow(Billing::SendReminderJob).to receive(:new).and_raise(ActiveJob::EnqueueError, "queue unavailable")
     described_class.new(today: Time.zone.today).call
     reminder = invoice.billing_reminders.find_by!(reminder_type: "suspended_notice")
 
-    job = instance_double(Billing::SendReminderJob, successfully_enqueued?: true)
-    allow(Billing::SendReminderJob).to receive(:perform_later).with(reminder.id).and_return(job)
+    allow(Billing::SendReminderJob).to receive(:new).and_call_original
     described_class.new(today: Time.zone.today).call
 
     expect(reminder.reload).to have_attributes(status: "pending", sent_at: nil)
     expect(reminder.enqueued_at).to be_present
+  end
+
+  it "does not duplicate a recently enqueued job that has not run yet" do
+    business = create_business
+    invoice = create_invoice(business, due_on: Time.zone.today)
+    active_job_id = SecureRandom.uuid
+    reminder = create_reminder(invoice, enqueued_at: 5.minutes.ago, active_job_id: active_job_id)
+
+    described_class.new(today: Time.zone.today).call
+
+    expect(reminder.reload).to have_attributes(status: "pending", active_job_id: active_job_id)
+    expect(enqueued_reminder_jobs_for(reminder)).to be_empty
+  end
+
+  it "leaves a stale reminder alone while its Solid Queue job is still active" do
+    business = create_business
+    invoice = create_invoice(business, due_on: Time.zone.today)
+    active_job_id = SecureRandom.uuid
+    reminder = create_reminder(invoice, enqueued_at: 2.hours.ago, active_job_id: active_job_id)
+    processor = described_class.new(today: Time.zone.today)
+    allow(processor).to receive(:active_job_present?).with(reminder.active_job_id).and_return(true)
+
+    processor.call
+
+    expect(reminder.reload.active_job_id).to eq(active_job_id)
+    expect(enqueued_reminder_jobs_for(reminder)).to be_empty
+  end
+
+  it "recovers a stale pending reminder after its Solid Queue job disappears" do
+    business = create_business
+    invoice = create_invoice(business, due_on: Time.zone.today)
+    missing_job_id = SecureRandom.uuid
+    reminder = create_reminder(invoice, enqueued_at: 2.hours.ago, active_job_id: missing_job_id)
+    processor = described_class.new(today: Time.zone.today)
+    allow(processor).to receive(:active_job_present?).with(missing_job_id).and_return(false)
+
+    processor.call
+
+    expect(reminder.reload).to have_attributes(status: "pending")
+    expect(reminder.active_job_id).to be_present
+    expect(reminder.active_job_id).not_to eq(missing_job_id)
+    expect(enqueued_reminder_jobs_for(reminder).size).to eq(1)
+  end
+
+  it "recovers a failed delivery after Active Job has no active retry" do
+    business = create_business
+    invoice = create_invoice(business, due_on: Time.zone.today)
+    failed_job_id = SecureRandom.uuid
+    reminder = create_reminder(
+      invoice,
+      status: "failed",
+      enqueued_at: 2.hours.ago,
+      active_job_id: failed_job_id,
+      updated_at: 2.hours.ago
+    )
+    processor = described_class.new(today: Time.zone.today)
+    allow(processor).to receive(:active_job_present?).with(failed_job_id).and_return(false)
+
+    processor.call
+
+    expect(reminder.reload).to have_attributes(status: "pending")
+    expect(reminder.active_job_id).not_to eq(failed_job_id)
+    expect(enqueued_reminder_jobs_for(reminder).size).to eq(1)
+  end
+
+  it "recovers a stale suspension notice without changing the suspension" do
+    business = create_business
+    due_on = 4.days.ago.to_date
+    invoice = create_invoice(business, due_on: due_on, status: "overdue")
+    business.subscription.update!(status: "suspended", grace_ends_on: due_on + 3.days, suspended_at: 2.hours.ago)
+    invoice.update!(suspended_at: 2.hours.ago)
+    reminder = create_reminder(
+      invoice,
+      reminder_type: "suspended_notice",
+      event_on: due_on + 4.days,
+      enqueued_at: 2.hours.ago,
+      active_job_id: SecureRandom.uuid
+    )
+    processor = described_class.new(today: Time.zone.today)
+    allow(processor).to receive(:active_job_present?).with(reminder.active_job_id).and_return(false)
+
+    expect { processor.call }.not_to change { business.subscription.reload.suspended_at }
+
+    expect(reminder.reload.status).to eq("pending")
+    expect(enqueued_reminder_jobs_for(reminder).size).to eq(1)
   end
 
   it "sends the internal daily summary only once per recipient and date" do
@@ -196,6 +280,17 @@ RSpec.describe Billing::DailyProcessor do
         reference_code: "HT-DAILY-#{SecureRandom.hex(4).upcase}",
         status: status
       )
+    end
+
+    def create_reminder(invoice, reminder_type: "due_today", event_on: invoice.due_on, **attributes)
+      invoice.billing_reminders.create!({
+        business: invoice.business,
+        reminder_type: reminder_type,
+        channel: "email",
+        recipient: invoice.business.owner.email_address,
+        event_on: event_on,
+        status: "pending"
+      }.merge(attributes))
     end
 
     def enqueued_reminder_jobs_for(reminder)

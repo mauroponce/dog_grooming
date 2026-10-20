@@ -24,7 +24,7 @@ production:
     schedule: every day at 8am
   billing_daily_processor:
     class: Billing::DailyJob
-    schedule: every day at 8:30am
+    schedule: every 15 minutes
   send_business_weekly_digest:
     class: SendBusinessWeeklyDigestJob
     schedule: every monday at 8:30am

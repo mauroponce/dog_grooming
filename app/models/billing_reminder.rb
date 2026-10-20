@@ -1,4 +1,6 @@
 class BillingReminder < ApplicationRecord
+  ENQUEUE_LEASE = 1.hour
+
   TYPES = %w[
     due_7_days due_4_days due_3_days due_2_days due_1_day due_today
     overdue_2_days overdue_3_days overdue_5_days overdue_10_days
@@ -9,6 +11,7 @@ class BillingReminder < ApplicationRecord
   belongs_to :subscription_invoice
 
   STATUSES = %w[pending failed skipped sent].freeze
+  RECOVERABLE_STATUSES = %w[pending failed].freeze
 
   validates :reminder_type, :channel, :recipient, :status, :event_on, presence: true
   validates :reminder_type, inclusion: { in: TYPES }
@@ -22,5 +25,9 @@ class BillingReminder < ApplicationRecord
 
   def failed?
     status == "failed"
+  end
+
+  def recoverable?
+    status.in?(RECOVERABLE_STATUSES)
   end
 end

@@ -14,6 +14,15 @@ RSpec.describe BillingReminder, type: :model do
       reference_code: "HT-CONCURRENT-#{SecureRandom.hex(4).upcase}",
       status: "open"
     )
+    @recovery_reminder = @invoice.billing_reminders.create!(
+      business: @business,
+      reminder_type: "manual_contact_task",
+      channel: "email",
+      recipient: @business.owner.email_address,
+      event_on: Time.zone.today,
+      status: "pending",
+      enqueued_at: 2.hours.ago
+    )
   end
 
   after(:context) do
@@ -80,5 +89,36 @@ RSpec.describe BillingReminder, type: :model do
     expect(second.event_on).to eq(new_due_on)
     expect(second.id).not_to eq(first.id)
     expect(@invoice.billing_reminders.where(reminder_type: "due_today").count).to eq(2)
+  end
+
+  it "allows only one process to reclaim a stale reminder" do
+    adapter = ActiveJob::Base.queue_adapter
+    adapter.enqueued_jobs.clear
+    ready = Queue.new
+    start = Queue.new
+    results = Queue.new
+
+    threads = 2.times.map do
+      Thread.new do
+        ActiveRecord::Base.connection_pool.with_connection do
+          ready << true
+          start.pop
+          reminder = described_class.find(@recovery_reminder.id)
+          Billing::DailyProcessor.new.send(:enqueue_reminder!, reminder)
+          results << :ok
+        rescue StandardError => error
+          results << error
+        end
+      end
+    end
+    2.times { ready.pop }
+    2.times { start << true }
+    threads.each(&:join)
+
+    expect(2.times.map { results.pop }).to all(eq(:ok))
+    expect(@recovery_reminder.reload.active_job_id).to be_present
+    expect(adapter.enqueued_jobs.count { |job| job.fetch(:job) == Billing::SendReminderJob }).to eq(1)
+  ensure
+    adapter&.enqueued_jobs&.clear
   end
 end

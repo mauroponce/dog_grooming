@@ -19,6 +19,8 @@ module Billing
     end
 
     def call
+      recover_stale_reminders!
+
       Business.where(billing_enabled: true).includes(:owner, :subscription).find_each do |business|
         process_business(business)
       end
@@ -28,6 +30,17 @@ module Billing
 
     private
       attr_reader :today
+
+      def recover_stale_reminders!
+        stale_before = BillingReminder::ENQUEUE_LEASE.ago
+        pending = BillingReminder.where(status: "pending").where(
+          "(enqueued_at IS NULL AND created_at <= :stale_before) OR enqueued_at <= :stale_before",
+          stale_before: stale_before
+        )
+        failed = BillingReminder.where(status: "failed", updated_at: ..stale_before)
+
+        pending.or(failed).find_each { |reminder| enqueue_reminder!(reminder) }
+      end
 
       def process_business(business)
         return unless business.billing_enabled?
@@ -149,21 +162,42 @@ module Billing
       end
 
       def enqueue_reminder!(reminder)
-        return if reminder.sent?
-        return if reminder.status == "pending" && reminder.enqueued_at.present?
+        job = nil
+        reminder.with_lock do
+          return unless reminder.recoverable?
+          return if reminder.enqueued_at.present? && reminder.enqueued_at > BillingReminder::ENQUEUE_LEASE.ago
+          return if active_job_present?(reminder.active_job_id)
 
-        reminder.update!(status: "pending", enqueued_at: nil)
-        job = Billing::SendReminderJob.perform_later(reminder.id)
-        raise ActiveJob::EnqueueError, "No se pudo encolar el recordatorio de facturación." unless job&.successfully_enqueued?
+          job = Billing::SendReminderJob.new(reminder.id)
+          reminder.update!(status: "pending", enqueued_at: Time.current, active_job_id: job.job_id)
+        end
 
-        reminder.reload
-        reminder.update!(enqueued_at: Time.current) unless reminder.sent?
+        job.enqueue
+        raise ActiveJob::EnqueueError, "No se pudo encolar el recordatorio de facturación." unless job.successfully_enqueued?
+
+        true
       rescue StandardError => error
         reminder&.with_lock do
-          reminder.update!(status: "failed", enqueued_at: nil) unless reminder.sent?
+          if reminder.recoverable? && (job.blank? || reminder.active_job_id == job.job_id)
+            reminder.update!(status: "failed", enqueued_at: nil, active_job_id: nil)
+          end
         end
         Rails.logger.error("Billing reminder enqueue failed reminder_id=#{reminder&.id}: #{error.class}: #{error.message}")
         false
+      end
+
+      def active_job_present?(active_job_id)
+        return false if active_job_id.blank?
+
+        SolidQueue::Job
+          .where(active_job_id: active_job_id, finished_at: nil)
+          .where.missing(:failed_execution)
+          .exists?
+      rescue StandardError => error
+        Rails.logger.warn(
+          "Billing reminder queue lookup failed active_job_id=#{active_job_id}: #{error.class}: #{error.message}"
+        )
+        true
       end
 
       def send_daily_summary!
