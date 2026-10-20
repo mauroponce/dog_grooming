@@ -41,6 +41,32 @@ RSpec.describe "Admin billing", type: :request do
     expect(response.body).to include("Regularizá el pago")
   end
 
+  it "prioriza una suspensión manual aunque el trial siga vigente" do
+    owner = User.create!(email_address: "suspended-trial-#{SecureRandom.hex(4)}@example.com", password: "password123", role: :admin)
+    business = Business.create!(owner: owner, name: "Patitas Pausada", slug: "patitas-pausada-#{SecureRandom.hex(4)}", contact_phone: "+54 9 11 4444 4444", onboarding_completed_at: Time.current)
+    business.subscription.update!(status: "suspended", suspended_at: Time.current)
+    sign_in(owner)
+
+    get admin_billing_path, headers: browser_headers
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Tu cuenta está suspendida")
+    expect(response.body).not_to include("Estás usando tu prueba gratuita")
+  end
+
+  it "prioriza un pago en revisión aunque el trial siga vigente" do
+    owner = User.create!(email_address: "review-trial-#{SecureRandom.hex(4)}@example.com", password: "password123", role: :admin)
+    business = Business.create!(owner: owner, name: "Patitas Review", slug: "patitas-review-#{SecureRandom.hex(4)}", contact_phone: "+54 9 11 4444 4444", onboarding_completed_at: Time.current)
+    business.subscription.update!(status: "pending_review")
+    sign_in(owner)
+
+    get admin_billing_path, headers: browser_headers
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Comprobante en revisión")
+    expect(response.body).not_to include("Estás usando tu prueba gratuita")
+  end
+
   def create_business
     owner = User.create!(email_address: "owner-#{SecureRandom.hex(4)}@example.com", password: "password123", role: :admin)
     Business.create!(owner: owner, name: "Patitas", slug: "patitas-#{SecureRandom.hex(4)}", contact_phone: "+54 9 11 4444 4444", onboarding_completed_at: Time.current, trial_ends_at: 1.day.ago)

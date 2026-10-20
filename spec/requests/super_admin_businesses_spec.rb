@@ -439,6 +439,15 @@ RSpec.describe "Super admin businesses", type: :request do
     business = Business.create!(owner: owner, name: "Trial Center", slug: "trial-center-#{SecureRandom.hex(4)}", contact_phone: "+54 9 11 5555-5555", onboarding_completed_at: Time.current)
     original_due_on = business.subscription.next_due_on
     pending_invoice = Billing::EnsureCurrentInvoice.call(business: business, force: true)
+    original_reminder = pending_invoice.billing_reminders.create!(
+      business: business,
+      reminder_type: "due_today",
+      channel: "email",
+      recipient: owner.email_address,
+      event_on: original_due_on,
+      status: "sent",
+      sent_at: Time.current
+    )
     paid_invoice = business.subscription.subscription_invoices.create!(
       business: business,
       period_start: 2.months.ago.to_date,
@@ -466,6 +475,17 @@ RSpec.describe "Super admin businesses", type: :request do
     )
     expect(pending_invoice.reload).to have_attributes(due_on: new_due_on, period_start: new_due_on, status: "open")
     expect(paid_invoice.reload.attributes.slice(*paid_attributes.keys)).to eq(paid_attributes)
+    expect(original_reminder.reload.event_on).to eq(original_due_on)
+    expect {
+      pending_invoice.billing_reminders.create!(
+        business: business,
+        reminder_type: "due_today",
+        channel: "email",
+        recipient: owner.email_address,
+        event_on: new_due_on,
+        status: "pending"
+      )
+    }.to change(pending_invoice.billing_reminders, :count).by(1)
   end
 
   it "extends grace from the effective date and prevents automatic suspension" do

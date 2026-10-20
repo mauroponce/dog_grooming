@@ -12,6 +12,19 @@ RSpec.describe BillingMailer, type: :mailer do
     expect(mail.text_part.body.encoded).to include("transferencia", "/admin/suscripcion")
   end
 
+  it "uses the effective grace date in the final warning" do
+    business = create_business
+    invoice = create_invoice(business)
+    business.subscription.update!(grace_ends_on: 10.days.from_now.to_date)
+
+    mail = described_class.reminder(invoice, "overdue_3_days")
+
+    expected_date = CustomerDateFormatter.date_label(business.subscription.grace_ends_on)
+    expect(mail.subject).to include("Último día")
+    expect(mail.text_part.body.encoded).to include("período de gracia termina hoy", expected_date)
+    expect(mail.html_part.body.encoded).to include("período de gracia termina hoy", expected_date)
+  end
+
   it "notifies a superadmin when a payment proof needs review" do
     business = create_business
     invoice = create_invoice(business)

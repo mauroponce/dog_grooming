@@ -2,6 +2,10 @@
 <% content_for :email_badge, "Facturación" %>
 <% content_for :email_status, "Pago pendiente" %>
 <h1><%= @business.name %>: pago de Cita.pet</h1>
-<p>Tu suscripción tiene un pago de <strong><%= @invoice.amount_label %></strong> con vencimiento el <strong><%= CustomerDateFormatter.date_label(@invoice.due_on) %></strong>.</p>
+<% if @reminder_type == "overdue_3_days" %>
+  <p>Tu período de gracia termina hoy, <strong><%= CustomerDateFormatter.date_label(@subscription.effective_grace_ends_on) %></strong>. El pago pendiente es de <strong><%= @invoice.amount_label %></strong>.</p>
+<% else %>
+  <p>Tu suscripción tiene un pago de <strong><%= @invoice.amount_label %></strong> con vencimiento el <strong><%= CustomerDateFormatter.date_label(@invoice.due_on) %></strong>.</p>
+<% end %>
 <p>Ingresá al panel para ver los datos de transferencia y subir el comprobante de pago.</p>
 <p><%= link_to "Ver cómo pagar", @billing_url, class: "email-button button" %></p>

@@ -6,9 +6,9 @@ module Billing
       -2 => "due_2_days",
       -1 => "due_1_day",
       0 => "due_today",
-      2 => "overdue_2_days",
-      3 => "overdue_3_days"
+      2 => "overdue_2_days"
     }.freeze
+    FINAL_GRACE_REMINDER_TYPE = "overdue_3_days"
 
     def self.call(...)
       new(...).call
@@ -37,13 +37,20 @@ module Billing
         invoice ||= subscription.current_invoice
         sync_without_invoice!(business, subscription) and return if invoice.blank?
         return if subscription.cancelled?
-        return if subscription.suspended? && invoice.suspended_at.present?
+        if subscription.suspended? && invoice.suspended_at.present?
+          schedule_suspension_notice!(invoice) if subscription.grace_period_expired?(today: today)
+          return
+        end
 
         sync_invoice_status!(invoice)
-        return if invoice.pending_review? || subscription.pending_review?
+        return if invoice.paid? || invoice.pending_review? || subscription.pending_review?
 
-        send_due_reminder_if_needed!(invoice)
-        suspend_if_needed!(invoice)
+        if subscription.grace_period_expired?(today: today)
+          suspend_if_needed!(invoice)
+        else
+          send_due_reminder_if_needed!(invoice)
+          send_final_grace_reminder_if_needed!(invoice)
+        end
       end
 
       def sync_without_invoice!(business, subscription)
@@ -81,58 +88,82 @@ module Billing
       end
 
       def send_due_reminder_if_needed!(invoice)
-        offset = invoice.due_on < today ? invoice.days_overdue : (invoice.due_on - today).to_i * -1
+        offset = (today - invoice.due_on).to_i
         reminder_type = REMINDERS_BY_OFFSET[offset]
         return if reminder_type.blank?
 
-        send_reminder!(invoice, reminder_type)
+        schedule_reminder!(invoice, reminder_type, event_on: invoice.due_on)
+      end
+
+      def send_final_grace_reminder_if_needed!(invoice)
+        grace_ends_on = invoice.subscription.effective_grace_ends_on
+        return unless grace_ends_on == today
+
+        schedule_reminder!(invoice, FINAL_GRACE_REMINDER_TYPE, event_on: grace_ends_on)
       end
 
       def suspend_if_needed!(invoice)
         return unless invoice.subscription.grace_period_expired?(today: today)
-        return if invoice.subscription.suspended? && invoice.suspended_at.present?
 
-        invoice.update!(suspended_at: Time.current)
-        invoice.subscription.update!(status: "suspended", suspended_at: Time.current)
-        send_suspension_notice!(invoice)
+        reminder = nil
+        invoice.with_lock do
+          invoice.update!(suspended_at: Time.current) if invoice.suspended_at.blank?
+          if !invoice.subscription.suspended? || invoice.subscription.suspended_at.blank?
+            invoice.subscription.update!(status: "suspended", suspended_at: Time.current)
+          end
+          reminder = find_or_create_reminder!(
+            invoice,
+            "suspended_notice",
+            event_on: invoice.subscription.effective_grace_ends_on + 1.day
+          )
+        end
+        enqueue_reminder!(reminder)
       end
 
-      def send_reminder!(invoice, reminder_type)
-        send_email_reminder!(invoice, reminder_type)
+      def schedule_suspension_notice!(invoice)
+        schedule_reminder!(
+          invoice,
+          "suspended_notice",
+          event_on: invoice.subscription.effective_grace_ends_on + 1.day
+        )
       end
 
-      def send_email_reminder!(invoice, reminder_type)
-        reminder = create_reminder_record!(invoice, reminder_type, "email", invoice.business.owner.email_address)
-        return if reminder.blank?
-
-        BillingMailer.reminder(invoice, reminder_type).deliver_later
-      rescue StandardError
-        reminder&.destroy!
-        raise
+      def schedule_reminder!(invoice, reminder_type, event_on:)
+        reminder = find_or_create_reminder!(invoice, reminder_type, event_on: event_on)
+        enqueue_reminder!(reminder)
       end
 
-      def send_suspension_notice!(invoice)
-        reminder = create_reminder_record!(invoice, "suspended_notice", "email", invoice.business.owner.email_address)
-        return if reminder.blank?
-
-        BillingMailer.account_suspended(invoice).deliver_later
-      rescue StandardError
-        reminder&.destroy!
-        raise
-      end
-
-      def create_reminder_record!(invoice, reminder_type, channel, recipient)
-        BillingReminder.create!(
-          business: invoice.business,
+      def find_or_create_reminder!(invoice, reminder_type, event_on:)
+        attributes = {
           subscription_invoice: invoice,
           reminder_type: reminder_type,
-          sent_at: Time.current,
-          channel: channel,
-          recipient: recipient,
-          status: "sent"
+          channel: "email",
+          recipient: invoice.business.owner.email_address,
+          event_on: event_on
+        }
+        BillingReminder.find_by(attributes) || BillingReminder.create!(
+          attributes.merge(business: invoice.business, status: "pending")
         )
       rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique
-        nil
+        BillingReminder.find_by!(attributes)
+      end
+
+      def enqueue_reminder!(reminder)
+        return if reminder.sent?
+        return if reminder.status == "pending" && reminder.enqueued_at.present?
+
+        reminder.update!(status: "pending", enqueued_at: nil)
+        job = Billing::SendReminderJob.perform_later(reminder.id)
+        raise ActiveJob::EnqueueError, "No se pudo encolar el recordatorio de facturación." unless job&.successfully_enqueued?
+
+        reminder.reload
+        reminder.update!(enqueued_at: Time.current) unless reminder.sent?
+      rescue StandardError => error
+        reminder&.with_lock do
+          reminder.update!(status: "failed", enqueued_at: nil) unless reminder.sent?
+        end
+        Rails.logger.error("Billing reminder enqueue failed reminder_id=#{reminder&.id}: #{error.class}: #{error.message}")
+        false
       end
 
       def send_daily_summary!

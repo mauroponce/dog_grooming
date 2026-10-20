@@ -2,21 +2,30 @@ require "rails_helper"
 
 RSpec.describe Billing::DailyProcessor do
   include ActiveSupport::Testing::TimeHelpers
+  include ActiveJob::TestHelper
+
+  around do |example|
+    previous_adapter = ActiveJob::Base.queue_adapter
+    ActiveJob::Base.queue_adapter = :test
+    clear_enqueued_jobs
+    example.run
+  ensure
+    clear_enqueued_jobs
+    ActiveJob::Base.queue_adapter = previous_adapter
+  end
 
   it "notifies by email when a trial reaches its payment date" do
     business = create_business
     business.update!(trial_ends_at: Time.current)
-    mail_delivery = instance_double(ActionMailer::MessageDelivery, deliver_later: true)
-    allow(BillingMailer).to receive(:reminder).and_return(mail_delivery)
 
     2.times { described_class.new(today: Time.zone.today).call }
 
     invoice = business.subscription.reload.current_invoice
+    reminder = invoice.billing_reminders.find_by!(reminder_type: "due_today", channel: "email")
     expect(invoice).to be_present
     expect(invoice.due_on).to eq(Time.zone.today)
-    expect(BillingMailer).to have_received(:reminder).with(invoice, "due_today").once
-    expect(mail_delivery).to have_received(:deliver_later).once
-    expect(invoice.billing_reminders.find_by!(reminder_type: "due_today", channel: "email")).to be_sent
+    expect(reminder).to have_attributes(status: "pending", event_on: Time.zone.today, sent_at: nil)
+    expect(enqueued_reminder_jobs_for(reminder).size).to eq(1)
   end
 
   it "does not suspend on any grace day and suspends on the following day" do
@@ -65,6 +74,7 @@ RSpec.describe Billing::DailyProcessor do
     expect(invoice.reload).to be_pending_review
     expect(business.subscription.reload).to be_pending_review
     expect(business).to be_access_active
+    expect(invoice.billing_reminders).to be_empty
   end
 
   it "is idempotent when run repeatedly for reminders and suspension" do
@@ -72,14 +82,73 @@ RSpec.describe Billing::DailyProcessor do
     due_on = 4.days.ago.to_date
     invoice = create_invoice(business, due_on: due_on)
     business.subscription.update!(status: "overdue", next_due_on: due_on, grace_ends_on: due_on + 3.days)
-    suspension_delivery = instance_double(ActionMailer::MessageDelivery, deliver_later: true)
-    allow(BillingMailer).to receive(:account_suspended).and_return(suspension_delivery)
-
     2.times { described_class.new(today: Time.zone.today).call }
 
-    expect(BillingMailer).to have_received(:account_suspended).once
-    expect(suspension_delivery).to have_received(:deliver_later).once
+    reminder = invoice.billing_reminders.find_by!(reminder_type: "suspended_notice", channel: "email")
+    expect(reminder).to have_attributes(status: "pending", event_on: due_on + 4.days, sent_at: nil)
     expect(invoice.billing_reminders.where(reminder_type: "suspended_notice", channel: "email").count).to eq(1)
+    expect(enqueued_reminder_jobs_for(reminder).size).to eq(1)
+  end
+
+  it "sends the final warning on the effective last grace day" do
+    business = create_business
+    due_on = 3.days.ago.to_date
+    invoice = create_invoice(business, due_on: due_on)
+    business.subscription.update!(status: "overdue", next_due_on: due_on, grace_ends_on: Time.zone.today)
+
+    described_class.new(today: Time.zone.today).call
+
+    reminder = invoice.billing_reminders.find_by!(reminder_type: "overdue_3_days")
+    expect(reminder.event_on).to eq(Time.zone.today)
+    expect(enqueued_reminder_jobs_for(reminder).size).to eq(1)
+  end
+
+  it "moves the final warning to a manually extended grace date" do
+    business = create_business
+    due_on = 3.days.ago.to_date
+    extended_grace_end = 5.days.from_now.to_date
+    invoice = create_invoice(business, due_on: due_on)
+    business.subscription.update!(status: "overdue", next_due_on: due_on, grace_ends_on: extended_grace_end)
+
+    described_class.new(today: Time.zone.today).call
+    expect(invoice.billing_reminders.where(reminder_type: "overdue_3_days")).to be_empty
+
+    described_class.new(today: extended_grace_end).call
+
+    reminder = invoice.billing_reminders.find_by!(reminder_type: "overdue_3_days")
+    expect(reminder.event_on).to eq(extended_grace_end)
+  end
+
+  it "keeps a failed suspension notice retryable when enqueueing fails" do
+    business = create_business
+    due_on = 4.days.ago.to_date
+    invoice = create_invoice(business, due_on: due_on)
+    business.subscription.update!(status: "overdue", next_due_on: due_on, grace_ends_on: due_on + 3.days)
+    allow(Billing::SendReminderJob).to receive(:perform_later).and_raise(ActiveJob::EnqueueError, "queue unavailable")
+
+    described_class.new(today: Time.zone.today).call
+
+    reminder = invoice.billing_reminders.find_by!(reminder_type: "suspended_notice")
+    expect(business.subscription.reload).to be_suspended
+    expect(invoice.reload.suspended_at).to be_present
+    expect(reminder).to have_attributes(status: "failed", sent_at: nil, enqueued_at: nil)
+  end
+
+  it "retries a suspension notice after a prior enqueue failure" do
+    business = create_business
+    due_on = 4.days.ago.to_date
+    invoice = create_invoice(business, due_on: due_on)
+    business.subscription.update!(status: "overdue", next_due_on: due_on, grace_ends_on: due_on + 3.days)
+    allow(Billing::SendReminderJob).to receive(:perform_later).and_raise(ActiveJob::EnqueueError, "queue unavailable")
+    described_class.new(today: Time.zone.today).call
+    reminder = invoice.billing_reminders.find_by!(reminder_type: "suspended_notice")
+
+    job = instance_double(Billing::SendReminderJob, successfully_enqueued?: true)
+    allow(Billing::SendReminderJob).to receive(:perform_later).with(reminder.id).and_return(job)
+    described_class.new(today: Time.zone.today).call
+
+    expect(reminder.reload).to have_attributes(status: "pending", sent_at: nil)
+    expect(reminder.enqueued_at).to be_present
   end
 
   it "sends the internal daily summary only once per recipient and date" do
@@ -127,5 +196,11 @@ RSpec.describe Billing::DailyProcessor do
         reference_code: "HT-DAILY-#{SecureRandom.hex(4).upcase}",
         status: status
       )
+    end
+
+    def enqueued_reminder_jobs_for(reminder)
+      enqueued_jobs.select do |job|
+        job.fetch(:job) == Billing::SendReminderJob && job.fetch(:args) == [ reminder.id ]
+      end
     end
 end

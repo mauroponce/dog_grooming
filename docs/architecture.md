@@ -81,6 +81,7 @@ No reutilizar cuentas, conexiones OAuth, webhooks, estados ni referencias extern
 
 - Jobs y mailers reciben identificadores persistidos, vuelven a cargar estado y deben tolerar que el registro haya cambiado antes de ejecutarse.
 - Las notificaciones no son la fuente de verdad de un pago. La aprobación o confirmación se persiste primero y luego se comunica.
+- Los avisos automáticos de facturación se persisten como `BillingReminder` antes de encolarse. Su identidad incluye factura, tipo, canal, destinatario y fecha del evento; sólo pasan a `sent` después de que el job procesa el correo, `pending` y `failed` permiten reintentos sin revertir una suspensión, y `skipped` conserva un aviso invalidado por cambios posteriores.
 - Los jobs recurrentes se declaran en `config/recurring.yml`; un cambio de frecuencia o responsabilidad operativa también actualiza `docs/production_operations.md`.
 - `SendDueAppointmentRemindersJob` busca cada minuto turnos confirmados dentro de las próximas 24 horas; la confirmación de último momento también encola. `SendAppointmentReminderJob` vuelve a validar estado y fecha bajo bloqueo del turno, envía y registra `reminder_sent_at` y `NotificationDelivery`. Reprogramar reinicia la marca. El correo externo no participa de la transacción: un corte después de entregar y antes de persistir puede duplicarlo al reintentar.
 

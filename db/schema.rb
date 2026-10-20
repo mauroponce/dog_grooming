@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_19_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_19_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -228,13 +228,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_19_130000) do
     t.datetime "created_at", null: false
     t.string "recipient", null: false
     t.string "reminder_type", null: false
-    t.datetime "sent_at", null: false
-    t.string "status", default: "sent", null: false
+    t.datetime "sent_at"
+    t.string "status", default: "pending", null: false
     t.bigint "subscription_invoice_id", null: false
     t.datetime "updated_at", null: false
+    t.date "event_on", null: false
+    t.datetime "enqueued_at"
     t.index ["business_id", "sent_at"], name: "index_billing_reminders_on_business_id_and_sent_at"
     t.index ["business_id"], name: "index_billing_reminders_on_business_id"
-    t.index ["subscription_invoice_id", "reminder_type", "channel"], name: "idx_billing_reminders_uniqueness", unique: true
+    t.index ["subscription_invoice_id", "reminder_type", "channel", "recipient", "event_on"], name: "idx_billing_reminders_event_uniqueness", unique: true
     t.index ["subscription_invoice_id"], name: "index_billing_reminders_on_subscription_invoice_id"
   end
 

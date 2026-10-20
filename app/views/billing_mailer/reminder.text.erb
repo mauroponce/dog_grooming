@@ -1,6 +1,10 @@
 <%= @business.name %>: pago de Cita.pet
 
+<% if @reminder_type == "overdue_3_days" %>
+Tu período de gracia termina hoy, <%= CustomerDateFormatter.date_label(@subscription.effective_grace_ends_on) %>. El pago pendiente es de <%= @invoice.amount_label %>.
+<% else %>
 Tu suscripción tiene un pago de <%= @invoice.amount_label %> con vencimiento el <%= CustomerDateFormatter.date_label(@invoice.due_on) %>.
+<% end %>
 
 Ingresá al panel para ver los datos de transferencia y subir el comprobante de pago.
 

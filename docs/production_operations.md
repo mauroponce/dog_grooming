@@ -142,3 +142,15 @@ docker compose -f compose.production.yml --env-file .env.production exec -T web 
 ```
 
 La tarea no imprime contactos y omite números incompletos o colisiones.
+
+## 8. Auditoría de gracias de facturación
+
+Antes del primer deploy que incluya `20261019130000_normalize_subscription_grace_period`, revisar los registros cuyo valor coincide exactamente con el valor legado automático de quince días:
+
+```sh
+docker compose -f compose.production.yml --env-file .env.production exec -T db \
+  psql -U dog_grooming -d dog_grooming_production -c \
+  "SELECT id, business_id, next_due_on, grace_ends_on, updated_at FROM subscriptions WHERE next_due_on IS NOT NULL AND grace_ends_on = next_due_on + 15 ORDER BY business_id;"
+```
+
+La interfaz histórica extendía la gracia en bloques de siete días, por lo que esas extensiones quedan en `+22`, `+29` o valores posteriores y la migración no las reduce. Un valor `+15` cargado directamente en base es indistinguible del default legado: contrastarlo con el historial operativo y el backup predeploy antes de migrar. Si la migración ya fue aplicada, usar el backup y los registros operativos para auditar cualquier excepción; no ampliar masivamente fechas `+3`, porque también representan la regla válida actual.

@@ -8,11 +8,19 @@ class BillingReminder < ApplicationRecord
   belongs_to :business
   belongs_to :subscription_invoice
 
-  validates :reminder_type, :sent_at, :channel, :recipient, :status, presence: true
+  STATUSES = %w[pending failed skipped sent].freeze
+
+  validates :reminder_type, :channel, :recipient, :status, :event_on, presence: true
   validates :reminder_type, inclusion: { in: TYPES }
-  validates :reminder_type, uniqueness: { scope: [ :subscription_invoice_id, :channel ] }
+  validates :status, inclusion: { in: STATUSES }
+  validates :reminder_type, uniqueness: { scope: [ :subscription_invoice_id, :channel, :recipient, :event_on ] }
+  validates :sent_at, presence: true, if: :sent?
 
   def sent?
     status == "sent"
+  end
+
+  def failed?
+    status == "failed"
   end
 end
