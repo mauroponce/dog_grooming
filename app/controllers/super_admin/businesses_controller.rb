@@ -84,8 +84,36 @@ module SuperAdmin
 
     def extend_trial
       current_end = [ business.trial_ends_at || Time.current, Time.current ].max
-      business.update!(trial_ends_at: current_end + 7.days)
-      business.subscription&.update!(status: "trialing") unless business.subscription&.active?
+      new_end = current_end + 7.days
+
+      business.transaction do
+        business.update!(trial_ends_at: new_end)
+        subscription = business.subscription
+        if subscription.present? && !subscription.paid?
+          old_due_on = subscription.next_due_on
+          new_due_on = new_end.to_date
+          subscription.update!(
+            trial_ends_on: new_due_on,
+            next_due_on: new_due_on,
+            grace_ends_on: new_due_on + Business::BILLING_GRACE_DAYS.days,
+            status: subscription.pending_review? ? "pending_review" : "trialing",
+            suspended_at: nil,
+            restricted_at: nil
+          )
+          invoice = subscription.current_invoice
+          if invoice.present? && !invoice.paid? && (old_due_on.blank? || invoice.due_on == old_due_on)
+            invoice.update!(
+              due_on: new_due_on,
+              period_start: new_due_on,
+              period_end: new_due_on.advance(months: invoice.billing_period_months),
+              status: invoice.pending_review? ? "pending_review" : "open",
+              overdue_at: nil,
+              suspended_at: nil,
+              restricted_at: nil
+            )
+          end
+        end
+      end
 
       redirect_to super_admin_businesses_path(business_id: business.id),
         notice: "Trial extendido hasta #{helpers.format_ar_date(business.trial_ends_at)}."
@@ -125,7 +153,7 @@ module SuperAdmin
 
     def extend_grace
       invoice = current_invoice!
-      new_grace_end = [ invoice.subscription.grace_ends_on || invoice.due_on, Time.zone.today ].max + 7.days
+      new_grace_end = [ invoice.subscription.effective_grace_ends_on || invoice.due_on, Time.zone.today ].max + 7.days
       invoice.subscription.update!(status: "overdue", grace_ends_on: new_grace_end, suspended_at: nil, restricted_at: nil)
       invoice.business.update!(disabled_at: nil)
       redirect_to super_admin_businesses_path(business_id: business.id), notice: "Gracia extendida hasta #{helpers.format_ar_date(new_grace_end)}."

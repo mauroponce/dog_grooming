@@ -1,6 +1,7 @@
 class BillingReminder < ApplicationRecord
   TYPES = %w[
-    due_7_days due_3_days due_today overdue_2_days overdue_5_days overdue_10_days
+    due_7_days due_4_days due_3_days due_2_days due_1_day due_today
+    overdue_2_days overdue_3_days overdue_5_days overdue_10_days
     manual_contact_task restricted_notice suspended_notice
   ].freeze
 

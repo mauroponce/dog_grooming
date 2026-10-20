@@ -28,7 +28,7 @@ module Billing
         subscription.update!(
           amount_cents: current_amount_cents,
           next_due_on: invoice.due_on,
-          grace_ends_on: invoice.due_on + 15.days
+          grace_ends_on: invoice.due_on + Business::BILLING_GRACE_DAYS.days
         )
       end
     end

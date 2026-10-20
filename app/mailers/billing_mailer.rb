@@ -68,7 +68,7 @@ class BillingMailer < ApplicationMailer
         "due_1_day" => "Tu suscripción Cita.pet vence mañana",
         "due_today" => "Tu suscripción Cita.pet vence hoy",
         "overdue_2_days" => "Tu pago de Cita.pet está pendiente",
-        "overdue_3_days" => "Tu cuenta de Cita.pet fue pausada temporalmente",
+        "overdue_3_days" => "Último día para regularizar tu pago de Cita.pet",
         "suspended_notice" => "Tu cuenta de Cita.pet fue pausada temporalmente"
       }.fetch(type, "Tu pago de Cita.pet está pendiente")
     end

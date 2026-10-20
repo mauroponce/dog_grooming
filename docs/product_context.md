@@ -72,7 +72,7 @@ Decisión detallada: [`0004-customer-recognition-without-login.md`](decisions/00
 
 ## Suscripción de la empresa a Cita.pet
 
-- La prueba dura 14 días. Al finalizar, la empresa debe tener un plan seleccionado y pagar el período para conservar el acceso según los estados y plazos de gracia vigentes.
+- La prueba dura 14 días. Después del vencimiento hay tres días calendario completos de gracia; el negocio conserva la operación y las reservas durante esos días y se suspende al comenzar el día siguiente si no existe un pago válido o en revisión. Las extensiones manuales de trial o gracia desplazan esa fecha efectiva.
 - Los planes vigentes son Básico y PRO; importes y prestaciones se definen en `Subscription::PLANS` y no se duplican en esta documentación.
 - El canal aprobado para pagar la suscripción es una transferencia bancaria directa a Cita.pet.
 - El superadmin configura alias, CBU, titular, identificación fiscal y, opcionalmente, una constancia bancaria visible para la empresa.

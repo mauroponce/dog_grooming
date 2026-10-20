@@ -15,6 +15,17 @@ RSpec.describe "Public bookings", type: :request do
     expect(response).to have_http_status(:found)
   end
 
+  it "blocks new public reservations when the subscription is suspended" do
+    owner = User.create!(email_address: "suspended-booking-#{SecureRandom.hex(4)}@example.com", password: "password123", role: :admin)
+    business = Business.create!(owner:, name: "Casa Pausada", slug: "casa-pausada-#{SecureRandom.hex(4)}", contact_phone: "+54 9 11 5555-5555", onboarding_completed_at: Time.current)
+    business.subscription.update!(status: "suspended", suspended_at: Time.current, grace_ends_on: 1.day.ago.to_date)
+
+    get new_public_booking_path(business.slug), headers: browser_headers
+
+    expect(response).to redirect_to(public_business_path(business.slug))
+    expect(flash[:alert]).to eq("La agenda no está disponible en este momento.")
+  end
+
   private
 
     def browser_headers

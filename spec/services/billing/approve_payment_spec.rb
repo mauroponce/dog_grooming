@@ -12,8 +12,11 @@ RSpec.describe Billing::ApprovePayment do
     expect(business.subscription.reload).to have_attributes(
       status: "active",
       paid_until: Time.zone.today + 30.days,
-      next_due_on: Time.zone.today + 30.days
+      next_due_on: Time.zone.today + 30.days,
+      grace_ends_on: Time.zone.today + 33.days
     )
+    expect(business).to be_access_active
+    expect(business).to be_booking_available
   end
 
   it "conserva los días ya pagos en una renovación anticipada" do

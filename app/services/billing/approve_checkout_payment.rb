@@ -22,7 +22,7 @@ module Billing
             last_payment_at: Time.current, expires_at: invoice.period_end.end_of_day,
             paid_until: invoice.period_end, current_period_start: invoice.period_start,
             current_period_end: invoice.period_end, next_due_on: invoice.period_end,
-            grace_ends_on: invoice.period_end + 15.days, restricted_at: nil, suspended_at: nil
+            grace_ends_on: invoice.period_end + Business::BILLING_GRACE_DAYS.days, restricted_at: nil, suspended_at: nil
           )
           invoice.business.update!(disabled_at: nil) if invoice.business.disabled_at.present?
         end

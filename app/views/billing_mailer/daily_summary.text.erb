@@ -2,7 +2,7 @@ Resumen de cobros Cita.pet
 
 Pagos para revisar: <%= @summary.fetch(:pending_review_count) %>
 Pagos vencidos: <%= @summary.fetch(:overdue_count) %>
-Cuentas que se restringen hoy: <%= @summary.fetch(:restricting_today_count) %>
+Cuentas cuyo período de gracia termina hoy: <%= @summary.fetch(:grace_ending_today_count) %>
 Cuentas que se suspenden hoy: <%= @summary.fetch(:suspending_today_count) %>
 Trials que vencen esta semana: <%= @summary.fetch(:trials_ending_count) %>
 MRR activo: <%= @summary.fetch(:mrr_label) %>

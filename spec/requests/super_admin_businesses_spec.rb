@@ -433,6 +433,59 @@ RSpec.describe "Super admin businesses", type: :request do
     expect(response).to redirect_to(root_path)
   end
 
+  it "extends the trial and synchronizes a pending invoice without changing approved payments" do
+    super_admin = create_user(role: :super_admin, email_prefix: "super-trial")
+    owner = create_user(role: :admin, email_prefix: "owner-trial")
+    business = Business.create!(owner: owner, name: "Trial Center", slug: "trial-center-#{SecureRandom.hex(4)}", contact_phone: "+54 9 11 5555-5555", onboarding_completed_at: Time.current)
+    original_due_on = business.subscription.next_due_on
+    pending_invoice = Billing::EnsureCurrentInvoice.call(business: business, force: true)
+    paid_invoice = business.subscription.subscription_invoices.create!(
+      business: business,
+      period_start: 2.months.ago.to_date,
+      period_end: 1.month.ago.to_date,
+      billing_period_months: 1,
+      amount_cents: business.monthly_amount_cents,
+      due_on: 2.months.ago.to_date,
+      reference_code: "PAID-#{SecureRandom.hex(4).upcase}",
+      status: "paid",
+      paid_at: 2.months.ago
+    )
+    paid_attributes = paid_invoice.attributes.slice("due_on", "period_start", "period_end", "status", "paid_at")
+    sign_in(super_admin)
+
+    patch extend_trial_super_admin_business_path(business), headers: browser_headers
+
+    new_due_on = original_due_on + 7.days
+    expect(response).to redirect_to(super_admin_businesses_path(business_id: business.id))
+    expect(business.reload.trial_ends_at.to_date).to eq(new_due_on)
+    expect(business.subscription.reload).to have_attributes(
+      status: "trialing",
+      trial_ends_on: new_due_on,
+      next_due_on: new_due_on,
+      grace_ends_on: new_due_on + 3.days
+    )
+    expect(pending_invoice.reload).to have_attributes(due_on: new_due_on, period_start: new_due_on, status: "open")
+    expect(paid_invoice.reload.attributes.slice(*paid_attributes.keys)).to eq(paid_attributes)
+  end
+
+  it "extends grace from the effective date and prevents automatic suspension" do
+    super_admin = create_user(role: :super_admin, email_prefix: "super-grace")
+    owner = create_user(role: :admin, email_prefix: "owner-grace")
+    business = Business.create!(owner: owner, name: "Grace Center", slug: "grace-center-#{SecureRandom.hex(4)}", contact_phone: "+54 9 11 5555-5555", onboarding_completed_at: Time.current)
+    invoice = Billing::EnsureCurrentInvoice.call(business: business, force: true)
+    invoice.update!(due_on: 5.days.ago.to_date, period_start: 5.days.ago.to_date, period_end: 25.days.from_now.to_date, status: "overdue")
+    business.subscription.update!(status: "suspended", next_due_on: invoice.due_on, grace_ends_on: 2.days.ago.to_date, suspended_at: Time.current)
+    sign_in(super_admin)
+
+    patch extend_grace_super_admin_business_path(business), headers: browser_headers
+    Billing::DailyProcessor.new(today: Time.zone.today).call
+
+    expect(response).to redirect_to(super_admin_businesses_path(business_id: business.id))
+    expect(business.subscription.reload.grace_ends_on).to eq(7.days.from_now.to_date)
+    expect(business.subscription).to be_overdue
+    expect(business).to be_access_active
+  end
+
   def sign_in(user)
     session = user.sessions.create!(user_agent: browser_headers.fetch("User-Agent"), ip_address: "127.0.0.1")
     allow_any_instance_of(ApplicationController).to receive(:resume_session) do

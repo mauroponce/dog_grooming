@@ -61,6 +61,18 @@ class Subscription < ApplicationRecord
     normalized_status == "payment_due"
   end
 
+  def effective_grace_ends_on
+    grace_ends_on || next_due_on&.+(Business::BILLING_GRACE_DAYS)
+  end
+
+  def grace_period_active?(today: Time.zone.today)
+    effective_grace_ends_on.present? && today <= effective_grace_ends_on
+  end
+
+  def grace_period_expired?(today: Time.zone.today)
+    effective_grace_ends_on.present? && today > effective_grace_ends_on
+  end
+
   def normalized_status
     {
       "authorized" => "active",
@@ -108,6 +120,6 @@ class Subscription < ApplicationRecord
       self.trial_started_on ||= business&.trial_started_at&.to_date
       self.trial_ends_on ||= business&.trial_ends_at&.to_date
       self.next_due_on ||= paid_until || trial_ends_on || expires_at&.to_date
-      self.grace_ends_on ||= next_due_on + 15.days if next_due_on.present?
+      self.grace_ends_on ||= next_due_on + Business::BILLING_GRACE_DAYS.days if next_due_on.present?
     end
 end

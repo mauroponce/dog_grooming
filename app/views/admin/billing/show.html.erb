@@ -154,13 +154,22 @@ end %>
     </div>
   </div>
 
-  <% if @business.billing_due_in_days && @business.billing_due_in_days < 5 && !@subscription.paid? %>
+  <% if @business.trial_active? %>
+    <div class="mb-6 rounded-2xl border border-blue-200 bg-blue-50 px-5 py-4 text-sm font-bold text-blue-900">
+      Estás usando tu prueba gratuita. Te quedan <%= @business.trial_days_remaining %> <%= @business.trial_days_remaining == 1 ? "día" : "días" %> y vence el <%= date_label.call(@subscription.trial_ends_on) %>.
+    </div>
+  <% elsif @business.billing_suspended? %>
+    <div class="mb-6 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm font-bold text-rose-800">
+      Tu cuenta está suspendida. Regularizá el pago desde esta página para recuperar el acceso y las reservas online.
+    </div>
+  <% elsif @business.billing_due_in_days && @business.billing_due_in_days < 5 && !@subscription.paid? %>
     <% days = @business.billing_due_in_days %>
+    <% grace_days_remaining = @subscription.effective_grace_ends_on && [(@subscription.effective_grace_ends_on - Time.zone.today).to_i, 0].max %>
     <div class="mb-6 rounded-2xl border <%= days.negative? ? 'border-rose-200 bg-rose-50 text-rose-800' : 'border-amber-200 bg-amber-50 text-amber-900' %> px-5 py-4 text-sm font-bold">
       <% if @subscription.pending_review? %>
         Comprobante en revisión. Tu acceso se mantiene mientras validamos el pago.
       <% elsif days.negative? %>
-        Tu pago está vencido. En <%= [Business::BILLING_GRACE_DAYS + days, 0].max %> días perderás acceso al sistema. <button type="button" class="underline" data-billing-tab-button="facturacion">Pagar ahora</button>
+        Tu pago está vencido. <%= grace_days_remaining.zero? ? "Hoy es el último día de gracia." : "Te quedan #{grace_days_remaining} días de gracia." %> <button type="button" class="underline" data-billing-tab-button="facturacion">Pagar ahora</button>
       <% elsif days.zero? %>
         Tu pago vence hoy. <button type="button" class="underline" data-billing-tab-button="facturacion">Pagar ahora</button>
       <% else %>

@@ -36,6 +36,8 @@ module Billing
         invoice = Billing::EnsureCurrentInvoice.call(business: business)
         invoice ||= subscription.current_invoice
         sync_without_invoice!(business, subscription) and return if invoice.blank?
+        return if subscription.cancelled?
+        return if subscription.suspended? && invoice.suspended_at.present?
 
         sync_invoice_status!(invoice)
         return if invoice.pending_review? || subscription.pending_review?
@@ -54,22 +56,28 @@ module Billing
       def sync_invoice_status!(invoice)
         return if invoice.paid? || invoice.pending_review?
 
-        days = invoice.days_overdue
-        subscription_status = if days >= Business::BILLING_GRACE_DAYS
+        subscription = invoice.subscription
+        return if subscription.cancelled? || subscription.suspended?
+
+        subscription_status = if subscription.grace_period_expired?(today: today)
           "suspended"
-        elsif days.positive?
+        elsif subscription.restricted?
+          "restricted"
+        elsif subscription.paid?
+          "active"
+        elsif invoice.due_on < today
           "overdue"
         elsif invoice.due_today?
           "payment_due"
-        elsif invoice.subscription.trialing? && invoice.due_on > today
+        elsif subscription.trialing?
           "trialing"
         else
           "payment_due"
         end
 
-        invoice_status = days.positive? ? "overdue" : "open"
+        invoice_status = invoice.due_on < today ? "overdue" : "open"
         invoice.update!(status: invoice_status, overdue_at: Time.current) if invoice.status != invoice_status && !invoice.rejected?
-        invoice.subscription.update!(status: subscription_status) unless invoice.subscription.pending_review?
+        subscription.update!(status: subscription_status)
       end
 
       def send_due_reminder_if_needed!(invoice)
@@ -81,13 +89,12 @@ module Billing
       end
 
       def suspend_if_needed!(invoice)
-        return unless invoice.days_overdue >= Business::BILLING_GRACE_DAYS
-        return if invoice.subscription.suspended?
+        return unless invoice.subscription.grace_period_expired?(today: today)
+        return if invoice.subscription.suspended? && invoice.suspended_at.present?
 
         invoice.update!(suspended_at: Time.current)
         invoice.subscription.update!(status: "suspended", suspended_at: Time.current)
-        BillingMailer.account_suspended(invoice).deliver_later unless reminder_sent?(invoice, "suspended_notice", "email")
-        create_reminder_record!(invoice, "suspended_notice", "email", invoice.business.owner.email_address)
+        send_suspension_notice!(invoice)
       end
 
       def send_reminder!(invoice, reminder_type)
@@ -95,14 +102,23 @@ module Billing
       end
 
       def send_email_reminder!(invoice, reminder_type)
-        return if reminder_sent?(invoice, reminder_type, "email")
+        reminder = create_reminder_record!(invoice, reminder_type, "email", invoice.business.owner.email_address)
+        return if reminder.blank?
 
         BillingMailer.reminder(invoice, reminder_type).deliver_later
-        create_reminder_record!(invoice, reminder_type, "email", invoice.business.owner.email_address)
+      rescue StandardError
+        reminder&.destroy!
+        raise
       end
 
-      def reminder_sent?(invoice, reminder_type, channel)
-        BillingReminder.where(subscription_invoice: invoice, reminder_type: reminder_type, channel: channel, status: "sent").exists?
+      def send_suspension_notice!(invoice)
+        reminder = create_reminder_record!(invoice, "suspended_notice", "email", invoice.business.owner.email_address)
+        return if reminder.blank?
+
+        BillingMailer.account_suspended(invoice).deliver_later
+      rescue StandardError
+        reminder&.destroy!
+        raise
       end
 
       def create_reminder_record!(invoice, reminder_type, channel, recipient)
@@ -115,14 +131,26 @@ module Billing
           recipient: recipient,
           status: "sent"
         )
-      rescue ActiveRecord::RecordInvalid
+      rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique
         nil
       end
 
       def send_daily_summary!
         recipients.each do |recipient|
-          BillingMailer.daily_summary(summary, recipient).deliver_later
+          next if daily_summary_sent_today?(recipient)
+
+          BillingMailer.daily_summary(summary, recipient).deliver_now
         end
+      end
+
+      def daily_summary_sent_today?(recipient)
+        EmailDeliveryLog.where(
+          mailer: "BillingMailer",
+          action: "daily_summary",
+          recipient: recipient,
+          status: "sent",
+          created_at: today.all_day
+        ).exists?
       end
 
       def recipients
@@ -132,14 +160,14 @@ module Billing
 
       def summary
         @summary ||= begin
-          invoices = SubscriptionInvoice.open_for_review.joins(:business).where(businesses: { billing_enabled: true })
+          invoices = SubscriptionInvoice.open_for_review.includes(:subscription).joins(:business).where(businesses: { billing_enabled: true })
           pending = invoices.pending_review.count
           overdue = invoices.where(status: %w[overdue rejected]).count
           {
             pending_review_count: pending,
             overdue_count: overdue,
-            restricting_today_count: invoices.select { |invoice| invoice.days_overdue == 10 }.size,
-            suspending_today_count: invoices.select { |invoice| invoice.days_overdue == 15 }.size,
+            grace_ending_today_count: invoices.count { |invoice| invoice.subscription.effective_grace_ends_on == today },
+            suspending_today_count: invoices.count { |invoice| invoice.subscription.effective_grace_ends_on == today - 1.day },
             trials_ending_count: Business.where(billing_enabled: true, trial_ends_at: today.beginning_of_day..7.days.from_now.end_of_day).count,
             mrr_label: money_label(Business.includes(:subscription).select(&:subscription_active?).sum(&:monthly_amount_cents)),
             overdue_label: money_label(invoices.where(status: %w[overdue rejected]).sum(:amount_cents))

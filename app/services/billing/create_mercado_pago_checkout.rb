@@ -40,7 +40,7 @@ module Billing
       end
 
       def expiration_time
-        (invoice.subscription.grace_ends_on || invoice.due_on + 15.days).end_of_day
+        (invoice.subscription.grace_ends_on || invoice.due_on + Business::BILLING_GRACE_DAYS.days).end_of_day
       end
 
       def preference_payload(payment)

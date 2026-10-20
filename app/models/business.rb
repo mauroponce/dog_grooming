@@ -19,7 +19,6 @@ class Business < ApplicationRecord
       "Usuarios administrativos"
     ]
   }.freeze
-  TRIAL_GRACE_DAYS = 3
   BILLING_GRACE_DAYS = 3
   BOOLEAN = ActiveModel::Type::Boolean.new
   DEPOSIT_PERCENTAGE_OPTIONS = (10..100).step(10).to_a.freeze
@@ -396,15 +395,14 @@ class Business < ApplicationRecord
   end
 
   def trial_grace_period_active?
-    trial_ends_at.present? && trial_ends_at.past? && Time.current <= trial_ends_at + TRIAL_GRACE_DAYS.days
+    trial_ends_at.present? && !trial_active? && subscription&.grace_period_active?
   end
 
   def billing_grace_period_active?
     return false unless billing_enabled?
     return true if billing_pending_review?
 
-    due_on = subscription&.current_invoice&.due_on || subscription&.next_due_on || trial_ends_at&.to_date
-    due_on.present? && Time.zone.today <= due_on + BILLING_GRACE_DAYS.days
+    subscription&.grace_period_active? || false
   end
 
   def billing_due_in_days
@@ -522,9 +520,13 @@ class Business < ApplicationRecord
   def billing_status
     return "free" unless billing_enabled?
     return "suspended" if disabled?
-    return subscription.normalized_status if subscription.present? && subscription.normalized_status.in?(%w[active payment_due pending_review overdue restricted suspended cancelled])
+    return "pending_review" if billing_pending_review?
+    return "suspended" if billing_suspended?
+    return "restricted" if billing_restricted?
+    return "active" if subscription_active?
     return "trialing" if trial_active?
-    return "payment_due" if trial_grace_period_active?
+    return "payment_due" if billing_grace_period_active? && billing_due_in_days.to_i >= 0
+    return "overdue" if billing_grace_period_active?
 
     "suspended"
   end
@@ -890,7 +892,7 @@ class Business < ApplicationRecord
         trial_started_on: trial_started_at&.to_date,
         trial_ends_on: trial_end,
         next_due_on: trial_end,
-        grace_ends_on: trial_end&.+(15)
+        grace_ends_on: trial_end&.+(BILLING_GRACE_DAYS)
       )
     end
 
