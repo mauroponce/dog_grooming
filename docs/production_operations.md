@@ -143,9 +143,11 @@ docker compose -f compose.production.yml --env-file .env.production exec -T web 
 
 La tarea no imprime contactos y omite números incompletos o colisiones.
 
-## 8. Recuperación de recordatorios de facturación
+## 8. Procesamiento y comunicaciones de facturación
 
-`Billing::DailyJob` corre cada quince minutos. Además de aplicar el ciclo de facturación, recupera recordatorios `pending` o `failed` cuyo lease de una hora venció. Antes de reencolar consulta el `active_job_id` en Solid Queue; si la cola no está disponible, conserva el recordatorio sin duplicarlo y registra el error para reintentar en la próxima ejecución.
+`Billing::DailyJob` corre cada quince minutos. Aplica vencimientos y suspensiones desde el comienzo del día correspondiente en `America/Argentina/Buenos_Aires`, y recupera recordatorios `pending` o `failed` cuyo lease de una hora venció. Antes de reencolar consulta el `active_job_id` en Solid Queue; si la cola no está disponible, conserva el recordatorio sin duplicarlo y registra el error para reintentar en la próxima ejecución.
+
+`Billing::DailyNotificationsJob` corre una vez por día a las 08:30 de `America/Argentina/Buenos_Aires`. En esa ejecución crea y encola los recordatorios ordinarios que correspondan y envía el resumen diario al superadmin. La zona está incluida explícitamente en el cron de `config/recurring.yml`, por lo que el horario no depende de la zona del servidor. La recuperación de un aviso fallido sigue ocurriendo cada quince minutos y puede reencolarlo fuera de esa ventana; el procesador frecuente no crea avisos ordinarios nuevos.
 
 Los correos tienen semántica de entrega al menos una vez. Si el proveedor acepta un mensaje y el worker cae antes de persistir `sent`, una recuperación posterior puede repetirlo. Ante duplicados, revisar juntos el recordatorio, los jobs con ese `active_job_id` y los logs del proveedor; no cambiar manualmente una suscripción ni su suspensión para corregir el aviso.
 

@@ -104,7 +104,7 @@ RSpec.describe BillingReminder, type: :model do
           ready << true
           start.pop
           reminder = described_class.find(@recovery_reminder.id)
-          Billing::DailyProcessor.new.send(:enqueue_reminder!, reminder)
+          Billing::ReminderScheduler.new.send(:enqueue!, reminder)
           results << :ok
         rescue StandardError => error
           results << error

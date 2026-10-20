@@ -51,12 +51,12 @@ module Billing
             Time.zone.today >= reminder.event_on
         end
 
-        if reminder.reminder_type == Billing::DailyProcessor::FINAL_GRACE_REMINDER_TYPE
+        if reminder.reminder_type == Billing::DailyNotifications::FINAL_GRACE_REMINDER_TYPE
           return reminder.event_on == subscription.effective_grace_ends_on && Time.zone.today == reminder.event_on
         end
 
         offset = (Time.zone.today - invoice.due_on).to_i
-        reminder.event_on == invoice.due_on && Billing::DailyProcessor::REMINDERS_BY_OFFSET[offset] == reminder.reminder_type
+        reminder.event_on == invoice.due_on && Billing::DailyNotifications::REMINDERS_BY_OFFSET[offset] == reminder.reminder_type
       end
   end
 end
