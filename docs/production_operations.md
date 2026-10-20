@@ -78,7 +78,7 @@ Antes de migrar hace un backup, construye la imagen, ejecuta `citapet:production
 
 ### Base vacía y superadmin
 
-El deploy crea esquemas pero nunca datos de aplicación. No ejecutar `db:seed` en producción; la tarea aborta fuera de desarrollo.
+El deploy crea esquemas pero nunca datos de aplicación. No ejecutar `db:seed` en producción; la tarea aborta explícitamente en ese entorno.
 
 Después del primer deploy, preaprovisionar el operador con el mismo email que usará en Google:
 

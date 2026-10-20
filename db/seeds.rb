@@ -1,4 +1,4 @@
-unless Rails.env.development?
+if Rails.env.production?
   abort "db:seed solo está habilitado en development. En producción usá citapet:bootstrap_super_admin."
 end
 
@@ -324,4 +324,4 @@ class DevelopmentSeeds
     end
 end
 
-DevelopmentSeeds.call
+DevelopmentSeeds.call if Rails.env.development?

@@ -75,7 +75,7 @@ No reutilizar cuentas, conexiones OAuth, webhooks, estados ni referencias extern
 - Las invitaciones del equipo se materializan mediante `EmployeeMembership#invite!`; no se usa una matriz de permisos configurable desde la UI.
 - No hay modelos, rutas ni jobs para asistente, chat, análisis o generación por IA, portal de cliente o lista de espera. La migración `20261017160000_remove_ai_customer_portal_and_waitlist` eliminó sus tablas y columnas, y es irreversible.
 - Las funciones comerciales heredadas (campañas, promociones, rankings, packs, gift cards, referidos y formularios previos) no forman parte del flujo mínimo. No exponerlas ni crear dependencias nuevas sobre ellas sin una decisión explícita.
-- `db/seeds.rb` rechaza cualquier entorno distinto de desarrollo y sólo reemplaza los tenants demo conocidos. `citapet:bootstrap_super_admin` es la única inicialización de datos prevista para una producción vacía y opera sobre un solo email.
+- `db/seeds.rb` carga los tenants demo conocidos sólo en desarrollo, se omite sin crear registros en test y aborta en producción. `citapet:bootstrap_super_admin` es la única inicialización de datos prevista para una producción vacía y opera sobre un solo email.
 
 ## Trabajo asíncrono y correo
 

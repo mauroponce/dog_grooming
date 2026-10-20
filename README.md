@@ -13,7 +13,7 @@ docker compose exec -T web bash -lc 'bin/rails db:seed'
 docker compose exec -T web bash -lc 'bundle exec rspec'
 ```
 
-La web queda en <http://localhost:3003>, PostgreSQL en `localhost:5435` sólo para diagnóstico y Mailpit en <http://localhost:8028>. Los seeds son escenarios de demostración, son reemplazables e idempotentes por slug y abortan fuera de `development`.
+La web queda en <http://localhost:3003>, PostgreSQL en `localhost:5435` sólo para diagnóstico y Mailpit en <http://localhost:8028>. Los seeds son escenarios de demostración, son reemplazables e idempotentes por slug, se omiten en `test` y abortan en `production`.
 
 ## Alcance del beta
 

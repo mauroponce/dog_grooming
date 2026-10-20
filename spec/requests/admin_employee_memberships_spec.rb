@@ -4,7 +4,13 @@ RSpec.describe "Admin employee memberships", type: :request do
   it "renders the team index without configurable role controls" do
     owner = User.create!(email_address: "team-owner-#{SecureRandom.hex(4)}@example.com", password: "password123", role: :admin)
     business = Business.create!(owner:, name: "Equipo", slug: "equipo-#{SecureRandom.hex(4)}", contact_phone: "+54 9 11 5555-5555", onboarding_completed_at: Time.current)
-    business.employee_memberships.create!(name: "Ada Lovelace", email_address: "ada-#{SecureRandom.hex(4)}@example.com", status: "active")
+    business.employee_memberships.create!(
+      name: "Ada Lovelace",
+      first_name: "Ada",
+      last_name: "Lovelace",
+      email_address: "ada-#{SecureRandom.hex(4)}@example.com",
+      status: "active"
+    )
     sign_in(owner)
 
     get admin_employee_memberships_path, headers: browser_headers
